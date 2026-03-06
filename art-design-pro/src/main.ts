@@ -8,10 +8,11 @@ import '@styles/index.scss'                         // 样式
 import '@utils/sys/console.ts'                      // 控制台输出内容
 import { setupGlobDirectives } from './directives'
 import { setupErrorHandle } from './utils/sys/error-handle'
+import DictTag from '@/components/DictTag/index.vue'
 
 document.addEventListener(
   'touchstart',
-  function () {},
+  function () { },
   { passive: false }
 )
 
@@ -20,6 +21,9 @@ initStore(app)
 initRouter(app)
 setupGlobDirectives(app)
 setupErrorHandle(app)
+
+// 注册全局字典标签组件
+app.component('DictTag', DictTag)
 
 app.use(language)
 app.mount('#app')
