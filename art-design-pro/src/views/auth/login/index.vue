@@ -142,8 +142,8 @@
     {
       key: 'super',
       label: t('login.roles.super'),
-      userName: 'Super',
-      password: '123456',
+      userName: 'admin',
+      password: 'admin123',
       roles: ['R_SUPER']
     },
     {
@@ -219,18 +219,19 @@
       // 登录请求
       const { username, password } = formData
 
-      const { token, refreshToken } = await fetchLogin({
-        userName: username,
+      const response: any = await fetchLogin({
+        username,
         password
-      })
+      } as any)
 
       // 验证token
+      const token = response.token || response.data?.token || response
       if (!token) {
         throw new Error('Login failed - no token received')
       }
 
       // 存储 token 和登录状态
-      userStore.setToken(token, refreshToken)
+      userStore.setToken(token, response.refreshToken)
       userStore.setLoginStatus(true)
 
       // 登录成功处理

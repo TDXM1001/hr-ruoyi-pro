@@ -195,7 +195,7 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
       showSuccess(res.data.msg)
     }
 
-    return res.data.data as T
+    return (res.data.data !== undefined ? res.data.data : res.data) as T
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false
