@@ -1,0 +1,224 @@
+<!-- 岗位管理页面 -->
+<template>
+  <div class="post-page art-full-height">
+    <!-- 搜索栏 -->
+    <ArtSearchBar
+      v-model="formFilters"
+      :items="formItems"
+      :showExpand="false"
+      @reset="handleReset"
+      @search="handleSearch"
+    />
+
+    <ElCard class="art-table-card" shadow="never">
+      <!-- 表格头部 -->
+      <ArtTableHeader
+        :showZebra="false"
+        :loading="loading"
+        v-model:columns="columnChecks"
+        @refresh="handleRefresh"
+      >
+        <template #left>
+          <ElButton v-auth="'add'" type="primary" @click="handleAdd" v-ripple> 新增岗位 </ElButton>
+          <ElButton v-auth="'remove'" type="danger" plain :disabled="!multiple" @click="handleDelete" v-ripple>
+            删除
+          </ElButton>
+        </template>
+      </ArtTableHeader>
+
+      <ArtTable
+        ref="tableRef"
+        rowKey="postId"
+        :loading="loading"
+        :columns="columns"
+        :data="postList"
+        @selection-change="handleSelectionChange"
+      />
+
+      <!-- 分页 -->
+      <div class="art-pagination-container">
+        <ElPagination
+          v-show="total > 0"
+          :total="total"
+          v-model:current-page="queryParams.pageNum"
+          v-model:page-size="queryParams.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="getList"
+          @current-change="getList"
+        />
+      </div>
+    </ElCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+  import { ref, reactive, computed, onMounted, h } from 'vue'
+  import { listPost, delPost } from '@/api/system/post'
+  import { useTableColumns } from '@/hooks/core/useTableColumns'
+  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+
+  defineOptions({ name: 'Post' })
+
+  // 状态管理
+  const loading = ref(false)
+  const postList = ref<any[]>([])
+  const total = ref(0)
+  const ids = ref<number[]>([])
+  const multiple = ref(true)
+
+  // 搜索相关
+  const initialSearchState = {
+    postCode: '',
+    postName: '',
+    status: ''
+  }
+
+  const queryParams = reactive({
+    pageNum: 1,
+    pageSize: 10
+  })
+
+  const formFilters = reactive({ ...initialSearchState })
+
+  const formItems = computed(() => [
+    {
+      label: '岗位编码',
+      key: 'postCode',
+      type: 'input',
+      props: { placeholder: '请输入岗位编码', clearable: true }
+    },
+    {
+      label: '岗位名称',
+      key: 'postName',
+      type: 'input',
+      props: { placeholder: '请输入岗位名称', clearable: true }
+    },
+    {
+      label: '状态',
+      key: 'status',
+      type: 'select',
+      options: [
+        { label: '正常', value: '0' },
+        { label: '停用', value: '1' }
+      ],
+      props: { placeholder: '岗位状态', clearable: true }
+    }
+  ])
+
+  // 表格列配置
+  const { columnChecks, columns } = useTableColumns(() => [
+    { type: 'selection', width: 55, align: 'center' },
+    { prop: 'postCode', label: '岗位编码', minWidth: 100 },
+    { prop: 'postName', label: '岗位名称', minWidth: 120 },
+    { prop: 'postSort', label: '岗位排序', width: 100, align: 'center' },
+    {
+      prop: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center',
+      formatter: (row: any) => {
+        return h(
+          ElTag,
+          { type: row.status === '0' ? 'success' : 'info' },
+          () => (row.status === '0' ? '正常' : '停用')
+        )
+      }
+    },
+    { prop: 'createTime', label: '创建时间', width: 180, align: 'center' },
+    {
+      prop: 'operation',
+      label: '操作',
+      width: 160,
+      align: 'right',
+      formatter: (row: any) => {
+        return h('div', { style: 'text-align: right' }, [
+          h(ArtButtonTable, {
+            type: 'edit',
+            onClick: () => handleUpdate(row)
+          }),
+          h(ArtButtonTable, {
+            type: 'delete',
+            onClick: () => handleDelete(row)
+          })
+        ])
+      }
+    }
+  ])
+
+  /** 查询岗位列表 */
+  const getList = async () => {
+    loading.value = true
+    try {
+      const response: any = await listPost({ ...queryParams, ...formFilters })
+      postList.value = response.rows || []
+      total.value = response.total || 0
+    } catch (error) {
+      console.error('获取岗位列表失败:', error)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /** 多选框选中数据 */
+  const handleSelectionChange = (selection: any[]) => {
+    ids.value = selection.map(item => item.postId)
+    multiple.value = !selection.length
+  }
+
+  /** 重置按钮操作 */
+  const handleReset = () => {
+    Object.assign(formFilters, initialSearchState)
+    handleSearch()
+  }
+
+  /** 搜索按钮操作 */
+  const handleSearch = () => {
+    queryParams.pageNum = 1
+    getList()
+  }
+
+  /** 刷新按钮操作 */
+  const handleRefresh = () => {
+    getList()
+  }
+
+  /** 新增按钮操作 */
+  const handleAdd = () => {
+    console.log('新增岗位')
+  }
+
+  /** 修改按钮操作 */
+  const handleUpdate = (row: any) => {
+    console.log('修改岗位', row)
+  }
+
+  /** 删除按钮操作 */
+  const handleDelete = async (row?: any) => {
+    const postIds = row?.postId || ids.value
+    try {
+      await ElMessageBox.confirm(`是否确认删除岗位编号为"${postIds}"的数据项？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      await delPost(postIds)
+      ElMessage.success('删除成功')
+      getList()
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除岗位失败:', error)
+      }
+    }
+  }
+
+  onMounted(() => {
+    getList()
+  })
+</script>
+
+<style lang="scss" scoped>
+  .post-page {
+    padding: 0;
+  }
+</style>
