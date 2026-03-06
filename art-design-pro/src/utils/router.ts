@@ -59,3 +59,22 @@ export const formatMenuTitle = (title: string): string => {
   }
   return ''
 }
+
+/**
+ * 转换后端路由数据格式
+ * @param routes 后端返回的路由数据
+ * @returns 转换后的路由树
+ */
+export function generateRoutes(routes: any[]): any[] {
+  return routes.map(route => {
+    const currentRoute = { ...route }
+    if (currentRoute.component) {
+      // 简单模拟路由组件转换，这里仅供结构性演示
+      // currentRoute.component = () => import(`@/views/${route.component}`)
+    }
+    if (currentRoute.children && currentRoute.children.length > 0) {
+      currentRoute.children = generateRoutes(currentRoute.children)
+    }
+    return currentRoute
+  })
+}
