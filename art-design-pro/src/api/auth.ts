@@ -18,12 +18,12 @@ export function fetchLogin(params: Api.Auth.LoginParams) {
  * 获取用户信息
  * @returns 用户信息
  */
-export function fetchGetUserInfo() {
-  return request.get<Api.Auth.UserInfo>({
-    url: '/api/user/info'
-    // 自定义请求头
-    // headers: {
-    //   'X-Custom-Header': 'your-custom-value'
-    // }
+/**
+ * 获取用户信息 (若依版)
+ * @returns 用户信息、角色、权限
+ */
+export function getInfo() {
+  return request.get<any>({
+    url: '/getInfo'
   })
 }

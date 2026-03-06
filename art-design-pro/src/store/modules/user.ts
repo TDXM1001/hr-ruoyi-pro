@@ -42,6 +42,7 @@ import { setPageTitle } from '@/utils/router'
 import { resetRouterState } from '@/router/guards/beforeEach'
 import { useMenuStore } from './menu'
 import { StorageConfig } from '@/utils/storage/storage-config'
+import { getInfo as fetchGetInfo } from '@/api/auth'
 
 /**
  * 用户状态管理
@@ -58,6 +59,10 @@ export const useUserStore = defineStore(
     const isLock = ref(false)
     // 锁屏密码
     const lockPassword = ref('')
+    // 用户角色
+    const roles = ref<string[]>([])
+    // 用户权限
+    const permissions = ref<string[]>([])
     // 用户信息
     const info = ref<Partial<Api.Auth.UserInfo>>({})
     // 搜索历史记录
@@ -203,6 +208,21 @@ export const useUserStore = defineStore(
       localStorage.removeItem(StorageConfig.LAST_USER_ID_KEY)
     }
 
+    /**
+     * 获取用户权限信息
+     */
+    const getInfo = async () => {
+      const res = await fetchGetInfo()
+      const data = res.data || res.content || res
+      const { user, roles: userRoles, permissions: userPerms } = data
+
+      roles.value = userRoles || []
+      permissions.value = userPerms || []
+      info.value = user || {}
+
+      return data
+    }
+
     return {
       language,
       isLogin,
@@ -223,7 +243,10 @@ export const useUserStore = defineStore(
       setLockPassword,
       setToken,
       logOut,
-      checkAndClearWorktabs
+      checkAndClearWorktabs,
+      getInfo,
+      roles,
+      permissions
     }
   },
   {
