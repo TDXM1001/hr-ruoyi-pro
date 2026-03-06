@@ -68,10 +68,18 @@ export const formatMenuTitle = (title: string): string => {
 export function generateRoutes(routes: any[]): any[] {
   return routes.map(route => {
     const currentRoute = { ...route }
-    if (currentRoute.component) {
-      // 简单模拟路由组件转换，这里仅供结构性演示
-      // currentRoute.component = () => import(`@/views/${route.component}`)
+    if (currentRoute.component === 'Layout') {
+      currentRoute.component = '/index/index'
+    } else if (currentRoute.component === 'ParentView') {
+      currentRoute.component = '/index/index' // 采用相似的嵌套布局或者可以保持默认
+    } else if (currentRoute.component === 'InnerLink') {
+      currentRoute.component = '/index/index'
+    } else if (currentRoute.component) {
+      if (!currentRoute.component.startsWith('/')) {
+        currentRoute.component = `/${currentRoute.component}`
+      }
     }
+
     if (currentRoute.children && currentRoute.children.length > 0) {
       currentRoute.children = generateRoutes(currentRoute.children)
     }

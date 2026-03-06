@@ -10,7 +10,8 @@
 import type { AppRouteRecord } from '@/types/router'
 import { useUserStore } from '@/store/modules/user'
 import { useAppMode } from '@/hooks/core/useAppMode'
-import { fetchGetMenuList } from '@/api/system-manage'
+import { getRouters } from '@/api/menu'
+import { generateRoutes } from '@/utils/router'
 import { asyncRoutes } from '../routes/asyncRoutes'
 import { RoutesAlias } from '../routesAlias'
 import { formatMenuTitle } from '@/utils'
@@ -57,8 +58,9 @@ export class MenuProcessor {
    * 处理后端控制模式的菜单
    */
   private async processBackendMenu(): Promise<AppRouteRecord[]> {
-    const list = await fetchGetMenuList()
-    return this.filterEmptyMenus(list)
+    const list = await getRouters()
+    const routes = generateRoutes(list)
+    return this.filterEmptyMenus(routes)
   }
 
   /**
@@ -204,10 +206,10 @@ export class MenuProcessor {
 
     console.error(
       `[路由配置错误] 菜单 "${formatMenuTitle(menuTitle)}" (name: ${routeName}, path: ${path}) 配置错误\n` +
-        `  位置: ${parentName} > ${routeName}\n` +
-        `  问题: ${level + 1}级菜单的 path 不能以 / 开头\n` +
-        `  当前配置: path: '${path}'\n` +
-        `  应该改为: path: '${suggestedPath}'`
+      `  位置: ${parentName} > ${routeName}\n` +
+      `  问题: ${level + 1}级菜单的 path 不能以 / 开头\n` +
+      `  当前配置: path: '${path}'\n` +
+      `  应该改为: path: '${suggestedPath}'`
     )
   }
 
