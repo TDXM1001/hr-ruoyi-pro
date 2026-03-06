@@ -7,17 +7,13 @@ import request from '@/utils/http'
  */
 export function fetchLogin(params: Api.Auth.LoginParams) {
   return request.post<Api.Auth.LoginResponse>({
-    url: '/api/auth/login',
+    url: '/login',
     params
     // showSuccessMessage: true // 显示成功消息
     // showErrorMessage: false // 不显示错误消息
   })
 }
 
-/**
- * 获取用户信息
- * @returns 用户信息
- */
 /**
  * 获取用户信息 (若依版)
  * @returns 用户信息、角色、权限
