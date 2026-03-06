@@ -65,7 +65,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) request.headers.set('Authorization', accessToken)
+    if (accessToken) request.headers.set('Authorization', 'Bearer ' + accessToken)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -83,10 +83,23 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+    const { code, msg } = response.data || {}
+    // 二进制数据直接返回
+    if (response.request.responseType === 'blob' || response.request.responseType === 'arraybuffer') {
+      return response
+    }
+
+    if (code === 200 || code === ApiStatus.success) {
+      return response
+    } else if (code === 401 || code === ApiStatus.unauthorized) {
+      handleUnauthorizedError(msg)
+    } else if (code === 500 || code === ApiStatus.internalServerError) {
+      const error = createHttpError(msg || $t('httpMsg.internalServerError') || '服务器错误', code)
+      showError(error, true)
+      throw error
+    } else {
+      throw createHttpError(msg || $t('httpMsg.requestFailed'), code || 0)
+    }
   },
   (error) => {
     if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
