@@ -6,47 +6,47 @@
  * @param {*} children 孩子节点字段 默认 'children'
  */
 export function handleTree(data: any[], id?: string, parentId?: string, children?: string) {
-  let config = {
+  const config = {
     id: id || 'id',
     parentId: parentId || 'parentId',
     childrenList: children || 'children'
-  };
+  }
 
-  var childrenListMap: Record<string, any[]> = {};
-  var nodeIds: Record<string, any> = {};
-  var tree: any[] = [];
+  const childrenListMap: Record<string, any[]> = {}
+  const nodeIds: Record<string, any> = {}
+  const tree: any[] = []
 
-  for (let d of data) {
-    let parentId = d[config.parentId];
+  for (const d of data) {
+    const parentId = d[config.parentId]
     if (childrenListMap[parentId] == null) {
-      childrenListMap[parentId] = [];
+      childrenListMap[parentId] = []
     }
-    nodeIds[d[config.id]] = d;
-    childrenListMap[parentId].push(d);
+    nodeIds[d[config.id]] = d
+    childrenListMap[parentId].push(d)
   }
 
-  for (let d of data) {
-    let parentId = d[config.parentId];
+  for (const d of data) {
+    const parentId = d[config.parentId]
     if (nodeIds[parentId] == null) {
-      tree.push(d);
+      tree.push(d)
     }
   }
 
-  for (let t of tree) {
-    adaptToChildrenList(t);
+  for (const t of tree) {
+    adaptToChildrenList(t)
   }
 
   function adaptToChildrenList(o: any) {
     if (childrenListMap[o[config.id]] !== null) {
-      o[config.childrenList] = childrenListMap[o[config.id]];
+      o[config.childrenList] = childrenListMap[o[config.id]]
     }
     if (o[config.childrenList]) {
-      for (let c of o[config.childrenList]) {
-        adaptToChildrenList(c);
+      for (const c of o[config.childrenList]) {
+        adaptToChildrenList(c)
       }
     }
   }
-  return tree;
+  return tree
 }
 
 /**
@@ -54,22 +54,25 @@ export function handleTree(data: any[], id?: string, parentId?: string, children
  */
 export function parseTime(time: any, pattern?: string) {
   if (arguments.length === 0 || !time) {
-    return null;
+    return null
   }
-  const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}';
-  let date;
+  const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}'
+  let date
   if (typeof time === 'object') {
-    date = time;
+    date = time
   } else {
-    if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
-      time = parseInt(time);
+    if (typeof time === 'string' && /^[0-9]+$/.test(time)) {
+      time = parseInt(time)
     } else if (typeof time === 'string') {
-      time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace(new RegExp(/\.[\d]{3}/gm), '');
+      time = time
+        .replace(new RegExp(/-/gm), '/')
+        .replace('T', ' ')
+        .replace(new RegExp(/\.[\d]{3}/gm), '')
     }
-    if ((typeof time === 'number') && (time.toString().length === 10)) {
-      time = time * 1000;
+    if (typeof time === 'number' && time.toString().length === 10) {
+      time = time * 1000
     }
-    date = new Date(time);
+    date = new Date(time)
   }
   const formatObj: Record<string, number> = {
     y: date.getFullYear(),
@@ -79,17 +82,19 @@ export function parseTime(time: any, pattern?: string) {
     i: date.getMinutes(),
     s: date.getSeconds(),
     a: date.getDay()
-  };
+  }
   const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result: string, key: string) => {
-    let value: number | string = formatObj[key];
+    let value: number | string = formatObj[key]
     // Note: getDay() returns 0 on Sunday
-    if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value]; }
-    if (result.length > 0 && value < 10) {
-      value = '0' + value;
+    if (key === 'a') {
+      return ['日', '一', '二', '三', '四', '五', '六'][value]
     }
-    return value.toString() || '0';
-  });
-  return time_str;
+    if (result.length > 0 && value < 10) {
+      value = '0' + value
+    }
+    return value.toString() || '0'
+  })
+  return time_str
 }
 
 /**
@@ -98,6 +103,6 @@ export function parseTime(time: any, pattern?: string) {
  */
 export function resetForm(refName: any) {
   if (refName && refName.resetFields) {
-    refName.resetFields();
+    refName.resetFields()
   }
 }

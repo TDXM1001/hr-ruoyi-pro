@@ -4,12 +4,12 @@ export const hasRole = {
   mounted(el: HTMLElement, binding: any) {
     const { value } = binding
     const userStore = useUserStore()
-    const super_admin = "admin";
+    const super_admin = 'admin'
     const roles = userStore.roles || []
 
     if (value && value instanceof Array && value.length > 0) {
       const roleFlag = value
-      const hasRole = roles.some(v => {
+      const hasRole = roles.some((v) => {
         return super_admin === v || roleFlag.includes(v)
       })
       if (!hasRole) {

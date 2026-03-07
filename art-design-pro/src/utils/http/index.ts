@@ -36,6 +36,7 @@ let unauthorizedTimer: NodeJS.Timeout | null = null
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   showErrorMessage?: boolean
   showSuccessMessage?: boolean
+  returnFullResponse?: boolean
 }
 
 const { VITE_API_URL, VITE_WITH_CREDENTIALS } = import.meta.env
@@ -85,7 +86,10 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
     const { code, msg } = response.data || {}
     // 二进制数据直接返回
-    if (response.request.responseType === 'blob' || response.request.responseType === 'arraybuffer') {
+    if (
+      response.request.responseType === 'blob' ||
+      response.request.responseType === 'arraybuffer'
+    ) {
       return response
     }
 
@@ -193,6 +197,10 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     // 显示成功消息
     if (config.showSuccessMessage && res.data.msg) {
       showSuccess(res.data.msg)
+    }
+
+    if (config.returnFullResponse) {
+      return res.data as T
     }
 
     return (res.data.data !== undefined ? res.data.data : res.data) as T

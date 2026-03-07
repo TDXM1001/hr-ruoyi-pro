@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
@@ -147,6 +148,14 @@ export default ({ mode }: { mode: string }) => {
             }
           }
         ]
+      }
+    },
+    test: {
+      environment: 'jsdom',
+      server: {
+        deps: {
+          inline: ['element-plus']
+        }
       }
     }
   })

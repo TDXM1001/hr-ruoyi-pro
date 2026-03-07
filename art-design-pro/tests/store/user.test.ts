@@ -1,6 +1,16 @@
 import { setActivePinia, createPinia } from 'pinia'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useUserStore } from '../../src/store/modules/user'
+
+vi.mock('../../src/api/auth', () => ({
+  getInfo: vi.fn().mockResolvedValue({
+    data: {
+      roles: ['admin'],
+      permissions: ['*:*:*'],
+      user: { userId: 1, userName: 'admin' }
+    }
+  })
+}))
 
 describe('User Store', () => {
   beforeEach(() => {

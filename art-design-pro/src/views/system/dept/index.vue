@@ -19,7 +19,9 @@
         @refresh="handleRefresh"
       >
         <template #left>
-          <ElButton v-auth="'add'" type="primary" @click="handleAddDept" v-ripple> 新增部门 </ElButton>
+          <ElButton v-auth="'system:dept:add'" type="primary" @click="handleAddDept" v-ripple>
+            新增部门
+          </ElButton>
           <ElButton @click="toggleExpand" v-ripple>
             {{ isExpanded ? '收起' : '展开' }}
           </ElButton>
@@ -37,16 +39,25 @@
         :default-expand-all="isExpanded"
       />
     </ElCard>
+
+    <!-- 部门编辑弹窗 -->
+    <DeptEditDialog
+      v-model="dialogVisible"
+      :dialog-type="dialogType"
+      :dept-data="currentData"
+      @success="getList"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, nextTick, h } from 'vue'
-  import { listDept } from '@/api/system/dept'
+  import { listDept, delDept } from '@/api/system/dept'
   import { handleTree } from '@/utils/ruoyi'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import { ElTag } from 'element-plus'
+  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import DeptEditDialog from './modules/dept-edit-dialog.vue'
 
   defineOptions({ name: 'Dept' })
 
@@ -55,6 +66,11 @@
   const isExpanded = ref(true)
   const tableRef = ref()
   const deptList = ref<any[]>([])
+
+  // 弹窗相关
+  const dialogVisible = ref(false)
+  const dialogType = ref<'add' | 'edit'>('add')
+  const currentData = ref<any>()
 
   // 搜索相关
   const initialSearchState = {
@@ -102,10 +118,8 @@
       width: 100,
       align: 'center',
       formatter: (row: any) => {
-        return h(
-          ElTag,
-          { type: row.status === '0' ? 'success' : 'info' },
-          () => (row.status === '0' ? '正常' : '停用')
+        return h(ElTag, { type: row.status === '0' ? 'success' : 'info' }, () =>
+          row.status === '0' ? '正常' : '停用'
         )
       }
     },
@@ -151,7 +165,9 @@
       const response = await listDept(formFilters)
       // 若依接口通常返回 res.data，但 http 拦截器可能已经提取
       // 兼容处理不同返回集
-      const data = Array.isArray(response) ? response : (response as any).data || (response as any).rows || []
+      const data = Array.isArray(response)
+        ? response
+        : (response as any).data || (response as any).rows || []
       deptList.value = handleTree(data, 'deptId')
     } catch (error) {
       console.error('获取部门列表失败:', error)
@@ -206,21 +222,38 @@
    * 新增部门
    */
   const handleAddDept = (row?: any) => {
-    console.log('新增部门', row)
+    dialogType.value = 'add'
+    currentData.value = row
+    dialogVisible.value = true
   }
 
   /**
    * 修改部门
    */
   const handleEditDept = (row: any) => {
-    console.log('修改部门', row)
+    dialogType.value = 'edit'
+    currentData.value = { ...row }
+    dialogVisible.value = true
   }
 
   /**
    * 删除部门
    */
-  const handleDeleteDept = (row: any) => {
-    console.log('删除部门', row)
+  const handleDeleteDept = async (row: any) => {
+    try {
+      await ElMessageBox.confirm(`是否确认删除名称为"${row.deptName}"的数据项？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      await delDept(row.deptId)
+      ElMessage.success('删除成功')
+      getList()
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除部门失败:', error)
+      }
+    }
   }
 
   onMounted(() => {

@@ -66,7 +66,7 @@ export const formatMenuTitle = (title: string): string => {
  * @returns 转换后的路由树
  */
 export function generateRoutes(routes: any[]): any[] {
-  return routes.map(route => {
+  return routes.map((route) => {
     const currentRoute = { ...route }
     if (currentRoute.component === 'Layout') {
       currentRoute.component = '/index/index'

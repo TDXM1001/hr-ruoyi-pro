@@ -32,22 +32,32 @@
  * @author Art Design Pro Team
  */
 
-import { router } from '@/router'
 import { App, Directive, DirectiveBinding } from 'vue'
+import { useUserStore } from '@/store/modules/user'
 
 interface AuthBinding extends DirectiveBinding {
-  value: string
+  value: string | string[]
 }
 
 function checkAuthPermission(el: HTMLElement, binding: AuthBinding): void {
-  // 获取当前路由的权限列表
-  const authList = (router.currentRoute.value.meta.authList as Array<{ authMark: string }>) || []
+  const { value } = binding
+  const userStore = useUserStore()
+  const permissions = userStore.permissions || []
+  const all_permission = '*:*:*'
 
-  // 检查是否有对应的权限标识
-  const hasPermission = authList.some((item) => item.authMark === binding.value)
+  if (value && value.length > 0) {
+    const hasPermission = permissions.some((permission) => {
+      if (typeof value === 'string') {
+        return all_permission === permission || value === permission
+      } else {
+        return all_permission === permission || value.includes(permission)
+      }
+    })
 
-  // 如果没有权限，移除元素
-  if (!hasPermission) {
+    if (!hasPermission) {
+      removeElement(el)
+    }
+  } else {
     removeElement(el)
   }
 }

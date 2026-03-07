@@ -19,8 +19,17 @@
         @refresh="handleRefresh"
       >
         <template #left>
-          <ElButton v-auth="'add'" type="primary" @click="handleAdd" v-ripple> 新增岗位 </ElButton>
-          <ElButton v-auth="'remove'" type="danger" plain :disabled="!multiple" @click="handleDelete" v-ripple>
+          <ElButton v-auth="'system:post:add'" type="primary" @click="handleAdd" v-ripple>
+            新增岗位
+          </ElButton>
+          <ElButton
+            v-auth="'system:post:remove'"
+            type="danger"
+            plain
+            :disabled="!multiple"
+            @click="handleDelete"
+            v-ripple
+          >
             删除
           </ElButton>
         </template>
@@ -32,22 +41,29 @@
         :loading="loading"
         :columns="columns"
         :data="postList"
+        :pagination="{ current: queryParams.pageNum, size: queryParams.pageSize, total: total }"
+        @pagination:size-change="
+          (val: number) => {
+            queryParams.pageSize = val
+            getList()
+          }
+        "
+        @pagination:current-change="
+          (val: number) => {
+            queryParams.pageNum = val
+            getList()
+          }
+        "
         @selection-change="handleSelectionChange"
       />
-
-      <!-- 分页 -->
-      <div class="art-pagination-container">
-        <ElPagination
-          v-show="total > 0"
-          :total="total"
-          v-model:current-page="queryParams.pageNum"
-          v-model:page-size="queryParams.pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="getList"
-          @current-change="getList"
-        />
-      </div>
     </ElCard>
+
+    <PostEditDialog
+      v-model="dialogVisible"
+      :dialog-type="dialogType"
+      :post-data="currentData"
+      @success="getList"
+    />
   </div>
 </template>
 
@@ -57,6 +73,7 @@
   import { useTableColumns } from '@/hooks/core/useTableColumns'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import PostEditDialog from './modules/post-edit-dialog.vue'
 
   defineOptions({ name: 'Post' })
 
@@ -66,6 +83,11 @@
   const total = ref(0)
   const ids = ref<number[]>([])
   const multiple = ref(true)
+
+  // 弹窗相关
+  const dialogVisible = ref(false)
+  const dialogType = ref<'add' | 'edit'>('add')
+  const currentData = ref<any>()
 
   // 搜索相关
   const initialSearchState = {
@@ -118,10 +140,8 @@
       width: 100,
       align: 'center',
       formatter: (row: any) => {
-        return h(
-          ElTag,
-          { type: row.status === '0' ? 'success' : 'info' },
-          () => (row.status === '0' ? '正常' : '停用')
+        return h(ElTag, { type: row.status === '0' ? 'success' : 'info' }, () =>
+          row.status === '0' ? '正常' : '停用'
         )
       }
     },
@@ -162,7 +182,7 @@
 
   /** 多选框选中数据 */
   const handleSelectionChange = (selection: any[]) => {
-    ids.value = selection.map(item => item.postId)
+    ids.value = selection.map((item) => item.postId)
     multiple.value = !selection.length
   }
 
@@ -185,12 +205,16 @@
 
   /** 新增按钮操作 */
   const handleAdd = () => {
-    console.log('新增岗位')
+    dialogType.value = 'add'
+    currentData.value = undefined
+    dialogVisible.value = true
   }
 
   /** 修改按钮操作 */
   const handleUpdate = (row: any) => {
-    console.log('修改岗位', row)
+    dialogType.value = 'edit'
+    currentData.value = { ...row }
+    dialogVisible.value = true
   }
 
   /** 删除按钮操作 */

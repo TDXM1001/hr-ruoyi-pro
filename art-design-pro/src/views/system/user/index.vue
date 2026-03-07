@@ -29,11 +29,11 @@
           @refresh="refreshData"
         >
           <template #left>
-            <ElButton v-auth="'add'" type="primary" @click="handleAdd" v-ripple>
+            <ElButton v-auth="'system:user:add'" type="primary" @click="handleAdd" v-ripple>
               新增用户
             </ElButton>
             <ElButton
-              v-auth="'remove'"
+              v-auth="'system:user:remove'"
               type="danger"
               plain
               :disabled="!multiple"
@@ -59,6 +59,14 @@
         />
       </ElCard>
     </div>
+
+    <!-- 用户编辑弹窗 -->
+    <UserEditDialog
+      v-model="dialogVisible"
+      :dialog-type="dialogType"
+      :user-data="currentData"
+      @success="refreshData"
+    />
   </div>
 </template>
 
@@ -69,6 +77,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DeptTreeAside from '@/components/business/DeptTreeAside/index.vue'
   import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import UserEditDialog from './modules/user-edit-dialog.vue'
 
   defineOptions({ name: 'User' })
 
@@ -77,6 +86,11 @@
   const currentNodeKey = ref<number | string | null>(null)
   const ids = ref<number[]>([])
   const multiple = ref(true)
+
+  // 弹窗相关
+  const dialogVisible = ref(false)
+  const dialogType = ref<'add' | 'edit'>('add')
+  const currentData = ref<any>()
 
   // 搜索相关
   const initialSearchState = {
@@ -216,12 +230,16 @@
 
   /** 新增按钮操作 */
   const handleAdd = () => {
-    console.log('新增用户')
+    dialogType.value = 'add'
+    currentData.value = undefined
+    dialogVisible.value = true
   }
 
   /** 修改按钮操作 */
   const handleUpdate = (row: any) => {
-    console.log('修改用户', row)
+    dialogType.value = 'edit'
+    currentData.value = { ...row }
+    dialogVisible.value = true
   }
 
   /** 删除按钮操作 */
