@@ -71,17 +71,23 @@
         <ElCol :span="12">
           <ElFormItem label="用户性别" prop="sex">
             <ElSelect v-model="formData.sex" placeholder="请选择性别" class="w-full">
-              <ElOption label="男" value="0" />
-              <ElOption label="女" value="1" />
-              <ElOption label="未知" value="2" />
+              <!-- 性别选项由字典 sys_user_sex 动态渲染 -->
+              <ElOption
+                v-for="item in sys_user_sex"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </ElSelect>
           </ElFormItem>
         </ElCol>
         <ElCol :span="12">
           <ElFormItem label="状态" prop="status">
             <ElRadioGroup v-model="formData.status">
-              <ElRadio label="0">正常</ElRadio>
-              <ElRadio label="1">停用</ElRadio>
+              <!-- 状态选项由字典 sys_normal_disable 动态渲染 -->
+              <ElRadio v-for="item in sys_normal_disable" :key="item.value" :label="item.value">{{
+                item.label
+              }}</ElRadio>
             </ElRadioGroup>
           </ElFormItem>
         </ElCol>
@@ -138,6 +144,10 @@
   import { ElMessage } from 'element-plus'
   import type { FormRules } from 'element-plus'
   import { getUser, addUser, updateUser, deptTreeSelect } from '@/api/system/user'
+  import { useDict } from '@/utils/dict'
+
+  // 性别字典（sys_user_sex）与正常/停用状态字典（sys_normal_disable）
+  const { sys_user_sex, sys_normal_disable } = useDict('sys_user_sex', 'sys_normal_disable')
 
   const props = defineProps<{
     modelValue: boolean

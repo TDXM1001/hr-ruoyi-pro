@@ -15,7 +15,8 @@ export function useDict(...args: string[]) {
         res.value[dictType] = dicts
       } else {
         getDicts(dictType).then((resp) => {
-          res.value[dictType] = resp || []
+          // 将响应结果强制转为数组，防止 TS 推断类型不匹配
+          res.value[dictType] = (resp as any[]) || []
           useDictStore().setDict(dictType, res.value[dictType])
         })
       }

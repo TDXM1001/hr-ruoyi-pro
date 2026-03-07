@@ -74,12 +74,17 @@
   import { ref, reactive, computed, onMounted, h } from 'vue'
   import { listUser, delUser, deptTreeSelect } from '@/api/system/user'
   import { useTable } from '@/hooks/core/useTable'
+  import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DeptTreeAside from '@/components/business/DeptTreeAside/index.vue'
-  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import DictTag from '@/components/DictTag/index.vue'
+  import { ElMessageBox, ElMessage } from 'element-plus'
   import UserEditDialog from './modules/user-edit-dialog.vue'
 
   defineOptions({ name: 'User' })
+
+  // 从后端字典接入：正常/停用状态（用于搜索筛选和表格状态列渲染）
+  const { sys_normal_disable } = useDict('sys_normal_disable')
 
   // 部门树数据
   const deptOptions = ref<any[]>([])
@@ -118,10 +123,8 @@
       label: '状态',
       key: 'status',
       type: 'select',
-      options: [
-        { label: '正常', value: '0' },
-        { label: '停用', value: '1' }
-      ],
+      // 使用动态字典数据替代硬编码选项
+      options: sys_normal_disable.value,
       props: { placeholder: '用户状态', clearable: true }
     }
   ])
@@ -158,10 +161,9 @@
           label: '状态',
           width: 100,
           align: 'center',
+          // 使用 DictTag 组件渲染状态，由字典系统统一管控
           formatter: (row: any) => {
-            return h(ElTag, { type: row.status === '0' ? 'success' : 'info' }, () =>
-              row.status === '0' ? '正常' : '停用'
-            )
+            return h(DictTag, { options: sys_normal_disable.value, value: row.status })
           }
         },
         { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },

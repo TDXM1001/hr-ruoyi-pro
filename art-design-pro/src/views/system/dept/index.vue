@@ -55,11 +55,16 @@
   import { listDept, delDept } from '@/api/system/dept'
   import { handleTree } from '@/utils/ruoyi'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
+  import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import DictTag from '@/components/DictTag/index.vue'
+  import { ElMessageBox, ElMessage } from 'element-plus'
   import DeptEditDialog from './modules/dept-edit-dialog.vue'
 
   defineOptions({ name: 'Dept' })
+
+  // 接入字典：正常/停用状态
+  const { sys_normal_disable } = useDict('sys_normal_disable')
 
   // 状态管理
   const loading = ref(false)
@@ -91,10 +96,8 @@
       label: '状态',
       key: 'status',
       type: 'select',
-      options: [
-        { label: '正常', value: '0' },
-        { label: '停用', value: '1' }
-      ],
+      // 状态选项由字典 sys_normal_disable 动态渲染
+      options: sys_normal_disable.value,
       props: { placeholder: '部门状态', clearable: true }
     }
   ])
@@ -117,10 +120,9 @@
       label: '状态',
       width: 100,
       align: 'center',
+      // 使用 DictTag 组件渲染，由字典系统统一管控
       formatter: (row: any) => {
-        return h(ElTag, { type: row.status === '0' ? 'success' : 'info' }, () =>
-          row.status === '0' ? '正常' : '停用'
-        )
+        return h(DictTag, { options: sys_normal_disable.value, value: row.status })
       }
     },
     {
