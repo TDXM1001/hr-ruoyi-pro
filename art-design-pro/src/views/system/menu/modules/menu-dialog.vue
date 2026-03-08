@@ -63,13 +63,13 @@
 </template>
 
 <script setup lang="ts">
-  import { reactive, ref, computed, watch, nextTick } from 'vue'
+  import { reactive, ref, computed, watch } from 'vue'
   import type { FormRules } from 'element-plus'
   import { ElMessage } from 'element-plus'
   import { Search } from '@element-plus/icons-vue'
   import ArtForm from '@/components/core/forms/art-form/index.vue'
   import type { FormItem } from '@/components/core/forms/art-form/index.vue'
-  import { listMenu, addMenu, updateMenu, getMenu } from '@/api/system/menu'
+  import { listMenu, addMenu, updateMenu } from '@/api/system/menu'
   import type { SysMenu } from '@/api/system/menu'
   import { Icon } from '@iconify/vue'
 

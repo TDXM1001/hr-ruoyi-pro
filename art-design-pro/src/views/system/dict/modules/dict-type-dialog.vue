@@ -7,13 +7,7 @@
     append-to-body
     @closed="handleClosed"
   >
-    <ElForm
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="80px"
-      v-loading="loading"
-    >
+    <ElForm ref="formRef" :model="form" :rules="rules" label-width="80px" v-loading="loading">
       <ElFormItem label="字典名称" prop="dictName">
         <ElInput v-model="form.dictName" placeholder="请输入字典名称" maxlength="100" />
       </ElFormItem>
@@ -22,11 +16,9 @@
       </ElFormItem>
       <ElFormItem label="状态" prop="status">
         <ElRadioGroup v-model="form.status">
-          <ElRadio
-            v-for="dict in sys_normal_disable"
-            :key="dict.value"
-            :label="dict.value"
-          >{{ dict.label }}</ElRadio>
+          <ElRadio v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.value">{{
+            dict.label
+          }}</ElRadio>
         </ElRadioGroup>
       </ElFormItem>
       <ElFormItem label="备注" prop="remark">
@@ -44,94 +36,94 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
-import { getType, addType, updateType } from '@/api/system/dict/type'
-import { useDict } from '@/utils/dict'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+  import { ref, reactive, watch } from 'vue'
+  import { getType, addType, updateType } from '@/api/system/dict/type'
+  import { useDict } from '@/utils/dict'
+  import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
-const props = defineProps<{
-  modelValue: boolean
-  dialogType: 'add' | 'edit'
-  formData?: any
-}>()
+  const props = defineProps<{
+    modelValue: boolean
+    dialogType: 'add' | 'edit'
+    formData?: any
+  }>()
 
-const emit = defineEmits(['update:modelValue', 'success'])
+  const emit = defineEmits(['update:modelValue', 'success'])
 
-const { sys_normal_disable } = useDict('sys_normal_disable')
+  const { sys_normal_disable } = useDict('sys_normal_disable')
 
-const visible = ref(false)
-const loading = ref(false)
-const submitLoading = ref(false)
-const formRef = ref<FormInstance>()
+  const visible = ref(false)
+  const loading = ref(false)
+  const submitLoading = ref(false)
+  const formRef = ref<FormInstance>()
 
-const initialForm = {
-  dictId: undefined,
-  dictName: '',
-  dictType: '',
-  status: '0',
-  remark: ''
-}
-
-const form = reactive({ ...initialForm })
-
-const rules = reactive<FormRules>({
-  dictName: [{ required: true, message: '字典名称不能为空', trigger: 'blur' }],
-  dictType: [{ required: true, message: '字典类型不能为空', trigger: 'blur' }]
-})
-
-watch(
-  () => props.modelValue,
-  async (val) => {
-    visible.value = val
-    if (val) {
-      if (props.dialogType === 'edit' && props.formData?.dictId) {
-        loading.value = true
-        try {
-          const res: any = await getType(props.formData.dictId)
-          Object.assign(form, res.data || res)
-        } catch (error) {
-          console.error('获取字典详细信息失败:', error)
-        } finally {
-          loading.value = false
-        }
-      } else {
-        Object.assign(form, initialForm)
-      }
-    }
+  const initialForm = {
+    dictId: undefined,
+    dictName: '',
+    dictType: '',
+    status: '0',
+    remark: ''
   }
-)
 
-watch(
-  () => visible.value,
-  (val) => {
-    emit('update:modelValue', val)
-  }
-)
+  const form = reactive({ ...initialForm })
 
-function handleClosed() {
-  formRef.value?.resetFields()
-  Object.assign(form, initialForm)
-}
-
-async function handleSubmit() {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      submitLoading.value = true
-      try {
-        if (props.dialogType === 'edit') {
-          await updateType(form)
-          ElMessage.success('修改成功')
-        } else {
-          await addType(form)
-          ElMessage.success('新增成功')
-        }
-        visible.value = false
-        emit('success')
-      } finally {
-        submitLoading.value = false
-      }
-    }
+  const rules = reactive<FormRules>({
+    dictName: [{ required: true, message: '字典名称不能为空', trigger: 'blur' }],
+    dictType: [{ required: true, message: '字典类型不能为空', trigger: 'blur' }]
   })
-}
+
+  watch(
+    () => props.modelValue,
+    async (val) => {
+      visible.value = val
+      if (val) {
+        if (props.dialogType === 'edit' && props.formData?.dictId) {
+          loading.value = true
+          try {
+            const res: any = await getType(props.formData.dictId)
+            Object.assign(form, res.data || res)
+          } catch (error) {
+            console.error('获取字典详细信息失败:', error)
+          } finally {
+            loading.value = false
+          }
+        } else {
+          Object.assign(form, initialForm)
+        }
+      }
+    }
+  )
+
+  watch(
+    () => visible.value,
+    (val) => {
+      emit('update:modelValue', val)
+    }
+  )
+
+  function handleClosed() {
+    formRef.value?.resetFields()
+    Object.assign(form, initialForm)
+  }
+
+  async function handleSubmit() {
+    if (!formRef.value) return
+    await formRef.value.validate(async (valid) => {
+      if (valid) {
+        submitLoading.value = true
+        try {
+          if (props.dialogType === 'edit') {
+            await updateType(form)
+            ElMessage.success('修改成功')
+          } else {
+            await addType(form)
+            ElMessage.success('新增成功')
+          }
+          visible.value = false
+          emit('success')
+        } finally {
+          submitLoading.value = false
+        }
+      }
+    })
+  }
 </script>

@@ -32,4 +32,3 @@ export function fetchGetMenuList() {
     url: '/system/menu/list'
   })
 }
-

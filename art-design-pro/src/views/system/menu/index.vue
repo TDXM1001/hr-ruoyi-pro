@@ -55,7 +55,6 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h, nextTick } from 'vue'
   import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
-  import { Plus, Edit, Delete, Sort } from '@element-plus/icons-vue'
   import ArtSearchBar from '@/components/core/forms/art-search-bar/index.vue'
   import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
@@ -64,9 +63,9 @@
   import MenuDialog from './modules/menu-dialog.vue'
   import { listMenu, delMenu } from '@/api/system/menu'
   import type { SysMenu } from '@/api/system/menu'
-  import { Icon } from '@iconify/vue'
+  // import { Icon } from '@iconify/vue'
 
-  defineOptions({ name: 'Menu' })
+  defineOptions({ name: 'MenuManagement' })
 
   // 状态管理
   const loading = ref(false)
@@ -113,14 +112,14 @@
     {
       prop: 'menuName',
       label: '菜单名称',
-      minWidth: 160,
-      fixed: 'left',
-      formatter: (row: SysMenu) => {
-        return h('div', { class: 'flex items-center gap-2' }, [
-          row.icon ? h(Icon, { icon: row.icon, class: 'w-4 h-4' }) : null,
-          h('span', row.menuName)
-        ])
-      }
+      minWidth: 160
+      // fixed: 'left',
+      // formatter: (row: SysMenu) => {
+      //   return h('span', { class: 'inline-flex items-center align-middle ml-1' }, [
+      //     row.icon ? h(Icon, { icon: row.icon, class: 'w-4 h-4 mr-2' }) : null,
+      //     h('span', row.menuName)
+      //   ])
+      // }
     },
     {
       prop: 'orderNum',
