@@ -3,6 +3,7 @@
   <div class="post-page art-full-height">
     <!-- 搜索栏 -->
     <ArtSearchBar
+      :key="dicts.sys_normal_disable.value.length"
       v-model="formFilters"
       :items="formItems"
       :showExpand="false"
@@ -79,8 +80,8 @@
 
   defineOptions({ name: 'Post' })
 
-  // 接入字典：正常/停用状态
-  const { sys_normal_disable } = useDict('sys_normal_disable')
+  // 接入字典
+  const dicts = useDict('sys_normal_disable')
 
   // 状态管理
   const loading = ref(false)
@@ -125,9 +126,11 @@
       label: '状态',
       key: 'status',
       type: 'select',
-      // 状态选项由字典 sys_normal_disable 动态渲染
-      options: sys_normal_disable.value,
-      props: { placeholder: '岗位状态', clearable: true }
+      props: {
+        placeholder: '岗位状态',
+        clearable: true,
+        options: dicts.sys_normal_disable.value
+      }
     }
   ])
 
@@ -142,9 +145,8 @@
       label: '状态',
       width: 100,
       align: 'center',
-      // 使用 DictTag 组件渲染，由字典系统统一管控
       formatter: (row: any) => {
-        return h(DictTag, { options: sys_normal_disable.value, value: row.status })
+        return h(DictTag, { options: dicts.sys_normal_disable.value, value: row.status })
       }
     },
     { prop: 'createTime', label: '创建时间', width: 180, align: 'center' },
@@ -154,7 +156,7 @@
       width: 160,
       align: 'right',
       formatter: (row: any) => {
-        return h('div', { style: 'text-align: right' }, [
+        return h('div', { class: 'flex justify-end' }, [
           h(ArtButtonTable, {
             type: 'edit',
             onClick: () => handleUpdate(row)
@@ -224,8 +226,6 @@
     const postIds = row?.postId || ids.value
     try {
       await ElMessageBox.confirm(`是否确认删除岗位编号为"${postIds}"的数据项？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
         type: 'warning'
       })
       await delPost(postIds)
@@ -240,11 +240,13 @@
 
   onMounted(() => {
     getList()
+    // 触发字典数据初始化
+    void dicts.sys_normal_disable.value
   })
 </script>
 
 <style lang="scss" scoped>
   .post-page {
-    padding: 0;
+    padding: 12px;
   }
 </style>

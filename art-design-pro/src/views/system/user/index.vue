@@ -13,6 +13,7 @@
     <div class="flex-1 min-w-0 flex flex-col h-full overflow-hidden relative">
       <!-- 搜索栏 -->
       <ArtSearchBar
+        :key="dicts.sys_normal_disable.value.length"
         v-model="formFilters"
         :items="formItems"
         :showExpand="false"
@@ -83,8 +84,8 @@
 
   defineOptions({ name: 'User' })
 
-  // 从后端字典接入：正常/停用状态（用于搜索筛选和表格状态列渲染）
-  const { sys_normal_disable } = useDict('sys_normal_disable')
+  // 接入字典
+  const dicts = useDict('sys_normal_disable')
 
   // 部门树数据
   const deptOptions = ref<any[]>([])
@@ -123,13 +124,15 @@
       label: '状态',
       key: 'status',
       type: 'select',
-      // 使用动态字典数据替代硬编码选项
-      options: sys_normal_disable.value,
-      props: { placeholder: '用户状态', clearable: true }
+      props: {
+        placeholder: '用户状态',
+        clearable: true,
+        options: dicts.sys_normal_disable.value
+      }
     }
   ])
 
-  // 使用 useTable 钩子 - 参考 role/index.vue 的模式
+  // 表格
   const {
     columns,
     columnChecks,
@@ -146,8 +149,6 @@
     core: {
       apiFn: listUser,
       apiParams: {
-        pageNum: 1,
-        pageSize: 10,
         deptId: undefined
       },
       columnsFactory: () => [
@@ -161,9 +162,8 @@
           label: '状态',
           width: 100,
           align: 'center',
-          // 使用 DictTag 组件渲染状态，由字典系统统一管控
           formatter: (row: any) => {
-            return h(DictTag, { options: sys_normal_disable.value, value: row.status })
+            return h(DictTag, { options: dicts.sys_normal_disable.value, value: row.status })
           }
         },
         { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
@@ -173,8 +173,7 @@
           width: 160,
           align: 'right',
           formatter: (row: any) => {
-            const buttonStyle = { style: 'text-align: right' }
-            return h('div', buttonStyle, [
+            return h('div', { class: 'flex justify-end' }, [
               h(ArtButtonTable, {
                 type: 'edit',
                 onClick: () => handleUpdate(row)
@@ -225,7 +224,6 @@
 
   /** 搜索按钮操作 */
   const handleSearch = () => {
-    // 合并搜索参数
     Object.assign(searchParams, formFilters)
     getData()
   }
@@ -251,8 +249,6 @@
 
     try {
       await ElMessageBox.confirm(`是否确认删除用户编号为"${userIds}"的数据项？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
         type: 'warning'
       })
       await delUser(userIds)
@@ -267,6 +263,8 @@
 
   onMounted(() => {
     getDeptTree()
+    // 触发字典数据初始化
+    void dicts.sys_normal_disable.value
   })
 </script>
 

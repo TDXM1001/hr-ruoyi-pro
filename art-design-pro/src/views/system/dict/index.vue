@@ -51,12 +51,14 @@
       :form-data="currentData"
       @success="refreshData"
     />
+
+    <!-- 字典数据抽屉（核心修改：点击字典类型后打开此抽屉） -->
+    <DictDataDrawer v-model="drawerVisible" :dict-type="selectedDictType" @closed="handleClosed" />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, h } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { ref, reactive, computed, h, onMounted } from 'vue'
   import { listType, delType, refreshCache } from '@/api/system/dict/type'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
@@ -64,11 +66,11 @@
   import DictTag from '@/components/DictTag/index.vue'
   import { ElMessageBox, ElMessage, ElLink } from 'element-plus'
   import DictTypeDialog from './modules/dict-type-dialog.vue'
+  import DictDataDrawer from './modules/dict-data-drawer.vue'
 
   defineOptions({ name: 'Dict' })
 
-  const router = useRouter()
-  const { sys_normal_disable } = useDict('sys_normal_disable')
+  const dicts = useDict('sys_normal_disable')
 
   // 状态管理
   const ids = ref<number[]>([])
@@ -76,6 +78,10 @@
   const dialogVisible = ref(false)
   const dialogType = ref<'add' | 'edit'>('add')
   const currentData = ref<any>()
+
+  // 抽屉管理
+  const drawerVisible = ref(false)
+  const selectedDictType = ref('')
 
   // 搜索配置
   const initialSearchState = {
@@ -102,14 +108,68 @@
       label: '状态',
       key: 'status',
       type: 'select',
-      options: sys_normal_disable.value,
-      props: { placeholder: '字典状态', clearable: true }
+      props: {
+        placeholder: '字典状态',
+        clearable: true,
+        options: dicts.sys_normal_disable.value
+      }
     }
   ])
 
   // 表格配置
+  const columns = computed(() => [
+    { type: 'selection' as const, width: 55, align: 'center' },
+    { prop: 'dictId', label: '字典主键', width: 100 },
+    { prop: 'dictName', label: '字典名称', minWidth: 150 },
+    {
+      prop: 'dictType',
+      label: '字典类型',
+      minWidth: 150,
+      formatter: (row: any) => {
+        return h(
+          ElLink,
+          {
+            type: 'primary',
+            underline: false,
+            onClick: () => handleOpenDrawer(row)
+          },
+          () => row.dictType
+        )
+      }
+    },
+    {
+      prop: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center',
+      formatter: (row: any) =>
+        h(DictTag, {
+          options: dicts.sys_normal_disable.value,
+          value: row.status
+        })
+    },
+    { prop: 'remark', label: '备注', minWidth: 150, showOverflowTooltip: true },
+    { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
+    {
+      prop: 'operation',
+      label: '操作',
+      width: 160,
+      align: 'right',
+      formatter: (row: any) =>
+        h('div', { class: 'flex justify-end' }, [
+          h(ArtButtonTable, { type: 'edit', onClick: () => handleUpdate(row) }),
+          h(ArtButtonTable, { type: 'delete', onClick: () => handleDelete(row) })
+        ])
+    }
+  ])
+
+  /** 状态初始化加载 */
+  onMounted(() => {
+    // 显式访问一次以触发加载
+    void dicts.sys_normal_disable.value
+  })
+
   const {
-    columns,
     columnChecks,
     data,
     loading,
@@ -126,49 +186,7 @@
       apiParams: {
         pageNum: 1,
         pageSize: 10
-      },
-      columnsFactory: () => [
-        { type: 'selection', width: 55, align: 'center' },
-        { prop: 'dictId', label: '字典主键', width: 100 },
-        { prop: 'dictName', label: '字典名称', minWidth: 150 },
-        {
-          prop: 'dictType',
-          label: '字典类型',
-          minWidth: 150,
-          formatter: (row: any) => {
-            return h(
-              ElLink,
-              {
-                type: 'primary',
-                underline: false,
-                onClick: () => handleViewData(row)
-              },
-              () => row.dictType
-            )
-          }
-        },
-        {
-          prop: 'status',
-          label: '状态',
-          width: 100,
-          align: 'center',
-          formatter: (row: any) =>
-            h(DictTag, { options: sys_normal_disable.value, value: row.status })
-        },
-        { prop: 'remark', label: '备注', minWidth: 150, showOverflowTooltip: true },
-        { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
-        {
-          prop: 'operation',
-          label: '操作',
-          width: 160,
-          align: 'right',
-          formatter: (row: any) =>
-            h('div', { class: 'flex justify-end' }, [
-              h(ArtButtonTable, { type: 'edit', onClick: () => handleUpdate(row) }),
-              h(ArtButtonTable, { type: 'delete', onClick: () => handleDelete(row) })
-            ])
-        }
-      ]
+      }
     }
   })
 
@@ -184,15 +202,21 @@
     resetSearchParams()
   }
 
+  /** 关闭抽屉时重置搜索条件 */
+  function handleClosed() {
+    // 不在此重置主表格状态
+  }
+
   /** 多选 */
   function handleSelectionChange(selection: any[]) {
     ids.value = selection.map((item) => item.dictId)
     multiple.value = !selection.length
   }
 
-  /** 跳转至字典数据 */
-  function handleViewData(row: any) {
-    router.push({ name: 'DictData', params: { dictId: row.dictId } })
+  /** 打开详情抽屉 */
+  function handleOpenDrawer(row: any) {
+    selectedDictType.value = row.dictType
+    drawerVisible.value = true
   }
 
   /** 新增 */
@@ -212,6 +236,7 @@
   /** 删除 */
   async function handleDelete(row?: any) {
     const dictIds = row?.dictId || ids.value
+    if (!dictIds) return
     try {
       await ElMessageBox.confirm(`是否确认删除字典编号为"${dictIds}"的数据项？`, '提示', {
         type: 'warning'
@@ -219,7 +244,9 @@
       await delType(dictIds)
       ElMessage.success('删除成功')
       refreshData()
-    } catch {}
+    } catch (error) {
+      console.log('取消删除:', error)
+    }
   }
 
   /** 刷新缓存 */
@@ -227,6 +254,8 @@
     try {
       await refreshCache()
       ElMessage.success('刷新成功')
-    } catch {}
+    } catch (error) {
+      console.error('刷新缓存失败:', error)
+    }
   }
 </script>
