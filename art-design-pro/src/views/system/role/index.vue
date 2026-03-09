@@ -58,7 +58,7 @@
 <script setup lang="ts">
   import { ButtonMoreItem } from '@/components/core/forms/art-button-more/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetRoleList } from '@/api/system-manage'
+  import { listRole, type SysRole } from '@/api/system/role'
   import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
   import RoleSearch from './modules/role-search.vue'
   import RoleEditDialog from './modules/role-edit-dialog.vue'
@@ -67,14 +67,11 @@
 
   defineOptions({ name: 'Role' })
 
-  type RoleListItem = Api.SystemManage.RoleListItem
-
   // 搜索表单
   const searchForm = ref({
     roleName: undefined,
-    roleCode: undefined,
-    description: undefined,
-    enabled: undefined,
+    roleKey: undefined,
+    status: undefined,
     daterange: undefined
   })
 
@@ -82,7 +79,7 @@
 
   const dialogVisible = ref(false)
   const permissionDialog = ref(false)
-  const currentRoleData = ref<RoleListItem | undefined>(undefined)
+  const currentRoleData = ref<SysRole | undefined>(undefined)
 
   const {
     columns,
@@ -99,17 +96,17 @@
   } = useTable({
     // 核心配置
     core: {
-      apiFn: fetchGetRoleList,
+      apiFn: listRole,
       apiParams: {
-        current: 1,
-        size: 20
+        pageNum: 1,
+        pageSize: 20
       },
       // 排除 apiParams 中的属性
       excludeParams: ['daterange'],
       columnsFactory: () => [
         {
           prop: 'roleId',
-          label: '角色ID',
+          label: '角色编号',
           width: 100
         },
         {
@@ -118,34 +115,34 @@
           minWidth: 120
         },
         {
-          prop: 'roleCode',
-          label: '角色编码',
+          prop: 'roleKey',
+          label: '权限字符',
           minWidth: 120
         },
         {
-          prop: 'description',
-          label: '角色描述',
-          minWidth: 150,
-          showOverflowTooltip: true
+          prop: 'roleSort',
+          label: '显示顺序',
+          width: 100
         },
         {
-          prop: 'enabled',
+          prop: 'status',
           label: '角色状态',
           width: 100,
-          formatter: (row) => {
-            const statusConfig = row.enabled
-              ? { type: 'success', text: '启用' }
-              : { type: 'warning', text: '禁用' }
+          formatter: (row: SysRole) => {
+            const isNormal = row.status === '0'
+            const statusConfig = isNormal
+              ? { type: 'success', text: '正常' }
+              : { type: 'danger', text: '停用' }
             return h(
               ElTag,
-              { type: statusConfig.type as 'success' | 'warning' },
+              { type: statusConfig.type as 'success' | 'danger' },
               () => statusConfig.text
             )
           }
         },
         {
           prop: 'createTime',
-          label: '创建日期',
+          label: '创建时间',
           width: 180,
           sortable: true
         },
@@ -185,7 +182,7 @@
 
   const dialogType = ref<'add' | 'edit'>('add')
 
-  const showDialog = (type: 'add' | 'edit', row?: RoleListItem) => {
+  const showDialog = (type: 'add' | 'edit', row?: SysRole) => {
     dialogVisible.value = true
     dialogType.value = type
     currentRoleData.value = row
@@ -196,16 +193,20 @@
    * @param params 搜索参数
    */
   const handleSearch = (params: Record<string, any>) => {
-    // 处理日期区间参数，把 daterange 转换为 startTime 和 endTime
+    // 处理日期区间参数，设置为若依后端要求的格式
     const { daterange, ...filtersParams } = params
-    const [startTime, endTime] = Array.isArray(daterange) ? daterange : [null, null]
+    const [beginTime, endTime] = Array.isArray(daterange) ? daterange : [null, null]
 
     // 搜索参数赋值
-    Object.assign(searchParams, { ...filtersParams, startTime, endTime })
+    Object.assign(searchParams, {
+      ...filtersParams,
+      'params[beginTime]': beginTime,
+      'params[endTime]': endTime
+    })
     getData()
   }
 
-  const buttonMoreClick = (item: ButtonMoreItem, row: RoleListItem) => {
+  const buttonMoreClick = (item: ButtonMoreItem, row: SysRole) => {
     switch (item.key) {
       case 'permission':
         showPermissionDialog(row)
@@ -219,19 +220,20 @@
     }
   }
 
-  const showPermissionDialog = (row?: RoleListItem) => {
+  const showPermissionDialog = (row?: SysRole) => {
     permissionDialog.value = true
     currentRoleData.value = row
   }
 
-  const deleteRole = (row: RoleListItem) => {
+  const deleteRole = (row: SysRole) => {
     ElMessageBox.confirm(`确定删除角色"${row.roleName}"吗？此操作不可恢复！`, '删除确认', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-      .then(() => {
-        // TODO: 调用删除接口
+      .then(async () => {
+        const { delRole } = await import('@/api/system/role')
+        await delRole(row.roleId!)
         ElMessage.success('删除成功')
         refreshData()
       })

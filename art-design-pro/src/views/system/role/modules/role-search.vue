@@ -43,8 +43,8 @@
    * 角色状态选项
    */
   const statusOptions = ref([
-    { label: '启用', value: true },
-    { label: '禁用', value: false }
+    { label: '正常', value: '0' },
+    { label: '停用', value: '1' }
   ])
 
   /**
@@ -59,25 +59,18 @@
       clearable: true
     },
     {
-      label: '角色编码',
-      key: 'roleCode',
+      label: '权限字符',
+      key: 'roleKey',
       type: 'input',
-      placeholder: '请输入角色编码',
-      clearable: true
-    },
-    {
-      label: '角色描述',
-      key: 'description',
-      type: 'input',
-      placeholder: '请输入角色描述',
+      placeholder: '请输入权限字符',
       clearable: true
     },
     {
       label: '角色状态',
-      key: 'enabled',
+      key: 'status',
       type: 'select',
       props: {
-        placeholder: '请选择状态',
+        placeholder: '角色状态',
         options: statusOptions.value,
         clearable: true
       }
@@ -88,7 +81,7 @@
       type: 'datetime',
       props: {
         style: { width: '100%' },
-        placeholder: '请选择日期范围',
+        placeholder: '创建时间',
         type: 'daterange',
         rangeSeparator: '至',
         startPlaceholder: '开始日期',

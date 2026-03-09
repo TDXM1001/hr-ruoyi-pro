@@ -92,6 +92,16 @@ export function updateMenu(data: Partial<SysMenu>) {
 }
 
 /**
+ * 根据角色ID查询菜单树结构
+ * @param roleId 角色ID
+ */
+export function roleMenuTreeselect(roleId: number | string) {
+  return request.get<{ checkedKeys: number[]; menus: any[] }>({
+    url: '/system/menu/roleMenuTreeselect/' + roleId
+  })
+}
+
+/**
  * 删除菜单
  * @param menuId 菜单ID
  */
