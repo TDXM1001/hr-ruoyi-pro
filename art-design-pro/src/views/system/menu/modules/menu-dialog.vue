@@ -69,6 +69,7 @@
   import { Search } from '@element-plus/icons-vue'
   import ArtForm from '@/components/core/forms/art-form/index.vue'
   import type { FormItem } from '@/components/core/forms/art-form/index.vue'
+  import { useDict } from '@/utils/dict'
   import { listMenu, addMenu, updateMenu } from '@/api/system/menu'
   import type { SysMenu } from '@/api/system/menu'
   import { Icon } from '@iconify/vue'
@@ -107,6 +108,9 @@
   })
 
   const emit = defineEmits<Emits>()
+
+  // 接入字典
+  const { sys_show_hide, sys_normal_disable } = useDict('sys_show_hide', 'sys_normal_disable')
 
   const formRef = ref()
   const isEdit = ref(false)
@@ -247,10 +251,7 @@
           key: 'visible',
           type: 'radio',
           props: {
-            options: [
-              { label: '显示', value: '0' },
-              { label: '隐藏', value: '1' }
-            ]
+            options: sys_show_hide.value
           },
           span: 12
         },
@@ -259,10 +260,7 @@
           key: 'status',
           type: 'radio',
           props: {
-            options: [
-              { label: '正常', value: '0' },
-              { label: '停用', value: '1' }
-            ]
+            options: sys_normal_disable.value
           },
           span: 12
         }

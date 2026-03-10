@@ -54,18 +54,23 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h, nextTick } from 'vue'
-  import { ElTag, ElMessageBox, ElMessage } from 'element-plus'
+  import { ElMessageBox, ElMessage } from 'element-plus'
   import ArtSearchBar from '@/components/core/forms/art-search-bar/index.vue'
   import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import DictTag from '@/components/DictTag/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
+  import { useDict } from '@/utils/dict'
   import MenuDialog from './modules/menu-dialog.vue'
   import { listMenu, delMenu } from '@/api/system/menu'
   import type { SysMenu } from '@/api/system/menu'
   // import { Icon } from '@iconify/vue'
 
   defineOptions({ name: 'MenuManagement' })
+
+  // 接入字典
+  const { sys_normal_disable } = useDict('sys_normal_disable')
 
   // 状态管理
   const loading = ref(false)
@@ -99,10 +104,7 @@
       props: {
         placeholder: '菜单状态',
         clearable: true,
-        options: [
-          { label: '正常', value: '0' },
-          { label: '停用', value: '1' }
-        ]
+        options: sys_normal_disable.value
       }
     }
   ])
@@ -113,13 +115,6 @@
       prop: 'menuName',
       label: '菜单名称',
       minWidth: 160
-      // fixed: 'left',
-      // formatter: (row: SysMenu) => {
-      //   return h('span', { class: 'inline-flex items-center align-middle ml-1' }, [
-      //     row.icon ? h(Icon, { icon: row.icon, class: 'w-4 h-4 mr-2' }) : null,
-      //     h('span', row.menuName)
-      //   ])
-      // }
     },
     {
       prop: 'orderNum',
@@ -145,12 +140,7 @@
       width: 80,
       align: 'center',
       formatter: (row: SysMenu) => {
-        const statusMap: any = {
-          '0': { text: '正常', type: 'success' },
-          '1': { text: '停用', type: 'danger' }
-        }
-        const status = statusMap[row.status] || { text: '未知', type: 'info' }
-        return h(ElTag, { type: status.type }, () => status.text)
+        return h(DictTag, { options: sys_normal_disable.value, value: row.status })
       }
     },
     {

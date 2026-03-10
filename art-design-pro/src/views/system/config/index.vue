@@ -76,6 +76,7 @@
   import { listConfig, delConfig, refreshCache } from '@/api/system/config'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
+  import { useAuth } from '@/hooks/core/useAuth'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
   import { ElMessageBox, ElMessage } from 'element-plus'
@@ -129,6 +130,9 @@
     }
   ])
 
+  // 权限控制
+  const { hasAuth } = useAuth()
+
   // 表格 Hook
   const {
     columns,
@@ -156,7 +160,7 @@
           label: '系统内置',
           width: 100,
           align: 'center',
-          render: (row: any) => {
+          formatter: (row: any) => {
             return h(DictTag, { options: sys_yes_no.value, value: row.configType })
           }
         },
@@ -167,19 +171,28 @@
           label: '操作',
           width: 120,
           align: 'right',
-          render: (row: any) => {
-            return h('div', { class: 'flex justify-end gap-2' }, [
-              h(ArtButtonTable, {
-                type: 'edit',
-                auth: 'system:config:edit',
-                onClick: () => handleUpdate(row)
-              }),
-              h(ArtButtonTable, {
-                type: 'delete',
-                auth: 'system:config:remove',
-                onClick: () => handleDelete(row)
-              })
-            ])
+          formatter: (row: any) => {
+            const buttons = []
+
+            if (hasAuth('system:config:edit')) {
+              buttons.push(
+                h(ArtButtonTable, {
+                  type: 'edit',
+                  onClick: () => handleUpdate(row)
+                })
+              )
+            }
+
+            if (hasAuth('system:config:remove')) {
+              buttons.push(
+                h(ArtButtonTable, {
+                  type: 'delete',
+                  onClick: () => handleDelete(row)
+                })
+              )
+            }
+
+            return h('div', { class: 'flex justify-end gap-2' }, buttons)
           }
         }
       ]
