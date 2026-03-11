@@ -49,10 +49,36 @@
         @selection-change="handleSelectionChange"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
-      />
+      >
+        <!-- 公告类型插槽 -->
+        <template #noticeType="{ row }">
+          <DictTag :options="sys_notice_type" :value="row.noticeType" />
+        </template>
+
+        <!-- 状态插槽 -->
+        <template #status="{ row }">
+          <DictTag :options="sys_notice_status" :value="row.status" />
+        </template>
+
+        <!-- 操作列插槽 -->
+        <template #operation="{ row }">
+          <div class="flex justify-end gap-2">
+            <ArtButtonTable
+              v-if="hasAuth('system:notice:edit')"
+              type="edit"
+              @click="handleUpdate(row)"
+            />
+            <ArtButtonTable
+              v-if="hasAuth('system:notice:remove')"
+              type="delete"
+              @click="handleDelete(row)"
+            />
+          </div>
+        </template>
+      </ArtTable>
     </ElCard>
 
-    <!-- 编辑弹窗：子组件自管理字典数据 -->
+    <!-- 编辑弹窗 -->
     <NoticeEditDialog
       v-model="dialogVisible"
       :dialog-type="dialogType"
@@ -63,10 +89,11 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { listNotice, delNotice } from '@/api/system/notice'
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { listNotice, delNotice, getNotice } from '@/api/system/notice'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
+  import { useAuth } from '@/hooks/core/useAuth'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
   import { ElMessageBox, ElMessage } from 'element-plus'
@@ -120,6 +147,9 @@
     }
   ])
 
+  // 权限控制
+  const { hasAuth } = useAuth()
+
   // 表格 Hook
   const {
     columns,
@@ -145,18 +175,14 @@
           label: '公告类型',
           width: 100,
           align: 'center',
-          render: (row: any) => {
-            return h(DictTag, { options: sys_notice_type.value, value: row.noticeType })
-          }
+          useSlot: true
         },
         {
           prop: 'status',
           label: '状态',
           width: 100,
           align: 'center',
-          render: (row: any) => {
-            return h(DictTag, { options: sys_notice_status.value, value: row.status })
-          }
+          useSlot: true
         },
         { prop: 'createBy', label: '创建者', width: 100 },
         { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
@@ -165,20 +191,7 @@
           label: '操作',
           width: 120,
           align: 'right',
-          render: (row: any) => {
-            return h('div', { class: 'flex justify-end gap-2' }, [
-              h(ArtButtonTable, {
-                type: 'edit',
-                auth: 'system:notice:edit',
-                onClick: () => handleUpdate(row)
-              }),
-              h(ArtButtonTable, {
-                type: 'delete',
-                auth: 'system:notice:remove',
-                onClick: () => handleDelete(row)
-              })
-            ])
-          }
+          useSlot: true
         }
       ]
     }
@@ -210,10 +223,17 @@
   }
 
   /** 修改按钮操作 */
-  const handleUpdate = (row: any) => {
-    dialogType.value = 'edit'
-    currentData.value = { ...row }
-    dialogVisible.value = true
+  const handleUpdate = async (row: any) => {
+    const noticeId = row.noticeId || ids.value[0]
+    try {
+      const response: any = await getNotice(noticeId)
+      currentData.value = response.data
+      dialogType.value = 'edit'
+      dialogVisible.value = true
+    } catch (error) {
+      console.error('获取公告详情失败:', error)
+      ElMessage.error('获取详情失败')
+    }
   }
 
   /** 删除按钮操作 */

@@ -135,12 +135,19 @@
     await formRef.value.validate(async (valid) => {
       if (valid) {
         submitLoading.value = true
+
+        // 字段清洗：移除审计字段及冗余参数
+        const submitData = { ...form }
+        delete (submitData as any).createTime
+        delete (submitData as any).updateTime
+        delete (submitData as any).params
+
         try {
-          if (form.noticeId !== undefined) {
-            await updateNotice(form)
+          if (submitData.noticeId !== undefined) {
+            await updateNotice(submitData)
             ElMessage.success('修改成功')
           } else {
-            await addNotice(form)
+            await addNotice(submitData)
             ElMessage.success('新增成功')
           }
           visible.value = false

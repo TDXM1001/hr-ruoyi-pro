@@ -11,18 +11,9 @@
 
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
       <!-- 表格头部 -->
-      <ArtTableHeader
-        :loading="loading"
-        v-model:columns="columnChecks"
-        @refresh="refreshData"
-      >
+      <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
         <template #left>
-          <ElButton
-            v-auth="'system:config:add'"
-            type="primary"
-            @click="handleAdd"
-            v-ripple
-          >
+          <ElButton v-auth="'system:config:add'" type="primary" @click="handleAdd" v-ripple>
             新增
           </ElButton>
           <ElButton
@@ -58,10 +49,31 @@
         @selection-change="handleSelectionChange"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
-      />
+      >
+        <!-- 系统内置插槽 -->
+        <template #configType="{ row }">
+          <DictTag :options="sys_yes_no" :value="row.configType" />
+        </template>
+
+        <!-- 操作列插槽 -->
+        <template #operation="{ row }">
+          <div class="flex justify-end gap-2">
+            <ArtButtonTable
+              v-if="hasAuth('system:config:edit')"
+              type="edit"
+              @click="handleUpdate(row)"
+            />
+            <ArtButtonTable
+              v-if="hasAuth('system:config:remove')"
+              type="delete"
+              @click="handleDelete(row)"
+            />
+          </div>
+        </template>
+      </ArtTable>
     </ElCard>
 
-    <!-- 编辑弹窗：子组件已内部包含字典，无需显式传参 -->
+    <!-- 编辑弹窗 -->
     <ConfigEditDialog
       v-model="dialogVisible"
       :dialog-type="dialogType"
@@ -72,8 +84,8 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { listConfig, delConfig, refreshCache } from '@/api/system/config'
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { listConfig, delConfig, refreshCache, getConfig } from '@/api/system/config'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import { useAuth } from '@/hooks/core/useAuth'
@@ -160,9 +172,7 @@
           label: '系统内置',
           width: 100,
           align: 'center',
-          formatter: (row: any) => {
-            return h(DictTag, { options: sys_yes_no.value, value: row.configType })
-          }
+          useSlot: true
         },
         { prop: 'remark', label: '备注', minWidth: 150, showOverflowTooltip: true },
         { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
@@ -171,29 +181,7 @@
           label: '操作',
           width: 120,
           align: 'right',
-          formatter: (row: any) => {
-            const buttons = []
-
-            if (hasAuth('system:config:edit')) {
-              buttons.push(
-                h(ArtButtonTable, {
-                  type: 'edit',
-                  onClick: () => handleUpdate(row)
-                })
-              )
-            }
-
-            if (hasAuth('system:config:remove')) {
-              buttons.push(
-                h(ArtButtonTable, {
-                  type: 'delete',
-                  onClick: () => handleDelete(row)
-                })
-              )
-            }
-
-            return h('div', { class: 'flex justify-end gap-2' }, buttons)
-          }
+          useSlot: true
         }
       ]
     }
@@ -225,10 +213,17 @@
   }
 
   /** 修改按钮操作 */
-  const handleUpdate = (row: any) => {
-    dialogType.value = 'edit'
-    currentData.value = { ...row }
-    dialogVisible.value = true
+  const handleUpdate = async (row: any) => {
+    const configId = row.configId || ids.value[0]
+    try {
+      const response: any = await getConfig(configId)
+      currentData.value = response.data
+      dialogType.value = 'edit'
+      dialogVisible.value = true
+    } catch (error) {
+      console.error('获取参数详情失败:', error)
+      ElMessage.error('获取详情失败')
+    }
   }
 
   /** 删除按钮操作 */
