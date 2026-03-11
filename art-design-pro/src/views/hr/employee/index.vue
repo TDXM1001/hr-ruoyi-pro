@@ -1,151 +1,278 @@
+<!-- 员工管理页面 -->
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="姓名" prop="name">
-        <el-input v-model="queryParams.name" placeholder="请输入员工姓名" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item label="工号" prop="employeeNo">
-        <el-input v-model="queryParams.employeeNo" placeholder="请输入工号" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="employee-page art-full-height flex !flex-row p-3 overflow-hidden">
+    <!-- 左侧组织架构树 -->
+    <DeptTreeAside
+      :data="deptOptions"
+      :width="200"
+      :current-node-key="currentNodeKey"
+      @node-click="handleNodeClick"
+    />
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['hr:employee:add']">新增入职</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
+    <!-- 右侧主体内容 -->
+    <div class="flex-1 min-w-0 flex flex-col h-full overflow-hidden relative">
+      <!-- 搜索栏 -->
+      <ArtSearchBar
+        v-model="formFilters"
+        :items="formItems"
+        :showExpand="false"
+        @reset="handleReset"
+        @search="handleSearch"
+      />
 
-    <el-table v-loading="loading" :data="employeeList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="工号" align="center" prop="employeeNo" />
-      <el-table-column label="姓名" align="center" prop="name" />
-      <el-table-column label="性别" align="center" prop="gender">
-        <template #default="scope">
-          <span v-if="scope.row.gender === '0'">男</span>
-          <span v-else-if="scope.row.gender === '1'">女</span>
-          <span v-else>未知</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="手机号码" align="center" prop="phone" width="120" />
-      <el-table-column label="状态" align="center" prop="employeeStatus">
-        <template #default="scope">
-          <el-tag v-if="scope.row.employeeStatus === '2'" type="success">正式</el-tag>
-          <el-tag v-else-if="scope.row.employeeStatus === '1'" type="warning">试用</el-tag>
-          <el-tag v-else type="info">{{ scope.row.employeeStatus }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="入职时间" align="center" prop="hireDate" width="120">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.hireDate, '{y}-{m}-{d}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" fixed="right" width="200" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button type="text" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['hr:employee:query']">档案</el-button>
-          <el-button type="text" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['hr:employee:edit']">修改</el-button>
-          <el-button type="text" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['hr:employee:remove']">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
+        <!-- 表格头部 -->
+        <ArtTableHeader
+          :showZebra="false"
+          :loading="loading"
+          v-model:columns="columnChecks"
+          @refresh="refreshData"
+        >
+          <template #left>
+            <ElButton v-auth="'hr:employee:add'" type="primary" @click="handleAdd" v-ripple>
+              新增入职
+            </ElButton>
+          </template>
+        </ArtTableHeader>
 
-    <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
+        <!-- 表格 -->
+        <ArtTable
+          ref="tableRef"
+          :loading="loading"
+          :data="data"
+          :columns="columns"
+          :pagination="pagination"
+          rowKey="employeeId"
+          @selection-change="handleSelectionChange"
+          @pagination:size-change="handleSizeChange"
+          @pagination:current-change="handleCurrentChange"
+        />
+      </ElCard>
+    </div>
+
+    <!-- 员工编辑弹窗 -->
+    <EmployeeEditDialog
+      v-model="dialogVisible"
+      :dialog-type="dialogType"
+      :employee-data="currentData"
+      @success="refreshData"
     />
   </div>
 </template>
 
-<script setup name="Employee" lang="ts">
-import { ref, reactive, toRefs, onMounted } from 'vue';
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted, h } from 'vue';
 import { listEmployee, delEmployee } from "@/api/hr/employee";
+import { treeselect } from "@/api/hr/organization";
+import { useTable } from '@/hooks/core/useTable';
 import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue';
+import DeptTreeAside from '@/components/business/DeptTreeAside/index.vue';
+import { ElMessageBox, ElMessage } from 'element-plus';
+import EmployeeEditDialog from './modules/employee-edit-dialog.vue';
+
+defineOptions({ name: 'Employee' });
 
 const router = useRouter();
-const loading = ref(true);
-const showSearch = ref(true);
-const total = ref(0);
-const employeeList = ref([]);
-const ids = ref<string[] | number[]>([]);
+const deptOptions = ref<any[]>([]);
+const currentNodeKey = ref<number | string | null>(null);
+const ids = ref<number[]>([]);
 
-const data = reactive({
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    name: undefined,
-    employeeNo: undefined
+// 弹窗相关
+const dialogVisible = ref(false);
+const dialogType = ref<'add' | 'edit'>('add');
+const currentData = ref<any>();
+
+// 搜索渲染项
+const initialSearchState = {
+  name: '',
+  employeeNo: ''
+};
+const formFilters = reactive({ ...initialSearchState });
+
+const formItems = computed(() => [
+  {
+    label: '姓名',
+    key: 'name',
+    type: 'input',
+    props: { placeholder: '请输入员工姓名', clearable: true }
+  },
+  {
+    label: '工号',
+    key: 'employeeNo',
+    type: 'input',
+    props: { placeholder: '请输入工号', clearable: true }
+  }
+]);
+
+// 使用 useTable 钩子
+const {
+  columns,
+  columnChecks,
+  data,
+  loading,
+  pagination,
+  searchParams,
+  resetSearchParams,
+  handleSizeChange,
+  handleCurrentChange,
+  refreshData,
+  getData
+} = useTable({
+  core: {
+    apiFn: listEmployee,
+    apiParams: {
+      orgId: undefined
+    },
+    columnsFactory: () => [
+      { type: 'selection', width: 55, align: 'center' },
+      { prop: 'employeeNo', label: '工号', width: 120 },
+      { prop: 'name', label: '姓名', minWidth: 100 },
+      { 
+        prop: 'gender', 
+        label: '性别', 
+        width: 80,
+        align: 'center',
+        formatter: (row: any) => {
+          const dict: any = { '0': '男', '1': '女', '2': '未知' };
+          return dict[row.gender] || '未知';
+        }
+      },
+      { prop: 'phone', label: '手机号码', width: 120 },
+      { 
+        prop: 'employeeStatus', 
+        label: '状态', 
+        width: 100,
+        align: 'center',
+        formatter: (row: any) => {
+          const statusMap: any = {
+            '0': { text: '待入职', type: 'info' },
+            '1': { text: '试用', type: 'warning' },
+            '2': { text: '正式', type: 'success' },
+            '3': { text: '调岗中', type: 'primary' },
+            '4': { text: '离职中', type: 'danger' },
+            '5': { text: '已离职', type: 'info' }
+          };
+          const status = statusMap[row.employeeStatus] || { text: row.employeeStatus, type: 'info' };
+          return h('span', { class: `el-tag el-tag--${status.type} el-tag--light` }, status.text);
+        }
+      },
+      { 
+        prop: 'hireDate', 
+        label: '入职时间', 
+        width: 120,
+        formatter: (row: any) => row.hireDate ? row.hireDate.split('T')[0] : ''
+      },
+      {
+        prop: 'operation',
+        label: '操作',
+        width: 200,
+        align: 'right',
+        formatter: (row: any) => {
+          return h('div', { class: 'flex justify-end gap-2' }, [
+            h(ArtButtonTable, {
+              type: 'view',
+              text: '档案',
+              onClick: () => handleDetail(row)
+            }),
+            h(ArtButtonTable, {
+              type: 'edit',
+              onClick: () => handleUpdate(row)
+            }),
+            h(ArtButtonTable, {
+              type: 'delete',
+              onClick: () => handleDelete(row)
+            })
+          ]);
+        }
+      }
+    ]
   }
 });
 
-const { queryParams } = toRefs(data);
+/** 查询组织树 */
+const getDeptTree = async () => {
+  try {
+    const response: any = await treeselect();
+    deptOptions.value = response.data || [];
+  } catch (error) {
+    console.error('获取组织树失败:', error);
+  }
+};
 
-function getList() {
-  loading.value = true;
-  listEmployee(queryParams.value).then(res => {
-    employeeList.value = res.rows;
-    total.value = res.total;
-    loading.value = false;
-  }).catch(() => {
-    loading.value = false;
-  });
-}
+/** 节点点击 */
+const handleNodeClick = (data: any) => {
+  currentNodeKey.value = data.id;
+  searchParams.orgId = data.id;
+  refreshData();
+};
 
-function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
-}
-
-function resetQuery() {
-  queryParams.value.name = undefined;
-  queryParams.value.employeeNo = undefined;
-  handleQuery();
-}
-
-function handleSelectionChange(selection: any[]) {
+/** 选中数据 */
+const handleSelectionChange = (selection: any[]) => {
   ids.value = selection.map(item => item.employeeId);
-}
+};
 
-function handleAdd() {
-  // TODO 弹窗处理
-}
+/** 重置 */
+const handleReset = () => {
+  Object.assign(formFilters, initialSearchState);
+  searchParams.orgId = undefined;
+  currentNodeKey.value = null;
+  resetSearchParams();
+};
 
-function handleUpdate(row: any) {
-  // TODO 弹窗更新信息
-}
+/** 搜索 */
+const handleSearch = () => {
+  Object.assign(searchParams, formFilters);
+  getData();
+};
 
-function handleDetail(row: any) {
+/** 新增 */
+const handleAdd = () => {
+  dialogType.value = 'add';
+  currentData.value = undefined;
+  dialogVisible.value = true;
+};
+
+/** 修改 */
+const handleUpdate = (row: any) => {
+  dialogType.value = 'edit';
+  currentData.value = { ...row };
+  dialogVisible.value = true;
+};
+
+/** 详情 */
+const handleDetail = (row: any) => {
   router.push({ path: '/hr/employee/detail', query: { id: row.employeeId } });
-}
+};
 
-function handleDelete(row: any) {
-  const employeeIds = row.employeeId || ids.value;
-  ElMessageBox.confirm('是否确认删除该员工档案?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(function() {
-    return delEmployee(employeeIds);
-  }).then(() => {
-    getList();
-    ElMessage.success("删除成功");
-  }).catch(() => {});
-}
+/** 删除 */
+const handleDelete = async (row?: any) => {
+  const employeeIds = row?.employeeId || ids.value;
+  if (!employeeIds || (Array.isArray(employeeIds) && employeeIds.length === 0)) return;
 
-// 帮助函数模拟
-function parseTime(time: string, format: string) {
-  if (!time) return '';
-  return time.split('T')[0];
-}
+  try {
+    await ElMessageBox.confirm('是否确认删除选中的员工档案?', '提示', {
+      type: 'warning'
+    });
+    await delEmployee(employeeIds);
+    ElMessage.success('删除成功');
+    refreshData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error);
+    }
+  }
+};
 
 onMounted(() => {
-  getList();
+  getDeptTree();
 });
 </script>
+
+<style lang="scss" scoped>
+.employee-page {
+  background-color: transparent;
+  padding: 12px;
+  gap: 12px;
+}
+</style>

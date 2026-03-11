@@ -14,7 +14,7 @@
 
 ---
 
-### Task 1: 建立独立的数据模型基础 (SQL)
+### Task 1: [x] 建立独立的数据模型基础 (SQL)
 
 **Files:**
 - Create: `e:\my-project\hr-ruoyi-pro\RuoYi-Vue\sql\hr_core_init.sql`

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.hr.mapper.HrOrganizationMapper">
+    
+    <resultMap type="HrOrganization" id="HrOrganizationResult">
+        <result property="orgId"    column="org_id"    />
+        <result property="parentId"    column="parent_id"    />
+        <result property="ancestors"    column="ancestors"    />
+        <result property="orgName"    column="org_name"    />
+        <result property="orgCode"    column="org_code"    />
+        <result property="orgType"    column="org_type"    />
+        <result property="orgLevel"    column="org_level"    />
+        <result property="leaderId"    column="leader_id"    />
+        <result property="phone"    column="phone"    />
+        <result property="address"    column="address"    />
+        <result property="establishDate"    column="establish_date"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="status"    column="status"    />
+        <result property="sysDeptId"    column="sys_dept_id"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectHrOrganizationVo">
+        select org_id, parent_id, ancestors, org_name, org_code, org_type, org_level, leader_id, phone, address, establish_date, order_num, status, sys_dept_id, create_by, create_time, update_by, update_time from hr_organization
+    </sql>
+
+    <select id="selectHrOrganizationList" parameterType="HrOrganization" resultMap="HrOrganizationResult">
+        <include refid="selectHrOrganizationVo"/>
+        <where>  
+            <if test="orgName != null  and orgName != ''"> and org_name like concat('%', #{orgName}, '%')</if>
+            <if test="orgCode != null  and orgCode != ''"> and org_code = #{orgCode}</if>
+            <if test="orgType != null  and orgType != ''"> and org_type = #{orgType}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="parentId != null"> and parent_id = #{parentId}</if>
+        </where>
+        order by parent_id, order_num
+    </select>
+    
+    <select id="selectHrOrganizationByOrgId" parameterType="Long" resultMap="HrOrganizationResult">
+        <include refid="selectHrOrganizationVo"/>
+        where org_id = #{orgId}
+    </select>
+        
+    <insert id="insertHrOrganization" parameterType="HrOrganization" useGeneratedKeys="true" keyProperty="orgId">
+        insert into hr_organization
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">parent_id,</if>
+            <if test="ancestors != null">ancestors,</if>
+            <if test="orgName != null">org_name,</if>
+            <if test="orgCode != null">org_code,</if>
+            <if test="orgType != null">org_type,</if>
+            <if test="orgLevel != null">org_level,</if>
+            <if test="leaderId != null">leader_id,</if>
+            <if test="phone != null">phone,</if>
+            <if test="address != null">address,</if>
+            <if test="establishDate != null">establish_date,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="status != null">status,</if>
+            <if test="sysDeptId != null">sys_dept_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">#{parentId},</if>
+            <if test="ancestors != null">#{ancestors},</if>
+            <if test="orgName != null">#{orgName},</if>
+            <if test="orgCode != null">#{orgCode},</if>
+            <if test="orgType != null">#{orgType},</if>
+            <if test="orgLevel != null">#{orgLevel},</if>
+            <if test="leaderId != null">#{leaderId},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="address != null">#{address},</if>
+            <if test="establishDate != null">#{establishDate},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sysDeptId != null">#{sysDeptId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrOrganization" parameterType="HrOrganization">
+        update hr_organization
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="ancestors != null">ancestors = #{ancestors},</if>
+            <if test="orgName != null">org_name = #{orgName},</if>
+            <if test="orgCode != null">org_code = #{orgCode},</if>
+            <if test="orgType != null">org_type = #{orgType},</if>
+            <if test="orgLevel != null">org_level = #{orgLevel},</if>
+            <if test="leaderId != null">leader_id = #{leaderId},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="establishDate != null">establish_date = #{establishDate},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sysDeptId != null">sys_dept_id = #{sysDeptId},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where org_id = #{orgId}
+    </update>
+
+    <delete id="deleteHrOrganizationByOrgId" parameterType="Long">
+        delete from hr_organization where org_id = #{orgId}
+    </delete>
+
+    <delete id="deleteHrOrganizationByOrgIds" parameterType="String">
+        delete from hr_organization where org_id in 
+        <foreach item="orgId" collection="array" open="(" separator="," close=")">
+            #{orgId}
+        </foreach>
+    </delete>
+</mapper>

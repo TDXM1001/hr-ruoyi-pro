@@ -60,6 +60,12 @@
             <artifactId>ruoyi-workflow</artifactId>
         </dependency>
 
+        <!-- HR 核心模块 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-hr</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
