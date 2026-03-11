@@ -68,6 +68,15 @@ export const formatMenuTitle = (title: string): string => {
 export function generateRoutes(routes: any[]): any[] {
   return routes.map((route) => {
     const currentRoute = { ...route }
+
+    // 将后端 hidden 字段映射到 meta.isHide，控制侧边栏是否显示
+    if (currentRoute.hidden === true) {
+      if (!currentRoute.meta) {
+        currentRoute.meta = {}
+      }
+      currentRoute.meta.isHide = true
+    }
+
     if (currentRoute.component === 'Layout') {
       currentRoute.component = '/index/index'
     } else if (currentRoute.component === 'ParentView') {
