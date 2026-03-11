@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.hr.mapper.HrEmployeeMapper">
+    
+    <resultMap type="HrEmployee" id="HrEmployeeResult">
+        <result property="employeeId"    column="employee_id"    />
+        <result property="employeeNo"    column="employee_no"    />
+        <result property="userId"    column="user_id"    />
+        <result property="name"    column="name"    />
+        <result property="gender"    column="gender"    />
+        <result property="idCard"    column="id_card"    />
+        <result property="birthday"    column="birthday"    />
+        <result property="phone"    column="phone"    />
+        <result property="email"    column="email"    />
+        <result property="photo"    column="photo"    />
+        <result property="orgId"    column="org_id"    />
+        <result property="positionId"    column="position_id"    />
+        <result property="levelId"    column="level_id"    />
+        <result property="directLeaderId"    column="direct_leader_id"    />
+        <result property="employeeType"    column="employee_type"    />
+        <result property="employeeStatus"    column="employee_status"    />
+        <result property="hireDate"    column="hire_date"    />
+        <result property="probationEnd"    column="probation_end"    />
+        <result property="regularDate"    column="regular_date"    />
+        <result property="leaveDate"    column="leave_date"    />
+        <result property="leaveReason"    column="leave_reason"    />
+        <result property="workLocation"    column="work_location"    />
+        <result property="nationality"    column="nationality"    />
+        <result property="nativePlace"    column="native_place"    />
+        <result property="maritalStatus"    column="marital_status"    />
+        <result property="political"    column="political"    />
+        <result property="highestEdu"    column="highest_edu"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectHrEmployeeVo">
+        select employee_id, employee_no, user_id, name, gender, id_card, birthday, phone, email, photo, org_id, position_id, level_id, direct_leader_id, employee_type, employee_status, hire_date, probation_end, regular_date, leave_date, leave_reason, work_location, nationality, native_place, marital_status, political, highest_edu, create_by, create_time, update_by, update_time from hr_employee
+    </sql>
+
+    <select id="selectHrEmployeeList" parameterType="HrEmployee" resultMap="HrEmployeeResult">
+        <include refid="selectHrEmployeeVo"/>
+        <where>  
+            <if test="employeeNo != null  and employeeNo != ''"> and employee_no = #{employeeNo}</if>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="gender != null  and gender != ''"> and gender = #{gender}</if>
+            <if test="idCard != null  and idCard != ''"> and id_card = #{idCard}</if>
+            <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
+            <if test="orgId != null "> and org_id = #{orgId}</if>
+            <if test="positionId != null "> and position_id = #{positionId}</if>
+            <if test="levelId != null "> and level_id = #{levelId}</if>
+            <if test="employeeType != null  and employeeType != ''"> and employee_type = #{employeeType}</if>
+            <if test="employeeStatus != null  and employeeStatus != ''"> and employee_status = #{employeeStatus}</if>
+        </where>
+    </select>
+    
+    <select id="selectHrEmployeeByEmployeeId" parameterType="Long" resultMap="HrEmployeeResult">
+        <include refid="selectHrEmployeeVo"/>
+        where employee_id = #{employeeId}
+    </select>
+        
+    <insert id="insertHrEmployee" parameterType="HrEmployee" useGeneratedKeys="true" keyProperty="employeeId">
+        insert into hr_employee
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="employeeNo != null and employeeNo != ''">employee_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="gender != null">gender,</if>
+            <if test="idCard != null">id_card,</if>
+            <if test="birthday != null">birthday,</if>
+            <if test="phone != null">phone,</if>
+            <if test="email != null">email,</if>
+            <if test="photo != null">photo,</if>
+            <if test="orgId != null">org_id,</if>
+            <if test="positionId != null">position_id,</if>
+            <if test="levelId != null">level_id,</if>
+            <if test="directLeaderId != null">direct_leader_id,</if>
+            <if test="employeeType != null">employee_type,</if>
+            <if test="employeeStatus != null">employee_status,</if>
+            <if test="hireDate != null">hire_date,</if>
+            <if test="probationEnd != null">probation_end,</if>
+            <if test="regularDate != null">regular_date,</if>
+            <if test="leaveDate != null">leave_date,</if>
+            <if test="leaveReason != null">leave_reason,</if>
+            <if test="workLocation != null">work_location,</if>
+            <if test="nationality != null">nationality,</if>
+            <if test="nativePlace != null">native_place,</if>
+            <if test="maritalStatus != null">marital_status,</if>
+            <if test="political != null">political,</if>
+            <if test="highestEdu != null">highest_edu,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="employeeNo != null and employeeNo != ''">#{employeeNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="gender != null">#{gender},</if>
+            <if test="idCard != null">#{idCard},</if>
+            <if test="birthday != null">#{birthday},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="email != null">#{email},</if>
+            <if test="photo != null">#{photo},</if>
+            <if test="orgId != null">#{orgId},</if>
+            <if test="positionId != null">#{positionId},</if>
+            <if test="levelId != null">#{levelId},</if>
+            <if test="directLeaderId != null">#{directLeaderId},</if>
+            <if test="employeeType != null">#{employeeType},</if>
+            <if test="employeeStatus != null">#{employeeStatus},</if>
+            <if test="hireDate != null">#{hireDate},</if>
+            <if test="probationEnd != null">#{probationEnd},</if>
+            <if test="regularDate != null">#{regularDate},</if>
+            <if test="leaveDate != null">#{leaveDate},</if>
+            <if test="leaveReason != null">#{leaveReason},</if>
+            <if test="workLocation != null">#{workLocation},</if>
+            <if test="nationality != null">#{nationality},</if>
+            <if test="nativePlace != null">#{nativePlace},</if>
+            <if test="maritalStatus != null">#{maritalStatus},</if>
+            <if test="political != null">#{political},</if>
+            <if test="highestEdu != null">#{highestEdu},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHrEmployee" parameterType="HrEmployee">
+        update hr_employee
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="employeeNo != null and employeeNo != ''">employee_no = #{employeeNo},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="birthday != null">birthday = #{birthday},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="photo != null">photo = #{photo},</if>
+            <if test="orgId != null">org_id = #{orgId},</if>
+            <if test="positionId != null">position_id = #{positionId},</if>
+            <if test="levelId != null">level_id = #{levelId},</if>
+            <if test="directLeaderId != null">direct_leader_id = #{directLeaderId},</if>
+            <if test="employeeType != null">employee_type = #{employeeType},</if>
+            <if test="employeeStatus != null">employee_status = #{employeeStatus},</if>
+            <if test="hireDate != null">hire_date = #{hireDate},</if>
+            <if test="probationEnd != null">probation_end = #{probationEnd},</if>
+            <if test="regularDate != null">regular_date = #{regularDate},</if>
+            <if test="leaveDate != null">leave_date = #{leaveDate},</if>
+            <if test="leaveReason != null">leave_reason = #{leaveReason},</if>
+            <if test="workLocation != null">work_location = #{workLocation},</if>
+            <if test="nationality != null">nationality = #{nationality},</if>
+            <if test="nativePlace != null">native_place = #{nativePlace},</if>
+            <if test="maritalStatus != null">marital_status = #{maritalStatus},</if>
+            <if test="political != null">political = #{political},</if>
+            <if test="highestEdu != null">highest_edu = #{highestEdu},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where employee_id = #{employeeId}
+    </update>
+
+    <delete id="deleteHrEmployeeByEmployeeId" parameterType="Long">
+        delete from hr_employee where employee_id = #{employeeId}
+    </delete>
+
+    <delete id="deleteHrEmployeeByEmployeeIds" parameterType="String">
+        delete from hr_employee where employee_id in 
+        <foreach item="employeeId" collection="array" open="(" separator="," close=")">
+            #{employeeId}
+        </foreach>
+    </delete>
+</mapper>
