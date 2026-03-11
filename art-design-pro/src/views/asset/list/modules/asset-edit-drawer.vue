@@ -6,20 +6,20 @@
     destroy-on-close
     @closed="handleClosed"
   >
-    <ElForm
+    <!-- 使用项目封装的 ArtForm 组件 -->
+    <ArtForm
       ref="formRef"
-      :model="formData"
+      v-model="formData"
+      :items="formItems"
       :rules="formRules"
+      :span="24"
       label-width="100px"
       v-loading="loading"
+      :show-reset="false"
+      :show-submit="false"
     >
-      <ElFormItem label="资产编号" prop="assetNo">
-        <ElInput v-model="formData.assetNo" placeholder="请输入资产编号" :disabled="dialogType === 'edit'" />
-      </ElFormItem>
-      <ElFormItem label="资产名称" prop="assetName">
-        <ElInput v-model="formData.assetName" placeholder="请输入资产名称" />
-      </ElFormItem>
-      <ElFormItem label="资产分类" prop="categoryId">
+      <!-- 资产分类插槽 -->
+      <template #categoryId>
         <ElTreeSelect
           v-model="formData.categoryId"
           :data="categoryOptions"
@@ -29,25 +29,23 @@
           check-strictly
           class="w-full"
         />
-      </ElFormItem>
-      <ElFormItem label="资产类型" prop="assetType">
-        <ElSelect v-model="formData.assetType" placeholder="选择资产类型" class="w-full">
-          <ElOption label="不动产" :value="1" />
-          <ElOption label="固定资产" :value="2" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="归属部门" prop="deptId">
+      </template>
+
+      <!-- 归属部门插槽 -->
+      <template #deptId>
         <ElTreeSelect
           v-model="formData.deptId"
           :data="deptOptions"
-          :props="{ value: 'deptId', label: 'deptName', children: 'children' }"
-          value-key="deptId"
+          :props="{ value: 'id', label: 'label', children: 'children' }"
+          value-key="id"
           placeholder="选择归属部门"
           check-strictly
           class="w-full"
         />
-      </ElFormItem>
-      <ElFormItem label="责任人" prop="userId">
+      </template>
+
+      <!-- 责任人插槽 -->
+      <template #userId>
         <ElSelect v-model="formData.userId" placeholder="选择责任人" class="w-full" clearable>
           <ElOption
             v-for="item in userOptions"
@@ -56,38 +54,30 @@
             :value="item.userId"
           />
         </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="资产状态" prop="status">
-        <ElSelect v-model="formData.status" placeholder="选择状态" class="w-full">
-          <ElOption label="正常" :value="1" />
-          <ElOption label="领用中" :value="2" />
-          <ElOption label="维修中" :value="3" />
-          <ElOption label="盘点中" :value="4" />
-          <ElOption label="已报废" :value="5" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="备注" prop="remark">
-        <ElInput v-model="formData.remark" type="textarea" placeholder="请输入备注" />
-      </ElFormItem>
-    </ElForm>
+      </template>
+    </ArtForm>
+
     <template #footer>
-      <div class="drawer-footer flex justify-end gap-2">
-        <ElButton @click="visible = false">取消</ElButton>
-        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading">确定</ElButton>
+      <div class="drawer-footer flex justify-end gap-2 p-4 border-t">
+        <ElButton @click="visible = false" v-ripple>取消</ElButton>
+        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading" v-ripple>确定</ElButton>
       </div>
     </template>
   </ElDrawer>
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, watch } from 'vue'
+  import { ref, reactive, watch, computed } from 'vue'
   import { ElMessage } from 'element-plus'
   import type { FormRules } from 'element-plus'
   import { getInfo, addInfo, updateInfo } from '@/api/asset/info'
   import { listCategory } from '@/api/asset/category'
   import { listDept } from '@/api/system/dept'
-  import { listUser } from '@/api/system/user'
+  import { listUser, deptTreeSelect } from '@/api/system/user'
   import { handleTree } from '@/utils/ruoyi'
+  import ArtForm from '@/components/core/forms/art-form/index.vue'
+  import type { FormItem } from '@/components/core/forms/art-form/index.vue'
+  import { useDict } from '@/utils/dict'
 
   const props = defineProps<{
     modelValue: boolean
@@ -100,23 +90,28 @@
     (e: 'success'): void
   }>()
 
+  // 状态管理
   const visible = ref(false)
   const loading = ref(false)
   const submitLoading = ref(false)
   const formRef = ref()
   
+  // 选项数据
   const categoryOptions = ref<any[]>([])
   const deptOptions = ref<any[]>([])
   const userOptions = ref<any[]>([])
+
+  // 字典数据
+  const { asset_type, asset_status } = useDict('asset_type', 'asset_status')
 
   const initialFormData = {
     assetNo: '',
     assetName: '',
     categoryId: undefined,
-    assetType: 2,
+    assetType: '2', // 使用字符串，匹配字典值类型
     deptId: undefined,
     userId: undefined,
-    status: 1,
+    status: '1',
     remark: ''
   }
 
@@ -130,22 +125,66 @@
     status: [{ required: true, message: '资产状态不能为空', trigger: 'change' }]
   }
 
+  // 定义表单项
+  const formItems = computed<FormItem[]>(() => [
+    {
+      label: '资产编号',
+      key: 'assetNo',
+      type: 'input',
+      props: { placeholder: '请输入资产编号', disabled: props.dialogType === 'edit' },
+      span: 24
+    },
+    {
+      label: '资产名称',
+      key: 'assetName',
+      type: 'input',
+      props: { placeholder: '请输入资产名称' },
+      span: 24
+    },
+    { label: '资产分类', key: 'categoryId', span: 24 },
+    {
+      label: '资产类型',
+      key: 'assetType',
+      type: 'select',
+      props: { options: asset_type.value, placeholder: '请选择资产类型' },
+      span: 12
+    },
+    {
+      label: '资产状态',
+      key: 'status',
+      type: 'select',
+      props: { options: asset_status.value, placeholder: '请选择状态' },
+      span: 12
+    },
+    { label: '归属部门', key: 'deptId', span: 24 },
+    { label: '责任人', key: 'userId', span: 24 },
+    {
+      label: '备注',
+      key: 'remark',
+      type: 'input',
+      props: { type: 'textarea', placeholder: '请输入备注' },
+      span: 24
+    }
+  ])
+
   /** 获取下拉选项 */
   const getOptions = async () => {
     try {
-      // 获取分类
-      const catRes: any = await listCategory()
-      const catData = Array.isArray(catRes) ? catRes : catRes.data || catRes.rows || []
-      categoryOptions.value = handleTree(catData, 'id')
+      const [catRes, deptRes, userRes] = await Promise.all([
+        listCategory(),
+        deptTreeSelect(),
+        listUser({ pageSize: 100 })
+      ])
 
-      // 获取部门
-      const deptRes: any = await listDept()
-      const deptData = Array.isArray(deptRes) ? deptRes : deptRes.data || deptRes.rows || []
-      deptOptions.value = handleTree(deptData, 'deptId')
+      // 分类树
+      const catList = Array.isArray(catRes) ? catRes : (catRes as any).data || (catRes as any).rows || []
+      categoryOptions.value = handleTree(catList, 'id')
 
-      // 获取用户 (简单起见，这里直接列出)
-      const userRes: any = await listUser({ pageSize: 100 })
-      userOptions.value = userRes.rows || []
+      // 部门树
+      deptOptions.value = Array.isArray(deptRes) ? deptRes : (deptRes as any).data || []
+
+      // 用户列表
+      userOptions.value = (userRes as any).rows || []
     } catch (error) {
       console.error('获取选项失败:', error)
     }
@@ -162,6 +201,9 @@
           try {
             const res: any = await getInfo(props.assetData.assetNo)
             Object.assign(formData, res.data || res)
+            // 确保类型和状态为字符串以匹配字典
+            formData.assetType = String(formData.assetType)
+            formData.status = String(formData.status)
           } finally {
             loading.value = false
           }
@@ -181,30 +223,27 @@
 
   const handleSubmit = async () => {
     if (!formRef.value) return
-    await formRef.value.validate(async (valid: boolean) => {
-      if (valid) {
-        submitLoading.value = true
-        try {
-          if (props.dialogType === 'edit') {
-            await updateInfo(formData)
-            ElMessage.success('修改成功')
-          } else {
-            await addInfo(formData)
-            ElMessage.success('新增成功')
-          }
-          visible.value = false
-          emit('success')
-        } finally {
-          submitLoading.value = false
+    const valid = await formRef.value.validate()
+    if (valid) {
+      submitLoading.value = true
+      try {
+        if (props.dialogType === 'edit') {
+          await updateInfo(formData)
+          ElMessage.success('修改成功')
+        } else {
+          await addInfo(formData)
+          ElMessage.success('新增成功')
         }
+        visible.value = false
+        emit('success')
+      } finally {
+        submitLoading.value = false
       }
-    })
+    }
   }
 
   const handleClosed = () => {
-    formRef.value?.resetFields()
+    formRef.value?.reset()
     Object.assign(formData, initialFormData)
   }
 </script>
-
-<style scoped></style>

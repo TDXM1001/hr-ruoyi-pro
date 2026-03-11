@@ -145,10 +145,10 @@
   const getList = async () => {
     loading.value = true
     try {
-      const response = await listCategory(formFilters)
+      const response: any = await listCategory(formFilters)
       const data = Array.isArray(response)
         ? response
-        : (response as any).data || (response as any).rows || []
+        : response.data || response.rows || []
       categoryList.value = handleTree(data, 'id')
     } catch (error) {
       console.error('获取资产分类列表失败:', error)
