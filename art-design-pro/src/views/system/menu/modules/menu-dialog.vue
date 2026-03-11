@@ -174,7 +174,7 @@
         {
           label: '是否外链',
           key: 'isFrame',
-          type: 'radio',
+          type: 'select',
           props: {
             options: [
               { label: '是', value: '0' },
@@ -220,11 +220,11 @@
         {
           label: '是否缓存',
           key: 'isCache',
-          type: 'radio',
+          type: 'select',
           props: {
             options: [
-              { label: '缓存', value: '0' },
-              { label: '不缓存', value: '1' }
+              { label: '是', value: '0' },
+              { label: '否', value: '1' }
             ]
           },
           span: 12
@@ -249,7 +249,7 @@
         {
           label: '显示状态',
           key: 'visible',
-          type: 'radio',
+          type: 'select',
           props: {
             options: sys_show_hide.value
           },
@@ -258,7 +258,7 @@
         {
           label: '菜单状态',
           key: 'status',
-          type: 'radio',
+          type: 'select',
           props: {
             options: sys_normal_disable.value
           },
