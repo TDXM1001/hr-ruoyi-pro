@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetInfoMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetInfo" id="AssetInfoResult">
+        <result property="assetNo" column="asset_no" />
+        <result property="assetName" column="asset_name" />
+        <result property="categoryId" column="category_id" />
+        <result property="assetType" column="asset_type" />
+        <result property="deptId" column="dept_id" />
+        <result property="userId" column="user_id" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectAssetInfoVo">
+        select asset_no, asset_name, category_id, asset_type, dept_id, user_id, status, create_time from asset_info
+    </sql>
+
+    <select id="selectAssetInfoList" parameterType="com.ruoyi.asset.domain.AssetInfo" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        <where>
+            <if test="assetNo != null and assetNo != ''"> and asset_no = #{assetNo}</if>
+            <if test="assetName != null and assetName != ''"> and asset_name like concat('%', #{assetName}, '%')</if>
+            <if test="categoryId != null "> and category_id = #{categoryId}</if>
+            <if test="assetType != null "> and asset_type = #{assetType}</if>
+            <if test="deptId != null "> and dept_id = #{deptId}</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="status != null "> and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectAssetInfoByAssetNo" parameterType="String" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        where asset_no = #{assetNo}
+    </select>
+
+    <insert id="insertAssetInfo" parameterType="com.ruoyi.asset.domain.AssetInfo">
+        insert into asset_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="assetNo != null and assetNo != ''">asset_no,</if>
+            <if test="assetName != null and assetName != ''">asset_name,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="assetType != null">asset_type,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="status != null">status,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="assetNo != null and assetNo != ''">#{assetNo},</if>
+            <if test="assetName != null and assetName != ''">#{assetName},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="assetType != null">#{assetType},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateAssetInfo" parameterType="com.ruoyi.asset.domain.AssetInfo">
+        update asset_info
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetName != null and assetName != ''">asset_name = #{assetName},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="assetType != null">asset_type = #{assetType},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where asset_no = #{assetNo}
+    </update>
+
+    <delete id="deleteAssetInfoByAssetNo" parameterType="String">
+        delete from asset_info where asset_no = #{assetNo}
+    </delete>
+
+    <delete id="deleteAssetInfoByAssetNos" parameterType="String">
+        delete from asset_info where asset_no in
+        <foreach item="assetNo" collection="array" open="(" separator="," close=")">
+            #{assetNo}
+        </foreach>
+    </delete>
+</mapper>
