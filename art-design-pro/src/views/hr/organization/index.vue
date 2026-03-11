@@ -1,95 +1,39 @@
 <template>
   <div class="app-container">
     <el-row :gutter="20">
-      <!-- 组织架构树 -->
+      <!-- 组织架构树部件 -->
       <el-col :span="6" :xs="24">
-        <div class="head-container">
-          <el-input
-            v-model="deptName"
-            placeholder="请输入组织名称"
-            clearable
-            prefix-icon="Search"
-            style="margin-bottom: 20px"
-          />
-        </div>
-        <div class="head-container">
-          <el-tree
-            :data="deptOptions"
-            :props="{ label: 'orgName', children: 'children' }"
-            :expand-on-click-node="false"
-            :filter-node-method="filterNode"
-            ref="deptTreeRef"
-            node-key="orgId"
-            highlight-current
-            default-expand-all
-            @node-click="handleNodeClick"
-          />
-        </div>
+        <org-tree 
+          :dept-options="deptOptions"
+          @node-click="handleNodeClick"
+          @node-drop="handleNodeDrop"
+        />
       </el-col>
-      <!-- 组织架构表格 -->
+      <!-- 组织架构列表与查询部件 -->
       <el-col :span="18" :xs="24">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-          <el-form-item label="组织名称" prop="orgName">
-            <el-input
-              v-model="queryParams.orgName"
-              placeholder="请输入组织名称"
-              clearable
-              style="width: 240px"
-              @keyup.enter="handleQuery"
-            />
-          </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="组织状态" clearable style="width: 240px">
-              <el-option value="0" label="正常" />
-              <el-option value="1" label="停用" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-          </el-form-item>
-        </el-form>
-
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button
-              type="primary"
-              plain
-              icon="Plus"
-              @click="handleAdd"
-              v-hasPermi="['hr:organization:add']"
-            >新增子级组织</el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
-
-        <el-table v-loading="loading" :data="orgList" row-key="orgId" default-expand-all>
-          <el-table-column prop="orgName" label="组织名称" width="260"></el-table-column>
-          <el-table-column prop="orgCode" label="组织编码" width="100"></el-table-column>
-          <el-table-column prop="orgLevel" label="层级" align="center" width="80"></el-table-column>
-          <el-table-column prop="establishDate" label="成立日期" align="center" width="120">
-            <template #default="scope">
-              <span>{{ parseTime(scope.row.establishDate, '{y}-{m}-{d}') }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-            <template #default="scope">
-              <el-button type="text" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['hr:organization:edit']">修改</el-button>
-              <el-button type="text" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['hr:organization:remove']">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <org-list 
+          ref="orgListRef"
+          :org-list="orgList"
+          :loading="loading"
+          @query="handleQuery"
+          @add="handleAdd"
+          @update="handleUpdate"
+          @delete="handleDelete"
+        />
       </el-col>
     </el-row>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, toRefs, watch } from 'vue';
+import { ref } from 'vue';
+import OrgTree from './components/OrgTree.vue';
+import OrgList from './components/OrgList.vue';
 
 const loading = ref(false);
-const showSearch = ref(true);
-const deptName = ref('');
+const orgListRef = ref();
+
+// 模拟树形部门结构数据
 const deptOptions = ref([
   {
     orgId: 1,
@@ -101,6 +45,7 @@ const deptOptions = ref([
   }
 ]);
 
+// 模拟列表部门数据
 const orgList = ref([
   {
     orgId: 101,
@@ -111,51 +56,42 @@ const orgList = ref([
   }
 ]);
 
-const data = reactive({
-  queryParams: {
-    orgName: undefined,
-    status: undefined,
-    parentId: undefined
-  }
-});
-
-const { queryParams } = toRefs(data);
-
+// 模拟获取数据行为
 function getList() {
-  // TODO: mock local get
+  console.log('Fetching data with params:', orgListRef.value?.queryParams);
 }
 
+// 树节点被点击触发查询
 function handleNodeClick(data: any) {
-  queryParams.value.parentId = data.orgId;
+  if (orgListRef.value) {
+    orgListRef.value.queryParams.parentId = data.orgId;
+    getList();
+  }
+}
+
+// 组织架构树节点拖拽事件处理
+function handleNodeDrop(dropInfo: any) {
+  console.log('Node dropped:', dropInfo);
+  //后续可在处提交拖拽带来的架构变更逻辑至后端
+}
+
+// 查询列表按钮触发
+function handleQuery(queryParams: any) {
   getList();
 }
 
-function handleQuery() {
-  getList();
+// 新增子级组织按钮触发
+function handleAdd() {
+  console.log('Add node');
 }
 
-function resetQuery() {
-  queryParams.value.orgName = undefined;
-  queryParams.value.status = undefined;
-  handleQuery();
+// 修改按键触发
+function handleUpdate(row: any) {
+  console.log('Update node', row);
 }
 
-function handleAdd() {}
-function handleUpdate(row: any) {}
-function handleDelete(row: any) {}
-
-function filterNode(value: string, data: any) {
-  if (!value) return true;
-  return data.orgName.indexOf(value) !== -1;
+// 删除组件按键触发
+function handleDelete(row: any) {
+  console.log('Delete node', row);
 }
-
-function parseTime(time: string, format: string) {
-  if (!time) return '';
-  return time.split('T')[0];
-}
-
-watch(deptName, val => {
-  // @ts-ignore
-  // deptTreeRef.value?.filter(val);
-});
 </script>
