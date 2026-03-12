@@ -17,7 +17,9 @@
           transition: 'opacity 0.2s'
         }"
       >
-        <div class="aside-header flex justify-between items-center px-4 py-3 border-b border-solid border-[var(--art-gray-200)] whitespace-nowrap">
+        <div
+          class="aside-header flex justify-between items-center px-4 py-3 border-b border-solid border-[var(--art-gray-200)] whitespace-nowrap"
+        >
           <span class="text-[15px] font-bold text-g-700">资产分类</span>
           <ArtSvgIcon icon="ri:organization-chart" class="text-g-500 text-lg" />
         </div>
@@ -66,7 +68,7 @@
     <div class="flex-1 min-w-0 flex flex-col h-full overflow-hidden relative">
       <!-- 搜索栏 -->
       <ArtSearchBar
-        :key="asset_status.value.length"
+        :key="asset_status.length"
         v-model="formFilters"
         :items="formItems"
         :showExpand="false"
@@ -143,7 +145,6 @@
   import DictTag from '@/components/DictTag/index.vue'
   import { handleTree } from '@/utils/ruoyi'
   import { ElMessageBox, ElMessage } from 'element-plus'
-  import { Search } from '@element-plus/icons-vue'
   import AssetEditDrawer from './modules/asset-edit-drawer.vue'
 
   defineOptions({ name: 'AssetList' })

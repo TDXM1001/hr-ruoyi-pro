@@ -60,7 +60,9 @@
     <template #footer>
       <div class="drawer-footer flex justify-end gap-2 p-4 border-t">
         <ElButton @click="visible = false" v-ripple>取消</ElButton>
-        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading" v-ripple>确定</ElButton>
+        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading" v-ripple>
+          确定
+        </ElButton>
       </div>
     </template>
   </ElDrawer>
@@ -72,7 +74,6 @@
   import type { FormRules } from 'element-plus'
   import { getInfo, addInfo, updateInfo } from '@/api/asset/info'
   import { listCategory } from '@/api/asset/category'
-  import { listDept } from '@/api/system/dept'
   import { listUser, deptTreeSelect } from '@/api/system/user'
   import { handleTree } from '@/utils/ruoyi'
   import ArtForm from '@/components/core/forms/art-form/index.vue'
@@ -107,11 +108,11 @@
   const initialFormData = {
     assetNo: '',
     assetName: '',
-    categoryId: undefined,
-    assetType: '2', // 使用字符串，匹配字典值类型
-    deptId: undefined,
-    userId: undefined,
-    status: '1',
+    categoryId: 0,
+    assetType: 2,
+    deptId: 0,
+    userId: 0,
+    status: 1,
     remark: ''
   }
 
@@ -201,9 +202,6 @@
           try {
             const res: any = await getInfo(props.assetData.assetNo)
             Object.assign(formData, res.data || res)
-            // 确保类型和状态为字符串以匹配字典
-            formData.assetType = String(formData.assetType)
-            formData.status = String(formData.status)
           } finally {
             loading.value = false
           }

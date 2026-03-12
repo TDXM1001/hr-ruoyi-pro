@@ -36,10 +36,9 @@ public class AssetCategoryController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('asset:category:list')")
     @GetMapping("/list")
-    public TableDataInfo list(AssetCategory assetCategory) {
-        startPage();
+    public AjaxResult list(AssetCategory assetCategory) {
         List<AssetCategory> list = assetCategoryService.selectAssetCategoryList(assetCategory);
-        return getDataTable(list);
+        return success(list);
     }
 
     /**

@@ -18,6 +18,8 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.poi.ExcelUtil;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 资产信息Controller
@@ -40,6 +42,18 @@ public class AssetInfoController extends BaseController {
         startPage();
         List<AssetInfo> list = assetInfoService.selectAssetInfoList(assetInfo);
         return getDataTable(list);
+    }
+
+    /**
+     * 导出资产信息列表
+     */
+    @PreAuthorize("@ss.hasPermi('asset:info:export')")
+    @Log(title = "资产信息", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, AssetInfo assetInfo) {
+        List<AssetInfo> list = assetInfoService.selectAssetInfoList(assetInfo);
+        ExcelUtil<AssetInfo> util = new ExcelUtil<AssetInfo>(AssetInfo.class);
+        util.exportExcel(response, list, "资产信息");
     }
 
     /**
