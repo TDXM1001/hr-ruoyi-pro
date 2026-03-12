@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRequisitionMapper">
+    <resultMap type="com.ruoyi.asset.domain.AssetRequisition" id="AssetRequisitionResult">
+        <result property="requisitionNo" column="requisition_no"/>
+        <result property="assetNo" column="asset_no"/>
+        <result property="applyUserId" column="apply_user_id"/>
+        <result property="applyDeptId" column="apply_dept_id"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    
+    <select id="selectAssetRequisitionList" parameterType="com.ruoyi.asset.domain.AssetRequisition" resultMap="AssetRequisitionResult">
+        select requisition_no, asset_no, apply_user_id, apply_dept_id, reason, status, create_time
+        from asset_requisition
+        <where>
+            <if test="requisitionNo != null and requisitionNo != ''"> and requisition_no = #{requisitionNo}</if>
+            <if test="assetNo != null and assetNo != ''"> and asset_no = #{assetNo}</if>
+        </where>
+    </select>
+
+    <select id="selectAssetRequisitionByRequisitionNo" parameterType="String" resultMap="AssetRequisitionResult">
+        select requisition_no, asset_no, apply_user_id, apply_dept_id, reason, status, create_time
+        from asset_requisition
+        where requisition_no = #{requisitionNo}
+    </select>
+
+    <insert id="insertAssetRequisition" parameterType="com.ruoyi.asset.domain.AssetRequisition">
+        insert into asset_requisition
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="requisitionNo != null">requisition_no,</if>
+            <if test="assetNo != null">asset_no,</if>
+            <if test="applyUserId != null">apply_user_id,</if>
+            <if test="applyDeptId != null">apply_dept_id,</if>
+            <if test="reason != null">reason,</if>
+            <if test="status != null">status,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="requisitionNo != null">#{requisitionNo},</if>
+            <if test="assetNo != null">#{assetNo},</if>
+            <if test="applyUserId != null">#{applyUserId},</if>
+            <if test="applyDeptId != null">#{applyDeptId},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateAssetRequisition" parameterType="com.ruoyi.asset.domain.AssetRequisition">
+        update asset_requisition
+        <set>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        where requisition_no = #{requisitionNo}
+    </update>
+</mapper>
