@@ -22,9 +22,9 @@ VALUES (1, '资产领用', 'REQUISITION', 'business_type', '', 'default', 'Y', '
 
 -- 审批中心目录
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-VALUES ('审批中心', 0, 5, 'workflow', NULL, 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '审批中心目录');
+VALUES ('审批中心', 0, 5, 'workflow', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '审批中心目录');
 
-SELECT @workflow_id := LAST_INSERT_ID();
+SET @workflow_id = LAST_INSERT_ID();
 
 -- 待办和已办菜单
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
@@ -32,7 +32,7 @@ VALUES ('待办处理', @workflow_id, 1, 'todo', 'asset/workflow/todo/index', 1,
        ('已办列表', @workflow_id, 2, 'done', 'asset/workflow/done/index', 1, 0, 'C', '0', '0', 'workflow:done:list', 'documentation', 'admin', sysdate(), '已办列表菜单');
 
 -- 查询资产管理的父级ID
-SELECT @asset_parent_id := menu_id FROM sys_menu WHERE menu_name = '资产系统' AND parent_id = 0 LIMIT 1;
+SELECT menu_id INTO @asset_parent_id FROM sys_menu WHERE menu_name = '资产系统' AND parent_id = 0 LIMIT 1;
 
 -- 业务记录菜单 (领用归还、维保管理、报废处置)
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
