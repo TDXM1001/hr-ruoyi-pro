@@ -60,6 +60,12 @@
             <artifactId>ruoyi-asset</artifactId>
         </dependency>
 
+        <!-- 工作流模块-->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-workflow</artifactId>
+        </dependency>
+
     </dependencies>
 
 

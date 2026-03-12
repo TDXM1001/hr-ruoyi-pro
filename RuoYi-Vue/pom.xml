@@ -177,6 +177,13 @@
                 <version>${ruoyi.version}</version>
             </dependency>
 
+            <!-- 工作流模块-->
+            <dependency>
+                <groupId>com.ruoyi</groupId>
+                <artifactId>ruoyi-workflow</artifactId>
+                <version>${ruoyi.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -188,6 +195,7 @@
         <module>ruoyi-generator</module>
         <module>ruoyi-common</module>
         <module>ruoyi-asset</module>
+        <module>ruoyi-workflow</module>
     </modules>
     <packaging>pom</packaging>
 
