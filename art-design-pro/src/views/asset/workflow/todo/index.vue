@@ -65,12 +65,11 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElButton } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import { listTodo, approveTask, type ApproveReq } from '@/api/workflow/task'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
-  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
 
   defineOptions({ name: 'WorkflowTodo' })
@@ -145,11 +144,15 @@
           align: 'right',
           formatter: (row: any) => {
             return h('div', { class: 'flex justify-end' }, [
-              h(ArtButtonTable, {
-                type: 'primary',
-                innerText: '处理',
-                onClick: () => handleProcess(row)
-              })
+              h(
+                ElButton,
+                {
+                  type: 'primary',
+                  link: true,
+                  onClick: () => handleProcess(row)
+                },
+                () => '处理'
+              )
             ])
           }
         }

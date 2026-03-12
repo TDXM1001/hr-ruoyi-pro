@@ -36,7 +36,9 @@
     <template #footer>
       <div class="dialog-footer">
         <ElButton @click="visible = false" v-ripple>取消</ElButton>
-        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading" v-ripple>确定</ElButton>
+        <ElButton type="primary" @click="handleSubmit" :loading="submitLoading" v-ripple
+          >确定</ElButton
+        >
       </div>
     </template>
   </ElDialog>

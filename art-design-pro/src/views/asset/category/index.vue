@@ -146,9 +146,7 @@
     loading.value = true
     try {
       const response: any = await listCategory(formFilters)
-      const data = Array.isArray(response)
-        ? response
-        : response.data || response.rows || []
+      const data = Array.isArray(response) ? response : response.data || response.rows || []
       categoryList.value = handleTree(data, 'id')
     } catch (error) {
       console.error('获取资产分类列表失败:', error)

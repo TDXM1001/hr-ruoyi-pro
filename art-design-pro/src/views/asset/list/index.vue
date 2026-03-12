@@ -132,19 +132,55 @@
       :asset-data="currentData"
       @success="refreshData"
     />
+
+    <!-- 领用/维修 统用申请弹窗 -->
+    <ElDialog
+      v-model="applyDialogVisible"
+      :title="applyType === 'requisition' ? '资产领用申请' : '资产维修申请'"
+      width="500px"
+      draggable
+      destroy-on-close
+    >
+      <ElForm :model="applyForm" :rules="applyRules" ref="applyFormRef" label-width="100px">
+        <ElFormItem label="资产编号">
+          <ElInput v-model="applyTask.assetNo" disabled />
+        </ElFormItem>
+        <ElFormItem label="资产名称">
+          <ElInput v-model="applyTask.assetName" disabled />
+        </ElFormItem>
+        <ElFormItem label="申请事由" prop="reason">
+          <ElInput
+            v-model="applyForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入申请事由"
+            clearable
+          />
+        </ElFormItem>
+      </ElForm>
+      <template #footer>
+        <span class="dialog-footer">
+          <ElButton @click="applyDialogVisible = false">取消</ElButton>
+          <ElButton type="primary" @click="submitApply" :loading="applySubmitting"
+            >提交申请</ElButton
+          >
+        </span>
+      </template>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, watch, h } from 'vue'
   import { listInfo, delInfo, exportInfo } from '@/api/asset/info'
+  import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
   import { handleTree } from '@/utils/ruoyi'
-  import { ElMessageBox, ElMessage } from 'element-plus'
+  import { ElMessageBox, ElMessage, ElButton } from 'element-plus'
   import AssetEditDrawer from './modules/asset-edit-drawer.vue'
 
   defineOptions({ name: 'AssetList' })
@@ -156,7 +192,7 @@
   const categoryOptions = ref<any[]>([])
   const ids = ref<string[]>([])
   const multiple = ref(true)
-  
+
   // 接入字典
   const { asset_type, asset_status } = useDict('asset_type', 'asset_status')
 
@@ -222,19 +258,19 @@
         { type: 'selection', width: 55, align: 'center' },
         { prop: 'assetNo', label: '资产编号', width: 120 },
         { prop: 'assetName', label: '资产名称', minWidth: 150 },
-        { 
-          prop: 'assetType', 
-          label: '资产类型', 
-          width: 100, 
+        {
+          prop: 'assetType',
+          label: '资产类型',
+          width: 100,
           align: 'center',
           formatter: (row: any) => {
             return h(DictTag, { options: asset_type.value, value: row.assetType })
           }
         },
-        { 
-          prop: 'status', 
-          label: '状态', 
-          width: 100, 
+        {
+          prop: 'status',
+          label: '状态',
+          width: 100,
           align: 'center',
           formatter: (row: any) => {
             return h(DictTag, { options: asset_status.value, value: row.status })
@@ -244,10 +280,28 @@
         {
           prop: 'operation',
           label: '操作',
-          width: 160,
+          width: 240,
           align: 'right',
           formatter: (row: any) => {
-            return h('div', { class: 'flex justify-end' }, [
+            return h('div', { class: 'flex justify-end gap-1' }, [
+              h(
+                ElButton,
+                {
+                  type: 'primary',
+                  link: true,
+                  onClick: () => handleRequisition(row)
+                },
+                () => '领用'
+              ),
+              h(
+                ElButton,
+                {
+                  type: 'primary',
+                  link: true,
+                  onClick: () => handleRepair(row)
+                },
+                () => '维修'
+              ),
               h(ArtButtonTable, {
                 type: 'edit',
                 onClick: () => handleUpdate(row)
@@ -348,13 +402,72 @@
   const handleExport = async () => {
     try {
       const response: any = await exportInfo(searchParams)
-      const blob = new Blob([response.data || response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const blob = new Blob([response.data || response], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
       const link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = `资产台账_${new Date().getTime()}.xlsx`
       link.click()
     } catch (error) {
       console.error('导出失败:', error)
+    }
+  }
+
+  // ==== 领用/维修 申请相关 ====
+  const applyDialogVisible = ref(false)
+  const applyType = ref<'requisition' | 'repair'>('requisition')
+  const applyTask = ref<any>({})
+  const applySubmitting = ref(false)
+  const applyFormRef = ref()
+  const applyForm = reactive({ reason: '' })
+  const applyRules = {
+    reason: [{ required: true, message: '请填写原因', trigger: 'blur' }]
+  }
+
+  const handleRequisition = (row: any) => {
+    applyType.value = 'requisition'
+    applyTask.value = row
+    applyForm.reason = ''
+    applyDialogVisible.value = true
+  }
+
+  const handleRepair = (row: any) => {
+    applyType.value = 'repair'
+    applyTask.value = row
+    applyForm.reason = ''
+    applyDialogVisible.value = true
+  }
+
+  const submitApply = async () => {
+    try {
+      if (!applyForm.reason.trim()) {
+        ElMessage.warning('请填写申请原因')
+        return
+      }
+      await applyFormRef.value?.validate()
+      applySubmitting.value = true
+
+      // 根据业务类型发起请求
+      if (applyType.value === 'requisition') {
+        await applyRequisition({
+          assetNo: applyTask.value.assetNo,
+          reason: applyForm.reason
+        })
+      } else {
+        // repair
+        // await applyRepair(...) （待后台拓展）
+        ElMessage.info('暂无维修接口')
+        // return
+      }
+
+      ElMessage.success('申请提交成功')
+      applyDialogVisible.value = false
+      refreshData()
+    } catch (e) {
+      console.error('提交失败:', e)
+    } finally {
+      applySubmitting.value = false
     }
   }
 
@@ -370,7 +483,7 @@
   .asset-list-page {
     padding: 12px;
   }
-  
+
   // 侧边栏折叠按钮样式 (同步 DeptTreeAside)
   .collapse-handle {
     top: 50%;
@@ -394,7 +507,7 @@
     }
 
     &.handle-collapsed {
-      left: -8px; 
+      left: -8px;
       border-left: 1px solid var(--art-gray-200);
       border-radius: 6px;
     }

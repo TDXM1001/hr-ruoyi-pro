@@ -96,7 +96,7 @@
   const loading = ref(false)
   const submitLoading = ref(false)
   const formRef = ref()
-  
+
   // 选项数据
   const categoryOptions = ref<any[]>([])
   const deptOptions = ref<any[]>([])
@@ -178,7 +178,9 @@
       ])
 
       // 分类树
-      const catList = Array.isArray(catRes) ? catRes : (catRes as any).data || (catRes as any).rows || []
+      const catList = Array.isArray(catRes)
+        ? catRes
+        : (catRes as any).data || (catRes as any).rows || []
       categoryOptions.value = handleTree(catList, 'id')
 
       // 部门树

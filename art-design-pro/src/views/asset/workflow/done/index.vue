@@ -33,10 +33,10 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h } from 'vue'
+  import { ElButton } from 'element-plus'
   import { listDone } from '@/api/workflow/task'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
-  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
 
   defineOptions({ name: 'WorkflowDone' })
@@ -111,11 +111,15 @@
           align: 'right',
           formatter: (row: any) => {
             return h('div', { class: 'flex justify-end' }, [
-              h(ArtButtonTable, {
-                type: 'primary',
-                innerText: '查看详情',
-                onClick: () => handleView(row)
-              })
+              h(
+                ElButton,
+                {
+                  type: 'primary',
+                  link: true,
+                  onClick: () => handleView(row)
+                },
+                () => '查看详情'
+              )
             ])
           }
         }
