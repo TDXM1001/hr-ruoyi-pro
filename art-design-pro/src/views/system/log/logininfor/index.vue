@@ -63,7 +63,12 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { list, delLogininfor, cleanLogininfor, unlockLogininfor } from '@/api/system/log/logininfor'
+  import {
+    list,
+    delLogininfor,
+    cleanLogininfor,
+    unlockLogininfor
+  } from '@/api/system/log/logininfor'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'

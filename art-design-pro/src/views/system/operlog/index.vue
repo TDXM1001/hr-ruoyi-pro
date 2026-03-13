@@ -82,10 +82,30 @@
   const formFilters = reactive({ ...initialSearchState })
 
   const formItems = computed(() => [
-    { label: '系统模块', key: 'title', type: 'input', props: { placeholder: '请输入系统模块', clearable: true } },
-    { label: '操作人员', key: 'operName', type: 'input', props: { placeholder: '请输入操作人员', clearable: true } },
-    { label: '类型', key: 'businessType', type: 'select', props: { options: sys_oper_type.value, clearable: true } },
-    { label: '状态', key: 'status', type: 'select', props: { options: sys_common_status.value, clearable: true } }
+    {
+      label: '系统模块',
+      key: 'title',
+      type: 'input',
+      props: { placeholder: '请输入系统模块', clearable: true }
+    },
+    {
+      label: '操作人员',
+      key: 'operName',
+      type: 'input',
+      props: { placeholder: '请输入操作人员', clearable: true }
+    },
+    {
+      label: '类型',
+      key: 'businessType',
+      type: 'select',
+      props: { options: sys_oper_type.value, clearable: true }
+    },
+    {
+      label: '状态',
+      key: 'status',
+      type: 'select',
+      props: { options: sys_common_status.value, clearable: true }
+    }
   ])
 
   const {
@@ -111,7 +131,8 @@
           label: '操作类型',
           width: 100,
           align: 'center',
-          render: (row: any) => h(DictTag, { options: sys_oper_type.value, value: row.businessType })
+          render: (row: any) =>
+            h(DictTag, { options: sys_oper_type.value, value: row.businessType })
         },
         { prop: 'operName', label: '人员', width: 100 },
         { prop: 'operIp', label: '地点', width: 130 },
@@ -128,10 +149,11 @@
           label: '操作',
           width: 120,
           align: 'right',
-          render: (row: any) => h('div', { class: 'flex justify-end gap-2' }, [
-            h(ArtButtonTable, { type: 'info', onClick: () => handleView(row) }),
-            h(ArtButtonTable, { type: 'delete', onClick: () => handleDelete(row) })
-          ])
+          render: (row: any) =>
+            h('div', { class: 'flex justify-end gap-2' }, [
+              h(ArtButtonTable, { type: 'info', onClick: () => handleView(row) }),
+              h(ArtButtonTable, { type: 'delete', onClick: () => handleDelete(row) })
+            ])
         }
       ]
     }
@@ -163,7 +185,9 @@
     const operIds = row?.operId || ids.value
     if (!operIds || (Array.isArray(operIds) && operIds.length === 0)) return
     try {
-      await ElMessageBox.confirm(`是否确认删除操作日志编号为"${operIds}"？`, '提示', { type: 'warning' })
+      await ElMessageBox.confirm(`是否确认删除操作日志编号为"${operIds}"？`, '提示', {
+        type: 'warning'
+      })
       await delOperlog(operIds)
       ElMessage.success('删除成功')
       refreshData()

@@ -167,7 +167,13 @@
           }
         },
         { prop: 'operTime', label: '操作日期', width: 170, align: 'center', sortable: 'custom' },
-        { prop: 'costTime', label: '消耗时间', width: 110, align: 'center', render: (row: any) => `${row.costTime}ms` },
+        {
+          prop: 'costTime',
+          label: '消耗时间',
+          width: 110,
+          align: 'center',
+          render: (row: any) => `${row.costTime}ms`
+        },
         {
           prop: 'operation',
           label: '操作',

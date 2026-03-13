@@ -29,11 +29,9 @@
         <ElCol :span="24">
           <ElFormItem label="状态" prop="status">
             <ElRadioGroup v-model="form.status">
-              <ElRadio
-                v-for="dict in sys_notice_status"
-                :key="dict.value"
-                :label="dict.value"
-              >{{ dict.label }}</ElRadio>
+              <ElRadio v-for="dict in sys_notice_status" :key="dict.value" :label="dict.value">{{
+                dict.label
+              }}</ElRadio>
             </ElRadioGroup>
           </ElFormItem>
         </ElCol>
@@ -131,7 +129,7 @@
   /** 提交按钮 */
   const submitForm = async () => {
     if (!formRef.value) return
-    
+
     await formRef.value.validate(async (valid) => {
       if (valid) {
         submitLoading.value = true

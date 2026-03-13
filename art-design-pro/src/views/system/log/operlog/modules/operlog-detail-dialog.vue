@@ -1,17 +1,13 @@
 <!-- 操作日志详情弹窗 (路径: src/views/system/log/operlog/modules/operlog-detail-dialog.vue) -->
 <template>
-  <ElDialog
-    v-model="visible"
-    title="操作日志详情"
-    width="700px"
-    append-to-body
-    destroy-on-close
-  >
+  <ElDialog v-model="visible" title="操作日志详情" width="700px" append-to-body destroy-on-close>
     <ElForm :model="form" label-width="100px" class="operlog-detail-form">
       <ElRow>
         <ElCol :span="12">
           <ElFormItem label="操作模块：">{{ form.title }} / {{ typeFormat(form) }}</ElFormItem>
-          <ElFormItem label="登录信息：">{{ form.operName }} / {{ form.operIp }} / {{ form.operLocation }}</ElFormItem>
+          <ElFormItem label="登录信息："
+            >{{ form.operName }} / {{ form.operIp }} / {{ form.operLocation }}</ElFormItem
+          >
         </ElCol>
         <ElCol :span="12">
           <ElFormItem label="请求地址：">{{ form.operUrl }}</ElFormItem>

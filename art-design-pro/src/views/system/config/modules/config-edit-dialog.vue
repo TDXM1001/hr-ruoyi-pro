@@ -19,11 +19,9 @@
       </ElFormItem>
       <ElFormItem label="系统内置" prop="configType">
         <ElRadioGroup v-model="form.configType">
-          <ElRadio
-            v-for="dict in sys_yes_no"
-            :key="dict.value"
-            :label="dict.value"
-          >{{ dict.label }}</ElRadio>
+          <ElRadio v-for="dict in sys_yes_no" :key="dict.value" :label="dict.value">{{
+            dict.label
+          }}</ElRadio>
         </ElRadioGroup>
       </ElFormItem>
       <ElFormItem label="备注" prop="remark">
@@ -113,11 +111,11 @@
   /** 提交按钮 */
   const submitForm = async () => {
     if (!formRef.value) return
-    
+
     await formRef.value.validate(async (valid) => {
       if (valid) {
         submitLoading.value = true
-        
+
         // 字段清洗：移除审计字段及冗余参数
         const submitData = { ...form }
         delete (submitData as any).createTime

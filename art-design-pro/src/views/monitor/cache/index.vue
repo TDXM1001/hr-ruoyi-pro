@@ -10,18 +10,30 @@
               <span>基本信息</span>
             </template>
             <ElDescriptions :column="3" border>
-              <ElDescriptionsItem label="Redis版本">{{ cacheData.info?.redis_version }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="Redis版本">{{
+                cacheData.info?.redis_version
+              }}</ElDescriptionsItem>
               <ElDescriptionsItem label="运行模式">{{
                 cacheData.info?.redis_mode === 'standalone' ? '单机' : '集群'
               }}</ElDescriptionsItem>
               <ElDescriptionsItem label="端口">{{ cacheData.info?.tcp_port }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="客户端数">{{ cacheData.info?.connected_clients }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="运行天数">{{ cacheData.info?.uptime_in_days }} 天</ElDescriptionsItem>
-              <ElDescriptionsItem label="使用内存">{{ cacheData.info?.used_memory_human }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="使用CPU">{{
-                parseFloat(cacheData.info?.used_cpu_user_children || '0').toFixed(2)
-              }}%</ElDescriptionsItem>
-              <ElDescriptionsItem label="内存配置">{{ cacheData.info?.maxmemory_human }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="客户端数">{{
+                cacheData.info?.connected_clients
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运行天数"
+                >{{ cacheData.info?.uptime_in_days }} 天</ElDescriptionsItem
+              >
+              <ElDescriptionsItem label="使用内存">{{
+                cacheData.info?.used_memory_human
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="使用CPU"
+                >{{
+                  parseFloat(cacheData.info?.used_cpu_user_children || '0').toFixed(2)
+                }}%</ElDescriptionsItem
+              >
+              <ElDescriptionsItem label="内存配置">{{
+                cacheData.info?.maxmemory_human
+              }}</ElDescriptionsItem>
               <ElDescriptionsItem label="AOF是否开启">{{
                 cacheData.info?.aof_enabled === '0' ? '否' : '是'
               }}</ElDescriptionsItem>

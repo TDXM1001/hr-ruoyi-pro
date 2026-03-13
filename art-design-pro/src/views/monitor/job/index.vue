@@ -21,12 +21,25 @@
       >
         <template #left>
           <ElSpace wrap>
-            <ElButton type="primary" plain icon="ri:add-line" @click="handleAdd" v-ripple>新增</ElButton>
-            <ElButton type="danger" plain icon="ri:delete-bin-line" :disabled="!multiple" @click="handleDelete" v-ripple>
+            <ElButton type="primary" plain icon="ri:add-line" @click="handleAdd" v-ripple
+              >新增</ElButton
+            >
+            <ElButton
+              type="danger"
+              plain
+              icon="ri:delete-bin-line"
+              :disabled="!multiple"
+              @click="handleDelete"
+              v-ripple
+            >
               删除
             </ElButton>
-            <ElButton type="warning" plain icon="ri:download-line" @click="handleExport" v-ripple>导出</ElButton>
-            <ElButton type="info" plain icon="ri:file-list-2-line" @click="handleJobLog" v-ripple>任务日志</ElButton>
+            <ElButton type="warning" plain icon="ri:download-line" @click="handleExport" v-ripple
+              >导出</ElButton
+            >
+            <ElButton type="info" plain icon="ri:file-list-2-line" @click="handleJobLog" v-ripple
+              >任务日志</ElButton
+            >
           </ElSpace>
         </template>
       </ArtTableHeader>

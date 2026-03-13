@@ -8,7 +8,12 @@
           <template #header>
             <div class="flex items-center justify-between">
               <span class="font-bold">缓存列表</span>
-              <ElButton type="primary" link icon="ri:refresh-line" @click="getCacheNames"></ElButton>
+              <ElButton
+                type="primary"
+                link
+                icon="ri:refresh-line"
+                @click="getCacheNames"
+              ></ElButton>
             </div>
           </template>
           <ElScrollbar class="list-scrollbar">
@@ -133,7 +138,9 @@
   const keySearch = ref('')
 
   const filteredCacheKeys = computed(() => {
-    return cacheKeys.value.filter((key) => key.toLowerCase().includes(keySearch.value.toLowerCase()))
+    return cacheKeys.value.filter((key) =>
+      key.toLowerCase().includes(keySearch.value.toLowerCase())
+    )
   })
 
   // 格式化输出 JSON

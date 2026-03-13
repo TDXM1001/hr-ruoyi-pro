@@ -11,11 +11,7 @@
 
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
       <!-- 表格头部 -->
-      <ArtTableHeader
-        :loading="loading"
-        v-model:columns="columnChecks"
-        @refresh="refreshData"
-      >
+      <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
         <template #left>
           <ElButton
             v-auth="'monitor:operlog:remove'"
@@ -172,7 +168,13 @@
           }
         },
         { prop: 'operTime', label: '操作日期', width: 170, align: 'center', sortable: 'custom' },
-        { prop: 'costTime', label: '消耗时间', width: 110, align: 'center', formatter: (row: any) => `${row.costTime}ms` },
+        {
+          prop: 'costTime',
+          label: '消耗时间',
+          width: 110,
+          align: 'center',
+          formatter: (row: any) => `${row.costTime}ms`
+        },
         {
           prop: 'operation',
           label: '操作',

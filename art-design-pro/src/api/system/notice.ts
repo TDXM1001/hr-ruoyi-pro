@@ -6,11 +6,11 @@ import http from '@/utils/http'
  * @param query 查询参数
  */
 export function listNotice(query?: any) {
-    return http.request({
-        url: '/system/notice/list',
-        method: 'get',
-        params: query
-    })
+  return http.request({
+    url: '/system/notice/list',
+    method: 'get',
+    params: query
+  })
 }
 
 /**
@@ -18,10 +18,10 @@ export function listNotice(query?: any) {
  * @param noticeId 公告ID
  */
 export function getNotice(noticeId: number | string) {
-    return http.request({
-        url: '/system/notice/' + noticeId,
-        method: 'get'
-    })
+  return http.request({
+    url: '/system/notice/' + noticeId,
+    method: 'get'
+  })
 }
 
 /**
@@ -29,11 +29,11 @@ export function getNotice(noticeId: number | string) {
  * @param data 公告数据
  */
 export function addNotice(data: any) {
-    return http.request({
-        url: '/system/notice',
-        method: 'post',
-        data: data
-    })
+  return http.request({
+    url: '/system/notice',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -41,11 +41,11 @@ export function addNotice(data: any) {
  * @param data 公告数据
  */
 export function updateNotice(data: any) {
-    return http.request({
-        url: '/system/notice',
-        method: 'put',
-        data: data
-    })
+  return http.request({
+    url: '/system/notice',
+    method: 'put',
+    data: data
+  })
 }
 
 /**
@@ -53,8 +53,8 @@ export function updateNotice(data: any) {
  * @param noticeId 公告ID
  */
 export function delNotice(noticeId: number | string) {
-    return http.request({
-        url: '/system/notice/' + noticeId,
-        method: 'delete'
-    })
+  return http.request({
+    url: '/system/notice/' + noticeId,
+    method: 'delete'
+  })
 }

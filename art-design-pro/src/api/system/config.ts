@@ -6,11 +6,11 @@ import http from '@/utils/http'
  * @param query 查询参数
  */
 export function listConfig(query?: any) {
-    return http.request({
-        url: '/system/config/list',
-        method: 'get',
-        params: query
-    })
+  return http.request({
+    url: '/system/config/list',
+    method: 'get',
+    params: query
+  })
 }
 
 /**
@@ -18,10 +18,10 @@ export function listConfig(query?: any) {
  * @param configId 参数ID
  */
 export function getConfig(configId: number | string) {
-    return http.request({
-        url: '/system/config/' + configId,
-        method: 'get'
-    })
+  return http.request({
+    url: '/system/config/' + configId,
+    method: 'get'
+  })
 }
 
 /**
@@ -29,10 +29,10 @@ export function getConfig(configId: number | string) {
  * @param configKey 参数键名
  */
 export function getConfigKey(configKey: string) {
-    return http.request({
-        url: '/system/config/configKey/' + configKey,
-        method: 'get'
-    })
+  return http.request({
+    url: '/system/config/configKey/' + configKey,
+    method: 'get'
+  })
 }
 
 /**
@@ -40,11 +40,11 @@ export function getConfigKey(configKey: string) {
  * @param data 参数数据
  */
 export function addConfig(data: any) {
-    return http.request({
-        url: '/system/config',
-        method: 'post',
-        data: data
-    })
+  return http.request({
+    url: '/system/config',
+    method: 'post',
+    data: data
+  })
 }
 
 /**
@@ -52,11 +52,11 @@ export function addConfig(data: any) {
  * @param data 参数数据
  */
 export function updateConfig(data: any) {
-    return http.request({
-        url: '/system/config',
-        method: 'put',
-        data: data
-    })
+  return http.request({
+    url: '/system/config',
+    method: 'put',
+    data: data
+  })
 }
 
 /**
@@ -64,18 +64,18 @@ export function updateConfig(data: any) {
  * @param configId 参数ID
  */
 export function delConfig(configId: number | string) {
-    return http.request({
-        url: '/system/config/' + configId,
-        method: 'delete'
-    })
+  return http.request({
+    url: '/system/config/' + configId,
+    method: 'delete'
+  })
 }
 
 /**
  * 刷新参数缓存
  */
 export function refreshCache() {
-    return http.request({
-        url: '/system/config/refreshCache',
-        method: 'delete'
-    })
+  return http.request({
+    url: '/system/config/refreshCache',
+    method: 'delete'
+  })
 }

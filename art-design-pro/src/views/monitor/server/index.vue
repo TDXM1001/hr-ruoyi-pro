@@ -20,7 +20,9 @@
               </div>
               <div class="info-item">
                 <span class="label">当前负载：</span>
-                <span class="value">{{ serverData.cpu?.sys }}% (系统) / {{ serverData.cpu?.used }}% (用户)</span>
+                <span class="value"
+                  >{{ serverData.cpu?.sys }}% (系统) / {{ serverData.cpu?.used }}% (用户)</span
+                >
               </div>
             </div>
           </ElCard>
@@ -80,9 +82,13 @@
               <span>服务器信息</span>
             </template>
             <ElDescriptions :column="2" border>
-              <ElDescriptionsItem label="服务器名称">{{ serverData.sys?.computerName }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="服务器名称">{{
+                serverData.sys?.computerName
+              }}</ElDescriptionsItem>
               <ElDescriptionsItem label="操作系统">{{ serverData.sys?.osName }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="服务器IP">{{ serverData.sys?.computerIp }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="服务器IP">{{
+                serverData.sys?.computerIp
+              }}</ElDescriptionsItem>
               <ElDescriptionsItem label="系统架构">{{ serverData.sys?.osArch }}</ElDescriptionsItem>
             </ElDescriptions>
           </ElCard>
@@ -96,11 +102,21 @@
             </template>
             <ElDescriptions :column="2" border>
               <ElDescriptionsItem label="Java名称">{{ serverData.jvm?.name }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="Java版本">{{ serverData.jvm?.version }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="启动时间">{{ serverData.jvm?.startTime }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="运行时长">{{ serverData.jvm?.runTime }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="安装路径" :span="2">{{ serverData.jvm?.home }}</ElDescriptionsItem>
-              <ElDescriptionsItem label="项目路径" :span="2">{{ serverData.sys?.userDir }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="Java版本">{{
+                serverData.jvm?.version
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="启动时间">{{
+                serverData.jvm?.startTime
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运行时长">{{
+                serverData.jvm?.runTime
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="安装路径" :span="2">{{
+                serverData.jvm?.home
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="项目路径" :span="2">{{
+                serverData.sys?.userDir
+              }}</ElDescriptionsItem>
             </ElDescriptions>
           </ElCard>
         </ElCol>
@@ -234,7 +250,8 @@
 
       // 更新图表
       if (cpuChart) cpuChart.setOption(getGaugeOption('CPU', serverData.value.cpu.used, '#409EFF'))
-      if (memChart) memChart.setOption(getGaugeOption('内存', serverData.value.mem.usage, '#67C23A'))
+      if (memChart)
+        memChart.setOption(getGaugeOption('内存', serverData.value.mem.usage, '#67C23A'))
       if (jvmChart) jvmChart.setOption(getGaugeOption('JVM', serverData.value.jvm.usage, '#E6A23C'))
     } catch (error) {
       console.error('获取监控数据失败', error)

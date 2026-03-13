@@ -11,18 +11,9 @@
 
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
       <!-- 表格头部 -->
-      <ArtTableHeader
-        :loading="loading"
-        v-model:columns="columnChecks"
-        @refresh="refreshData"
-      >
+      <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
         <template #left>
-          <ElButton
-            v-auth="'system:notice:add'"
-            type="primary"
-            @click="handleAdd"
-            v-ripple
-          >
+          <ElButton v-auth="'system:notice:add'" type="primary" @click="handleAdd" v-ripple>
             新增
           </ElButton>
           <ElButton

@@ -5,11 +5,11 @@ import http from '@/utils/http'
  * @param query 查询参数
  */
 export function listOnline(query?: any) {
-    return http.request({
-        url: '/monitor/online/list',
-        method: 'get',
-        params: query
-    })
+  return http.request({
+    url: '/monitor/online/list',
+    method: 'get',
+    params: query
+  })
 }
 
 /**
@@ -17,8 +17,8 @@ export function listOnline(query?: any) {
  * @param tokenId 会话ID
  */
 export function forceLogout(tokenId: string) {
-    return http.request({
-        url: '/monitor/online/' + tokenId,
-        method: 'delete'
-    })
+  return http.request({
+    url: '/monitor/online/' + tokenId,
+    method: 'delete'
+  })
 }
