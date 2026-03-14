@@ -5,31 +5,59 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="com.ruoyi.asset.mapper.AssetInfoMapper">
 
     <resultMap type="com.ruoyi.asset.domain.AssetInfo" id="AssetInfoResult">
+        <result property="assetId" column="asset_id" />
         <result property="assetNo" column="asset_no" />
         <result property="assetName" column="asset_name" />
         <result property="categoryId" column="category_id" />
         <result property="assetType" column="asset_type" />
-        <result property="deptId" column="dept_id" />
+        <result property="specModel" column="spec_model" />
+        <result property="unit" column="unit" />
+        <result property="ownershipOrgId" column="ownership_org_id" />
+        <result property="manageDeptId" column="manage_dept_id" />
+        <result property="useDeptId" column="use_dept_id" />
+        <result property="responsibleUserId" column="responsible_user_id" />
         <result property="userId" column="user_id" />
-        <result property="status" column="status" />
+        <result property="locationId" column="location_id" />
+        <result property="locationText" column="location_text" />
+        <result property="acquireMethod" column="acquire_method" />
+        <result property="purchaseDate" column="purchase_date" />
+        <result property="capitalizationDate" column="capitalization_date" />
+        <result property="enableDate" column="enable_date" />
+        <result property="assetStatus" column="asset_status" />
+        <result property="remark" column="remark" />
         <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
     </resultMap>
 
     <sql id="selectAssetInfoVo">
-        select asset_no, asset_name, category_id, asset_type, dept_id, user_id, status, create_time from asset_info
+        select asset_id, asset_no, asset_name, category_id, asset_type, spec_model, unit,
+               ownership_org_id, manage_dept_id, use_dept_id, responsible_user_id, user_id,
+               location_id, location_text, acquire_method, purchase_date, capitalization_date,
+               enable_date, asset_status, remark, create_time, update_time
+        from asset_info
     </sql>
 
     <select id="selectAssetInfoList" parameterType="com.ruoyi.asset.domain.AssetInfo" resultMap="AssetInfoResult">
         <include refid="selectAssetInfoVo"/>
         <where>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
             <if test="assetNo != null and assetNo != ''"> and asset_no = #{assetNo}</if>
             <if test="assetName != null and assetName != ''"> and asset_name like concat('%', #{assetName}, '%')</if>
-            <if test="categoryId != null "> and category_id = #{categoryId}</if>
+            <if test="categoryId != null"> and category_id = #{categoryId}</if>
             <if test="assetType != null and assetType != ''"> and asset_type = #{assetType}</if>
-            <if test="deptId != null "> and dept_id = #{deptId}</if>
-            <if test="userId != null "> and user_id = #{userId}</if>
-            <if test="status != null and status != ''"> and status = #{status}</if>
+            <if test="manageDeptId != null"> and manage_dept_id = #{manageDeptId}</if>
+            <if test="useDeptId != null"> and use_dept_id = #{useDeptId}</if>
+            <if test="responsibleUserId != null"> and responsible_user_id = #{responsibleUserId}</if>
+            <if test="userId != null"> and user_id = #{userId}</if>
+            <if test="assetStatus != null and assetStatus != ''"> and asset_status = #{assetStatus}</if>
+            <if test="locationText != null and locationText != ''"> and location_text like concat('%', #{locationText}, '%')</if>
         </where>
+        order by asset_id desc
+    </select>
+
+    <select id="selectAssetInfoByAssetId" parameterType="Long" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        where asset_id = #{assetId}
     </select>
 
     <select id="selectAssetInfoByAssetNo" parameterType="String" resultMap="AssetInfoResult">
@@ -37,52 +65,98 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where asset_no = #{assetNo}
     </select>
 
-    <insert id="insertAssetInfo" parameterType="com.ruoyi.asset.domain.AssetInfo">
+    <insert id="insertAssetInfo" parameterType="com.ruoyi.asset.domain.AssetInfo" useGeneratedKeys="true" keyProperty="assetId">
         insert into asset_info
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="assetNo != null and assetNo != ''">asset_no,</if>
             <if test="assetName != null and assetName != ''">asset_name,</if>
             <if test="categoryId != null">category_id,</if>
-            <if test="assetType != null">asset_type,</if>
-            <if test="deptId != null">dept_id,</if>
+            <if test="assetType != null and assetType != ''">asset_type,</if>
+            <if test="specModel != null and specModel != ''">spec_model,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="ownershipOrgId != null">ownership_org_id,</if>
+            <if test="manageDeptId != null">manage_dept_id,</if>
+            <if test="useDeptId != null">use_dept_id,</if>
+            <if test="responsibleUserId != null">responsible_user_id,</if>
             <if test="userId != null">user_id,</if>
-            <if test="status != null">status,</if>
+            <if test="locationId != null">location_id,</if>
+            <if test="locationText != null and locationText != ''">location_text,</if>
+            <if test="acquireMethod != null and acquireMethod != ''">acquire_method,</if>
+            <if test="purchaseDate != null">purchase_date,</if>
+            <if test="capitalizationDate != null">capitalization_date,</if>
+            <if test="enableDate != null">enable_date,</if>
+            <if test="assetStatus != null and assetStatus != ''">asset_status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
             <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="assetNo != null and assetNo != ''">#{assetNo},</if>
             <if test="assetName != null and assetName != ''">#{assetName},</if>
             <if test="categoryId != null">#{categoryId},</if>
-            <if test="assetType != null">#{assetType},</if>
-            <if test="deptId != null">#{deptId},</if>
+            <if test="assetType != null and assetType != ''">#{assetType},</if>
+            <if test="specModel != null and specModel != ''">#{specModel},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="ownershipOrgId != null">#{ownershipOrgId},</if>
+            <if test="manageDeptId != null">#{manageDeptId},</if>
+            <if test="useDeptId != null">#{useDeptId},</if>
+            <if test="responsibleUserId != null">#{responsibleUserId},</if>
             <if test="userId != null">#{userId},</if>
-            <if test="status != null">#{status},</if>
+            <if test="locationId != null">#{locationId},</if>
+            <if test="locationText != null and locationText != ''">#{locationText},</if>
+            <if test="acquireMethod != null and acquireMethod != ''">#{acquireMethod},</if>
+            <if test="purchaseDate != null">#{purchaseDate},</if>
+            <if test="capitalizationDate != null">#{capitalizationDate},</if>
+            <if test="enableDate != null">#{enableDate},</if>
+            <if test="assetStatus != null and assetStatus != ''">#{assetStatus},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
             <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
         </trim>
     </insert>
 
     <update id="updateAssetInfo" parameterType="com.ruoyi.asset.domain.AssetInfo">
         update asset_info
         <trim prefix="SET" suffixOverrides=",">
+            <if test="assetNo != null and assetNo != ''">asset_no = #{assetNo},</if>
             <if test="assetName != null and assetName != ''">asset_name = #{assetName},</if>
             <if test="categoryId != null">category_id = #{categoryId},</if>
-            <if test="assetType != null">asset_type = #{assetType},</if>
-            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="assetType != null and assetType != ''">asset_type = #{assetType},</if>
+            <if test="specModel != null">spec_model = #{specModel},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="ownershipOrgId != null">ownership_org_id = #{ownershipOrgId},</if>
+            <if test="manageDeptId != null">manage_dept_id = #{manageDeptId},</if>
+            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            <if test="responsibleUserId != null">responsible_user_id = #{responsibleUserId},</if>
             <if test="userId != null">user_id = #{userId},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="locationId != null">location_id = #{locationId},</if>
+            <if test="locationText != null">location_text = #{locationText},</if>
+            <if test="acquireMethod != null">acquire_method = #{acquireMethod},</if>
+            <if test="purchaseDate != null">purchase_date = #{purchaseDate},</if>
+            <if test="capitalizationDate != null">capitalization_date = #{capitalizationDate},</if>
+            <if test="enableDate != null">enable_date = #{enableDate},</if>
+            <if test="assetStatus != null">asset_status = #{assetStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
-        where asset_no = #{assetNo}
+        <choose>
+            <when test="assetId != null">
+                where asset_id = #{assetId}
+            </when>
+            <otherwise>
+                where asset_no = #{assetNo}
+            </otherwise>
+        </choose>
     </update>
 
-    <delete id="deleteAssetInfoByAssetNo" parameterType="String">
-        delete from asset_info where asset_no = #{assetNo}
+    <delete id="deleteAssetInfoByAssetId" parameterType="Long">
+        delete from asset_info where asset_id = #{assetId}
     </delete>
 
-    <delete id="deleteAssetInfoByAssetNos" parameterType="String">
-        delete from asset_info where asset_no in
-        <foreach item="assetNo" collection="array" open="(" separator="," close=")">
-            #{assetNo}
+    <delete id="deleteAssetInfoByAssetIds" parameterType="Long">
+        delete from asset_info where asset_id in
+        <foreach item="assetId" collection="array" open="(" separator="," close=")">
+            #{assetId}
         </foreach>
     </delete>
 </mapper>
