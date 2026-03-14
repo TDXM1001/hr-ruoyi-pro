@@ -1,35 +1,12 @@
 import request from '@/utils/http'
-
-/**
- * 资产信息实体
- */
-export interface AssetInfo {
-  /** 资产编号 */
-  assetNo: string
-  /** 资产名称 */
-  assetName: string
-  /** 分类ID */
-  categoryId: number
-  /** 类型：1=不动产 2=固定资产 */
-  assetType: string
-  /** 归属部门 */
-  deptId?: number
-  /** 责任人 */
-  userId?: number
-  /** 状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废 */
-  status: string
-  /** 创建时间 */
-  createTime?: string
-  /** 备注 */
-  remark?: string
-}
+import type { AssetAggregateDetail, AssetAggregateReq, AssetListItem } from '@/types/asset'
 
 /**
  * 查询资产信息列表
  * @param params 查询参数
  */
 export function listInfo(params?: any) {
-  return request.get<AssetInfo[]>({
+  return request.get<AssetListItem[]>({
     url: '/asset/info/list',
     params
   })
@@ -37,19 +14,19 @@ export function listInfo(params?: any) {
 
 /**
  * 获取资产信息详细信息
- * @param assetNo 资产编号
+ * @param assetId 资产主键
  */
-export function getInfo(assetNo: string) {
-  return request.get<AssetInfo>({
-    url: `/asset/info/${assetNo}`
+export function getInfo(assetId: number | string) {
+  return request.get<AssetAggregateDetail>({
+    url: `/asset/info/${assetId}`
   })
 }
 
 /**
- * 新增资产信息
- * @param data 资产数据
+ * 新增资产聚合信息
+ * @param data 聚合请求体
  */
-export function addInfo(data: AssetInfo) {
+export function addInfo(data: AssetAggregateReq) {
   return request.post({
     url: '/asset/info',
     data
@@ -57,10 +34,10 @@ export function addInfo(data: AssetInfo) {
 }
 
 /**
- * 修改资产信息
- * @param data 资产数据
+ * 修改资产聚合信息
+ * @param data 聚合请求体
  */
-export function updateInfo(data: AssetInfo) {
+export function updateInfo(data: AssetAggregateReq) {
   return request.put({
     url: '/asset/info',
     data
@@ -69,11 +46,11 @@ export function updateInfo(data: AssetInfo) {
 
 /**
  * 删除资产信息
- * @param assetNo 资产编号
+ * @param assetId 资产主键
  */
-export function delInfo(assetNo: string) {
+export function delInfo(assetId: number | string) {
   return request.del({
-    url: `/asset/info/${assetNo}`
+    url: `/asset/info/${assetId}`
   })
 }
 

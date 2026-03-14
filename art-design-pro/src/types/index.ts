@@ -20,3 +20,6 @@ export * from './router'
 
 /** 配置相关类型定义 */
 export * from './config'
+
+/** 资产相关类型定义 */
+export * from './asset'

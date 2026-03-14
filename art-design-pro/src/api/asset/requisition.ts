@@ -15,6 +15,7 @@ export interface RequisitionQuery {
  * 发起领用请求
  */
 export interface ApplyRequisitionReq {
+  assetId: number
   assetNo: string
   reason: string
 }
