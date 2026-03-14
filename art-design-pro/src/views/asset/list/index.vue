@@ -117,7 +117,7 @@
           :data="data"
           :columns="columns"
           :pagination="pagination"
-          rowKey="assetNo"
+          rowKey="assetId"
           @selection-change="handleSelectionChange"
           @pagination:size-change="handleSizeChange"
           @pagination:current-change="handleCurrentChange"
@@ -148,6 +148,9 @@
         <ElFormItem label="资产名称">
           <ElInput v-model="applyTask.assetName" disabled />
         </ElFormItem>
+        <ElFormItem label="资产状态">
+          <ElInput v-model="applyTask.assetStatus" disabled />
+        </ElFormItem>
         <ElFormItem label="申请事由" prop="reason">
           <ElInput
             v-model="applyForm.reason"
@@ -175,6 +178,7 @@
   import { listInfo, delInfo, exportInfo } from '@/api/asset/info'
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
+  import type { AssetListItem } from '@/types/asset'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -182,6 +186,12 @@
   import { handleTree } from '@/utils/ruoyi'
   import { ElMessageBox, ElMessage, ElButton } from 'element-plus'
   import AssetEditDrawer from './modules/asset-edit-drawer.vue'
+  import {
+    buildAssetListQuery,
+    collectAssetIds,
+    toApplyAssetContext,
+    type AssetApplyContext
+  } from './asset-list.helper'
 
   defineOptions({ name: 'AssetList' })
 
@@ -190,7 +200,8 @@
   const isTreeCollapse = ref(false)
   const treeRef = ref()
   const categoryOptions = ref<any[]>([])
-  const ids = ref<string[]>([])
+  const ids = ref<number[]>([])
+  const selectedAssetNos = ref<string[]>([])
   const multiple = ref(true)
 
   // 接入字典
@@ -205,7 +216,7 @@
   const initialSearchState = {
     assetNo: '',
     assetName: '',
-    status: undefined
+    assetStatus: undefined as string | undefined
   }
 
   const formFilters = reactive({ ...initialSearchState })
@@ -225,7 +236,7 @@
     },
     {
       label: '资产状态',
-      key: 'status',
+      key: 'assetStatus',
       type: 'select',
       props: {
         placeholder: '资产状态',
@@ -267,20 +278,23 @@
             return h(DictTag, { options: asset_type.value, value: row.assetType })
           }
         },
+        { prop: 'specModel', label: '规格型号', minWidth: 140 },
+        { prop: 'locationText', label: '位置描述', minWidth: 160 },
         {
-          prop: 'status',
-          label: '状态',
-          width: 100,
+          prop: 'assetStatus',
+          label: '资产状态',
+          width: 110,
           align: 'center',
           formatter: (row: any) => {
-            return h(DictTag, { options: asset_status.value, value: row.status })
+            return h(DictTag, { options: asset_status.value, value: row.assetStatus })
           }
         },
-        { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
+        { prop: 'purchaseDate', label: '购置日期', width: 120, align: 'center' },
+        { prop: 'capitalizationDate', label: '入账日期', width: 120, align: 'center' },
         {
           prop: 'operation',
           label: '操作',
-          width: 240,
+          width: 260,
           align: 'right',
           formatter: (row: any) => {
             return h('div', { class: 'flex justify-end gap-1' }, [
@@ -331,8 +345,9 @@
   }
 
   /** 多选框选中数据 */
-  const handleSelectionChange = (selection: any[]) => {
-    ids.value = selection.map((item) => item.assetNo)
+  const handleSelectionChange = (selection: AssetListItem[]) => {
+    ids.value = collectAssetIds(selection)
+    selectedAssetNos.value = selection.map((item) => item.assetNo)
     multiple.value = !selection.length
   }
 
@@ -361,7 +376,13 @@
 
   /** 搜索 */
   const handleSearch = () => {
-    Object.assign(searchParams, formFilters)
+    Object.assign(
+      searchParams,
+      buildAssetListQuery({
+        ...formFilters,
+        categoryId: searchParams.categoryId as number | undefined
+      })
+    )
     getData()
   }
 
@@ -373,22 +394,24 @@
   }
 
   /** 修改 */
-  const handleUpdate = (row: any) => {
+  const handleUpdate = (row: AssetListItem) => {
     drawerType.value = 'edit'
     currentData.value = { ...row }
     drawerVisible.value = true
   }
 
   /** 删除 */
-  const handleDelete = async (row: any) => {
-    const assetNos = row?.assetNo || ids.value
-    if (!assetNos || (Array.isArray(assetNos) && assetNos.length === 0)) return
+  const handleDelete = async (row?: AssetListItem) => {
+    const assetIds = row?.assetId || ids.value
+    if (!assetIds || (Array.isArray(assetIds) && assetIds.length === 0)) return
+
+    const displayAssetNos = row?.assetNo || selectedAssetNos.value.join('、')
 
     try {
-      await ElMessageBox.confirm(`是否确认删除资产编号为"${assetNos}"的数据项？`, '提示', {
+      await ElMessageBox.confirm(`是否确认删除资产编号为"${displayAssetNos}"的数据项？`, '提示', {
         type: 'warning'
       })
-      await delInfo(assetNos)
+      await delInfo(Array.isArray(assetIds) ? assetIds.join(',') : assetIds)
       ElMessage.success('删除成功')
       refreshData()
     } catch (error) {
@@ -417,7 +440,12 @@
   // ==== 领用/维修 申请相关 ====
   const applyDialogVisible = ref(false)
   const applyType = ref<'requisition' | 'repair'>('requisition')
-  const applyTask = ref<any>({})
+  const applyTask = ref<AssetApplyContext>({
+    assetId: 0,
+    assetNo: '',
+    assetName: '',
+    assetStatus: ''
+  })
   const applySubmitting = ref(false)
   const applyFormRef = ref()
   const applyForm = reactive({ reason: '' })
@@ -425,16 +453,16 @@
     reason: [{ required: true, message: '请填写原因', trigger: 'blur' }]
   }
 
-  const handleRequisition = (row: any) => {
+  const handleRequisition = (row: AssetListItem) => {
     applyType.value = 'requisition'
-    applyTask.value = row
+    applyTask.value = toApplyAssetContext(row)
     applyForm.reason = ''
     applyDialogVisible.value = true
   }
 
-  const handleRepair = (row: any) => {
+  const handleRepair = (row: AssetListItem) => {
     applyType.value = 'repair'
-    applyTask.value = row
+    applyTask.value = toApplyAssetContext(row)
     applyForm.reason = ''
     applyDialogVisible.value = true
   }
@@ -451,6 +479,7 @@
       // 根据业务类型发起请求
       if (applyType.value === 'requisition') {
         await applyRequisition({
+          assetId: applyTask.value.assetId,
           assetNo: applyTask.value.assetNo,
           reason: applyForm.reason
         })
