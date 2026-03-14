@@ -217,3 +217,17 @@ Run: `cd art-design-pro && npm run type-check` (或略过直接 run build)
 git add art-design-pro/src/api/asset/ art-design-pro/src/views/asset/
 git commit -m "feat: 完成资产相关核心业务（领用/维修）的前端界面与流转对接"
 ```
+
+---
+
+## 2026-03-14 接口契约同步提示
+
+资产后端数据模型已进入聚合接口阶段，前端联调时需要同步关注以下变化：
+
+- 资产详情接口已从单表 `AssetInfo` 响应切换为聚合结构，包含 `basicInfo`、`financeInfo`、`realEstateInfo`、`dynamicAttrs`、`attachments`、`depreciationLogs`
+- 资产详情、删除、财务重算等接口统一以 `assetId` 作为主路径参数，不再使用 `assetNo` 作为内部关联键
+- 资产新增、修改接口请求体已从平铺结构调整为聚合请求体，需同时提交基础信息、财务信息和扩展信息
+- 资产类型编码已统一为 `1=固定资产`、`2=不动产`，与早期前端页面中的旧口径不同
+- 新增管理端财务接口，用于手动重算、查询折旧日志和按期间执行批量计提
+
+详细字段说明与前端最小改造触点，见 `docs/plans/2026-03-14-asset-api-contract-notes.md`。
