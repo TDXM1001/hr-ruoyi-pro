@@ -20,6 +20,7 @@ import com.ruoyi.asset.mapper.AssetDepreciationLogMapper;
 import com.ruoyi.asset.mapper.AssetFinanceMapper;
 import com.ruoyi.asset.mapper.AssetRealEstateMapper;
 import com.ruoyi.asset.service.IAssetAggregateService;
+import com.ruoyi.asset.service.IAssetFinanceService;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
@@ -55,6 +56,9 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
 
     @Autowired
     private AssetDepreciationLogMapper assetDepreciationLogMapper;
+
+    @Autowired
+    private IAssetFinanceService assetFinanceService;
 
     /**
      * 查询资产列表。
@@ -196,6 +200,7 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
     private void replaceFinanceInfo(Long assetId, AssetFinance financeInfo) {
         Date now = DateUtils.getNowDate();
         assetFinanceMapper.deleteAssetFinanceByAssetId(assetId);
+        financeInfo = assetFinanceService.calculateFinance(financeInfo);
         financeInfo.setFinanceId(null);
         financeInfo.setAssetId(assetId);
         financeInfo.setCreateTime(now);
