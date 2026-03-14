@@ -4,6 +4,7 @@
 -- 1. 本脚本依赖 20260311_asset_management_init.sql 已执行
 -- 2. 本脚本用于将 asset_info 从 asset_no 主键升级为 asset_id 主键
 -- 3. 本脚本同时补充财务、不动产、扩展属性、附件和折旧日志相关表
+-- 4. 已执行旧版业务流水脚本的库，请额外执行 20260314_asset_workflow_asset_id_patch.sql
 -- =========================================================
 
 -- 一、统一资产类型编码
@@ -55,44 +56,7 @@ UPDATE `asset_info`
 SET `responsible_user_id` = `user_id`
 WHERE `responsible_user_id` IS NULL;
 
--- 三、补充业务流水表 asset_id 关联字段
-ALTER TABLE `asset_requisition`
-    ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT '资产ID' AFTER `requisition_no`,
-    ADD KEY `idx_asset_requisition_asset_id` (`asset_id`);
-
-UPDATE `asset_requisition` req
-LEFT JOIN `asset_info` info ON info.`asset_no` = req.`asset_no`
-SET req.`asset_id` = info.`asset_id`
-WHERE req.`asset_id` IS NULL;
-
-ALTER TABLE `asset_requisition`
-    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
-
-ALTER TABLE `asset_maintenance`
-    ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT '资产ID' AFTER `maintenance_no`,
-    ADD KEY `idx_asset_maintenance_asset_id` (`asset_id`);
-
-UPDATE `asset_maintenance` maintenance
-LEFT JOIN `asset_info` info ON info.`asset_no` = maintenance.`asset_no`
-SET maintenance.`asset_id` = info.`asset_id`
-WHERE maintenance.`asset_id` IS NULL;
-
-ALTER TABLE `asset_maintenance`
-    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
-
-ALTER TABLE `asset_disposal`
-    ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT '资产ID' AFTER `disposal_no`,
-    ADD KEY `idx_asset_disposal_asset_id` (`asset_id`);
-
-UPDATE `asset_disposal` disposal
-LEFT JOIN `asset_info` info ON info.`asset_no` = disposal.`asset_no`
-SET disposal.`asset_id` = info.`asset_id`
-WHERE disposal.`asset_id` IS NULL;
-
-ALTER TABLE `asset_disposal`
-    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
-
--- 四、资产财务表
+-- 三、资产财务表
 CREATE TABLE `asset_finance` (
   `finance_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '财务记录ID',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
@@ -142,7 +106,7 @@ SELECT
   '历史资产默认生成财务记录，待补充财务数据'
 FROM `asset_info`;
 
--- 五、不动产专表
+-- 四、不动产专表
 CREATE TABLE `asset_real_estate` (
   `real_estate_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '不动产记录ID',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
@@ -183,7 +147,7 @@ CREATE TABLE `asset_real_estate` (
   KEY `idx_asset_real_estate_term_end` (`land_term_end_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='不动产专表';
 
--- 六、分类扩展字段定义表
+-- 五、分类扩展字段定义表
 CREATE TABLE `asset_category_attr` (
   `attr_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '字段定义ID',
   `category_id` bigint(20) NOT NULL COMMENT '分类ID',
@@ -211,7 +175,7 @@ CREATE TABLE `asset_category_attr` (
   KEY `idx_asset_category_attr_sort` (`category_id`, `sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产分类扩展字段定义表';
 
--- 七、分类扩展字段值表
+-- 六、分类扩展字段值表
 CREATE TABLE `asset_attr_value` (
   `value_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '字段值ID',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
@@ -232,7 +196,7 @@ CREATE TABLE `asset_attr_value` (
   KEY `idx_asset_attr_value_attr_code` (`attr_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产分类扩展字段值表';
 
--- 八、附件表
+-- 七、附件表
 CREATE TABLE `asset_attachment` (
   `attachment_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '附件ID',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
@@ -252,7 +216,7 @@ CREATE TABLE `asset_attachment` (
   KEY `idx_asset_attachment_biz_type` (`biz_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产附件表';
 
--- 九、折旧日志表
+-- 八、折旧日志表
 CREATE TABLE `asset_depreciation_log` (
   `log_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '折旧日志ID',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
