@@ -12,6 +12,8 @@ public interface IAssetFinanceService {
     /**
      * 按资产ID查询财务信息。
      *
+     * 该接口同时供管理端财务接口和聚合详情查询复用。
+     *
      * @param assetId 资产ID
      * @return 财务信息
      */
@@ -19,6 +21,8 @@ public interface IAssetFinanceService {
 
     /**
      * 重新计算资产财务结果并回写数据表。
+     *
+     * 该接口用于管理端手动触发财务重算。
      *
      * @param assetId 资产ID
      * @return 重算后的财务信息

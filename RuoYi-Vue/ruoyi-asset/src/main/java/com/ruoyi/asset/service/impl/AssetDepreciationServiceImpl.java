@@ -1,5 +1,6 @@
 package com.ruoyi.asset.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import com.ruoyi.asset.domain.AssetDepreciationLog;
 import com.ruoyi.asset.domain.AssetFinance;
@@ -22,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AssetDepreciationServiceImpl implements IAssetDepreciationService {
+    private static final String FINANCE_STATUS_DISPOSED = "3";
+
     @Autowired
     private AssetFinanceMapper assetFinanceMapper;
 
@@ -75,5 +78,48 @@ public class AssetDepreciationServiceImpl implements IAssetDepreciationService {
         calculatedFinance.setUpdateTime(DateUtils.getNowDate());
         assetFinanceMapper.updateAssetFinance(calculatedFinance);
         return depreciationLog;
+    }
+
+    /**
+     * 按期间批量执行折旧计提，已处置、已完成或已执行过的资产会被自动跳过。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<AssetDepreciationLog> accrueDepreciationByPeriod(String period) {
+        if (StringUtils.isBlank(period)) {
+            throw new ServiceException("折旧期间不能为空");
+        }
+        List<AssetDepreciationLog> result = new ArrayList<>();
+        List<AssetFinance> financeList = assetFinanceMapper.selectAssetFinanceList(new AssetFinance());
+        for (AssetFinance assetFinance : financeList) {
+            if (!canAccrueByPeriod(assetFinance, period)) {
+                continue;
+            }
+            result.add(accrueDepreciation(assetFinance.getAssetId(), period));
+        }
+        return result;
+    }
+
+    /**
+     * 仅对具备折旧条件、且本期尚未执行的资产进行批量计提。
+     */
+    private boolean canAccrueByPeriod(AssetFinance assetFinance, String period) {
+        if (assetFinance == null || assetFinance.getAssetId() == null) {
+            return false;
+        }
+        if (FINANCE_STATUS_DISPOSED.equals(assetFinance.getFinanceStatus())) {
+            return false;
+        }
+        if (assetFinance.getOriginalValue() == null
+            || assetFinance.getUsefulLifeMonth() == null
+            || assetFinance.getUsefulLifeMonth() <= 0
+            || StringUtils.isBlank(assetFinance.getDepreciationMethod())) {
+            return false;
+        }
+        if (assetDepreciationLogMapper.selectAssetDepreciationLogByAssetIdAndPeriod(assetFinance.getAssetId(), period) != null) {
+            return false;
+        }
+        List<AssetDepreciationLog> depreciationLogs = assetDepreciationLogMapper.selectAssetDepreciationLogByAssetId(assetFinance.getAssetId());
+        return depreciationLogs.size() < assetFinance.getUsefulLifeMonth();
     }
 }

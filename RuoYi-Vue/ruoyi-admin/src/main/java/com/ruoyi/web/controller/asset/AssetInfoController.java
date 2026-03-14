@@ -64,7 +64,9 @@ public class AssetInfoController extends BaseController {
     }
 
     /**
-     * 获取资产主档详细信息。
+     * 获取资产聚合详情。
+     *
+     * 返回主档、财务、不动产、动态属性、附件以及最近折旧日志。
      */
     @PreAuthorize("@ss.hasPermi('asset:info:query')")
     @GetMapping("/{assetId}")

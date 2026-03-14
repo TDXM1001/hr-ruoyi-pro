@@ -26,4 +26,12 @@ public interface IAssetDepreciationService {
      * @return 折旧日志
      */
     public AssetDepreciationLog accrueDepreciation(Long assetId, String period);
+
+    /**
+     * 按期间批量执行月度折旧计提。
+     *
+     * @param period 会计期间
+     * @return 本次生成的折旧日志集合
+     */
+    public List<AssetDepreciationLog> accrueDepreciationByPeriod(String period);
 }

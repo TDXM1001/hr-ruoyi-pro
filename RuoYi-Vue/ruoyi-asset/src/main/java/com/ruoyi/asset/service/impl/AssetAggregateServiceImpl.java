@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AssetAggregateServiceImpl implements IAssetAggregateService {
     private static final String ASSET_TYPE_REAL_ESTATE = "2";
+    private static final int RECENT_DEPRECIATION_LOG_LIMIT = 12;
 
     @Autowired
     private IAssetInfoService assetInfoService;
@@ -89,7 +90,7 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
         detailVo.setRealEstateInfo(assetRealEstateMapper.selectAssetRealEstateByAssetId(assetId));
         detailVo.setDynamicAttrs(assetAttrValueMapper.selectAssetAttrValueByAssetId(assetId));
         detailVo.setAttachments(assetAttachmentMapper.selectAssetAttachmentByAssetId(assetId));
-        detailVo.setDepreciationLogs(assetDepreciationLogMapper.selectAssetDepreciationLogByAssetId(assetId));
+        detailVo.setDepreciationLogs(loadRecentDepreciationLogs(assetId));
         return detailVo;
     }
 
@@ -280,6 +281,17 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
             attachment.setUpdateTime(now);
             assetAttachmentMapper.insertAssetAttachment(attachment);
         }
+    }
+
+    /**
+     * 详情页仅返回最近折旧日志，避免一次加载全部历史记录造成响应过重。
+     */
+    private List<AssetDepreciationLog> loadRecentDepreciationLogs(Long assetId) {
+        List<AssetDepreciationLog> depreciationLogs = assetDepreciationLogMapper.selectAssetDepreciationLogByAssetId(assetId);
+        if (depreciationLogs == null || depreciationLogs.size() <= RECENT_DEPRECIATION_LOG_LIMIT) {
+            return depreciationLogs;
+        }
+        return new ArrayList<>(depreciationLogs.subList(0, RECENT_DEPRECIATION_LOG_LIMIT));
     }
 
     /**
