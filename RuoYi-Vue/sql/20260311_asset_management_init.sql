@@ -12,10 +12,10 @@ CREATE TABLE `asset_info` (
   `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
   `asset_name` varchar(100) NOT NULL COMMENT '资产名称',
   `category_id` bigint(20) NOT NULL COMMENT '分类ID',
-  `asset_type` tinyint(4) NOT NULL COMMENT '类型：1=不动产 2=固定资产',
+  `asset_type` char(1) NOT NULL COMMENT '类型：1=不动产 2=固定资产',
   `dept_id` bigint(20) DEFAULT NULL COMMENT '归属部门',
   `user_id` bigint(20) DEFAULT NULL COMMENT '责任人',
-  `status` tinyint(4) DEFAULT '1' COMMENT '状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废',
+  `status` char(1) DEFAULT '1' COMMENT '状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废',
   `create_time` datetime DEFAULT NULL,
   PRIMARY KEY (`asset_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产主表';

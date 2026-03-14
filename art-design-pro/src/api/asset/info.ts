@@ -11,13 +11,13 @@ export interface AssetInfo {
   /** 分类ID */
   categoryId: number
   /** 类型：1=不动产 2=固定资产 */
-  assetType: number
+  assetType: string
   /** 归属部门 */
   deptId?: number
   /** 责任人 */
   userId?: number
   /** 状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废 */
-  status: number
+  status: string
   /** 创建时间 */
   createTime?: string
   /** 备注 */

@@ -27,7 +27,7 @@ public class AssetInfo extends BaseEntity {
 
     /** 类型：1=不动产 2=固定资产 */
     @Excel(name = "类型", readConverterExp = "1=不动产,2=固定资产")
-    private Integer assetType;
+    private String assetType;
 
     /** 归属部门 */
     @Excel(name = "归属部门")
@@ -39,7 +39,7 @@ public class AssetInfo extends BaseEntity {
 
     /** 状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废 */
     @Excel(name = "状态", readConverterExp = "1=正常,2=领用中,3=维修中,4=盘点中,5=已报废")
-    private Integer status;
+    private String status;
 
     public void setAssetNo(String assetNo) {
         this.assetNo = assetNo;
@@ -65,11 +65,11 @@ public class AssetInfo extends BaseEntity {
         return categoryId;
     }
 
-    public void setAssetType(Integer assetType) {
+    public void setAssetType(String assetType) {
         this.assetType = assetType;
     }
 
-    public Integer getAssetType() {
+    public String getAssetType() {
         return assetType;
     }
 
@@ -89,11 +89,11 @@ public class AssetInfo extends BaseEntity {
         return userId;
     }
 
-    public void setStatus(Integer status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
-    public Integer getStatus() {
+    public String getStatus() {
         return status;
     }
 

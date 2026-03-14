@@ -25,10 +25,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assetNo != null and assetNo != ''"> and asset_no = #{assetNo}</if>
             <if test="assetName != null and assetName != ''"> and asset_name like concat('%', #{assetName}, '%')</if>
             <if test="categoryId != null "> and category_id = #{categoryId}</if>
-            <if test="assetType != null "> and asset_type = #{assetType}</if>
+            <if test="assetType != null and assetType != ''"> and asset_type = #{assetType}</if>
             <if test="deptId != null "> and dept_id = #{deptId}</if>
             <if test="userId != null "> and user_id = #{userId}</if>
-            <if test="status != null "> and status = #{status}</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
         </where>
     </select>
 

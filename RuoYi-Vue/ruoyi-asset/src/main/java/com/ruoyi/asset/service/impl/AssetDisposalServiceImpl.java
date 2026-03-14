@@ -49,7 +49,7 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
         // 修改资产状态为"已报废"审批中（在状态这里，为了测试直接置为5已报废或者4盘点中，因为计划说状态变为“维修中/盘点中/已报废”，这里选5）
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetNo(assetDisposal.getAssetNo());
-        assetInfo.setStatus(5); // 5=已报废
+        assetInfo.setStatus("5"); // 5=已报废
         assetInfoMapper.updateAssetInfo(assetInfo);
 
         // 发起审批流程

@@ -49,7 +49,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
         // 修改资产状态为"维修中" (状态3为维修中)
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetNo(assetMaintenance.getAssetNo());
-        assetInfo.setStatus(3); // 3=维修中
+        assetInfo.setStatus("3"); // 3=维修中
         assetInfoMapper.updateAssetInfo(assetInfo);
 
         // 发起审批流程

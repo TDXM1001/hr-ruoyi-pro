@@ -51,7 +51,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         // 修改资产状态为"领用中"
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetNo(assetRequisition.getAssetNo());
-        assetInfo.setStatus(2); // 2=领用中
+        assetInfo.setStatus("2"); // 2=领用中
         assetInfoMapper.updateAssetInfo(assetInfo);
 
         // 发起审批流程

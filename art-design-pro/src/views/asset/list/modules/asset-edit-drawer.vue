@@ -108,11 +108,11 @@
   const initialFormData = {
     assetNo: '',
     assetName: '',
-    categoryId: 0,
-    assetType: 2,
-    deptId: 0,
-    userId: 0,
-    status: 1,
+    categoryId: undefined,
+    assetType: undefined,
+    deptId: undefined,
+    userId: undefined,
+    status: undefined,
     remark: ''
   }
 
@@ -123,7 +123,9 @@
     assetName: [{ required: true, message: '资产名称不能为空', trigger: 'blur' }],
     categoryId: [{ required: true, message: '资产分类不能为空', trigger: 'change' }],
     assetType: [{ required: true, message: '资产类型不能为空', trigger: 'change' }],
-    status: [{ required: true, message: '资产状态不能为空', trigger: 'change' }]
+    status: [{ required: true, message: '资产状态不能为空', trigger: 'change' }],
+    deptId: [{ required: true, message: '归属部门不能为空', trigger: 'change' }],
+    userId: [{ required: true, message: '责任人不能为空', trigger: 'change' }]
   }
 
   // 定义表单项
@@ -171,11 +173,7 @@
   /** 获取下拉选项 */
   const getOptions = async () => {
     try {
-      const [catRes, deptRes, userRes] = await Promise.all([
-        listCategory(),
-        deptTreeSelect(),
-        listUser({ pageSize: 100 })
-      ])
+      const [catRes, deptRes] = await Promise.all([listCategory(), deptTreeSelect()])
 
       // 分类树
       const catList = Array.isArray(catRes)
@@ -185,13 +183,36 @@
 
       // 部门树
       deptOptions.value = Array.isArray(deptRes) ? deptRes : (deptRes as any).data || []
-
-      // 用户列表
-      userOptions.value = (userRes as any).rows || []
     } catch (error) {
       console.error('获取选项失败:', error)
     }
   }
+
+  /** 根据部门获取用户 */
+  const getUserOptions = async (deptId?: number) => {
+    if (!deptId) {
+      userOptions.value = []
+      return
+    }
+    try {
+      const res: any = await listUser({ deptId, pageSize: 100 })
+      userOptions.value = res.rows || []
+    } catch (error) {
+      console.error('获取用户列表失败:', error)
+    }
+  }
+
+  // 监听部门变化联动责任人
+  watch(
+    () => formData.deptId,
+    (newDeptId, oldDeptId) => {
+      // 只有手动切换部门时才清空责任人（如果是回显引起的变化则跳过）
+      if (oldDeptId !== undefined) {
+        formData.userId = undefined
+      }
+      getUserOptions(newDeptId)
+    }
+  )
 
   watch(
     () => props.modelValue,
@@ -203,12 +224,19 @@
           loading.value = true
           try {
             const res: any = await getInfo(props.assetData.assetNo)
-            Object.assign(formData, res.data || res)
+            const data = res.data || res
+            // 先加载对应部门的用户列表，再赋值，确保回显正常
+            if (data.deptId) {
+              await getUserOptions(data.deptId)
+            }
+            Object.assign(formData, data)
           } finally {
             loading.value = false
           }
         } else if (props.dialogType === 'add') {
+          // 重置表单为初始空值
           Object.assign(formData, initialFormData)
+          userOptions.value = []
         }
       }
     }
@@ -228,10 +256,10 @@
       submitLoading.value = true
       try {
         if (props.dialogType === 'edit') {
-          await updateInfo(formData)
+          await updateInfo(formData as any)
           ElMessage.success('修改成功')
         } else {
-          await addInfo(formData)
+          await addInfo(formData as any)
           ElMessage.success('新增成功')
         }
         visible.value = false
