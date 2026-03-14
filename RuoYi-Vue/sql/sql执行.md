@@ -17,21 +17,27 @@
 
 3.  **`20260311_asset_management_init.sql`**
     *   **用途**：创建资产分类表 (`asset_category`) 和资产台账主表 (`asset_info`)。
-4.  **`20260311_asset_dicts.sql`**
+4.  **`20260314_asset_data_model_refactor.sql`**
+    *   **用途**：
+        *   将 `asset_info` 从业务编码主键升级为内部 `asset_id` 主键。
+        *   增加资产财务表、不动产专表、扩展字段定义和值表、附件表、折旧日志表。
+        *   回填旧资产主档的基础兼容数据。
+    *   **依赖**：依赖 `20260311_asset_management_init.sql` 已先执行。
+5.  **`20260311_asset_dicts.sql`**
     *   **用途**：初始化资产相关的字典数据（如：资产类型、资产状态）。
     *   **依赖**：依赖 `sys_dict_type` 和 `sys_dict_data` 表。
-5.  **`20260311_asset_menu_init.sql`**
+6.  **`20260311_asset_menu_init.sql`**
     *   **用途**：初始化资产管理系统的菜单和权限按钮。
     *   **依赖**：依赖 `sys_menu` 表。
 
 ## 3. 审批引擎与业务流程 (Phase 2)
 增加流程引擎相关表以及具体的业务申请单据。
 
-6.  **`20260312_asset_workflow_business.sql`**
+7.  **`20260312_asset_workflow_business.sql`**
     *   **用途**：
         *   审批引擎核心表 (`wf_approval_template`, `wf_approval_instance`, `wf_approval_node`)。
         *   资产业务流水表（领用单、采购单、调拨单、维修单、处置单）。
-7.  **`20260312_asset_workflow_menu.sql`**
+8.  **`20260312_asset_workflow_menu.sql`**
     *   **用途**：初始化审批中心的菜单（待办、已办）以及资产业务记录菜单。
     *   **依赖**：依赖 `sys_menu` 表，且会自动查找“资产系统”父菜单 ID。
 
