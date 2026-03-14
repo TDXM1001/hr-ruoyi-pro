@@ -2,6 +2,10 @@ package com.ruoyi.web.controller.asset;
 
 import java.util.List;
 import com.ruoyi.asset.domain.AssetInfo;
+import com.ruoyi.asset.domain.dto.AssetCreateReq;
+import com.ruoyi.asset.domain.dto.AssetUpdateReq;
+import com.ruoyi.asset.domain.vo.AssetListVo;
+import com.ruoyi.asset.service.IAssetAggregateService;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
@@ -31,6 +35,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/asset/info")
 public class AssetInfoController extends BaseController {
     @Autowired
+    private IAssetAggregateService assetAggregateService;
+
+    @Autowired
     private IAssetInfoService assetInfoService;
 
     /**
@@ -40,7 +47,7 @@ public class AssetInfoController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo list(AssetInfo assetInfo) {
         startPage();
-        List<AssetInfo> list = assetInfoService.selectAssetInfoList(assetInfo);
+        List<AssetListVo> list = assetAggregateService.selectAssetList(assetInfo);
         return getDataTable(list);
     }
 
@@ -51,8 +58,8 @@ public class AssetInfoController extends BaseController {
     @Log(title = "资产主档", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, AssetInfo assetInfo) {
-        List<AssetInfo> list = assetInfoService.selectAssetInfoList(assetInfo);
-        ExcelUtil<AssetInfo> util = new ExcelUtil<>(AssetInfo.class);
+        List<AssetListVo> list = assetAggregateService.selectAssetList(assetInfo);
+        ExcelUtil<AssetListVo> util = new ExcelUtil<>(AssetListVo.class);
         util.exportExcel(response, list, "资产主档");
     }
 
@@ -62,7 +69,7 @@ public class AssetInfoController extends BaseController {
     @PreAuthorize("@ss.hasPermi('asset:info:query')")
     @GetMapping("/{assetId}")
     public AjaxResult getInfo(@PathVariable("assetId") Long assetId) {
-        return success(assetInfoService.selectAssetInfoByAssetId(assetId));
+        return success(assetAggregateService.selectAssetDetailByAssetId(assetId));
     }
 
     /**
@@ -71,8 +78,8 @@ public class AssetInfoController extends BaseController {
     @PreAuthorize("@ss.hasPermi('asset:info:add')")
     @Log(title = "资产主档", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@RequestBody AssetInfo assetInfo) {
-        return toAjax(assetInfoService.insertAssetInfo(assetInfo));
+    public AjaxResult add(@RequestBody AssetCreateReq assetCreateReq) {
+        return toAjax(assetAggregateService.insertAsset(assetCreateReq));
     }
 
     /**
@@ -81,8 +88,8 @@ public class AssetInfoController extends BaseController {
     @PreAuthorize("@ss.hasPermi('asset:info:edit')")
     @Log(title = "资产主档", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestBody AssetInfo assetInfo) {
-        return toAjax(assetInfoService.updateAssetInfo(assetInfo));
+    public AjaxResult edit(@RequestBody AssetUpdateReq assetUpdateReq) {
+        return toAjax(assetAggregateService.updateAsset(assetUpdateReq));
     }
 
     /**

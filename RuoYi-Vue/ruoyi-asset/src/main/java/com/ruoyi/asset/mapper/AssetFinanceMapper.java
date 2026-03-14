@@ -20,6 +20,8 @@ public interface AssetFinanceMapper {
 
     public int updateAssetFinance(AssetFinance assetFinance);
 
+    public int deleteAssetFinanceByAssetId(Long assetId);
+
     public int deleteAssetFinanceByFinanceId(Long financeId);
 
     public int deleteAssetFinanceByFinanceIds(Long[] financeIds);

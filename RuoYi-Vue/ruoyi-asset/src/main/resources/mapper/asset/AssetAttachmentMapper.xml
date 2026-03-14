@@ -79,6 +79,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         delete from asset_attachment where attachment_id = #{attachmentId}
     </delete>
 
+    <delete id="deleteAssetAttachmentByAssetId" parameterType="Long">
+        delete from asset_attachment where asset_id = #{assetId}
+    </delete>
+
     <delete id="deleteAssetAttachmentByAttachmentIds" parameterType="Long">
         delete from asset_attachment where attachment_id in
         <foreach item="attachmentId" collection="array" open="(" separator="," close=")">

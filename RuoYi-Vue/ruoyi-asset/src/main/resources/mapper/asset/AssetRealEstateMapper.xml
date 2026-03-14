@@ -131,6 +131,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         delete from asset_real_estate where real_estate_id = #{realEstateId}
     </delete>
 
+    <delete id="deleteAssetRealEstateByAssetId" parameterType="Long">
+        delete from asset_real_estate where asset_id = #{assetId}
+    </delete>
+
     <delete id="deleteAssetRealEstateByRealEstateIds" parameterType="Long">
         delete from asset_real_estate where real_estate_id in
         <foreach item="realEstateId" collection="array" open="(" separator="," close=")">

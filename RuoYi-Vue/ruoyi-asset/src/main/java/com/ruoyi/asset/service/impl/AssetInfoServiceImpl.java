@@ -5,6 +5,7 @@ import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.mapper.AssetInfoMapper;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.common.utils.DateUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,11 +61,9 @@ public class AssetInfoServiceImpl implements IAssetInfoService {
      */
     @Override
     public int insertAssetInfo(AssetInfo assetInfo) {
+        normalizeAssetInfo(assetInfo);
         assetInfo.setCreateTime(DateUtils.getNowDate());
         assetInfo.setUpdateTime(DateUtils.getNowDate());
-        if (assetInfo.getAssetStatus() == null || assetInfo.getAssetStatus().isEmpty()) {
-            assetInfo.setAssetStatus("1");
-        }
         return assetInfoMapper.insertAssetInfo(assetInfo);
     }
 
@@ -76,6 +75,7 @@ public class AssetInfoServiceImpl implements IAssetInfoService {
      */
     @Override
     public int updateAssetInfo(AssetInfo assetInfo) {
+        normalizeAssetInfo(assetInfo);
         assetInfo.setUpdateTime(DateUtils.getNowDate());
         return assetInfoMapper.updateAssetInfo(assetInfo);
     }
@@ -100,5 +100,23 @@ public class AssetInfoServiceImpl implements IAssetInfoService {
     @Override
     public int deleteAssetInfoByAssetId(Long assetId) {
         return assetInfoMapper.deleteAssetInfoByAssetId(assetId);
+    }
+
+    /**
+     * 统一整理资产主档字段，减少脏值写入。
+     */
+    private void normalizeAssetInfo(AssetInfo assetInfo) {
+        if (assetInfo == null) {
+            return;
+        }
+        assetInfo.setAssetNo(StringUtils.trimToNull(assetInfo.getAssetNo()));
+        assetInfo.setAssetName(StringUtils.trimToNull(assetInfo.getAssetName()));
+        assetInfo.setSpecModel(StringUtils.trimToNull(assetInfo.getSpecModel()));
+        assetInfo.setUnit(StringUtils.trimToNull(assetInfo.getUnit()));
+        assetInfo.setLocationText(StringUtils.trimToNull(assetInfo.getLocationText()));
+        assetInfo.setAcquireMethod(StringUtils.trimToNull(assetInfo.getAcquireMethod()));
+        if (StringUtils.isBlank(assetInfo.getAssetStatus())) {
+            assetInfo.setAssetStatus("1");
+        }
     }
 }

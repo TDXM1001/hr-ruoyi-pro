@@ -82,6 +82,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         delete from asset_attr_value where value_id = #{valueId}
     </delete>
 
+    <delete id="deleteAssetAttrValueByAssetId" parameterType="Long">
+        delete from asset_attr_value where asset_id = #{assetId}
+    </delete>
+
     <delete id="deleteAssetAttrValueByValueIds" parameterType="Long">
         delete from asset_attr_value where value_id in
         <foreach item="valueId" collection="array" open="(" separator="," close=")">

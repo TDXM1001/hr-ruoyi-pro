@@ -20,6 +20,8 @@ public interface AssetRealEstateMapper {
 
     public int updateAssetRealEstate(AssetRealEstate assetRealEstate);
 
+    public int deleteAssetRealEstateByAssetId(Long assetId);
+
     public int deleteAssetRealEstateByRealEstateId(Long realEstateId);
 
     public int deleteAssetRealEstateByRealEstateIds(Long[] realEstateIds);

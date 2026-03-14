@@ -20,6 +20,8 @@ public interface AssetAttachmentMapper {
 
     public int updateAssetAttachment(AssetAttachment assetAttachment);
 
+    public int deleteAssetAttachmentByAssetId(Long assetId);
+
     public int deleteAssetAttachmentByAttachmentId(Long attachmentId);
 
     public int deleteAssetAttachmentByAttachmentIds(Long[] attachmentIds);

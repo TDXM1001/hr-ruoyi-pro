@@ -20,6 +20,8 @@ public interface AssetAttrValueMapper {
 
     public int updateAssetAttrValue(AssetAttrValue assetAttrValue);
 
+    public int deleteAssetAttrValueByAssetId(Long assetId);
+
     public int deleteAssetAttrValueByValueId(Long valueId);
 
     public int deleteAssetAttrValueByValueIds(Long[] valueIds);
