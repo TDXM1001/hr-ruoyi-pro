@@ -1,5 +1,6 @@
 package com.ruoyi.asset.service.impl;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -123,8 +124,14 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
             throw new ServiceException("待修改的资产不存在");
         }
         checkAssetNoUnique(basicInfo.getAssetNo(), basicInfo.getAssetId());
+        AssetFinance financeToPersist = prepareFinanceInfoForUpdate(
+            assetFinanceMapper.selectAssetFinanceByAssetId(basicInfo.getAssetId()),
+            assetUpdateReq.getFinanceInfo()
+        );
         assetInfoService.updateAssetInfo(basicInfo);
-        replaceFinanceInfo(basicInfo.getAssetId(), assetUpdateReq.getFinanceInfo());
+        if (financeToPersist != null) {
+            replaceFinanceInfo(basicInfo.getAssetId(), financeToPersist);
+        }
         replaceRealEstateInfo(basicInfo.getAssetId(), basicInfo.getAssetType(), assetUpdateReq.getRealEstateInfo());
         replaceDynamicAttrs(basicInfo.getAssetId(), basicInfo.getCategoryId(), assetUpdateReq.getDynamicAttrs());
         replaceAttachments(basicInfo.getAssetId(), assetUpdateReq.getAttachments());
@@ -273,5 +280,56 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
             attachment.setUpdateTime(now);
             assetAttachmentMapper.insertAssetAttachment(attachment);
         }
+    }
+
+    /**
+     * 已开始折旧的资产不允许通过聚合修改静默改写财务基础数据。
+     */
+    private AssetFinance prepareFinanceInfoForUpdate(AssetFinance currentFinance, AssetFinance incomingFinance) {
+        if (currentFinance == null) {
+            return incomingFinance;
+        }
+        if (!hasDepreciationStarted(currentFinance)) {
+            return incomingFinance;
+        }
+        validateLockedFinanceFields(currentFinance, incomingFinance);
+        return null;
+    }
+
+    /**
+     * 一旦进入折旧周期，只允许保留现有财务快照，避免累计折旧被意外重置。
+     */
+    private void validateLockedFinanceFields(AssetFinance currentFinance, AssetFinance incomingFinance) {
+        if (incomingFinance == null) {
+            throw new ServiceException("资产财务信息不能为空");
+        }
+        if (isBigDecimalChanged(currentFinance.getOriginalValue(), incomingFinance.getOriginalValue())
+            || isStringChanged(currentFinance.getDepreciationMethod(), incomingFinance.getDepreciationMethod())
+            || !Objects.equals(currentFinance.getUsefulLifeMonth(), incomingFinance.getUsefulLifeMonth())
+            || isBigDecimalChanged(currentFinance.getSalvageRate(), incomingFinance.getSalvageRate())
+            || !Objects.equals(currentFinance.getDepreciationStartDate(), incomingFinance.getDepreciationStartDate())) {
+            throw new ServiceException("资产已开始折旧，不能直接修改财务基础数据");
+        }
+    }
+
+    /**
+     * 通过最近折旧期间、累计折旧和财务状态综合判断是否已经开始折旧。
+     */
+    private boolean hasDepreciationStarted(AssetFinance assetFinance) {
+        return StringUtils.isNotBlank(assetFinance.getLastDepreciationPeriod())
+            || defaultZero(assetFinance.getAccumulatedDepreciation()).compareTo(BigDecimal.ZERO) > 0
+            || StringUtils.equalsAny(assetFinance.getFinanceStatus(), "1", "2");
+    }
+
+    private boolean isBigDecimalChanged(BigDecimal currentValue, BigDecimal incomingValue) {
+        return defaultZero(currentValue).compareTo(defaultZero(incomingValue)) != 0;
+    }
+
+    private boolean isStringChanged(String currentValue, String incomingValue) {
+        return !StringUtils.equals(StringUtils.trimToEmpty(currentValue), StringUtils.trimToEmpty(incomingValue));
+    }
+
+    private BigDecimal defaultZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 }

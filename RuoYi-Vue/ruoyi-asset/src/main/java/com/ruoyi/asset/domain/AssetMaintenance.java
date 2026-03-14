@@ -12,6 +12,9 @@ public class AssetMaintenance extends BaseEntity {
     /** 维修单号 */
     private String maintenanceNo;
 
+    /** 资产ID */
+    private Long assetId;
+
     /** 资产编号 */
     @Excel(name = "资产编号")
     private String assetNo;
@@ -38,6 +41,14 @@ public class AssetMaintenance extends BaseEntity {
 
     public String getMaintenanceNo() {
         return maintenanceNo;
+    }
+
+    public void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    public Long getAssetId() {
+        return assetId;
     }
 
     public void setAssetNo(String assetNo) {

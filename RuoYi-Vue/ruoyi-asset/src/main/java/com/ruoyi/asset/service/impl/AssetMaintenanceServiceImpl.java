@@ -1,23 +1,27 @@
 package com.ruoyi.asset.service.impl;
 
 import java.util.List;
+import com.ruoyi.asset.domain.AssetInfo;
+import com.ruoyi.asset.domain.AssetMaintenance;
+import com.ruoyi.asset.mapper.AssetInfoMapper;
+import com.ruoyi.asset.mapper.AssetMaintenanceMapper;
+import com.ruoyi.asset.service.IAssetMaintenanceService;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.workflow.service.IApprovalEngine;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.ruoyi.asset.mapper.AssetMaintenanceMapper;
-import com.ruoyi.asset.mapper.AssetInfoMapper;
-import com.ruoyi.asset.domain.AssetMaintenance;
-import com.ruoyi.asset.domain.AssetInfo;
-import com.ruoyi.asset.service.IAssetMaintenanceService;
-import com.ruoyi.workflow.service.IApprovalEngine;
-import com.ruoyi.common.utils.DateUtils;
 
 /**
  * 资产维修服务实现
  */
 @Service
 public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
+    private static final String ASSET_STATUS_MAINTENANCE = "3";
+    private static final String ASSET_STATUS_SCRAPPED = "5";
+    private static final String ASSET_STATUS_DISPOSED = "6";
     
     @Autowired
     private AssetMaintenanceMapper assetMaintenanceMapper;
@@ -43,18 +47,55 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     public int insertAssetMaintenance(AssetMaintenance assetMaintenance) {
         assetMaintenance.setCreateTime(DateUtils.getNowDate());
         assetMaintenance.setStatus(0); // 审批中
+
+        // 统一解析资产主档，保证维保流程与资产主档通过 assetId 关联。
+        AssetInfo assetInfo = resolveAsset(assetMaintenance.getAssetId(), assetMaintenance.getAssetNo());
+        validateAssetForMaintenance(assetInfo);
+        assetMaintenance.setAssetId(assetInfo.getAssetId());
+        assetMaintenance.setAssetNo(assetInfo.getAssetNo());
         
         int rows = assetMaintenanceMapper.insertAssetMaintenance(assetMaintenance);
 
         // 修改资产状态为"维修中" (状态3为维修中)
-        AssetInfo assetInfo = new AssetInfo();
-        assetInfo.setAssetNo(assetMaintenance.getAssetNo());
-        assetInfo.setStatus("3"); // 3=维修中
-        assetInfoMapper.updateAssetInfo(assetInfo);
+        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_MAINTENANCE);
 
         // 发起审批流程
         approvalEngine.startProcess(assetMaintenance.getMaintenanceNo(), "asset_maintenance");
         
         return rows;
+    }
+
+    private AssetInfo resolveAsset(Long assetId, String assetNo) {
+        AssetInfo assetInfo;
+        if (assetId != null) {
+            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
+        } else if (StringUtils.isNotBlank(assetNo)) {
+            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
+        } else {
+            throw new ServiceException("资产ID或资产编号不能为空");
+        }
+        if (assetInfo == null) {
+            throw new ServiceException("关联资产不存在");
+        }
+        return assetInfo;
+    }
+
+    /**
+     * 已处置或已报废资产不允许继续发起维修流程。
+     */
+    private void validateAssetForMaintenance(AssetInfo assetInfo) {
+        if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
+            throw new ServiceException("已处置资产不能维修");
+        }
+        if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
+            throw new ServiceException("已报废资产不能维修");
+        }
+    }
+
+    private void updateAssetStatus(Long assetId, String assetStatus) {
+        AssetInfo assetInfo = new AssetInfo();
+        assetInfo.setAssetId(assetId);
+        assetInfo.setAssetStatus(assetStatus);
+        assetInfoMapper.updateAssetInfo(assetInfo);
     }
 }

@@ -12,6 +12,9 @@ public class AssetDisposal extends BaseEntity {
     /** 报废单号 */
     private String disposalNo;
 
+    /** 资产ID */
+    private Long assetId;
+
     /** 资产编号 */
     @Excel(name = "资产编号")
     private String assetNo;
@@ -38,6 +41,14 @@ public class AssetDisposal extends BaseEntity {
 
     public String getDisposalNo() {
         return disposalNo;
+    }
+
+    public void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    public Long getAssetId() {
+        return assetId;
     }
 
     public void setAssetNo(String assetNo) {

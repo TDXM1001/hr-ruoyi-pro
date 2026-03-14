@@ -12,6 +12,9 @@ public class AssetRequisition extends BaseEntity {
     /** 领用单号 */
     private String requisitionNo;
 
+    /** 资产ID */
+    private Long assetId;
+
     /** 资产编号 */
     @Excel(name = "资产编号")
     private String assetNo;
@@ -38,6 +41,14 @@ public class AssetRequisition extends BaseEntity {
 
     public String getRequisitionNo() {
         return requisitionNo;
+    }
+
+    public void setAssetId(Long assetId) {
+        this.assetId = assetId;
+    }
+
+    public Long getAssetId() {
+        return assetId;
     }
 
     public void setAssetNo(String assetNo) {
