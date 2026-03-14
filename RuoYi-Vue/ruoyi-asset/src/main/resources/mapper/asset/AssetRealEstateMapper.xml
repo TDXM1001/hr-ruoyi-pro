@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRealEstateMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetRealEstate" id="AssetRealEstateResult">
+        <result property="realEstateId" column="real_estate_id" />
+        <result property="assetId" column="asset_id" />
+        <result property="propertyCertNo" column="property_cert_no" />
+        <result property="legacyCertNo" column="legacy_cert_no" />
+        <result property="realEstateUnitNo" column="real_estate_unit_no" />
+        <result property="addressFull" column="address_full" />
+        <result property="landNature" column="land_nature" />
+        <result property="landUse" column="land_use" />
+        <result property="buildingUse" column="building_use" />
+        <result property="landArea" column="land_area" />
+        <result property="sharedLandArea" column="shared_land_area" />
+        <result property="buildingArea" column="building_area" />
+        <result property="innerArea" column="inner_area" />
+        <result property="buildingStructure" column="building_structure" />
+        <result property="buildingNo" column="building_no" />
+        <result property="floorNo" column="floor_no" />
+        <result property="roomNo" column="room_no" />
+        <result property="completionDate" column="completion_date" />
+        <result property="builtYear" column="built_year" />
+        <result property="landTermStartDate" column="land_term_start_date" />
+        <result property="landTermEndDate" column="land_term_end_date" />
+        <result property="rightsType" column="rights_type" />
+        <result property="rightsHolder" column="rights_holder" />
+        <result property="coOwnershipType" column="co_ownership_type" />
+        <result property="mortgageStatus" column="mortgage_status" />
+        <result property="mortgagee" column="mortgagee" />
+        <result property="seizureStatus" column="seizure_status" />
+        <result property="registrationDate" column="registration_date" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectAssetRealEstateVo">
+        select real_estate_id, asset_id, property_cert_no, legacy_cert_no, real_estate_unit_no,
+               address_full, land_nature, land_use, building_use, land_area, shared_land_area,
+               building_area, inner_area, building_structure, building_no, floor_no, room_no,
+               completion_date, built_year, land_term_start_date, land_term_end_date, rights_type,
+               rights_holder, co_ownership_type, mortgage_status, mortgagee, seizure_status,
+               registration_date, remark, create_by, create_time, update_by, update_time
+        from asset_real_estate
+    </sql>
+
+    <select id="selectAssetRealEstateByRealEstateId" parameterType="Long" resultMap="AssetRealEstateResult">
+        <include refid="selectAssetRealEstateVo"/>
+        where real_estate_id = #{realEstateId}
+    </select>
+
+    <select id="selectAssetRealEstateByAssetId" parameterType="Long" resultMap="AssetRealEstateResult">
+        <include refid="selectAssetRealEstateVo"/>
+        where asset_id = #{assetId}
+    </select>
+
+    <select id="selectAssetRealEstateList" parameterType="com.ruoyi.asset.domain.AssetRealEstate" resultMap="AssetRealEstateResult">
+        <include refid="selectAssetRealEstateVo"/>
+        <where>
+            <if test="realEstateId != null"> and real_estate_id = #{realEstateId}</if>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
+            <if test="propertyCertNo != null and propertyCertNo != ''"> and property_cert_no = #{propertyCertNo}</if>
+            <if test="rightsHolder != null and rightsHolder != ''"> and rights_holder like concat('%', #{rightsHolder}, '%')</if>
+            <if test="landTermEndDate != null"> and land_term_end_date = #{landTermEndDate}</if>
+        </where>
+        order by real_estate_id desc
+    </select>
+
+    <insert id="insertAssetRealEstate" parameterType="com.ruoyi.asset.domain.AssetRealEstate" useGeneratedKeys="true" keyProperty="realEstateId">
+        insert into asset_real_estate (
+            asset_id, property_cert_no, legacy_cert_no, real_estate_unit_no, address_full,
+            land_nature, land_use, building_use, land_area, shared_land_area, building_area,
+            inner_area, building_structure, building_no, floor_no, room_no, completion_date,
+            built_year, land_term_start_date, land_term_end_date, rights_type, rights_holder,
+            co_ownership_type, mortgage_status, mortgagee, seizure_status, registration_date,
+            remark, create_by, create_time, update_by, update_time
+        ) values (
+            #{assetId}, #{propertyCertNo}, #{legacyCertNo}, #{realEstateUnitNo}, #{addressFull},
+            #{landNature}, #{landUse}, #{buildingUse}, #{landArea}, #{sharedLandArea}, #{buildingArea},
+            #{innerArea}, #{buildingStructure}, #{buildingNo}, #{floorNo}, #{roomNo}, #{completionDate},
+            #{builtYear}, #{landTermStartDate}, #{landTermEndDate}, #{rightsType}, #{rightsHolder},
+            #{coOwnershipType}, #{mortgageStatus}, #{mortgagee}, #{seizureStatus}, #{registrationDate},
+            #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateAssetRealEstate" parameterType="com.ruoyi.asset.domain.AssetRealEstate">
+        update asset_real_estate
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="propertyCertNo != null">property_cert_no = #{propertyCertNo},</if>
+            <if test="legacyCertNo != null">legacy_cert_no = #{legacyCertNo},</if>
+            <if test="realEstateUnitNo != null">real_estate_unit_no = #{realEstateUnitNo},</if>
+            <if test="addressFull != null">address_full = #{addressFull},</if>
+            <if test="landNature != null">land_nature = #{landNature},</if>
+            <if test="landUse != null">land_use = #{landUse},</if>
+            <if test="buildingUse != null">building_use = #{buildingUse},</if>
+            <if test="landArea != null">land_area = #{landArea},</if>
+            <if test="sharedLandArea != null">shared_land_area = #{sharedLandArea},</if>
+            <if test="buildingArea != null">building_area = #{buildingArea},</if>
+            <if test="innerArea != null">inner_area = #{innerArea},</if>
+            <if test="buildingStructure != null">building_structure = #{buildingStructure},</if>
+            <if test="buildingNo != null">building_no = #{buildingNo},</if>
+            <if test="floorNo != null">floor_no = #{floorNo},</if>
+            <if test="roomNo != null">room_no = #{roomNo},</if>
+            <if test="completionDate != null">completion_date = #{completionDate},</if>
+            <if test="builtYear != null">built_year = #{builtYear},</if>
+            <if test="landTermStartDate != null">land_term_start_date = #{landTermStartDate},</if>
+            <if test="landTermEndDate != null">land_term_end_date = #{landTermEndDate},</if>
+            <if test="rightsType != null">rights_type = #{rightsType},</if>
+            <if test="rightsHolder != null">rights_holder = #{rightsHolder},</if>
+            <if test="coOwnershipType != null">co_ownership_type = #{coOwnershipType},</if>
+            <if test="mortgageStatus != null">mortgage_status = #{mortgageStatus},</if>
+            <if test="mortgagee != null">mortgagee = #{mortgagee},</if>
+            <if test="seizureStatus != null">seizure_status = #{seizureStatus},</if>
+            <if test="registrationDate != null">registration_date = #{registrationDate},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where real_estate_id = #{realEstateId}
+    </update>
+
+    <delete id="deleteAssetRealEstateByRealEstateId" parameterType="Long">
+        delete from asset_real_estate where real_estate_id = #{realEstateId}
+    </delete>
+
+    <delete id="deleteAssetRealEstateByRealEstateIds" parameterType="Long">
+        delete from asset_real_estate where real_estate_id in
+        <foreach item="realEstateId" collection="array" open="(" separator="," close=")">
+            #{realEstateId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetCategoryAttrMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetCategoryAttr" id="AssetCategoryAttrResult">
+        <result property="attrId" column="attr_id" />
+        <result property="categoryId" column="category_id" />
+        <result property="attrCode" column="attr_code" />
+        <result property="attrName" column="attr_name" />
+        <result property="attrType" column="attr_type" />
+        <result property="dataType" column="data_type" />
+        <result property="isRequired" column="is_required" />
+        <result property="isUnique" column="is_unique" />
+        <result property="isListDisplay" column="is_list_display" />
+        <result property="isQueryCondition" column="is_query_condition" />
+        <result property="defaultValue" column="default_value" />
+        <result property="optionSourceType" column="option_source_type" />
+        <result property="optionSource" column="option_source" />
+        <result property="validationRule" column="validation_rule" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectAssetCategoryAttrVo">
+        select attr_id, category_id, attr_code, attr_name, attr_type, data_type, is_required,
+               is_unique, is_list_display, is_query_condition, default_value, option_source_type,
+               option_source, validation_rule, sort_order, status, remark, create_by, create_time,
+               update_by, update_time
+        from asset_category_attr
+    </sql>
+
+    <select id="selectAssetCategoryAttrByAttrId" parameterType="Long" resultMap="AssetCategoryAttrResult">
+        <include refid="selectAssetCategoryAttrVo"/>
+        where attr_id = #{attrId}
+    </select>
+
+    <select id="selectAssetCategoryAttrList" parameterType="com.ruoyi.asset.domain.AssetCategoryAttr" resultMap="AssetCategoryAttrResult">
+        <include refid="selectAssetCategoryAttrVo"/>
+        <where>
+            <if test="attrId != null"> and attr_id = #{attrId}</if>
+            <if test="categoryId != null"> and category_id = #{categoryId}</if>
+            <if test="attrCode != null and attrCode != ''"> and attr_code = #{attrCode}</if>
+            <if test="attrName != null and attrName != ''"> and attr_name like concat('%', #{attrName}, '%')</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+        </where>
+        order by sort_order asc, attr_id asc
+    </select>
+
+    <select id="selectAssetCategoryAttrByCategoryId" parameterType="Long" resultMap="AssetCategoryAttrResult">
+        <include refid="selectAssetCategoryAttrVo"/>
+        where category_id = #{categoryId}
+        order by sort_order asc, attr_id asc
+    </select>
+
+    <insert id="insertAssetCategoryAttr" parameterType="com.ruoyi.asset.domain.AssetCategoryAttr" useGeneratedKeys="true" keyProperty="attrId">
+        insert into asset_category_attr (
+            category_id, attr_code, attr_name, attr_type, data_type, is_required, is_unique,
+            is_list_display, is_query_condition, default_value, option_source_type, option_source,
+            validation_rule, sort_order, status, remark, create_by, create_time, update_by, update_time
+        ) values (
+            #{categoryId}, #{attrCode}, #{attrName}, #{attrType}, #{dataType}, #{isRequired}, #{isUnique},
+            #{isListDisplay}, #{isQueryCondition}, #{defaultValue}, #{optionSourceType}, #{optionSource},
+            #{validationRule}, #{sortOrder}, #{status}, #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateAssetCategoryAttr" parameterType="com.ruoyi.asset.domain.AssetCategoryAttr">
+        update asset_category_attr
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="attrCode != null">attr_code = #{attrCode},</if>
+            <if test="attrName != null">attr_name = #{attrName},</if>
+            <if test="attrType != null">attr_type = #{attrType},</if>
+            <if test="dataType != null">data_type = #{dataType},</if>
+            <if test="isRequired != null">is_required = #{isRequired},</if>
+            <if test="isUnique != null">is_unique = #{isUnique},</if>
+            <if test="isListDisplay != null">is_list_display = #{isListDisplay},</if>
+            <if test="isQueryCondition != null">is_query_condition = #{isQueryCondition},</if>
+            <if test="defaultValue != null">default_value = #{defaultValue},</if>
+            <if test="optionSourceType != null">option_source_type = #{optionSourceType},</if>
+            <if test="optionSource != null">option_source = #{optionSource},</if>
+            <if test="validationRule != null">validation_rule = #{validationRule},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where attr_id = #{attrId}
+    </update>
+
+    <delete id="deleteAssetCategoryAttrByAttrId" parameterType="Long">
+        delete from asset_category_attr where attr_id = #{attrId}
+    </delete>
+
+    <delete id="deleteAssetCategoryAttrByAttrIds" parameterType="Long">
+        delete from asset_category_attr where attr_id in
+        <foreach item="attrId" collection="array" open="(" separator="," close=")">
+            #{attrId}
+        </foreach>
+    </delete>
+</mapper>

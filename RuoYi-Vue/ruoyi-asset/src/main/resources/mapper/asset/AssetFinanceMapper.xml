@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetFinanceMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetFinance" id="AssetFinanceResult">
+        <result property="financeId" column="finance_id" />
+        <result property="assetId" column="asset_id" />
+        <result property="bookType" column="book_type" />
+        <result property="currencyCode" column="currency_code" />
+        <result property="originalValue" column="original_value" />
+        <result property="salvageRate" column="salvage_rate" />
+        <result property="salvageValue" column="salvage_value" />
+        <result property="depreciableValue" column="depreciable_value" />
+        <result property="depreciationMethod" column="depreciation_method" />
+        <result property="usefulLifeMonth" column="useful_life_month" />
+        <result property="depreciationStartDate" column="depreciation_start_date" />
+        <result property="depreciationEndDate" column="depreciation_end_date" />
+        <result property="monthlyDepreciationAmount" column="monthly_depreciation_amount" />
+        <result property="accumulatedDepreciation" column="accumulated_depreciation" />
+        <result property="netBookValue" column="net_book_value" />
+        <result property="impairmentAmount" column="impairment_amount" />
+        <result property="bookValue" column="book_value" />
+        <result property="disposedValue" column="disposed_value" />
+        <result property="financeStatus" column="finance_status" />
+        <result property="lastDepreciationPeriod" column="last_depreciation_period" />
+        <result property="versionNo" column="version_no" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectAssetFinanceVo">
+        select finance_id, asset_id, book_type, currency_code, original_value, salvage_rate,
+               salvage_value, depreciable_value, depreciation_method, useful_life_month,
+               depreciation_start_date, depreciation_end_date, monthly_depreciation_amount,
+               accumulated_depreciation, net_book_value, impairment_amount, book_value,
+               disposed_value, finance_status, last_depreciation_period, version_no, remark,
+               create_by, create_time, update_by, update_time
+        from asset_finance
+    </sql>
+
+    <select id="selectAssetFinanceByFinanceId" parameterType="Long" resultMap="AssetFinanceResult">
+        <include refid="selectAssetFinanceVo"/>
+        where finance_id = #{financeId}
+    </select>
+
+    <select id="selectAssetFinanceByAssetId" parameterType="Long" resultMap="AssetFinanceResult">
+        <include refid="selectAssetFinanceVo"/>
+        where asset_id = #{assetId}
+    </select>
+
+    <select id="selectAssetFinanceList" parameterType="com.ruoyi.asset.domain.AssetFinance" resultMap="AssetFinanceResult">
+        <include refid="selectAssetFinanceVo"/>
+        <where>
+            <if test="financeId != null"> and finance_id = #{financeId}</if>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
+            <if test="bookType != null and bookType != ''"> and book_type = #{bookType}</if>
+            <if test="currencyCode != null and currencyCode != ''"> and currency_code = #{currencyCode}</if>
+            <if test="financeStatus != null and financeStatus != ''"> and finance_status = #{financeStatus}</if>
+            <if test="lastDepreciationPeriod != null and lastDepreciationPeriod != ''"> and last_depreciation_period = #{lastDepreciationPeriod}</if>
+        </where>
+        order by finance_id desc
+    </select>
+
+    <insert id="insertAssetFinance" parameterType="com.ruoyi.asset.domain.AssetFinance" useGeneratedKeys="true" keyProperty="financeId">
+        insert into asset_finance (
+            asset_id, book_type, currency_code, original_value, salvage_rate, salvage_value,
+            depreciable_value, depreciation_method, useful_life_month, depreciation_start_date,
+            depreciation_end_date, monthly_depreciation_amount, accumulated_depreciation,
+            net_book_value, impairment_amount, book_value, disposed_value, finance_status,
+            last_depreciation_period, version_no, remark, create_by, create_time, update_by, update_time
+        ) values (
+            #{assetId}, #{bookType}, #{currencyCode}, #{originalValue}, #{salvageRate}, #{salvageValue},
+            #{depreciableValue}, #{depreciationMethod}, #{usefulLifeMonth}, #{depreciationStartDate},
+            #{depreciationEndDate}, #{monthlyDepreciationAmount}, #{accumulatedDepreciation},
+            #{netBookValue}, #{impairmentAmount}, #{bookValue}, #{disposedValue}, #{financeStatus},
+            #{lastDepreciationPeriod}, #{versionNo}, #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateAssetFinance" parameterType="com.ruoyi.asset.domain.AssetFinance">
+        update asset_finance
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="bookType != null">book_type = #{bookType},</if>
+            <if test="currencyCode != null">currency_code = #{currencyCode},</if>
+            <if test="originalValue != null">original_value = #{originalValue},</if>
+            <if test="salvageRate != null">salvage_rate = #{salvageRate},</if>
+            <if test="salvageValue != null">salvage_value = #{salvageValue},</if>
+            <if test="depreciableValue != null">depreciable_value = #{depreciableValue},</if>
+            <if test="depreciationMethod != null">depreciation_method = #{depreciationMethod},</if>
+            <if test="usefulLifeMonth != null">useful_life_month = #{usefulLifeMonth},</if>
+            <if test="depreciationStartDate != null">depreciation_start_date = #{depreciationStartDate},</if>
+            <if test="depreciationEndDate != null">depreciation_end_date = #{depreciationEndDate},</if>
+            <if test="monthlyDepreciationAmount != null">monthly_depreciation_amount = #{monthlyDepreciationAmount},</if>
+            <if test="accumulatedDepreciation != null">accumulated_depreciation = #{accumulatedDepreciation},</if>
+            <if test="netBookValue != null">net_book_value = #{netBookValue},</if>
+            <if test="impairmentAmount != null">impairment_amount = #{impairmentAmount},</if>
+            <if test="bookValue != null">book_value = #{bookValue},</if>
+            <if test="disposedValue != null">disposed_value = #{disposedValue},</if>
+            <if test="financeStatus != null">finance_status = #{financeStatus},</if>
+            <if test="lastDepreciationPeriod != null">last_depreciation_period = #{lastDepreciationPeriod},</if>
+            <if test="versionNo != null">version_no = #{versionNo},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where finance_id = #{financeId}
+    </update>
+
+    <delete id="deleteAssetFinanceByFinanceId" parameterType="Long">
+        delete from asset_finance where finance_id = #{financeId}
+    </delete>
+
+    <delete id="deleteAssetFinanceByFinanceIds" parameterType="Long">
+        delete from asset_finance where finance_id in
+        <foreach item="financeId" collection="array" open="(" separator="," close=")">
+            #{financeId}
+        </foreach>
+    </delete>
+</mapper>

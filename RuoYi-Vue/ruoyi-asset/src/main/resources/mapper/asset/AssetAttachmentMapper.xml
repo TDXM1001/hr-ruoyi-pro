@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetAttachmentMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetAttachment" id="AssetAttachmentResult">
+        <result property="attachmentId" column="attachment_id" />
+        <result property="assetId" column="asset_id" />
+        <result property="bizType" column="biz_type" />
+        <result property="fileName" column="file_name" />
+        <result property="fileUrl" column="file_url" />
+        <result property="fileSize" column="file_size" />
+        <result property="fileSuffix" column="file_suffix" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectAssetAttachmentVo">
+        select attachment_id, asset_id, biz_type, file_name, file_url, file_size, file_suffix,
+               sort_order, remark, create_by, create_time, update_by, update_time
+        from asset_attachment
+    </sql>
+
+    <select id="selectAssetAttachmentByAttachmentId" parameterType="Long" resultMap="AssetAttachmentResult">
+        <include refid="selectAssetAttachmentVo"/>
+        where attachment_id = #{attachmentId}
+    </select>
+
+    <select id="selectAssetAttachmentList" parameterType="com.ruoyi.asset.domain.AssetAttachment" resultMap="AssetAttachmentResult">
+        <include refid="selectAssetAttachmentVo"/>
+        <where>
+            <if test="attachmentId != null"> and attachment_id = #{attachmentId}</if>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
+            <if test="bizType != null and bizType != ''"> and biz_type = #{bizType}</if>
+            <if test="fileName != null and fileName != ''"> and file_name like concat('%', #{fileName}, '%')</if>
+        </where>
+        order by sort_order asc, attachment_id asc
+    </select>
+
+    <select id="selectAssetAttachmentByAssetId" parameterType="Long" resultMap="AssetAttachmentResult">
+        <include refid="selectAssetAttachmentVo"/>
+        where asset_id = #{assetId}
+        order by sort_order asc, attachment_id asc
+    </select>
+
+    <insert id="insertAssetAttachment" parameterType="com.ruoyi.asset.domain.AssetAttachment" useGeneratedKeys="true" keyProperty="attachmentId">
+        insert into asset_attachment (
+            asset_id, biz_type, file_name, file_url, file_size, file_suffix,
+            sort_order, remark, create_by, create_time, update_by, update_time
+        ) values (
+            #{assetId}, #{bizType}, #{fileName}, #{fileUrl}, #{fileSize}, #{fileSuffix},
+            #{sortOrder}, #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateAssetAttachment" parameterType="com.ruoyi.asset.domain.AssetAttachment">
+        update asset_attachment
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="bizType != null">biz_type = #{bizType},</if>
+            <if test="fileName != null">file_name = #{fileName},</if>
+            <if test="fileUrl != null">file_url = #{fileUrl},</if>
+            <if test="fileSize != null">file_size = #{fileSize},</if>
+            <if test="fileSuffix != null">file_suffix = #{fileSuffix},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where attachment_id = #{attachmentId}
+    </update>
+
+    <delete id="deleteAssetAttachmentByAttachmentId" parameterType="Long">
+        delete from asset_attachment where attachment_id = #{attachmentId}
+    </delete>
+
+    <delete id="deleteAssetAttachmentByAttachmentIds" parameterType="Long">
+        delete from asset_attachment where attachment_id in
+        <foreach item="attachmentId" collection="array" open="(" separator="," close=")">
+            #{attachmentId}
+        </foreach>
+    </delete>
+</mapper>

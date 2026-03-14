@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetAttrValueMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetAttrValue" id="AssetAttrValueResult">
+        <result property="valueId" column="value_id" />
+        <result property="assetId" column="asset_id" />
+        <result property="categoryId" column="category_id" />
+        <result property="attrId" column="attr_id" />
+        <result property="attrCode" column="attr_code" />
+        <result property="attrValueText" column="attr_value_text" />
+        <result property="attrValueNumber" column="attr_value_number" />
+        <result property="attrValueDate" column="attr_value_date" />
+        <result property="attrValueJson" column="attr_value_json" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectAssetAttrValueVo">
+        select value_id, asset_id, category_id, attr_id, attr_code, attr_value_text, attr_value_number,
+               attr_value_date, attr_value_json, remark, create_by, create_time, update_by, update_time
+        from asset_attr_value
+    </sql>
+
+    <select id="selectAssetAttrValueByValueId" parameterType="Long" resultMap="AssetAttrValueResult">
+        <include refid="selectAssetAttrValueVo"/>
+        where value_id = #{valueId}
+    </select>
+
+    <select id="selectAssetAttrValueList" parameterType="com.ruoyi.asset.domain.AssetAttrValue" resultMap="AssetAttrValueResult">
+        <include refid="selectAssetAttrValueVo"/>
+        <where>
+            <if test="valueId != null"> and value_id = #{valueId}</if>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
+            <if test="categoryId != null"> and category_id = #{categoryId}</if>
+            <if test="attrId != null"> and attr_id = #{attrId}</if>
+            <if test="attrCode != null and attrCode != ''"> and attr_code = #{attrCode}</if>
+        </where>
+        order by value_id asc
+    </select>
+
+    <select id="selectAssetAttrValueByAssetId" parameterType="Long" resultMap="AssetAttrValueResult">
+        <include refid="selectAssetAttrValueVo"/>
+        where asset_id = #{assetId}
+        order by value_id asc
+    </select>
+
+    <insert id="insertAssetAttrValue" parameterType="com.ruoyi.asset.domain.AssetAttrValue" useGeneratedKeys="true" keyProperty="valueId">
+        insert into asset_attr_value (
+            asset_id, category_id, attr_id, attr_code, attr_value_text, attr_value_number,
+            attr_value_date, attr_value_json, remark, create_by, create_time, update_by, update_time
+        ) values (
+            #{assetId}, #{categoryId}, #{attrId}, #{attrCode}, #{attrValueText}, #{attrValueNumber},
+            #{attrValueDate}, #{attrValueJson}, #{remark}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateAssetAttrValue" parameterType="com.ruoyi.asset.domain.AssetAttrValue">
+        update asset_attr_value
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="attrId != null">attr_id = #{attrId},</if>
+            <if test="attrCode != null">attr_code = #{attrCode},</if>
+            <if test="attrValueText != null">attr_value_text = #{attrValueText},</if>
+            <if test="attrValueNumber != null">attr_value_number = #{attrValueNumber},</if>
+            <if test="attrValueDate != null">attr_value_date = #{attrValueDate},</if>
+            <if test="attrValueJson != null">attr_value_json = #{attrValueJson},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where value_id = #{valueId}
+    </update>
+
+    <delete id="deleteAssetAttrValueByValueId" parameterType="Long">
+        delete from asset_attr_value where value_id = #{valueId}
+    </delete>
+
+    <delete id="deleteAssetAttrValueByValueIds" parameterType="Long">
+        delete from asset_attr_value where value_id in
+        <foreach item="valueId" collection="array" open="(" separator="," close=")">
+            #{valueId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetDepreciationLogMapper">
+
+    <resultMap type="com.ruoyi.asset.domain.AssetDepreciationLog" id="AssetDepreciationLogResult">
+        <result property="logId" column="log_id" />
+        <result property="assetId" column="asset_id" />
+        <result property="period" column="period" />
+        <result property="depreciationAmount" column="depreciation_amount" />
+        <result property="accumulatedDepreciation" column="accumulated_depreciation" />
+        <result property="netBookValue" column="net_book_value" />
+        <result property="bookValue" column="book_value" />
+        <result property="calcTime" column="calc_time" />
+        <result property="calcType" column="calc_type" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectAssetDepreciationLogVo">
+        select log_id, asset_id, period, depreciation_amount, accumulated_depreciation,
+               net_book_value, book_value, calc_time, calc_type, remark, create_by, create_time
+        from asset_depreciation_log
+    </sql>
+
+    <select id="selectAssetDepreciationLogByLogId" parameterType="Long" resultMap="AssetDepreciationLogResult">
+        <include refid="selectAssetDepreciationLogVo"/>
+        where log_id = #{logId}
+    </select>
+
+    <select id="selectAssetDepreciationLogByAssetIdAndPeriod" resultMap="AssetDepreciationLogResult">
+        <include refid="selectAssetDepreciationLogVo"/>
+        where asset_id = #{assetId}
+          and period = #{period}
+    </select>
+
+    <select id="selectAssetDepreciationLogList" parameterType="com.ruoyi.asset.domain.AssetDepreciationLog" resultMap="AssetDepreciationLogResult">
+        <include refid="selectAssetDepreciationLogVo"/>
+        <where>
+            <if test="logId != null"> and log_id = #{logId}</if>
+            <if test="assetId != null"> and asset_id = #{assetId}</if>
+            <if test="period != null and period != ''"> and period = #{period}</if>
+            <if test="calcType != null and calcType != ''"> and calc_type = #{calcType}</if>
+        </where>
+        order by period desc, log_id desc
+    </select>
+
+    <select id="selectAssetDepreciationLogByAssetId" parameterType="Long" resultMap="AssetDepreciationLogResult">
+        <include refid="selectAssetDepreciationLogVo"/>
+        where asset_id = #{assetId}
+        order by period desc, log_id desc
+    </select>
+
+    <insert id="insertAssetDepreciationLog" parameterType="com.ruoyi.asset.domain.AssetDepreciationLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into asset_depreciation_log (
+            asset_id, period, depreciation_amount, accumulated_depreciation, net_book_value,
+            book_value, calc_time, calc_type, remark, create_by, create_time
+        ) values (
+            #{assetId}, #{period}, #{depreciationAmount}, #{accumulatedDepreciation}, #{netBookValue},
+            #{bookValue}, #{calcTime}, #{calcType}, #{remark}, #{createBy}, #{createTime}
+        )
+    </insert>
+
+    <update id="updateAssetDepreciationLog" parameterType="com.ruoyi.asset.domain.AssetDepreciationLog">
+        update asset_depreciation_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="period != null">period = #{period},</if>
+            <if test="depreciationAmount != null">depreciation_amount = #{depreciationAmount},</if>
+            <if test="accumulatedDepreciation != null">accumulated_depreciation = #{accumulatedDepreciation},</if>
+            <if test="netBookValue != null">net_book_value = #{netBookValue},</if>
+            <if test="bookValue != null">book_value = #{bookValue},</if>
+            <if test="calcTime != null">calc_time = #{calcTime},</if>
+            <if test="calcType != null">calc_type = #{calcType},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where log_id = #{logId}
+    </update>
+
+    <delete id="deleteAssetDepreciationLogByLogId" parameterType="Long">
+        delete from asset_depreciation_log where log_id = #{logId}
+    </delete>
+
+    <delete id="deleteAssetDepreciationLogByLogIds" parameterType="Long">
+        delete from asset_depreciation_log where log_id in
+        <foreach item="logId" collection="array" open="(" separator="," close=")">
+            #{logId}
+        </foreach>
+    </delete>
+</mapper>
