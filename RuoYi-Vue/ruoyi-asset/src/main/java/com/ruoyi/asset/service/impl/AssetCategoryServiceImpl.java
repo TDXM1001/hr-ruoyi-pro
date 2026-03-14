@@ -1,6 +1,8 @@
 package com.ruoyi.asset.service.impl;
 
 import java.util.List;
+import com.ruoyi.asset.service.IAssetCategoryAttrService;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ import com.ruoyi.asset.service.IAssetCategoryService;
 public class AssetCategoryServiceImpl implements IAssetCategoryService {
     @Autowired
     private AssetCategoryMapper assetCategoryMapper;
+
+    @Autowired
+    private IAssetCategoryAttrService assetCategoryAttrService;
 
     /**
      * 查询资产分类
@@ -72,6 +77,9 @@ public class AssetCategoryServiceImpl implements IAssetCategoryService {
      */
     @Override
     public int deleteAssetCategoryByIds(Long[] ids) {
+        for (Long id : ids) {
+            checkCategoryHasAttrConfig(id);
+        }
         return assetCategoryMapper.deleteAssetCategoryByIds(ids);
     }
 
@@ -83,6 +91,16 @@ public class AssetCategoryServiceImpl implements IAssetCategoryService {
      */
     @Override
     public int deleteAssetCategoryById(Long id) {
+        checkCategoryHasAttrConfig(id);
         return assetCategoryMapper.deleteAssetCategoryById(id);
+    }
+
+    /**
+     * 分类删除前先校验是否仍挂有扩展字段定义。
+     */
+    private void checkCategoryHasAttrConfig(Long categoryId) {
+        if (!assetCategoryAttrService.selectAssetCategoryAttrByCategoryId(categoryId).isEmpty()) {
+            throw new ServiceException("当前分类已配置扩展字段，请先停用或删除扩展字段后再删除分类");
+        }
     }
 }

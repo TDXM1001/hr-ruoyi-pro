@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.asset.domain.AssetCategory;
+import com.ruoyi.asset.service.IAssetCategoryAttrService;
 import com.ruoyi.asset.service.IAssetCategoryService;
-import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.enums.BusinessType;
 
 /**
  * 资产分类Controller
@@ -30,6 +30,9 @@ import com.ruoyi.common.core.page.TableDataInfo;
 public class AssetCategoryController extends BaseController {
     @Autowired
     private IAssetCategoryService assetCategoryService;
+
+    @Autowired
+    private IAssetCategoryAttrService assetCategoryAttrService;
 
     /**
      * 查询资产分类列表
@@ -48,6 +51,15 @@ public class AssetCategoryController extends BaseController {
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(assetCategoryService.selectAssetCategoryById(id));
+    }
+
+    /**
+     * 查询分类下的扩展字段定义。
+     */
+    @PreAuthorize("@ss.hasPermi('asset:category:query')")
+    @GetMapping("/{id}/attrs")
+    public AjaxResult getCategoryAttrs(@PathVariable("id") Long id) {
+        return success(assetCategoryAttrService.selectAssetCategoryAttrByCategoryId(id));
     }
 
     /**
