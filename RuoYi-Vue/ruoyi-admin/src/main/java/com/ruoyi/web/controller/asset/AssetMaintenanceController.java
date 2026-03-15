@@ -29,6 +29,15 @@ public class AssetMaintenanceController extends BaseController {
         return getDataTable(list);
     }
 
+    /**
+     * 查询维修单详情。
+     */
+    @PreAuthorize("@ss.hasPermi('asset:maintenance:query')")
+    @GetMapping("/{maintenanceNo}")
+    public AjaxResult getInfo(@PathVariable("maintenanceNo") String maintenanceNo) {
+        return success(assetMaintenanceService.selectAssetMaintenanceByMaintenanceNo(maintenanceNo));
+    }
+
     @PreAuthorize("@ss.hasPermi('asset:maintenance:add')")
     @PostMapping
     public AjaxResult add(@RequestBody AssetMaintenance assetMaintenance) {
@@ -38,5 +47,14 @@ public class AssetMaintenanceController extends BaseController {
             assetMaintenance.setMaintenanceNo("MNT" + System.currentTimeMillis());
         }
         return toAjax(assetMaintenanceService.insertAssetMaintenance(assetMaintenance));
+    }
+
+    /**
+     * 完成维修。
+     */
+    @PreAuthorize("@ss.hasPermi('asset:maintenance:complete')")
+    @PostMapping("/complete/{maintenanceNo}")
+    public AjaxResult complete(@PathVariable("maintenanceNo") String maintenanceNo) {
+        return toAjax(assetMaintenanceService.completeMaintenance(maintenanceNo));
     }
 }

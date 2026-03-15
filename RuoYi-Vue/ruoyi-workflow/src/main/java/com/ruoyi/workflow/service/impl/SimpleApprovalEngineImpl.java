@@ -8,6 +8,7 @@ import com.ruoyi.workflow.domain.WfApprovalNode;
 import com.ruoyi.workflow.mapper.WfApprovalInstanceMapper;
 import com.ruoyi.workflow.mapper.WfApprovalNodeMapper;
 import com.ruoyi.workflow.service.IApprovalEngine;
+import com.ruoyi.workflow.service.WorkflowBusinessHandlerRegistry;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,9 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
 
     @Autowired
     private WfApprovalNodeMapper approvalNodeMapper;
+
+    @Autowired(required = false)
+    private WorkflowBusinessHandlerRegistry businessHandlerRegistry;
 
     @Override
     public Long startProcess(String businessId, String businessType) {
@@ -129,6 +133,15 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
         updatePayload.setStatus(targetStatus);
         updatePayload.setCurrentNode(targetNodeName);
         approvalInstanceMapper.updateWfApprovalInstance(updatePayload);
+
+        // 审批实例状态落库后再触发业务回调，保证业务侧读取到的是最终状态而不是中间态。
+        if (businessHandlerRegistry != null) {
+            if ("approve".equals(action)) {
+                businessHandlerRegistry.handleApproved(approvalInstance.getBusinessType(), approvalInstance.getBusinessId());
+            } else if ("reject".equals(action)) {
+                businessHandlerRegistry.handleRejected(approvalInstance.getBusinessType(), approvalInstance.getBusinessId());
+            }
+        }
     }
 
     /**

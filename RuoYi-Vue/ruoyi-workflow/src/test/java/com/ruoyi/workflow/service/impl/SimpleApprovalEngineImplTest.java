@@ -5,6 +5,7 @@ import com.ruoyi.workflow.domain.WfApprovalInstance;
 import com.ruoyi.workflow.domain.vo.WorkflowTaskVo;
 import com.ruoyi.workflow.mapper.WfApprovalInstanceMapper;
 import com.ruoyi.workflow.mapper.WfApprovalNodeMapper;
+import com.ruoyi.workflow.service.WorkflowBusinessHandlerRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,6 +32,9 @@ class SimpleApprovalEngineImplTest {
 
     @Mock
     private WfApprovalNodeMapper approvalNodeMapper;
+
+    @Mock
+    private WorkflowBusinessHandlerRegistry businessHandlerRegistry;
 
     @InjectMocks
     private SimpleApprovalEngineImpl approvalEngine;
@@ -94,6 +98,8 @@ class SimpleApprovalEngineImplTest {
     void shouldAppendNodeAndMarkInstanceApprovedWhenApprove() {
         WfApprovalInstance instance = new WfApprovalInstance();
         instance.setInstanceId(1003L);
+        instance.setBusinessId("REQ-20260315-002");
+        instance.setBusinessType("asset_requisition");
         instance.setStatus("pending");
         when(approvalInstanceMapper.selectWfApprovalInstanceByInstanceId(1003L)).thenReturn(instance);
 
@@ -105,12 +111,15 @@ class SimpleApprovalEngineImplTest {
         verify(approvalInstanceMapper).updateWfApprovalInstance(captor.capture());
         assertEquals(1003L, captor.getValue().getInstanceId());
         assertEquals("approved", captor.getValue().getStatus());
+        verify(businessHandlerRegistry).handleApproved("asset_requisition", "REQ-20260315-002");
     }
 
     @Test
     void shouldAppendNodeAndMarkInstanceRejectedWhenReject() {
         WfApprovalInstance instance = new WfApprovalInstance();
         instance.setInstanceId(1004L);
+        instance.setBusinessId("MNT-20260315-001");
+        instance.setBusinessType("asset_maintenance");
         instance.setStatus("pending");
         when(approvalInstanceMapper.selectWfApprovalInstanceByInstanceId(1004L)).thenReturn(instance);
 
@@ -122,5 +131,6 @@ class SimpleApprovalEngineImplTest {
         verify(approvalInstanceMapper).updateWfApprovalInstance(captor.capture());
         assertEquals(1004L, captor.getValue().getInstanceId());
         assertEquals("rejected", captor.getValue().getStatus());
+        verify(businessHandlerRegistry).handleRejected("asset_maintenance", "MNT-20260315-001");
     }
 }

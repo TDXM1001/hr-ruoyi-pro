@@ -19,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
-    private static final String ASSET_STATUS_IN_USE = "2";
+    private static final String ASSET_STATUS_REQUISITION = "2";
+    private static final String ASSET_STATUS_ACTIVE = "1";
     private static final String ASSET_STATUS_MAINTENANCE = "3";
     private static final String ASSET_STATUS_SCRAPPED = "5";
     private static final String ASSET_STATUS_DISPOSED = "6";
@@ -60,11 +61,32 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         int rows = assetRequisitionMapper.insertAssetRequisition(assetRequisition);
 
         // 修改资产状态为"领用中"
-        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_IN_USE);
+        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_REQUISITION);
 
         // 发起审批流程
         approvalEngine.startProcess(assetRequisition.getRequisitionNo(), "asset_requisition");
         
+        return rows;
+    }
+
+    @Transactional
+    @Override
+    public int returnAsset(String requisitionNo) {
+        AssetRequisition requisition = assetRequisitionMapper.selectAssetRequisitionByRequisitionNo(requisitionNo);
+        if (requisition == null) {
+            throw new ServiceException("领用单不存在");
+        }
+        if (!Integer.valueOf(1).equals(requisition.getStatus())) {
+            throw new ServiceException("仅审批通过的领用单允许归还");
+        }
+
+        AssetRequisition updatePayload = new AssetRequisition();
+        updatePayload.setRequisitionNo(requisitionNo);
+        updatePayload.setStatus(3);
+        int rows = assetRequisitionMapper.updateAssetRequisition(updatePayload);
+
+        // 归还动作是生命周期上的闭环点，完成后资产必须回到“在用”状态。
+        updateAssetStatus(requisition.getAssetId(), ASSET_STATUS_ACTIVE);
         return rows;
     }
 

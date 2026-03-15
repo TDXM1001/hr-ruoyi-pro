@@ -29,6 +29,15 @@ public class AssetDisposalController extends BaseController {
         return getDataTable(list);
     }
 
+    /**
+     * 查询处置单详情。
+     */
+    @PreAuthorize("@ss.hasPermi('asset:disposal:query')")
+    @GetMapping("/{disposalNo}")
+    public AjaxResult getInfo(@PathVariable("disposalNo") String disposalNo) {
+        return success(assetDisposalService.selectAssetDisposalByDisposalNo(disposalNo));
+    }
+
     @PreAuthorize("@ss.hasPermi('asset:disposal:add')")
     @PostMapping
     public AjaxResult add(@RequestBody AssetDisposal assetDisposal) {

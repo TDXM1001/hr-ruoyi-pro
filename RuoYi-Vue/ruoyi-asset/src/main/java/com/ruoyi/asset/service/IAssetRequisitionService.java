@@ -15,4 +15,12 @@ public interface IAssetRequisitionService {
     
     /** 申请资产领用 */
     public int insertAssetRequisition(AssetRequisition assetRequisition);
+
+    /**
+     * 归还已审批通过的领用单。
+     *
+     * @param requisitionNo 领用单号
+     * @return 影响行数
+     */
+    public int returnAsset(String requisitionNo);
 }

@@ -55,4 +55,13 @@ public class AssetRequisitionController extends BaseController {
         }
         return toAjax(assetRequisitionService.insertAssetRequisition(assetRequisition));
     }
+
+    /**
+     * 归还资产。
+     */
+    @PreAuthorize("@ss.hasPermi('asset:requisition:return')")
+    @PostMapping("/return/{requisitionNo}")
+    public AjaxResult returnAsset(@PathVariable("requisitionNo") String requisitionNo) {
+        return toAjax(assetRequisitionService.returnAsset(requisitionNo));
+    }
 }

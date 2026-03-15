@@ -107,6 +107,27 @@ class AssetRequisitionServiceImplTest {
         verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
 
+    @Test
+    void shouldReturnApprovedRequisitionAndResetAssetStatus() {
+        AssetRequisition requisition = new AssetRequisition();
+        requisition.setRequisitionNo("REQ-20260315-010");
+        requisition.setAssetId(1005L);
+        requisition.setStatus(1);
+        when(assetRequisitionMapper.selectAssetRequisitionByRequisitionNo("REQ-20260315-010")).thenReturn(requisition);
+
+        assetRequisitionService.returnAsset("REQ-20260315-010");
+
+        ArgumentCaptor<AssetRequisition> requisitionCaptor = ArgumentCaptor.forClass(AssetRequisition.class);
+        verify(assetRequisitionMapper).updateAssetRequisition(requisitionCaptor.capture());
+        assertEquals("REQ-20260315-010", requisitionCaptor.getValue().getRequisitionNo());
+        assertEquals(3, requisitionCaptor.getValue().getStatus());
+
+        ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
+        verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
+        assertEquals(1005L, assetCaptor.getValue().getAssetId());
+        assertEquals("1", assetCaptor.getValue().getAssetStatus());
+    }
+
     private AssetInfo buildAssetInfo(Long assetId, String assetNo, String assetStatus) {
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetId(assetId);

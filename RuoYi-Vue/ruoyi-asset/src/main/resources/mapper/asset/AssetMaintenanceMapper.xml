@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetMaintenanceMapper">
+    <resultMap type="com.ruoyi.asset.domain.AssetMaintenance" id="AssetMaintenanceResult">
+        <id property="maintenanceNo" column="maintenance_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetNo" column="asset_no"/>
+        <result property="applyUserId" column="apply_user_id"/>
+        <result property="applyDeptId" column="apply_dept_id"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectAssetMaintenanceByMaintenanceNo" parameterType="String" resultMap="AssetMaintenanceResult">
+        select maintenance_no, asset_id, asset_no, apply_user_id, apply_dept_id, reason, status, create_time
+        from asset_maintenance
+        where maintenance_no = #{maintenanceNo}
+    </select>
+
+    <select id="selectAssetMaintenanceList" parameterType="com.ruoyi.asset.domain.AssetMaintenance" resultMap="AssetMaintenanceResult">
+        select maintenance_no, asset_id, asset_no, apply_user_id, apply_dept_id, reason, status, create_time
+        from asset_maintenance
+        <where>
+            <if test="maintenanceNo != null and maintenanceNo != ''">and maintenance_no = #{maintenanceNo}</if>
+            <if test="assetId != null">and asset_id = #{assetId}</if>
+            <if test="assetNo != null and assetNo != ''">and asset_no = #{assetNo}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertAssetMaintenance" parameterType="com.ruoyi.asset.domain.AssetMaintenance">
+        insert into asset_maintenance
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="maintenanceNo != null">maintenance_no,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="assetNo != null">asset_no,</if>
+            <if test="applyUserId != null">apply_user_id,</if>
+            <if test="applyDeptId != null">apply_dept_id,</if>
+            <if test="reason != null">reason,</if>
+            <if test="status != null">status,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="maintenanceNo != null">#{maintenanceNo},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="assetNo != null">#{assetNo},</if>
+            <if test="applyUserId != null">#{applyUserId},</if>
+            <if test="applyDeptId != null">#{applyDeptId},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateAssetMaintenance" parameterType="com.ruoyi.asset.domain.AssetMaintenance">
+        update asset_maintenance
+        <set>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        where maintenance_no = #{maintenanceNo}
+    </update>
+</mapper>

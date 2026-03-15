@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
+    private static final String ASSET_STATUS_ACTIVE = "1";
     private static final String ASSET_STATUS_MAINTENANCE = "3";
     private static final String ASSET_STATUS_SCRAPPED = "5";
     private static final String ASSET_STATUS_DISPOSED = "6";
@@ -62,6 +63,27 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
         // 发起审批流程
         approvalEngine.startProcess(assetMaintenance.getMaintenanceNo(), "asset_maintenance");
         
+        return rows;
+    }
+
+    @Transactional
+    @Override
+    public int completeMaintenance(String maintenanceNo) {
+        AssetMaintenance maintenance = assetMaintenanceMapper.selectAssetMaintenanceByMaintenanceNo(maintenanceNo);
+        if (maintenance == null) {
+            throw new ServiceException("维修单不存在");
+        }
+        if (!Integer.valueOf(1).equals(maintenance.getStatus())) {
+            throw new ServiceException("仅审批通过的维修单允许完成维修");
+        }
+
+        AssetMaintenance updatePayload = new AssetMaintenance();
+        updatePayload.setMaintenanceNo(maintenanceNo);
+        updatePayload.setStatus(3);
+        int rows = assetMaintenanceMapper.updateAssetMaintenance(updatePayload);
+
+        // 维修完成意味着资产重新可用，因此需要回退到“在用”状态。
+        updateAssetStatus(maintenance.getAssetId(), ASSET_STATUS_ACTIVE);
         return rows;
     }
 
