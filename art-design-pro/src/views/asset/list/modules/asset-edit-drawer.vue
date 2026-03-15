@@ -356,17 +356,31 @@
               class="mb-4"
               :closable="false"
             />
+            <ElAlert
+              title="扩展信息页仅填写当前资产实例值，模板字段请到资产分类页维护。"
+              type="info"
+              class="mb-4"
+              :closable="false"
+            />
             <ElCard shadow="never" class="mb-4">
               <template #header>
                 <div class="flex items-center justify-between">
                   <span>动态属性</span>
-                  <span class="text-xs text-[var(--art-gray-500)]">切换资产分类后自动加载</span>
+                  <span class="text-xs text-[var(--art-gray-500)]">
+                    按分类模板回填当前资产实例值
+                  </span>
                 </div>
               </template>
 
               <ElEmpty
-                v-if="!state.dynamicAttrDefinitions.length"
-                description="当前分类暂无动态属性定义"
+                v-if="!hasSelectedCategory"
+                description="请先选择资产分类，再填写扩展信息"
+                :image-size="80"
+              />
+
+              <ElEmpty
+                v-else-if="!state.dynamicAttrDefinitions.length"
+                description="当前分类暂无动态属性定义，请到资产分类页维护模板"
                 :image-size="80"
               />
 
@@ -552,6 +566,7 @@
   ]
 
   const showRealEstateTab = computed(() => state.basicForm.assetType === '2')
+  const hasSelectedCategory = computed(() => Boolean(state.basicForm.categoryId))
   const financeBaseReadonly = computed(() => !canEditFinanceBaseFields(state.financeForm))
   const dynamicAttrConflictCodes = ref<string[]>([])
   const activeBizType = ref('asset')

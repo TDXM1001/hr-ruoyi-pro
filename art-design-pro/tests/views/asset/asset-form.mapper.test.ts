@@ -52,4 +52,34 @@ describe('asset form mapper', () => {
     expect(addPayload.basicInfo.assetId).toBeUndefined()
     expect(editPayload.basicInfo.assetId).toBe(1)
   })
+
+  it('sets realEstateInfo to null for fixed assets', () => {
+    const state = createEmptyDrawerState()
+    state.basicForm.assetNo = 'FA-001'
+    state.basicForm.assetName = '电脑'
+    state.basicForm.assetType = '1'
+    state.basicForm.assetStatus = '1'
+    state.realEstateForm.propertyCertNo = '沪(2026)001号'
+
+    expect(buildAggregatePayload(state, 'add').realEstateInfo).toBeNull()
+  })
+
+  it('builds dynamic attrs only from definitions and form values', () => {
+    const state = createEmptyDrawerState()
+    state.basicForm.assetNo = 'FA-001'
+    state.basicForm.assetName = '电脑'
+    state.basicForm.assetType = '1'
+    state.basicForm.assetStatus = '1'
+    state.dynamicAttrDefinitions = [
+      { attrId: 1, categoryId: 10, attrCode: 'manufacturer', dataType: 'text' }
+    ] as any
+    state.dynamicAttrForm = {
+      manufacturer: '联想',
+      weight: 2.5
+    }
+
+    expect(buildAggregatePayload(state, 'add').dynamicAttrs).toEqual([
+      { attrId: 1, categoryId: 10, attrCode: 'manufacturer', attrValueText: '联想' }
+    ])
+  })
 })

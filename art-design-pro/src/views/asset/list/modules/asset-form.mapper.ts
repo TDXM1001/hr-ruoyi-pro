@@ -124,19 +124,23 @@ export function buildAggregatePayload(
     delete basicInfo.assetId
   }
 
+  // 扩展信息只从分类模板定义和实例表单值构建，避免任意字段混入聚合请求。
+  const dynamicAttrs = buildDynamicAttrPayload(state.dynamicAttrDefinitions, state.dynamicAttrForm)
+  const realEstateInfo =
+    state.basicForm.assetType === '2'
+      ? {
+          ...state.realEstateForm,
+          assetId: mode === 'edit' ? state.basicForm.assetId : undefined
+        }
+      : null
+
   return {
     basicInfo,
     financeInfo: {
       ...state.financeForm
     },
-    realEstateInfo:
-      state.basicForm.assetType === '2'
-        ? {
-            ...state.realEstateForm,
-            assetId: mode === 'edit' ? state.basicForm.assetId : undefined
-          }
-        : null,
-    dynamicAttrs: buildDynamicAttrPayload(state.dynamicAttrDefinitions, state.dynamicAttrForm),
+    realEstateInfo,
+    dynamicAttrs,
     attachments: state.attachments.map((item) => ({ ...item }))
   }
 }

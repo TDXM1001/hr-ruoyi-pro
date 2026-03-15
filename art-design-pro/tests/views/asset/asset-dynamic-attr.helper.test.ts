@@ -39,4 +39,19 @@ describe('asset dynamic attr helper', () => {
       { attrId: 2, categoryId: 10, attrCode: 'weight', attrValueNumber: 2.5 }
     ])
   })
+
+  it('keeps empty state when no attr definitions exist', () => {
+    expect(buildDynamicAttrPayload([], { manufacturer: '联想' })).toEqual([])
+  })
+
+  it('builds payload only from definitions', () => {
+    expect(
+      buildDynamicAttrPayload(
+        [{ attrId: 1, categoryId: 10, attrCode: 'manufacturer', dataType: 'text' }],
+        { manufacturer: '联想', weight: 2.5 }
+      )
+    ).toEqual([
+      { attrId: 1, categoryId: 10, attrCode: 'manufacturer', attrValueText: '联想' }
+    ])
+  })
 })

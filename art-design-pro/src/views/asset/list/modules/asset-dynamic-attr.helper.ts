@@ -30,6 +30,11 @@ export function buildDynamicAttrPayload(
   >,
   formRecord: Record<string, AssetDynamicAttrFormValue>
 ) {
+  if (!definitions.length) {
+    return []
+  }
+
+  // 动态属性提交严格以模板定义为准，表单里额外的自由字段不会进入请求体。
   return definitions.map((item) => {
     const value = formRecord[item.attrCode]
     const payload: AssetDynamicAttrValue = {
