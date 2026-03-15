@@ -21,6 +21,15 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common</artifactId>
         </dependency>
+        <!--
+            工作流模块当前先采用 Mockito + JUnit 的轻量单元测试方式验证审批闭环，
+            这样可以在不依赖数据库和 Spring 容器的前提下，先把最小审批语义锁住。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

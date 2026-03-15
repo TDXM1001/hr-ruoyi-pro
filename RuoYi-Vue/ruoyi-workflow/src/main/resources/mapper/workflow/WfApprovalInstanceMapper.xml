@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.workflow.mapper.WfApprovalInstanceMapper">
+
+    <resultMap id="WfApprovalInstanceResult" type="com.ruoyi.workflow.domain.WfApprovalInstance">
+        <id property="instanceId" column="instance_id"/>
+        <result property="businessId" column="business_id"/>
+        <result property="businessType" column="business_type"/>
+        <result property="currentNode" column="current_node"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="WorkflowTaskVoResult" type="com.ruoyi.workflow.domain.vo.WorkflowTaskVo">
+        <id property="instanceId" column="instance_id"/>
+        <result property="businessId" column="business_id"/>
+        <result property="businessType" column="business_type"/>
+        <result property="currentNode" column="current_node"/>
+        <result property="status" column="status"/>
+        <result property="action" column="action"/>
+        <result property="comment" column="comment"/>
+        <result property="approverId" column="approver_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insertWfApprovalInstance" parameterType="com.ruoyi.workflow.domain.WfApprovalInstance"
+            useGeneratedKeys="true" keyProperty="instanceId">
+        insert into wf_approval_instance (
+            business_id,
+            business_type,
+            current_node,
+            status,
+            create_time
+        ) values (
+            #{businessId},
+            #{businessType},
+            #{currentNode},
+            #{status},
+            #{createTime}
+        )
+    </insert>
+
+    <select id="selectWfApprovalInstanceByInstanceId" parameterType="Long" resultMap="WfApprovalInstanceResult">
+        select instance_id,
+               business_id,
+               business_type,
+               current_node,
+               status,
+               create_time
+        from wf_approval_instance
+        where instance_id = #{instanceId}
+    </select>
+
+    <update id="updateWfApprovalInstance" parameterType="com.ruoyi.workflow.domain.WfApprovalInstance">
+        update wf_approval_instance
+        <set>
+            <if test="currentNode != null and currentNode != ''">current_node = #{currentNode},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+        </set>
+        where instance_id = #{instanceId}
+    </update>
+
+    <select id="selectTodoTaskList" parameterType="Long" resultMap="WorkflowTaskVoResult">
+        select instance_id,
+               business_id,
+               business_type,
+               current_node,
+               status,
+               create_time
+        from wf_approval_instance
+        where status = 'pending'
+        order by create_time desc
+    </select>
+
+    <select id="selectDoneTaskList" parameterType="Long" resultMap="WorkflowTaskVoResult">
+        select i.instance_id,
+               i.business_id,
+               i.business_type,
+               i.current_node,
+               i.status,
+               n.action,
+               n.comment,
+               n.approver_id,
+               n.process_time as create_time
+        from wf_approval_instance i
+                 inner join wf_approval_node n
+                            on n.node_id = (
+                                select max(n2.node_id)
+                                from wf_approval_node n2
+                                where n2.instance_id = i.instance_id
+                                  and n2.approver_id = #{approverId}
+                                  and n2.action in ('approve', 'reject')
+                            )
+        order by n.process_time desc
+    </select>
+</mapper>

@@ -1,6 +1,6 @@
 package com.ruoyi.workflow.service;
 
-import com.ruoyi.workflow.domain.WfApprovalInstance;
+import com.ruoyi.workflow.domain.vo.WorkflowTaskVo;
 
 import java.util.List;
 
@@ -42,7 +42,18 @@ public interface IApprovalEngine {
      * 获取指定用户的待办任务列表
      *
      * @param approverId 审批人ID
-     * @return 待办实例列表
+     * @return 待办任务列表
      */
-    List<WfApprovalInstance> getTasks(Long approverId);
+    List<WorkflowTaskVo> getTasks(Long approverId);
+
+    /**
+     * 获取指定用户的已办任务列表。
+     *
+     * 当前阶段的最小审批闭环只要求返回“我处理过”的业务单据，
+     * 供前端已办页直接展示，不引入复杂流程历史视图。
+     *
+     * @param approverId 审批人ID
+     * @return 已办任务列表
+     */
+    List<WorkflowTaskVo> getDoneTasks(Long approverId);
 }
