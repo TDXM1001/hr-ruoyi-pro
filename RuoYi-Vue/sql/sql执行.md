@@ -61,11 +61,19 @@
         *   把审批中心菜单权限修正为 `workflow:task:todo`、`workflow:task:done`，并补充 `workflow:task:approve` 按钮权限。
         *   补齐 `asset:requisition:return`、`asset:maintenance:*`、`asset:disposal:*` 等按钮权限。
     *   **说明**：脚本顶部提供 `@enable_workflow_center_menu` 开关；若当前环境暂不开放审批中心，可先改为 `0` 再执行。
+11. **`20260315_asset_real_estate_lifecycle.sql`**
+    *   **适用场景**：需要启用不动产权属变更、用途变更、状态变更、注销/处置四类生命周期动作。
+    *   **依赖**：
+        *   `20260314_asset_data_model_refactor.sql` 已执行，`asset_real_estate` 主表已存在。
+        *   如需审批型动作流转，`20260312_asset_workflow_business.sql` 已执行，审批引擎表已存在。
+    *   **用途**：
+        *   创建 `asset_real_estate_ownership_change`、`asset_real_estate_usage_change`、`asset_real_estate_status_change`、`asset_real_estate_disposal` 四张动作单据表。
+        *   为不动产动作保留前值、目标值、申请信息和单据状态，避免过程字段直接写回主档。
 
 ## 执行建议
 
-*   **全新库初始化**：按 1 到 8 的顺序执行即可；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
-*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本。
+*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11 个脚本；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
+*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11 个脚本。
 *   **补丁执行失败时**：如果第 9 个脚本在收紧非空约束时失败，通常说明某些业务单据的 `asset_no` 无法匹配到 `asset_info`，需要先修正历史数据后再重跑补丁。
 
 ---

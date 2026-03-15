@@ -4,12 +4,19 @@ import java.util.List;
 import com.ruoyi.asset.domain.AssetDisposal;
 import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.domain.AssetMaintenance;
+import com.ruoyi.asset.domain.AssetRealEstate;
+import com.ruoyi.asset.domain.AssetRealEstateDisposal;
+import com.ruoyi.asset.domain.AssetRealEstateOwnershipChange;
 import com.ruoyi.asset.domain.AssetRequisition;
 import com.ruoyi.asset.mapper.AssetDisposalMapper;
 import com.ruoyi.asset.mapper.AssetInfoMapper;
 import com.ruoyi.asset.mapper.AssetMaintenanceMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateDisposalMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateOwnershipChangeMapper;
 import com.ruoyi.asset.mapper.AssetRequisitionMapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.workflow.service.WorkflowBusinessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +41,15 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
     /** 资产已报废。 */
     private static final String ASSET_STATUS_SCRAPPED = "5";
 
+    /** 资产已处置。 */
+    private static final String ASSET_STATUS_DISPOSED = "6";
+
+    /** 单据审批通过。 */
+    private static final String DOC_STATUS_APPROVED = "approved";
+
+    /** 单据审批驳回。 */
+    private static final String DOC_STATUS_REJECTED = "rejected";
+
     @Autowired
     private AssetRequisitionMapper assetRequisitionMapper;
 
@@ -46,9 +62,24 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
     @Autowired
     private AssetInfoMapper assetInfoMapper;
 
+    @Autowired
+    private AssetRealEstateOwnershipChangeMapper assetRealEstateOwnershipChangeMapper;
+
+    @Autowired
+    private AssetRealEstateDisposalMapper assetRealEstateDisposalMapper;
+
+    @Autowired
+    private AssetRealEstateMapper assetRealEstateMapper;
+
     @Override
     public List<String> getSupportedBusinessTypes() {
-        return List.of("asset_requisition", "asset_maintenance", "asset_disposal");
+        return List.of(
+            "asset_requisition",
+            "asset_maintenance",
+            "asset_disposal",
+            "asset_real_estate_ownership_change",
+            "asset_real_estate_disposal"
+        );
     }
 
     @Override
@@ -57,6 +88,8 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
             case "asset_requisition" -> approveRequisition(businessId);
             case "asset_maintenance" -> approveMaintenance(businessId);
             case "asset_disposal" -> approveDisposal(businessId);
+            case "asset_real_estate_ownership_change" -> approveRealEstateOwnershipChange(businessId);
+            case "asset_real_estate_disposal" -> approveRealEstateDisposal(businessId);
             default -> throw new ServiceException("不支持的资产业务类型: " + businessType);
         }
     }
@@ -67,6 +100,8 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
             case "asset_requisition" -> rejectRequisition(businessId);
             case "asset_maintenance" -> rejectMaintenance(businessId);
             case "asset_disposal" -> rejectDisposal(businessId);
+            case "asset_real_estate_ownership_change" -> rejectRealEstateOwnershipChange(businessId);
+            case "asset_real_estate_disposal" -> rejectRealEstateDisposal(businessId);
             default -> throw new ServiceException("不支持的资产业务类型: " + businessType);
         }
     }
@@ -156,6 +191,66 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
     }
 
     /**
+     * 不动产权属变更审批通过后，再把目标值回写到主档。
+     */
+    private void approveRealEstateOwnershipChange(String businessId) {
+        AssetRealEstateOwnershipChange ownershipChange = requireOwnershipChange(businessId);
+        AssetRealEstateOwnershipChange updatePayload = new AssetRealEstateOwnershipChange();
+        updatePayload.setOwnershipChangeNo(ownershipChange.getOwnershipChangeNo());
+        updatePayload.setStatus(DOC_STATUS_APPROVED);
+        updatePayload.setUpdateTime(DateUtils.getNowDate());
+        assetRealEstateOwnershipChangeMapper.updateOwnershipChange(updatePayload);
+
+        AssetRealEstate realEstate = new AssetRealEstate();
+        realEstate.setAssetId(ownershipChange.getAssetId());
+        realEstate.setRightsHolder(ownershipChange.getTargetRightsHolder());
+        realEstate.setPropertyCertNo(ownershipChange.getTargetPropertyCertNo());
+        realEstate.setRegistrationDate(ownershipChange.getTargetRegistrationDate());
+        assetRealEstateMapper.updateAssetRealEstate(realEstate);
+    }
+
+    /**
+     * 不动产权属变更驳回时只改单据状态，不污染当前事实。
+     */
+    private void rejectRealEstateOwnershipChange(String businessId) {
+        AssetRealEstateOwnershipChange ownershipChange = requireOwnershipChange(businessId);
+        AssetRealEstateOwnershipChange updatePayload = new AssetRealEstateOwnershipChange();
+        updatePayload.setOwnershipChangeNo(ownershipChange.getOwnershipChangeNo());
+        updatePayload.setStatus(DOC_STATUS_REJECTED);
+        updatePayload.setUpdateTime(DateUtils.getNowDate());
+        assetRealEstateOwnershipChangeMapper.updateOwnershipChange(updatePayload);
+    }
+
+    /**
+     * 不动产注销/处置审批通过后才改资产终态。
+     */
+    private void approveRealEstateDisposal(String businessId) {
+        AssetRealEstateDisposal disposal = requireRealEstateDisposal(businessId);
+        AssetRealEstateDisposal updatePayload = new AssetRealEstateDisposal();
+        updatePayload.setDisposalNo(disposal.getDisposalNo());
+        updatePayload.setStatus(DOC_STATUS_APPROVED);
+        updatePayload.setUpdateTime(DateUtils.getNowDate());
+        assetRealEstateDisposalMapper.updateDisposal(updatePayload);
+
+        updateAssetStatus(
+            disposal.getAssetId(),
+            disposal.getTargetAssetStatus() == null ? ASSET_STATUS_DISPOSED : disposal.getTargetAssetStatus()
+        );
+    }
+
+    /**
+     * 不动产注销/处置驳回时只改单据状态。
+     */
+    private void rejectRealEstateDisposal(String businessId) {
+        AssetRealEstateDisposal disposal = requireRealEstateDisposal(businessId);
+        AssetRealEstateDisposal updatePayload = new AssetRealEstateDisposal();
+        updatePayload.setDisposalNo(disposal.getDisposalNo());
+        updatePayload.setStatus(DOC_STATUS_REJECTED);
+        updatePayload.setUpdateTime(DateUtils.getNowDate());
+        assetRealEstateDisposalMapper.updateDisposal(updatePayload);
+    }
+
+    /**
      * 保证领用单存在，否则审批回调不应继续落库。
      */
     private AssetRequisition requireRequisition(String businessId) {
@@ -184,6 +279,29 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
         AssetDisposal disposal = assetDisposalMapper.selectAssetDisposalByDisposalNo(businessId);
         if (disposal == null) {
             throw new ServiceException("处置单不存在: " + businessId);
+        }
+        return disposal;
+    }
+
+    /**
+     * 保证不动产权属变更单存在。
+     */
+    private AssetRealEstateOwnershipChange requireOwnershipChange(String businessId) {
+        AssetRealEstateOwnershipChange ownershipChange =
+            assetRealEstateOwnershipChangeMapper.selectOwnershipChangeByNo(businessId);
+        if (ownershipChange == null) {
+            throw new ServiceException("权属变更单不存在: " + businessId);
+        }
+        return ownershipChange;
+    }
+
+    /**
+     * 保证不动产注销/处置单存在。
+     */
+    private AssetRealEstateDisposal requireRealEstateDisposal(String businessId) {
+        AssetRealEstateDisposal disposal = assetRealEstateDisposalMapper.selectDisposalByNo(businessId);
+        if (disposal == null) {
+            throw new ServiceException("不动产注销/处置单不存在: " + businessId);
         }
         return disposal;
     }

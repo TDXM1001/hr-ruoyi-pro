@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRealEstateUsageChangeMapper">
+    <resultMap type="com.ruoyi.asset.domain.AssetRealEstateUsageChange" id="AssetRealEstateUsageChangeResult">
+        <id property="usageChangeNo" column="usage_change_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetNo" column="asset_no"/>
+        <result property="applyUserId" column="apply_user_id"/>
+        <result property="applyDeptId" column="apply_dept_id"/>
+        <result property="status" column="status"/>
+        <result property="oldLandUse" column="old_land_use"/>
+        <result property="targetLandUse" column="target_land_use"/>
+        <result property="oldBuildingUse" column="old_building_use"/>
+        <result property="targetBuildingUse" column="target_building_use"/>
+        <result property="reason" column="reason"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectUsageChangeVo">
+        select usage_change_no, asset_id, asset_no, apply_user_id, apply_dept_id, status,
+               old_land_use, target_land_use, old_building_use, target_building_use,
+               reason, create_time, update_time, remark
+        from asset_real_estate_usage_change
+    </sql>
+
+    <select id="selectUsageChangeByNo" parameterType="String" resultMap="AssetRealEstateUsageChangeResult">
+        <include refid="selectUsageChangeVo"/>
+        where usage_change_no = #{usageChangeNo}
+    </select>
+
+    <select id="selectUsageChangeList" parameterType="com.ruoyi.asset.domain.AssetRealEstateUsageChange" resultMap="AssetRealEstateUsageChangeResult">
+        <include refid="selectUsageChangeVo"/>
+        <where>
+            <if test="usageChangeNo != null and usageChangeNo != ''">and usage_change_no = #{usageChangeNo}</if>
+            <if test="assetId != null">and asset_id = #{assetId}</if>
+            <if test="assetNo != null and assetNo != ''">and asset_no = #{assetNo}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertUsageChange" parameterType="com.ruoyi.asset.domain.AssetRealEstateUsageChange">
+        insert into asset_real_estate_usage_change
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="usageChangeNo != null">usage_change_no,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="assetNo != null">asset_no,</if>
+            <if test="applyUserId != null">apply_user_id,</if>
+            <if test="applyDeptId != null">apply_dept_id,</if>
+            <if test="status != null">status,</if>
+            <if test="oldLandUse != null">old_land_use,</if>
+            <if test="targetLandUse != null">target_land_use,</if>
+            <if test="oldBuildingUse != null">old_building_use,</if>
+            <if test="targetBuildingUse != null">target_building_use,</if>
+            <if test="reason != null">reason,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="usageChangeNo != null">#{usageChangeNo},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="assetNo != null">#{assetNo},</if>
+            <if test="applyUserId != null">#{applyUserId},</if>
+            <if test="applyDeptId != null">#{applyDeptId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="oldLandUse != null">#{oldLandUse},</if>
+            <if test="targetLandUse != null">#{targetLandUse},</if>
+            <if test="oldBuildingUse != null">#{oldBuildingUse},</if>
+            <if test="targetBuildingUse != null">#{targetBuildingUse},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+</mapper>

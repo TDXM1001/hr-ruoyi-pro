@@ -4,10 +4,16 @@ import java.util.Date;
 import com.ruoyi.asset.domain.AssetDisposal;
 import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.domain.AssetMaintenance;
+import com.ruoyi.asset.domain.AssetRealEstate;
+import com.ruoyi.asset.domain.AssetRealEstateDisposal;
+import com.ruoyi.asset.domain.AssetRealEstateOwnershipChange;
 import com.ruoyi.asset.domain.AssetRequisition;
 import com.ruoyi.asset.mapper.AssetDisposalMapper;
 import com.ruoyi.asset.mapper.AssetInfoMapper;
 import com.ruoyi.asset.mapper.AssetMaintenanceMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateDisposalMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateMapper;
+import com.ruoyi.asset.mapper.AssetRealEstateOwnershipChangeMapper;
 import com.ruoyi.asset.mapper.AssetRequisitionMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +22,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,8 +49,23 @@ class AssetWorkflowBusinessHandlerTest {
     @Mock
     private AssetInfoMapper assetInfoMapper;
 
+    @Mock
+    private AssetRealEstateOwnershipChangeMapper assetRealEstateOwnershipChangeMapper;
+
+    @Mock
+    private AssetRealEstateDisposalMapper assetRealEstateDisposalMapper;
+
+    @Mock
+    private AssetRealEstateMapper assetRealEstateMapper;
+
     @InjectMocks
     private AssetWorkflowBusinessHandler assetWorkflowBusinessHandler;
+
+    @Test
+    void shouldSupportRealEstateWorkflowBusinessTypes() {
+        assertTrue(assetWorkflowBusinessHandler.getSupportedBusinessTypes().contains("asset_real_estate_ownership_change"));
+        assertTrue(assetWorkflowBusinessHandler.getSupportedBusinessTypes().contains("asset_real_estate_disposal"));
+    }
 
     @Test
     void shouldMarkRequisitionApprovedAndKeepAssetAsBorrowedWhenApprovalPasses() {
@@ -157,6 +180,82 @@ class AssetWorkflowBusinessHandlerTest {
         ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
         verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
         assertEquals("1", assetCaptor.getValue().getAssetStatus());
+    }
+
+    @Test
+    void shouldApplyOwnershipChangeToRealEstateWhenApprovalPasses() {
+        AssetRealEstateOwnershipChange ownershipChange = new AssetRealEstateOwnershipChange();
+        ownershipChange.setOwnershipChangeNo("OWN-20260315-001");
+        ownershipChange.setAssetId(4001L);
+        ownershipChange.setTargetRightsHolder("李四");
+        ownershipChange.setTargetPropertyCertNo("CERT-NEW");
+        ownershipChange.setTargetRegistrationDate(new Date(1742083200000L));
+        when(assetRealEstateOwnershipChangeMapper.selectOwnershipChangeByNo("OWN-20260315-001")).thenReturn(ownershipChange);
+
+        assetWorkflowBusinessHandler.onApprove("asset_real_estate_ownership_change", "OWN-20260315-001");
+
+        ArgumentCaptor<AssetRealEstateOwnershipChange> changeCaptor =
+            ArgumentCaptor.forClass(AssetRealEstateOwnershipChange.class);
+        verify(assetRealEstateOwnershipChangeMapper).updateOwnershipChange(changeCaptor.capture());
+        assertEquals("approved", changeCaptor.getValue().getStatus());
+
+        ArgumentCaptor<AssetRealEstate> estateCaptor = ArgumentCaptor.forClass(AssetRealEstate.class);
+        verify(assetRealEstateMapper).updateAssetRealEstate(estateCaptor.capture());
+        assertEquals(4001L, estateCaptor.getValue().getAssetId());
+        assertEquals("李四", estateCaptor.getValue().getRightsHolder());
+        assertEquals("CERT-NEW", estateCaptor.getValue().getPropertyCertNo());
+    }
+
+    @Test
+    void shouldOnlyRejectOwnershipChangeDocumentWithoutTouchingRealEstate() {
+        AssetRealEstateOwnershipChange ownershipChange = new AssetRealEstateOwnershipChange();
+        ownershipChange.setOwnershipChangeNo("OWN-20260315-002");
+        ownershipChange.setAssetId(4002L);
+        when(assetRealEstateOwnershipChangeMapper.selectOwnershipChangeByNo("OWN-20260315-002")).thenReturn(ownershipChange);
+
+        assetWorkflowBusinessHandler.onReject("asset_real_estate_ownership_change", "OWN-20260315-002");
+
+        ArgumentCaptor<AssetRealEstateOwnershipChange> changeCaptor =
+            ArgumentCaptor.forClass(AssetRealEstateOwnershipChange.class);
+        verify(assetRealEstateOwnershipChangeMapper).updateOwnershipChange(changeCaptor.capture());
+        assertEquals("rejected", changeCaptor.getValue().getStatus());
+        verify(assetRealEstateMapper, never()).updateAssetRealEstate(any(AssetRealEstate.class));
+        verify(assetInfoMapper, never()).updateAssetInfo(any(AssetInfo.class));
+    }
+
+    @Test
+    void shouldMarkRealEstateDisposalApprovedAndUpdateAssetStatusWhenApprovalPasses() {
+        AssetRealEstateDisposal disposal = new AssetRealEstateDisposal();
+        disposal.setDisposalNo("RED-20260315-001");
+        disposal.setAssetId(5001L);
+        disposal.setTargetAssetStatus("6");
+        when(assetRealEstateDisposalMapper.selectDisposalByNo("RED-20260315-001")).thenReturn(disposal);
+
+        assetWorkflowBusinessHandler.onApprove("asset_real_estate_disposal", "RED-20260315-001");
+
+        ArgumentCaptor<AssetRealEstateDisposal> disposalCaptor = ArgumentCaptor.forClass(AssetRealEstateDisposal.class);
+        verify(assetRealEstateDisposalMapper).updateDisposal(disposalCaptor.capture());
+        assertEquals("approved", disposalCaptor.getValue().getStatus());
+
+        ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
+        verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
+        assertEquals(5001L, assetCaptor.getValue().getAssetId());
+        assertEquals("6", assetCaptor.getValue().getAssetStatus());
+    }
+
+    @Test
+    void shouldOnlyRejectRealEstateDisposalDocumentWithoutTouchingAsset() {
+        AssetRealEstateDisposal disposal = new AssetRealEstateDisposal();
+        disposal.setDisposalNo("RED-20260315-002");
+        disposal.setAssetId(5002L);
+        when(assetRealEstateDisposalMapper.selectDisposalByNo("RED-20260315-002")).thenReturn(disposal);
+
+        assetWorkflowBusinessHandler.onReject("asset_real_estate_disposal", "RED-20260315-002");
+
+        ArgumentCaptor<AssetRealEstateDisposal> disposalCaptor = ArgumentCaptor.forClass(AssetRealEstateDisposal.class);
+        verify(assetRealEstateDisposalMapper).updateDisposal(disposalCaptor.capture());
+        assertEquals("rejected", disposalCaptor.getValue().getStatus());
+        verify(assetInfoMapper, never()).updateAssetInfo(any(AssetInfo.class));
     }
 
     private AssetInfo buildAssetInfo(Long assetId, String assetNo, String assetStatus) {

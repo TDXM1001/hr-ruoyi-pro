@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRealEstateDisposalMapper">
+    <resultMap type="com.ruoyi.asset.domain.AssetRealEstateDisposal" id="AssetRealEstateDisposalResult">
+        <id property="disposalNo" column="disposal_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetNo" column="asset_no"/>
+        <result property="applyUserId" column="apply_user_id"/>
+        <result property="applyDeptId" column="apply_dept_id"/>
+        <result property="status" column="status"/>
+        <result property="oldAssetStatus" column="old_asset_status"/>
+        <result property="targetAssetStatus" column="target_asset_status"/>
+        <result property="disposalType" column="disposal_type"/>
+        <result property="reason" column="reason"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectDisposalVo">
+        select disposal_no, asset_id, asset_no, apply_user_id, apply_dept_id, status,
+               old_asset_status, target_asset_status, disposal_type, reason, create_time, update_time, remark
+        from asset_real_estate_disposal
+    </sql>
+
+    <select id="selectDisposalByNo" parameterType="String" resultMap="AssetRealEstateDisposalResult">
+        <include refid="selectDisposalVo"/>
+        where disposal_no = #{disposalNo}
+    </select>
+
+    <select id="selectDisposalList" parameterType="com.ruoyi.asset.domain.AssetRealEstateDisposal" resultMap="AssetRealEstateDisposalResult">
+        <include refid="selectDisposalVo"/>
+        <where>
+            <if test="disposalNo != null and disposalNo != ''">and disposal_no = #{disposalNo}</if>
+            <if test="assetId != null">and asset_id = #{assetId}</if>
+            <if test="assetNo != null and assetNo != ''">and asset_no = #{assetNo}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertDisposal" parameterType="com.ruoyi.asset.domain.AssetRealEstateDisposal">
+        insert into asset_real_estate_disposal
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="disposalNo != null">disposal_no,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="assetNo != null">asset_no,</if>
+            <if test="applyUserId != null">apply_user_id,</if>
+            <if test="applyDeptId != null">apply_dept_id,</if>
+            <if test="status != null">status,</if>
+            <if test="oldAssetStatus != null">old_asset_status,</if>
+            <if test="targetAssetStatus != null">target_asset_status,</if>
+            <if test="disposalType != null">disposal_type,</if>
+            <if test="reason != null">reason,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="disposalNo != null">#{disposalNo},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="assetNo != null">#{assetNo},</if>
+            <if test="applyUserId != null">#{applyUserId},</if>
+            <if test="applyDeptId != null">#{applyDeptId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="oldAssetStatus != null">#{oldAssetStatus},</if>
+            <if test="targetAssetStatus != null">#{targetAssetStatus},</if>
+            <if test="disposalType != null">#{disposalType},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDisposal" parameterType="com.ruoyi.asset.domain.AssetRealEstateDisposal">
+        update asset_real_estate_disposal
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where disposal_no = #{disposalNo}
+    </update>
+</mapper>
