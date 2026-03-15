@@ -104,6 +104,8 @@
 
 - `ruoyi-asset` 聚焦测试在当前多模块工程下使用 reactor 方式验证：`mvn -pl ruoyi-asset,ruoyi-workflow -am ...`
 - `art-design-pro` 的 `npm run build` 仍被 `monitor/system` 目录历史 TypeScript 问题阻塞，本次资产模块变更未新增这些报错
+- 固定资产生命周期系统化基线完成后，不动产专属生命周期改由 `docs/plans/2026-03-15-asset-real-estate-lifecycle-next-phase-implementation-plan.md` 单独承接
+- 因此本计划“本阶段非目标”里关于不动产正式页面与 API 的限制，只约束当前固定资产基线批次，不再约束后续不动产专项实现
 
 ### Task 1: 落地 `ruoyi-workflow` 最小可用任务链路
 

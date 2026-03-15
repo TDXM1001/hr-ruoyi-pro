@@ -69,11 +69,19 @@
     *   **用途**：
         *   创建 `asset_real_estate_ownership_change`、`asset_real_estate_usage_change`、`asset_real_estate_status_change`、`asset_real_estate_disposal` 四张动作单据表。
         *   为不动产动作保留前值、目标值、申请信息和单据状态，避免过程字段直接写回主档。
+12. **`20260315_asset_real_estate_lifecycle_menu.sql`**
+    *   **适用场景**：需要为不动产权属变更、用途变更、状态变更、注销/处置四类页面补齐菜单与按钮权限。
+    *   **依赖**：
+        *   `20260311_asset_menu_init.sql` 已执行，`资产系统` 父菜单已存在。
+        *   前端已提供 `asset/real-estate/*/index` 四个页面组件。
+    *   **用途**：
+        *   创建 `asset/real-estate/ownership/index`、`asset/real-estate/usage/index`、`asset/real-estate/status/index`、`asset/real-estate/disposal/index` 四个台账菜单。
+        *   补齐 `asset:realEstateOwnership:*`、`asset:realEstateUsage:*`、`asset:realEstateStatus:*`、`asset:realEstateDisposal:*` 的最小按钮权限。
 
 ## 执行建议
 
-*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11 个脚本；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
-*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11 个脚本。
+*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11、12 个脚本；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
+*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11、12 个脚本。
 *   **补丁执行失败时**：如果第 9 个脚本在收紧非空约束时失败，通常说明某些业务单据的 `asset_no` 无法匹配到 `asset_info`，需要先修正历史数据后再重跑补丁。
 
 ---

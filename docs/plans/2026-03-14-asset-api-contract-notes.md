@@ -265,8 +265,84 @@
   按钮权限：`workflow:task:approve`
 - `asset/workflow/done/index`
   页面权限：`workflow:task:done`
+- `asset/real-estate/ownership/index`
+  页面权限：`asset:realEstateOwnership:list`
+  按钮权限：`asset:realEstateOwnership:query`、`asset:realEstateOwnership:add`
+- `asset/real-estate/usage/index`
+  页面权限：`asset:realEstateUsage:list`
+  按钮权限：`asset:realEstateUsage:query`、`asset:realEstateUsage:add`
+- `asset/real-estate/status/index`
+  页面权限：`asset:realEstateStatus:list`
+  按钮权限：`asset:realEstateStatus:query`、`asset:realEstateStatus:add`
+- `asset/real-estate/disposal/index`
+  页面权限：`asset:realEstateDisposal:list`
+  按钮权限：`asset:realEstateDisposal:query`、`asset:realEstateDisposal:add`
 
-## 九、当前构建阻塞说明
+## 九、不动产生命周期接口
+
+### 权属变更
+
+- `GET /asset/real-estate/ownership/list`
+  用途：分页查询权属变更记录
+- `GET /asset/real-estate/ownership/{ownershipChangeNo}`
+  用途：查询权属变更详情
+- `POST /asset/real-estate/ownership`
+  用途：发起权属变更申请
+
+补充说明：
+
+- 权属变更属于审批型动作，单据状态按 `pending -> approved/rejected` 流转
+- 前端创建请求体最小字段为 `assetId/assetNo`、`targetRightsHolder`、`targetPropertyCertNo`、`targetRegistrationDate`、`reason`
+
+### 用途变更
+
+- `GET /asset/real-estate/usage/list`
+  用途：分页查询用途变更记录
+- `GET /asset/real-estate/usage/{usageChangeNo}`
+  用途：查询用途变更详情
+- `POST /asset/real-estate/usage`
+  用途：发起用途变更
+
+补充说明：
+
+- 用途变更属于免审批动作，创建后单据直接进入 `completed`
+- 后端在写入单据后会同步回写 `asset_real_estate.land_use` 与 `asset_real_estate.building_use`
+
+### 状态变更
+
+- `GET /asset/real-estate/status/list`
+  用途：分页查询状态变更记录
+- `GET /asset/real-estate/status/{statusChangeNo}`
+  用途：查询状态变更详情
+- `POST /asset/real-estate/status`
+  用途：发起状态变更
+
+补充说明：
+
+- 状态变更属于免审批动作，创建后单据直接进入 `completed`
+- 后端在写入单据后会同步回写 `asset_info.asset_status`
+
+### 注销/处置
+
+- `GET /asset/real-estate/disposal/list`
+  用途：分页查询注销/处置记录
+- `GET /asset/real-estate/disposal/{disposalNo}`
+  用途：查询注销/处置详情
+- `POST /asset/real-estate/disposal`
+  用途：发起注销/处置申请
+
+补充说明：
+
+- 注销/处置属于审批型动作，单据状态按 `pending -> approved/rejected` 流转
+- 当前阶段前端最小请求体字段为 `assetId/assetNo`、`disposalType`、`targetAssetStatus`、`reason`
+
+### 动作分流口径
+
+- 审批型动作：权属变更、注销/处置
+- 免审批动作：用途变更、状态变更
+- 资产列表页不再暴露 `realEstateChange` 占位键，而是拆分为 `realEstateOwnership`、`realEstateUsage`、`realEstateStatus`、`realEstateDisposal`
+
+## 十、当前构建阻塞说明
 
 `art-design-pro` 的 `npm run build` 仍被以下历史 TypeScript 问题阻塞，本次资产生命周期改动未新增这些报错：
 

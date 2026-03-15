@@ -197,7 +197,16 @@ export interface AssetLifecycleContext {
 
 /** 生命周期入口定义。 */
 export interface AssetLifecycleAction {
-  key: 'change' | 'delete' | 'requisition' | 'repair' | 'disposal' | 'realEstateChange'
+  key:
+    | 'change'
+    | 'delete'
+    | 'requisition'
+    | 'repair'
+    | 'disposal'
+    | 'realEstateOwnership'
+    | 'realEstateUsage'
+    | 'realEstateStatus'
+    | 'realEstateDisposal'
   label: string
   tone?: 'primary' | 'warning' | 'danger' | 'info'
   /** action=有实际处理函数，placeholder=只给出规划提示。 */

@@ -25,6 +25,24 @@ describe('asset lifecycle helper', () => {
   it('keeps common actions for real estate assets', () => {
     expect(
       buildLifecycleActions({ assetType: '2', assetStatus: '1' }).map((item) => item.key)
-    ).toEqual(expect.arrayContaining(['change', 'delete', 'realEstateChange', 'disposal']))
+    ).toEqual(
+      expect.arrayContaining([
+        'change',
+        'delete',
+        'realEstateOwnership',
+        'realEstateUsage',
+        'realEstateStatus',
+        'realEstateDisposal'
+      ])
+    )
+  })
+
+  it('exposes real estate actions as formal action entries', () => {
+    const actions = buildLifecycleActions({ assetType: '2', assetStatus: '1' })
+
+    expect(actions.find((item) => item.key === 'realEstateOwnership')?.mode).toBe('action')
+    expect(actions.find((item) => item.key === 'realEstateUsage')?.mode).toBe('action')
+    expect(actions.find((item) => item.key === 'realEstateStatus')?.mode).toBe('action')
+    expect(actions.find((item) => item.key === 'realEstateDisposal')?.mode).toBe('action')
   })
 })

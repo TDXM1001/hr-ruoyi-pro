@@ -448,6 +448,22 @@
     openLifecycleLedger('/asset/disposal/index', row)
   }
 
+  const handleRealEstateOwnership = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/real-estate/ownership/index', row)
+  }
+
+  const handleRealEstateUsage = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/real-estate/usage/index', row)
+  }
+
+  const handleRealEstateStatus = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/real-estate/status/index', row)
+  }
+
+  const handleRealEstateDisposal = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/real-estate/disposal/index', row)
+  }
+
   /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */
   const renderLifecycleActionButton = (row: AssetListItem, action: AssetLifecycleAction) => {
     if (action.mode === 'placeholder') {
@@ -473,6 +489,10 @@
       requisition: () => handleRequisition(row),
       repair: () => handleMaintenance(row),
       disposal: () => handleDisposal(row),
+      realEstateOwnership: () => handleRealEstateOwnership(row),
+      realEstateUsage: () => handleRealEstateUsage(row),
+      realEstateStatus: () => handleRealEstateStatus(row),
+      realEstateDisposal: () => handleRealEstateDisposal(row),
       change: () => handleLifecyclePlaceholder(action)
     }
 

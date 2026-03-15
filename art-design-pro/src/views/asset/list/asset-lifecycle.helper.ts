@@ -21,18 +21,28 @@ export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecy
   if (asset.assetType === '2') {
     return [
       {
-        key: 'realEstateChange',
+        key: 'realEstateOwnership',
         label: '权属变更',
         tone: 'warning',
-        mode: 'placeholder',
-        message: '不动产权属变更入口待规划。'
+        mode: 'action'
       },
       {
-        key: 'disposal',
+        key: 'realEstateUsage',
+        label: '用途变更',
+        tone: 'primary',
+        mode: 'action'
+      },
+      {
+        key: 'realEstateStatus',
+        label: '状态变更',
+        tone: 'info',
+        mode: 'action'
+      },
+      {
+        key: 'realEstateDisposal',
         label: '注销/处置',
-        tone: 'warning',
-        mode: 'placeholder',
-        message: '不动产注销/处置入口待规划。'
+        tone: 'danger',
+        mode: 'action'
       },
       ...commonActions
     ]

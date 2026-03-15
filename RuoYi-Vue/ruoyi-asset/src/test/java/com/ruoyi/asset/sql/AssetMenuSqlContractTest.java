@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AssetMenuSqlContractTest {
     private static final Path LEGACY_MENU_SQL_PATH = Path.of("..", "sql", "20260312_asset_workflow_menu.sql");
     private static final Path PATCH_MENU_SQL_PATH = Path.of("..", "sql", "20260315_asset_lifecycle_workflow_menu_patch.sql");
+    private static final Path REAL_ESTATE_MENU_SQL_PATH = Path.of("..", "sql", "20260315_asset_real_estate_lifecycle_menu.sql");
     private static final Path SQL_EXECUTION_DOC_PATH = Path.of("..", "sql", "sql执行.md");
 
     @Test
@@ -52,12 +53,38 @@ class AssetMenuSqlContractTest {
     }
 
     @Test
+    void shouldExposeRealEstateLifecycleMenusAndPermissions() throws IOException {
+        String realEstateMenuSql = Files.readString(REAL_ESTATE_MENU_SQL_PATH, StandardCharsets.UTF_8);
+
+        assertAll(
+            () -> assertTrue(realEstateMenuSql.contains("asset/real-estate/ownership/index"), "菜单脚本缺少权属变更页面路径"),
+            () -> assertTrue(realEstateMenuSql.contains("asset/real-estate/usage/index"), "菜单脚本缺少用途变更页面路径"),
+            () -> assertTrue(realEstateMenuSql.contains("asset/real-estate/status/index"), "菜单脚本缺少状态变更页面路径"),
+            () -> assertTrue(realEstateMenuSql.contains("asset/real-estate/disposal/index"), "菜单脚本缺少注销/处置页面路径"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateOwnership:list"), "菜单脚本缺少权属变更菜单权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateOwnership:add"), "菜单脚本缺少权属变更新增权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateUsage:list"), "菜单脚本缺少用途变更菜单权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateUsage:add"), "菜单脚本缺少用途变更新增权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateStatus:list"), "菜单脚本缺少状态变更菜单权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateStatus:add"), "菜单脚本缺少状态变更新增权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateDisposal:list"), "菜单脚本缺少注销/处置菜单权限"),
+            () -> assertTrue(realEstateMenuSql.contains("asset:realEstateDisposal:add"), "菜单脚本缺少注销/处置新增权限")
+        );
+    }
+
+    @Test
     void shouldDocumentMenuPatchExecutionOrder() throws IOException {
         String executionDoc = Files.readString(SQL_EXECUTION_DOC_PATH, StandardCharsets.UTF_8);
 
-        assertTrue(
-            executionDoc.contains("20260315_asset_lifecycle_workflow_menu_patch.sql"),
-            "SQL 执行说明缺少菜单权限补丁脚本"
+        assertAll(
+            () -> assertTrue(
+                executionDoc.contains("20260315_asset_lifecycle_workflow_menu_patch.sql"),
+                "SQL 执行说明缺少菜单权限补丁脚本"
+            ),
+            () -> assertTrue(
+                executionDoc.contains("20260315_asset_real_estate_lifecycle_menu.sql"),
+                "SQL 执行说明缺少不动产生命周期菜单脚本"
+            )
         );
     }
 }
