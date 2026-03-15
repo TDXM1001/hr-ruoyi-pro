@@ -1,5 +1,7 @@
 import type { AssetDynamicAttrDefinition, AssetDynamicAttrValue } from '@/types/asset'
 
+export type AssetDynamicAttrFormValue = string | number | undefined
+
 /** 保留字段编码，这些字段已经由基础表单承载，不能再动态重复配置。 */
 const RESERVED_ATTR_CODES = ['asset_no', 'asset_name', 'original_value', 'property_cert_no']
 
@@ -14,7 +16,7 @@ export function findReservedAttrCodes(
 
 /** 把后端动态属性值回填成前端表单记录。 */
 export function toDynamicAttrFormRecord(items: AssetDynamicAttrValue[] = []) {
-  return items.reduce<Record<string, unknown>>((acc, item) => {
+  return items.reduce<Record<string, AssetDynamicAttrFormValue>>((acc, item) => {
     acc[item.attrCode] =
       item.attrValueText ?? item.attrValueNumber ?? item.attrValueDate ?? item.attrValueJson ?? ''
     return acc
@@ -26,7 +28,7 @@ export function buildDynamicAttrPayload(
   definitions: Array<
     Pick<AssetDynamicAttrDefinition, 'attrId' | 'categoryId' | 'attrCode' | 'dataType'>
   >,
-  formRecord: Record<string, unknown>
+  formRecord: Record<string, AssetDynamicAttrFormValue>
 ) {
   return definitions.map((item) => {
     const value = formRecord[item.attrCode]

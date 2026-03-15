@@ -21,11 +21,27 @@ export interface ApplyRequisitionReq {
 }
 
 /**
+ * 领用台账最小行结构。
+ * 前端优先依赖 assetId 做内部关联，assetNo 继续承担展示职责。
+ */
+export interface AssetRequisitionItem {
+  requisitionNo: string
+  assetId?: number
+  assetNo: string
+  assetName?: string
+  reason?: string
+  status: number
+  wfStatus?: string
+  applyUserId?: number
+  createTime?: string
+}
+
+/**
  * 查询领用记录列表
  * @param params 查询参数
  */
 export function listRequisition(params?: RequisitionQuery) {
-  return request.get<any[]>({
+  return request.get<AssetRequisitionItem[]>({
     url: '/asset/requisition/list',
     params
   })

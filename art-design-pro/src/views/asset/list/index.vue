@@ -93,7 +93,7 @@
               type="danger"
               plain
               :disabled="!multiple"
-              @click="handleDelete"
+              @click="() => handleDelete()"
               v-ripple
             >
               删除
@@ -131,6 +131,12 @@
       :dialog-type="drawerType"
       :asset-data="currentData"
       @success="refreshData"
+    />
+
+    <AssetFinanceDialog
+      v-model="financeVisible"
+      :asset-id="currentFinanceAsset?.assetId"
+      :asset-no="currentFinanceAsset?.assetNo"
     />
 
     <!-- 领用/维修 统用申请弹窗 -->
@@ -186,12 +192,14 @@
   import { handleTree } from '@/utils/ruoyi'
   import { ElMessageBox, ElMessage, ElButton } from 'element-plus'
   import AssetEditDrawer from './modules/asset-edit-drawer.vue'
+  import AssetFinanceDialog from './modules/asset-finance-dialog.vue'
   import {
     buildAssetListQuery,
     collectAssetIds,
     toApplyAssetContext,
     type AssetApplyContext
   } from './asset-list.helper'
+  import { buildApplyRequisitionReq } from '../requisition/requisition.helper'
 
   defineOptions({ name: 'AssetList' })
 
@@ -210,7 +218,9 @@
   // 抽屉相关
   const drawerVisible = ref(false)
   const drawerType = ref<'add' | 'edit'>('add')
-  const currentData = ref<any>()
+  const currentData = ref<AssetListItem>()
+  const financeVisible = ref(false)
+  const currentFinanceAsset = ref<AssetListItem>()
 
   // 搜索相关
   const initialSearchState = {
@@ -294,7 +304,7 @@
         {
           prop: 'operation',
           label: '操作',
-          width: 260,
+          width: 320,
           align: 'right',
           formatter: (row: any) => {
             return h('div', { class: 'flex justify-end gap-1' }, [
@@ -315,6 +325,15 @@
                   onClick: () => handleRepair(row)
                 },
                 () => '维修'
+              ),
+              h(
+                ElButton,
+                {
+                  type: 'primary',
+                  link: true,
+                  onClick: () => openFinanceDialog(row)
+                },
+                () => '璐㈠姟'
               ),
               h(ArtButtonTable, {
                 type: 'edit',
@@ -401,6 +420,12 @@
   }
 
   /** 删除 */
+  /** 打开单资产财务弹窗，统一查看财务摘要与折旧日志。 */
+  const openFinanceDialog = (row: AssetListItem) => {
+    currentFinanceAsset.value = row
+    financeVisible.value = true
+  }
+
   const handleDelete = async (row?: AssetListItem) => {
     const assetIds = row?.assetId || ids.value
     if (!assetIds || (Array.isArray(assetIds) && assetIds.length === 0)) return
@@ -478,11 +503,7 @@
 
       // 根据业务类型发起请求
       if (applyType.value === 'requisition') {
-        await applyRequisition({
-          assetId: applyTask.value.assetId,
-          assetNo: applyTask.value.assetNo,
-          reason: applyForm.reason
-        })
+        await applyRequisition(buildApplyRequisitionReq(applyTask.value, applyForm.reason))
       } else {
         // repair
         // await applyRepair(...) （待后台拓展）

@@ -1,6 +1,5 @@
 <template>
   <div class="asset-requisition-page art-full-height flex flex-col p-3 overflow-hidden">
-    <!-- 搜索栏 -->
     <ArtSearchBar
       :key="wf_status.length"
       v-model="formFilters"
@@ -10,8 +9,14 @@
       @search="handleSearch"
     />
 
+    <ElAlert
+      class="mb-3"
+      title="当前分支对应的本地后端尚未提供资产归还接口，页面暂不展示归还按钮。"
+      type="info"
+      :closable="false"
+    />
+
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
-      <!-- 表格头部 -->
       <ArtTableHeader
         :showZebra="false"
         :loading="loading"
@@ -19,7 +24,6 @@
         @refresh="refreshData"
       />
 
-      <!-- 表格 -->
       <ArtTable
         ref="tableRef"
         :loading="loading"
@@ -35,23 +39,25 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { ElMessageBox, ElMessage, ElButton } from 'element-plus'
-  import { listRequisition, returnAsset } from '@/api/asset/requisition'
+  import { computed, h, onMounted, reactive, ref } from 'vue'
+  import { listRequisition, type AssetRequisitionItem } from '@/api/asset/requisition'
   import { useTable } from '@/hooks/core/useTable'
+  import type { ColumnOption } from '@/types/component'
   import { useDict } from '@/utils/dict'
   import DictTag from '@/components/DictTag/index.vue'
+  import { canReturnAsset, mapRequisitionStatusToWorkflow } from './requisition.helper'
 
   defineOptions({ name: 'AssetRequisition' })
 
-  // 状态管理
   const { wf_status } = useDict('wf_status')
 
-  // 搜索相关
+  /** 本地后端未实现归还接口，因此前端不保留必然失败的操作入口。 */
+  const returnApiAvailable = false
+
   const initialSearchState = {
     requisitionNo: '',
     assetNo: '',
-    status: undefined
+    status: undefined as number | undefined
   }
 
   const formFilters = reactive({ ...initialSearchState })
@@ -67,21 +73,20 @@
       label: '资产编号',
       key: 'assetNo',
       type: 'input',
-      props: { placeholder: '请输入相关资产编号', clearable: true }
+      props: { placeholder: '请输入关联资产编号', clearable: true }
     },
     {
       label: '流转状态',
       key: 'status',
       type: 'select',
       props: {
-        placeholder: '流转状态',
+        placeholder: '请选择流转状态',
         clearable: true,
         options: wf_status.value
       }
     }
   ])
 
-  // 表格逻辑
   const {
     columns,
     columnChecks,
@@ -97,83 +102,67 @@
   } = useTable({
     core: {
       apiFn: listRequisition,
-      columnsFactory: () => [
-        { type: 'index', label: '序号', width: 60, align: 'center' },
-        { prop: 'requisitionNo', label: '领用单号', width: 150 },
-        { prop: 'assetNo', label: '关联资产', minWidth: 150 },
-        { prop: 'applyUserId', label: '申请人ID', width: 120, align: 'center' },
-        { prop: 'reason', label: '领用事由', minWidth: 200 },
-        {
-          prop: 'status',
-          label: '状态',
-          width: 100,
-          align: 'center',
-          formatter: (row: any) => {
-            // 这里将资产领用表的status映射为对应表现
-            // status：0=审批中 1=已通过 2=已驳回 3=已归还
-            let val = ''
-            if (row.status === 0) val = 'IN_PROGRESS'
-            else if (row.status === 1) val = 'COMPLETED'
-            else if (row.status === 2) val = 'REJECTED'
-            else if (row.status === 3) val = 'COMPLETED' // 类似已归还
+      columnsFactory: () => {
+        const baseColumns: ColumnOption<AssetRequisitionItem>[] = [
+          { type: 'index', label: '序号', width: 60, align: 'center' },
+          { prop: 'requisitionNo', label: '领用单号', width: 150 },
+          { prop: 'assetNo', label: '关联资产', minWidth: 150 },
+          { prop: 'assetName', label: '资产名称', minWidth: 150 },
+          { prop: 'applyUserId', label: '申请人ID', width: 120, align: 'center' },
+          { prop: 'reason', label: '领用事由', minWidth: 200 },
+          {
+            prop: 'status',
+            label: '状态',
+            width: 100,
+            align: 'center',
+            formatter: (row: AssetRequisitionItem) =>
+              h(DictTag, {
+                options: wf_status.value,
+                value: mapRequisitionStatusToWorkflow(row.status)
+              })
+          },
+          { prop: 'createTime', label: '申请时间', width: 170, align: 'center' }
+        ]
 
-            return h(DictTag, { options: wf_status.value, value: val })
-          }
-        },
-        { prop: 'createTime', label: '申请时间', width: 170, align: 'center' },
-        {
-          prop: 'operation',
-          label: '操作',
-          width: 120,
-          align: 'right',
-          formatter: (row: any) => {
-            return h('div', { class: 'flex justify-end' }, [
-              row.status === 1
+        if (!returnApiAvailable) {
+          return baseColumns
+        }
+
+        return [
+          ...baseColumns,
+          {
+            prop: 'operation',
+            label: '操作',
+            width: 120,
+            align: 'right',
+            formatter: (row: AssetRequisitionItem) =>
+              canReturnAsset(row)
                 ? h(
-                    ElButton,
+                    'span',
                     {
-                      type: 'primary',
-                      link: true,
-                      onClick: () => handleReturn(row)
+                      class: 'text-[var(--art-gray-500)]'
                     },
-                    () => '归还资产'
+                    '待补充'
                   )
                 : null
-            ])
           }
-        }
-      ]
+        ]
+      }
     }
   })
 
   const tableRef = ref()
 
-  /** 重置 */
+  /** 重置查询条件，保持和台账页相同的交互节奏。 */
   const handleReset = () => {
     Object.assign(formFilters, initialSearchState)
     resetSearchParams()
   }
 
-  /** 搜索 */
+  /** 把筛选条件同步到 useTable 的查询状态中。 */
   const handleSearch = () => {
     Object.assign(searchParams, formFilters)
     getData()
-  }
-
-  /** 归还操作 */
-  const handleReturn = async (row: any) => {
-    try {
-      await ElMessageBox.confirm(`是否确认归还单号为"${row.requisitionNo}"的资产？`, '归还提示', {
-        type: 'warning'
-      })
-      await returnAsset(row.requisitionNo)
-      ElMessage.success('资产归还请求已提交')
-      refreshData()
-    } catch (error) {
-      if (error !== 'cancel') {
-        console.error('归还操作失败:', error)
-      }
-    }
   }
 
   onMounted(() => {

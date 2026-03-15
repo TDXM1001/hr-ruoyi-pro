@@ -8,14 +8,18 @@ import type {
   AssetFinanceInfo,
   AssetRealEstateInfo
 } from '@/types/asset'
-import { buildDynamicAttrPayload, toDynamicAttrFormRecord } from './asset-dynamic-attr.helper'
+import {
+  buildDynamicAttrPayload,
+  toDynamicAttrFormRecord,
+  type AssetDynamicAttrFormValue
+} from './asset-dynamic-attr.helper'
 
 /** 编辑抽屉的聚合状态。 */
 export interface AssetDrawerState {
   basicForm: AssetBasicInfo
   financeForm: AssetFinanceInfo
   realEstateForm: AssetRealEstateInfo
-  dynamicAttrForm: Record<string, unknown>
+  dynamicAttrForm: Record<string, AssetDynamicAttrFormValue>
   dynamicAttrDefinitions: AssetDynamicAttrDefinition[]
   dynamicAttrs: AssetDynamicAttrValue[]
   attachments: AssetAttachment[]

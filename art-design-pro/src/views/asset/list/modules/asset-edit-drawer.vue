@@ -504,6 +504,7 @@
   import { handleTree } from '@/utils/ruoyi'
   import { useDict } from '@/utils/dict'
   import { findReservedAttrCodes, toDynamicAttrFormRecord } from './asset-dynamic-attr.helper'
+  import { canEditFinanceBaseFields } from './asset-finance.helper'
   import {
     buildAggregatePayload,
     createEmptyDrawerState,
@@ -551,7 +552,7 @@
   ]
 
   const showRealEstateTab = computed(() => state.basicForm.assetType === '2')
-  const financeBaseReadonly = computed(() => (state.financeForm.accumulatedDepreciation || 0) > 0)
+  const financeBaseReadonly = computed(() => !canEditFinanceBaseFields(state.financeForm))
   const dynamicAttrConflictCodes = ref<string[]>([])
   const activeBizType = ref('asset')
 
@@ -682,7 +683,7 @@
       options.onSuccess?.(resp)
       ElMessage.success('附件上传成功')
     } catch (error) {
-      options.onError?.(error as Error)
+      options.onError?.(error as any)
       ElMessage.error('附件上传失败')
     }
   }
