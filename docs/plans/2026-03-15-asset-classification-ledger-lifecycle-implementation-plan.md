@@ -8,11 +8,28 @@
 
 **Tech Stack:** Vue 3、TypeScript、Element Plus、Vitest、Java 17、Spring Boot 3、MyBatis、RuoYi
 
+## 执行拆分
+
+- 批次一：Task 1、Task 2、Task 3，先收敛分类模板契约、分类页模板管理入口和台账实例填值边界。
+- 批次二：Task 4，单独收敛固定资产与不动产的生命周期入口，避免和台账主数据调整交叉修改。
+- 批次三：Task 5，统一做聚焦测试、局部 lint、前端构建与工作区核对，并记录非资产模块历史阻塞项。
+
+## 执行记录
+
+- 批次一已完成，对应提交：`e5ef306`、`5ede2e7`、`407fab3`
+- 批次二已完成，对应提交：`b057683`
+- 批次三已完成，对应提交：`cacb09f`
+- 2026-03-15 复核结果：
+  - `npx vitest run tests/api/asset-category-attr.test.ts tests/views/asset/category-attr.helper.test.ts tests/views/asset/asset-dynamic-attr.helper.test.ts tests/views/asset/asset-form.mapper.test.ts tests/views/asset/asset-lifecycle.helper.test.ts` 通过，`5` 个测试文件、`18` 个用例全部通过。
+  - `npm run lint -- src/api/asset/category-attr.ts src/views/asset/category src/views/asset/list` 通过。
+  - `mvn -pl ruoyi-asset -am -DskipTests=true compile` 通过，`BUILD SUCCESS`。
+  - `npm run build` 未通过，阻塞来自既有 `monitor` / `system` 模块类型问题，不属于本轮资产分类、台账和生命周期改造引入。
+
 ---
 
 ### Task 1: 收敛分类属性模板前后端契约
 
-**Status:** 已完成
+**Status:** 已完成（批次一，提交：`e5ef306`）
 
 **Files:**
 - Modify: `art-design-pro/src/types/asset.ts`
@@ -173,7 +190,7 @@ git commit -m "feat: 补齐资产分类属性模板接口契约"
 
 ### Task 2: 在资产分类页补齐属性模板管理入口
 
-**Status:** 已完成
+**Status:** 已完成（批次一，提交：`5ede2e7`）
 
 **Files:**
 - Create: `art-design-pro/src/views/asset/category/category-attr.helper.ts`
@@ -294,7 +311,7 @@ git commit -m "feat: 增加资产分类属性模板管理界面"
 
 ### Task 3: 收紧台账扩展信息只消费模板并填写实例值
 
-**Status:** 已完成
+**Status:** 已完成（批次一，提交：`407fab3`）
 
 **Files:**
 - Modify: `art-design-pro/src/views/asset/list/modules/asset-edit-drawer.vue`
@@ -408,7 +425,7 @@ git commit -m "feat: 收紧资产台账扩展信息为实例填值"
 
 ### Task 4: 为固定资产与不动产建立生命周期入口约束
 
-**Status:** 已完成
+**Status:** 已完成（批次二，提交：`b057683`）
 
 **Files:**
 - Create: `art-design-pro/src/views/asset/list/asset-lifecycle.helper.ts`
@@ -508,7 +525,7 @@ git commit -m "feat: 按资产类型收敛生命周期入口"
 
 ### Task 5: 最终验证分类模板与台账主数据边界
 
-**Status:** 已完成（前端构建被 monitor / system 目录既有类型问题阻塞，非本轮资产改造引入）
+**Status:** 已完成（批次三，提交：`cacb09f`；前端构建被 `monitor` / `system` 目录既有类型问题阻塞，非本轮资产改造引入）
 
 **Files:**
 - Verify only
@@ -530,6 +547,16 @@ Expected: PASS
 Run: `cd art-design-pro && npm run build`
 
 Expected: `vue-tsc --noEmit` 与 `vite build` 通过。若仍被非资产模块历史问题阻塞，必须在执行记录中明确指出阻塞文件和原因，不能把问题归因到本轮分类/台账改造。
+
+实际复核阻塞文件与原因（2026-03-15）：
+
+- `art-design-pro/src/views/monitor/job/index.vue`：布尔值回调参数类型与组件声明不匹配。
+- `art-design-pro/src/views/monitor/logininfor/index.vue`：表格列 `sortable` 类型与 `ColumnOption` 定义不匹配。
+- `art-design-pro/src/views/monitor/operlog/index.vue`：表格列 `sortable` 类型不匹配，且 `ArtButtonTable` 的 `type="info"` 不符合组件类型约束。
+- `art-design-pro/src/views/monitor/server/index.vue`：数字类型不匹配、`unknown` 未收窄，以及 ECharts 实例空值/属性访问类型错误。
+- `art-design-pro/src/views/system/log/logininfor/index.vue`：表格列 `sortable` 类型与 `ColumnOption` 定义不匹配。
+- `art-design-pro/src/views/system/log/operlog/index.vue`：表格列 `sortable` 类型不匹配，且 `ArtButtonTable` 的 `type="info"` 不符合组件类型约束。
+- `art-design-pro/src/views/system/operlog/index.vue`：缺失 `@/api/system/operlog`、`./modules/operlog-detail-dialog.vue` 模块声明，同时存在 `ArtButtonTable` 类型不匹配问题。
 
 **Step 4: 手工回归关键链路**
 
