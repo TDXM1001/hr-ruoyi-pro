@@ -185,6 +185,22 @@ export interface AssetListItem {
   createTime?: string
 }
 
+/** 生命周期入口上下文。 */
+export interface AssetLifecycleContext {
+  assetType: '1' | '2' | string
+  assetStatus?: string
+}
+
+/** 生命周期入口定义。 */
+export interface AssetLifecycleAction {
+  key: 'change' | 'delete' | 'requisition' | 'repair' | 'disposal' | 'realEstateChange'
+  label: string
+  tone?: 'primary' | 'warning' | 'danger' | 'info'
+  /** action=有实际处理函数，placeholder=只给出规划提示。 */
+  mode: 'action' | 'placeholder'
+  message?: string
+}
+
 /** 资产聚合详情。 */
 export interface AssetAggregateDetail {
   basicInfo: AssetBasicInfo

@@ -139,10 +139,10 @@
       :asset-no="currentFinanceAsset?.assetNo"
     />
 
-    <!-- 领用/维修 统用申请弹窗 -->
+    <!-- 领用申请弹窗 -->
     <ElDialog
       v-model="applyDialogVisible"
-      :title="applyType === 'requisition' ? '资产领用申请' : '资产维修申请'"
+      title="资产领用申请"
       width="500px"
       draggable
       destroy-on-close
@@ -184,7 +184,7 @@
   import { listInfo, delInfo, exportInfo } from '@/api/asset/info'
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
-  import type { AssetListItem } from '@/types/asset'
+  import type { AssetLifecycleAction, AssetListItem } from '@/types/asset'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -200,6 +200,7 @@
     type AssetApplyContext
   } from './asset-list.helper'
   import { buildApplyRequisitionReq } from '../requisition/requisition.helper'
+  import { buildLifecycleActions } from './asset-lifecycle.helper'
 
   defineOptions({ name: 'AssetList' })
 
@@ -304,46 +305,14 @@
         {
           prop: 'operation',
           label: '操作',
-          width: 320,
+          width: 420,
           align: 'right',
           formatter: (row: any) => {
-            return h('div', { class: 'flex justify-end gap-1' }, [
-              h(
-                ElButton,
-                {
-                  type: 'primary',
-                  link: true,
-                  onClick: () => handleRequisition(row)
-                },
-                () => '领用'
-              ),
-              h(
-                ElButton,
-                {
-                  type: 'primary',
-                  link: true,
-                  onClick: () => handleRepair(row)
-                },
-                () => '维修'
-              ),
-              h(
-                ElButton,
-                {
-                  type: 'primary',
-                  link: true,
-                  onClick: () => openFinanceDialog(row)
-                },
-                () => '璐㈠姟'
-              ),
-              h(ArtButtonTable, {
-                type: 'edit',
-                onClick: () => handleUpdate(row)
-              }),
-              h(ArtButtonTable, {
-                type: 'delete',
-                onClick: () => handleDelete(row)
-              })
-            ])
+            return h(
+              'div',
+              { class: 'flex flex-wrap justify-end gap-1' },
+              buildOperationButtons(row)
+            )
           }
         }
       ]
@@ -419,7 +388,6 @@
     drawerVisible.value = true
   }
 
-  /** 删除 */
   /** 打开单资产财务弹窗，统一查看财务摘要与折旧日志。 */
   const openFinanceDialog = (row: AssetListItem) => {
     currentFinanceAsset.value = row
@@ -446,6 +414,64 @@
     }
   }
 
+  /** 占位生命周期动作只给出中文提示，不冒充可成功的业务流程。 */
+  const handleLifecyclePlaceholder = (action: AssetLifecycleAction) => {
+    ElMessage.info(action.message || `${action.label}入口待规划`)
+  }
+
+  /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */
+  const renderLifecycleActionButton = (row: AssetListItem, action: AssetLifecycleAction) => {
+    if (action.key === 'delete') {
+      return h(ArtButtonTable, {
+        type: 'delete',
+        onClick: () => handleDelete(row)
+      })
+    }
+
+    const actionHandlerMap: Partial<Record<AssetLifecycleAction['key'], () => void>> = {
+      requisition: () => handleRequisition(row),
+      repair: () => handleLifecyclePlaceholder(action),
+      disposal: () => handleLifecyclePlaceholder(action),
+      change: () => handleLifecyclePlaceholder(action),
+      realEstateChange: () => handleLifecyclePlaceholder(action)
+    }
+
+    return h(
+      ElButton,
+      {
+        type: action.tone || 'primary',
+        link: true,
+        onClick: actionHandlerMap[action.key]
+      },
+      () => action.label
+    )
+  }
+
+  /** 统一拼装操作列，保留“编辑”与“变更”的独立语义。 */
+  const buildOperationButtons = (row: AssetListItem) => {
+    const lifecycleActions = buildLifecycleActions(row)
+    const deleteAction = lifecycleActions.find((item) => item.key === 'delete')
+    const otherLifecycleActions = lifecycleActions.filter((item) => item.key !== 'delete')
+
+    return [
+      ...otherLifecycleActions.map((item) => renderLifecycleActionButton(row, item)),
+      h(
+        ElButton,
+        {
+          type: 'primary',
+          link: true,
+          onClick: () => openFinanceDialog(row)
+        },
+        () => '财务'
+      ),
+      h(ArtButtonTable, {
+        type: 'edit',
+        onClick: () => handleUpdate(row)
+      }),
+      ...(deleteAction ? [renderLifecycleActionButton(row, deleteAction)] : [])
+    ]
+  }
+
   /** 导出 */
   const handleExport = async () => {
     try {
@@ -462,9 +488,8 @@
     }
   }
 
-  // ==== 领用/维修 申请相关 ====
+  // ==== 领用申请相关 ====
   const applyDialogVisible = ref(false)
-  const applyType = ref<'requisition' | 'repair'>('requisition')
   const applyTask = ref<AssetApplyContext>({
     assetId: 0,
     assetNo: '',
@@ -479,14 +504,6 @@
   }
 
   const handleRequisition = (row: AssetListItem) => {
-    applyType.value = 'requisition'
-    applyTask.value = toApplyAssetContext(row)
-    applyForm.reason = ''
-    applyDialogVisible.value = true
-  }
-
-  const handleRepair = (row: AssetListItem) => {
-    applyType.value = 'repair'
     applyTask.value = toApplyAssetContext(row)
     applyForm.reason = ''
     applyDialogVisible.value = true
@@ -501,16 +518,7 @@
       await applyFormRef.value?.validate()
       applySubmitting.value = true
 
-      // 根据业务类型发起请求
-      if (applyType.value === 'requisition') {
-        await applyRequisition(buildApplyRequisitionReq(applyTask.value, applyForm.reason))
-      } else {
-        // repair
-        // await applyRepair(...) （待后台拓展）
-        ElMessage.info('暂无维修接口')
-        // return
-      }
-
+      await applyRequisition(buildApplyRequisitionReq(applyTask.value, applyForm.reason))
       ElMessage.success('申请提交成功')
       applyDialogVisible.value = false
       refreshData()
