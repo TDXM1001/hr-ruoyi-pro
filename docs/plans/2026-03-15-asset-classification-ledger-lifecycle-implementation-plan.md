@@ -12,6 +12,8 @@
 
 ### Task 1: 收敛分类属性模板前后端契约
 
+**Status:** 已完成
+
 **Files:**
 - Modify: `art-design-pro/src/types/asset.ts`
 - Modify: `art-design-pro/src/api/asset/category-attr.ts`
@@ -171,6 +173,8 @@ git commit -m "feat: 补齐资产分类属性模板接口契约"
 
 ### Task 2: 在资产分类页补齐属性模板管理入口
 
+**Status:** 已完成
+
 **Files:**
 - Create: `art-design-pro/src/views/asset/category/category-attr.helper.ts`
 - Create: `art-design-pro/src/views/asset/category/modules/category-attr-manager.vue`
@@ -290,6 +294,8 @@ git commit -m "feat: 增加资产分类属性模板管理界面"
 
 ### Task 3: 收紧台账扩展信息只消费模板并填写实例值
 
+**Status:** 已完成
+
 **Files:**
 - Modify: `art-design-pro/src/views/asset/list/modules/asset-edit-drawer.vue`
 - Modify: `art-design-pro/src/views/asset/list/modules/asset-dynamic-attr.helper.ts`
@@ -402,6 +408,8 @@ git commit -m "feat: 收紧资产台账扩展信息为实例填值"
 
 ### Task 4: 为固定资产与不动产建立生命周期入口约束
 
+**Status:** 已完成
+
 **Files:**
 - Create: `art-design-pro/src/views/asset/list/asset-lifecycle.helper.ts`
 - Modify: `art-design-pro/src/views/asset/list/index.vue`
@@ -499,6 +507,8 @@ git commit -m "feat: 按资产类型收敛生命周期入口"
 ```
 
 ### Task 5: 最终验证分类模板与台账主数据边界
+
+**Status:** 已完成（前端构建被 monitor / system 目录既有类型问题阻塞，非本轮资产改造引入）
 
 **Files:**
 - Verify only
