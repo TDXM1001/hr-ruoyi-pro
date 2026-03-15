@@ -123,7 +123,11 @@
   import type { FormInstance, FormRules } from 'element-plus'
   import { addCategoryAttr, updateCategoryAttr } from '@/api/asset/category-attr'
   import type { AssetDynamicAttrDefinition, AssetDynamicAttrDefinitionReq } from '@/types/asset'
-  import { getReservedCodeMessage, isReservedAttrCode } from '../category-attr.helper'
+  import {
+    buildCategoryAttrSubmitPayload,
+    getReservedCodeMessage,
+    isReservedAttrCode
+  } from '../category-attr.helper'
 
   interface CategoryAttrFormData extends AssetDynamicAttrDefinitionReq {
     attrId?: number
@@ -242,11 +246,11 @@
 
     submitting.value = true
     try {
-      const payload: CategoryAttrFormData = {
+      const payload = buildCategoryAttrSubmitPayload({
         ...formData,
         categoryId: props.categoryId || formData.categoryId,
         attrCode: normalizeAttrCode(formData.attrCode)
-      }
+      }) as CategoryAttrFormData
 
       if (payload.attrId) {
         await updateCategoryAttr(payload)

@@ -106,9 +106,18 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
         if (StringUtils.isBlank(assetCategoryAttr.getAttrName())) {
             throw new ServiceException("字段名称不能为空");
         }
+        if (StringUtils.isBlank(assetCategoryAttr.getDataType())) {
+            throw new ServiceException("数据类型不能为空");
+        }
 
         String normalizedAttrCode = normalizeAttrCode(assetCategoryAttr.getAttrCode());
         assetCategoryAttr.setAttrCode(normalizedAttrCode);
+        assetCategoryAttr.setDataType(normalizeFieldType(assetCategoryAttr.getDataType()));
+        if (StringUtils.isBlank(assetCategoryAttr.getAttrType())) {
+            assetCategoryAttr.setAttrType(assetCategoryAttr.getDataType());
+        } else {
+            assetCategoryAttr.setAttrType(normalizeFieldType(assetCategoryAttr.getAttrType()));
+        }
         if (RESERVED_ATTR_CODES.contains(normalizedAttrCode)) {
             throw new ServiceException("字段编码[" + normalizedAttrCode + "]为系统保留字段，不允许使用");
         }
@@ -129,5 +138,12 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
      */
     private String normalizeAttrCode(String attrCode) {
         return StringUtils.trimToEmpty(attrCode).toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * 字段类型统一去空白并转小写，确保前后端约定稳定。
+     */
+    private String normalizeFieldType(String fieldType) {
+        return StringUtils.trimToEmpty(fieldType).toLowerCase(Locale.ROOT);
     }
 }

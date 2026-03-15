@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildCategoryAttrSubmitPayload,
   buildAttrStatusTag,
   getReservedCodeMessage,
   shouldShowAttrPanel
@@ -18,5 +19,38 @@ describe('category attr helper', () => {
   it('shows panel only when category is selected', () => {
     expect(shouldShowAttrPanel(undefined)).toBe(false)
     expect(shouldShowAttrPanel(10)).toBe(true)
+  })
+
+  it('backfills attr type from data type when building submit payload', () => {
+    expect(
+      buildCategoryAttrSubmitPayload({
+        categoryId: 10,
+        attrCode: ' Manufacturer ',
+        attrName: '厂商',
+        dataType: 'text'
+      })
+    ).toMatchObject({
+      categoryId: 10,
+      attrCode: 'manufacturer',
+      attrName: '厂商',
+      attrType: 'text',
+      dataType: 'text'
+    })
+  })
+
+  it('keeps explicit attr type when building submit payload', () => {
+    expect(
+      buildCategoryAttrSubmitPayload({
+        categoryId: 10,
+        attrCode: 'status',
+        attrName: '状态',
+        attrType: 'radio',
+        dataType: 'select'
+      })
+    ).toMatchObject({
+      attrCode: 'status',
+      attrType: 'radio',
+      dataType: 'select'
+    })
   })
 })

@@ -116,6 +116,7 @@ export interface AssetDynamicAttrDefinitionReq {
   categoryId: number
   attrCode: string
   attrName: string
+  attrType?: string
   dataType?: string
   isRequired?: string
   defaultValue?: string
