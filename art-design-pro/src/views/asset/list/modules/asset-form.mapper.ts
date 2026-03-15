@@ -3,10 +3,12 @@ import type {
   AssetAggregateReq,
   AssetAttachment,
   AssetBasicInfo,
+  AssetDynamicAttrDefinition,
   AssetDynamicAttrValue,
   AssetFinanceInfo,
   AssetRealEstateInfo
 } from '@/types/asset'
+import { buildDynamicAttrPayload, toDynamicAttrFormRecord } from './asset-dynamic-attr.helper'
 
 /** 编辑抽屉的聚合状态。 */
 export interface AssetDrawerState {
@@ -14,6 +16,7 @@ export interface AssetDrawerState {
   financeForm: AssetFinanceInfo
   realEstateForm: AssetRealEstateInfo
   dynamicAttrForm: Record<string, unknown>
+  dynamicAttrDefinitions: AssetDynamicAttrDefinition[]
   dynamicAttrs: AssetDynamicAttrValue[]
   attachments: AssetAttachment[]
 }
@@ -56,15 +59,6 @@ function createEmptyRealEstateForm(): AssetRealEstateInfo {
   }
 }
 
-/** 把动态属性值映射为表单可编辑记录。 */
-function createDynamicAttrForm(items: AssetDynamicAttrValue[] = []) {
-  return items.reduce<Record<string, unknown>>((acc, item) => {
-    acc[item.attrCode] =
-      item.attrValueText ?? item.attrValueNumber ?? item.attrValueDate ?? item.attrValueJson ?? ''
-    return acc
-  }, {})
-}
-
 /** 创建抽屉初始状态。 */
 export function createEmptyDrawerState(): AssetDrawerState {
   return {
@@ -72,6 +66,7 @@ export function createEmptyDrawerState(): AssetDrawerState {
     financeForm: createEmptyFinanceForm(),
     realEstateForm: createEmptyRealEstateForm(),
     dynamicAttrForm: {},
+    dynamicAttrDefinitions: [],
     dynamicAttrs: [],
     attachments: []
   }
@@ -105,7 +100,8 @@ export function hydrateDrawerState(
       ...state.realEstateForm,
       ...realEstateInfo
     },
-    dynamicAttrForm: createDynamicAttrForm(dynamicAttrs),
+    dynamicAttrForm: toDynamicAttrFormRecord(dynamicAttrs),
+    dynamicAttrDefinitions: [],
     dynamicAttrs: dynamicAttrs.map((item) => ({ ...item })),
     attachments: attachments.map((item) => ({ ...item }))
   }
@@ -124,27 +120,6 @@ export function buildAggregatePayload(
     delete basicInfo.assetId
   }
 
-  const dynamicAttrs = state.dynamicAttrs.map((item) => {
-    const nextItem: AssetDynamicAttrValue = {
-      ...item,
-      attrValueText: undefined,
-      attrValueNumber: undefined,
-      attrValueDate: undefined,
-      attrValueJson: undefined
-    }
-    const nextValue = state.dynamicAttrForm[item.attrCode]
-
-    if (typeof nextValue === 'number') {
-      nextItem.attrValueNumber = nextValue
-    } else if (typeof nextValue === 'string') {
-      nextItem.attrValueText = nextValue
-    } else if (nextValue != null) {
-      nextItem.attrValueJson = JSON.stringify(nextValue)
-    }
-
-    return nextItem
-  })
-
   return {
     basicInfo,
     financeInfo: {
@@ -157,7 +132,7 @@ export function buildAggregatePayload(
             assetId: mode === 'edit' ? state.basicForm.assetId : undefined
           }
         : null,
-    dynamicAttrs,
+    dynamicAttrs: buildDynamicAttrPayload(state.dynamicAttrDefinitions, state.dynamicAttrForm),
     attachments: state.attachments.map((item) => ({ ...item }))
   }
 }

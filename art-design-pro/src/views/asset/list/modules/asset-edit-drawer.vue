@@ -349,6 +349,120 @@
           </ElTabPane>
 
           <ElTabPane label="扩展信息" name="extras">
+            <ElAlert
+              v-if="dynamicAttrConflictCodes.length"
+              :title="`以下动态属性编码与系统保留字段冲突：${dynamicAttrConflictCodes.join('、')}`"
+              type="error"
+              class="mb-4"
+              :closable="false"
+            />
+            <ElCard shadow="never" class="mb-4">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <span>动态属性</span>
+                  <span class="text-xs text-[var(--art-gray-500)]">切换资产分类后自动加载</span>
+                </div>
+              </template>
+
+              <ElEmpty
+                v-if="!state.dynamicAttrDefinitions.length"
+                description="当前分类暂无动态属性定义"
+                :image-size="80"
+              />
+
+              <ElRow v-else :gutter="16">
+                <ElCol
+                  v-for="item in state.dynamicAttrDefinitions"
+                  :key="item.attrId"
+                  :span="item.dataType === 'json' ? 24 : 12"
+                >
+                  <ElFormItem :label="item.attrName || item.attrCode">
+                    <template v-if="getAttrOptions(item).length">
+                      <ElSelect
+                        v-model="state.dynamicAttrForm[item.attrCode]"
+                        class="w-full"
+                        clearable
+                        :placeholder="`请选择${item.attrName || item.attrCode}`"
+                      >
+                        <ElOption
+                          v-for="option in getAttrOptions(item)"
+                          :key="option.value"
+                          :label="option.label"
+                          :value="option.value"
+                        />
+                      </ElSelect>
+                    </template>
+                    <template v-else-if="item.dataType === 'number'">
+                      <ElInputNumber
+                        v-model="state.dynamicAttrForm[item.attrCode]"
+                        class="w-full"
+                        :min="0"
+                      />
+                    </template>
+                    <template v-else-if="item.dataType === 'date'">
+                      <ElDatePicker
+                        v-model="state.dynamicAttrForm[item.attrCode]"
+                        type="date"
+                        value-format="YYYY-MM-DD"
+                        class="w-full"
+                        :placeholder="`选择${item.attrName || item.attrCode}`"
+                      />
+                    </template>
+                    <template v-else-if="item.dataType === 'json'">
+                      <ElInput
+                        v-model="state.dynamicAttrForm[item.attrCode]"
+                        type="textarea"
+                        :rows="4"
+                        :placeholder="`请输入${item.attrName || item.attrCode} JSON 内容`"
+                      />
+                    </template>
+                    <template v-else>
+                      <ElInput
+                        v-model="state.dynamicAttrForm[item.attrCode]"
+                        :placeholder="`请输入${item.attrName || item.attrCode}`"
+                      />
+                    </template>
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+            </ElCard>
+
+            <ElCard shadow="never" class="mb-4">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <span>附件</span>
+                  <span class="text-xs text-[var(--art-gray-500)]">上传后会直接回填到附件数组</span>
+                </div>
+              </template>
+
+              <ElUpload :show-file-list="false" :http-request="handleUploadRequest">
+                <ElButton type="primary" plain>上传附件</ElButton>
+              </ElUpload>
+
+              <ElEmpty
+                v-if="!state.attachments.length"
+                description="暂无附件"
+                :image-size="80"
+                class="mt-4"
+              />
+
+              <div v-else class="mt-4 flex flex-col gap-2">
+                <div
+                  v-for="(item, index) in state.attachments"
+                  :key="`${item.fileUrl}-${index}`"
+                  class="flex items-center justify-between rounded border border-solid border-[var(--art-gray-200)] px-3 py-2"
+                >
+                  <div class="min-w-0">
+                    <div class="truncate text-sm">{{ item.fileName }}</div>
+                    <div class="text-xs text-[var(--art-gray-500)]">
+                      {{ formatAttachmentMeta(item) }}
+                    </div>
+                  </div>
+                  <ElButton link type="danger" @click="removeAttachment(index)">删除</ElButton>
+                </div>
+              </div>
+            </ElCard>
+
             <ElFormItem label="备注">
               <ElInput
                 v-model="state.basicForm.remark"
@@ -357,11 +471,6 @@
                 placeholder="请输入备注"
               />
             </ElFormItem>
-            <ElAlert
-              :title="`已保留 ${state.dynamicAttrs.length} 条动态属性、${state.attachments.length} 个附件，下一批任务会接入可编辑 UI。`"
-              type="info"
-              :closable="false"
-            />
           </ElTabPane>
         </ElTabs>
       </ElForm>
@@ -381,12 +490,20 @@
 <script setup lang="ts">
   import { ref, reactive, watch, computed } from 'vue'
   import { ElMessage } from 'element-plus'
-  import type { FormInstance, FormRules } from 'element-plus'
+  import type { FormInstance, FormRules, UploadRequestOptions } from 'element-plus'
+  import type {
+    AssetAttachment,
+    AssetDynamicAttrDefinition,
+    AssetDynamicAttrValue
+  } from '@/types/asset'
   import { getInfo, addInfo, updateInfo } from '@/api/asset/info'
   import { listCategory } from '@/api/asset/category'
+  import { listCategoryAttrs } from '@/api/asset/category-attr'
+  import { uploadCommonFile } from '@/api/common/upload'
   import { listUser, deptTreeSelect } from '@/api/system/user'
   import { handleTree } from '@/utils/ruoyi'
   import { useDict } from '@/utils/dict'
+  import { findReservedAttrCodes, toDynamicAttrFormRecord } from './asset-dynamic-attr.helper'
   import {
     buildAggregatePayload,
     createEmptyDrawerState,
@@ -435,6 +552,8 @@
 
   const showRealEstateTab = computed(() => state.basicForm.assetType === '2')
   const financeBaseReadonly = computed(() => (state.financeForm.accumulatedDepreciation || 0) > 0)
+  const dynamicAttrConflictCodes = ref<string[]>([])
+  const activeBizType = ref('asset')
 
   const formRules: FormRules = {
     'basicForm.assetNo': [{ required: true, message: '资产编号不能为空', trigger: 'blur' }],
@@ -459,6 +578,125 @@
 
   const resetState = () => {
     Object.assign(state, createEmptyDrawerState())
+    dynamicAttrConflictCodes.value = []
+  }
+
+  /** 把后端 optionSource 解析成可直接渲染的下拉选项。 */
+  const getAttrOptions = (item: AssetDynamicAttrDefinition) => {
+    if (!item.optionSourceType || !item.optionSource) {
+      return []
+    }
+
+    const raw = item.optionSource.trim()
+    if (!raw) {
+      return []
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed.map((option: any) => {
+          if (typeof option === 'string') {
+            return { label: option, value: option }
+          }
+          return {
+            label: option.label ?? option.name ?? option.value,
+            value: option.value ?? option.code ?? option.label
+          }
+        })
+      }
+    } catch {
+      // 非 JSON 文本继续走分隔符解析。
+    }
+
+    return raw
+      .split(/[\n,]/)
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const [value, label] = entry.includes(':') ? entry.split(':') : [entry, entry]
+        return {
+          label: (label || value).trim(),
+          value: value.trim()
+        }
+      })
+  }
+
+  /** 合并分类定义与现有动态属性值，保证编辑态可以正确回填。 */
+  const mergeCategoryAttrs = (
+    definitions: AssetDynamicAttrDefinition[],
+    values: AssetDynamicAttrValue[] = []
+  ) => {
+    const valueMap = new Map(values.map((item) => [item.attrCode, item]))
+
+    return definitions.map((item) => ({
+      ...valueMap.get(item.attrCode),
+      attrId: item.attrId,
+      categoryId: item.categoryId,
+      attrCode: item.attrCode,
+      dataType: item.dataType
+    }))
+  }
+
+  /** 根据分类加载动态属性定义，并同步表单回填。 */
+  const loadCategoryAttrs = async (categoryId?: number, values: AssetDynamicAttrValue[] = []) => {
+    if (!categoryId) {
+      state.dynamicAttrDefinitions = []
+      state.dynamicAttrs = []
+      state.dynamicAttrForm = {}
+      dynamicAttrConflictCodes.value = []
+      return
+    }
+
+    const definitions = await listCategoryAttrs(categoryId)
+    const reservedCodes = findReservedAttrCodes(definitions)
+    dynamicAttrConflictCodes.value = reservedCodes
+
+    if (reservedCodes.length) {
+      state.dynamicAttrDefinitions = []
+      state.dynamicAttrs = []
+      state.dynamicAttrForm = {}
+      ElMessage.warning(`动态属性编码与系统保留字段冲突：${reservedCodes.join('、')}`)
+      return
+    }
+
+    state.dynamicAttrDefinitions = definitions
+    state.dynamicAttrs = mergeCategoryAttrs(definitions, values)
+    state.dynamicAttrForm = {
+      ...Object.fromEntries(definitions.map((item) => [item.attrCode, item.defaultValue || ''])),
+      ...toDynamicAttrFormRecord(values)
+    }
+  }
+
+  /** 处理附件上传并回填到聚合状态。 */
+  const handleUploadRequest = async (options: UploadRequestOptions) => {
+    try {
+      const resp = await uploadCommonFile(options.file as File)
+      state.attachments.push({
+        bizType: activeBizType.value,
+        fileName: resp.originalFilename || resp.newFileName,
+        fileUrl: resp.url,
+        fileSize: options.file.size,
+        fileSuffix: (options.file.name.split('.').pop() || '').toLowerCase()
+      })
+      options.onSuccess?.(resp)
+      ElMessage.success('附件上传成功')
+    } catch (error) {
+      options.onError?.(error as Error)
+      ElMessage.error('附件上传失败')
+    }
+  }
+
+  /** 删除附件。 */
+  const removeAttachment = (index: number) => {
+    state.attachments.splice(index, 1)
+  }
+
+  /** 格式化附件展示信息。 */
+  const formatAttachmentMeta = (item: AssetAttachment) => {
+    const sizeText = item.fileSize ? `${(item.fileSize / 1024).toFixed(1)} KB` : '未知大小'
+    const suffixText = item.fileSuffix ? `.${item.fileSuffix}` : '未知类型'
+    return `${suffixText} / ${sizeText}`
   }
 
   /** 获取下拉选项 */
@@ -511,6 +749,7 @@
           try {
             const res: any = await getInfo(props.assetData.assetId)
             Object.assign(state, hydrateDrawerState(res.data || res))
+            await loadCategoryAttrs(state.basicForm.categoryId, state.dynamicAttrs)
           } finally {
             loading.value = false
           }
@@ -528,10 +767,38 @@
     }
   )
 
+  watch(
+    () => state.basicForm.categoryId,
+    async (newCategoryId, oldCategoryId) => {
+      if (!visible.value || !newCategoryId) {
+        if (!newCategoryId) {
+          await loadCategoryAttrs(undefined)
+        }
+        return
+      }
+
+      if (newCategoryId === oldCategoryId) {
+        return
+      }
+
+      // 编辑态首次回填已在打开抽屉时主动加载，这里只处理用户后续切换分类。
+      if (oldCategoryId === undefined && props.dialogType === 'edit' && state.dynamicAttrs.length) {
+        return
+      }
+
+      await loadCategoryAttrs(newCategoryId)
+    }
+  )
+
   const handleSubmit = async () => {
     if (!formRef.value) return
     const valid = await formRef.value.validate().catch(() => false)
     if (!valid || !validateRealEstateTab()) {
+      return
+    }
+    if (dynamicAttrConflictCodes.value.length) {
+      activeTab.value = 'extras'
+      ElMessage.warning('请先处理动态属性编码冲突后再提交')
       return
     }
 
