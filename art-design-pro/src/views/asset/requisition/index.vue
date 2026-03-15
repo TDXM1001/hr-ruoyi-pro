@@ -8,14 +8,6 @@
       @reset="handleReset"
       @search="handleSearch"
     />
-
-    <ElAlert
-      class="mb-3"
-      title="当前分支对应的本地后端尚未提供资产归还接口，页面暂不展示归还按钮。"
-      type="info"
-      :closable="false"
-    />
-
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
       <ArtTableHeader
         :showZebra="false"
@@ -40,7 +32,8 @@
 
 <script setup lang="ts">
   import { computed, h, onMounted, reactive, ref } from 'vue'
-  import { listRequisition, type AssetRequisitionItem } from '@/api/asset/requisition'
+  import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
+  import { listRequisition, returnAsset, type AssetRequisitionItem } from '@/api/asset/requisition'
   import { useTable } from '@/hooks/core/useTable'
   import type { ColumnOption } from '@/types/component'
   import { useDict } from '@/utils/dict'
@@ -50,9 +43,6 @@
   defineOptions({ name: 'AssetRequisition' })
 
   const { wf_status } = useDict('wf_status')
-
-  /** 本地后端未实现归还接口，因此前端不保留必然失败的操作入口。 */
-  const returnApiAvailable = false
 
   const initialSearchState = {
     requisitionNo: '',
@@ -124,10 +114,6 @@
           { prop: 'createTime', label: '申请时间', width: 170, align: 'center' }
         ]
 
-        if (!returnApiAvailable) {
-          return baseColumns
-        }
-
         return [
           ...baseColumns,
           {
@@ -138,13 +124,15 @@
             formatter: (row: AssetRequisitionItem) =>
               canReturnAsset(row)
                 ? h(
-                    'span',
+                    ElButton,
                     {
-                      class: 'text-[var(--art-gray-500)]'
+                      type: 'primary',
+                      link: true,
+                      onClick: () => handleReturn(row)
                     },
-                    '待补充'
+                    () => '归还'
                   )
-                : null
+                : h('span', { class: 'text-[var(--art-gray-400)]' }, '--')
           }
         ]
       }
@@ -163,6 +151,24 @@
   const handleSearch = () => {
     Object.assign(searchParams, formFilters)
     getData()
+  }
+
+  /**
+   * 归还动作只对审批通过的记录开放，避免页面侧和后端规则不一致。
+   */
+  const handleReturn = async (row: AssetRequisitionItem) => {
+    try {
+      await ElMessageBox.confirm(`确认归还领用单“${row.requisitionNo}”对应的资产吗？`, '提示', {
+        type: 'warning'
+      })
+      await returnAsset(row.requisitionNo)
+      ElMessage.success('资产归还成功')
+      refreshData()
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('归还资产失败:', error)
+      }
+    }
   }
 
   onMounted(() => {

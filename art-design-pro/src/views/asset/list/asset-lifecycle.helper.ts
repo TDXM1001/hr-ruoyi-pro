@@ -1,6 +1,6 @@
 import type { AssetLifecycleAction, AssetLifecycleContext } from '@/types/asset'
 
-/** 生命周期入口只负责控制展示边界，不在这里混入具体审批流程。 */
+/** 生命周期入口负责声明“哪些动作已经能走通”，不在这里写页面跳转细节。 */
 export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecycleAction[] {
   const commonActions: AssetLifecycleAction[] = [
     {
@@ -49,15 +49,13 @@ export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecy
       key: 'repair',
       label: '维修',
       tone: 'warning',
-      mode: 'placeholder',
-      message: '固定资产维修入口待接后端接口。'
+      mode: 'action'
     },
     {
       key: 'disposal',
       label: '报废/处置',
       tone: 'warning',
-      mode: 'placeholder',
-      message: '固定资产报废/处置入口待规划。'
+      mode: 'action'
     },
     ...commonActions
   ]

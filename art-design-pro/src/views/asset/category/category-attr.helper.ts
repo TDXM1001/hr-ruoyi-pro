@@ -56,7 +56,8 @@ export function buildCategoryAttrSubmitPayload<T extends CategoryAttrSubmitPaylo
   const dataType = String(payload.dataType || 'text').trim() || 'text'
   const attrType = String(payload.attrType || dataType).trim() || dataType
   // 新增模板时补齐数据库非空字段，保证旧表单数据也能平滑提交。
-  const optionSourceType = OPTION_SOURCE_TYPE_MAP[String(payload.optionSourceType || '1').trim()] || '1'
+  const optionSourceType =
+    OPTION_SOURCE_TYPE_MAP[String(payload.optionSourceType || '1').trim()] || '1'
 
   return {
     ...payload,

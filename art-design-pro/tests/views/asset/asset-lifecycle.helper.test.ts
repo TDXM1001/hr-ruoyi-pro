@@ -9,6 +9,13 @@ describe('asset lifecycle helper', () => {
     ).toEqual(expect.arrayContaining(['change', 'delete', 'requisition', 'repair', 'disposal']))
   })
 
+  it('uses real actions for fixed asset repair and disposal entries', () => {
+    const actions = buildLifecycleActions({ assetType: '1', assetStatus: '1' })
+
+    expect(actions.find((item) => item.key === 'repair')?.mode).toBe('action')
+    expect(actions.find((item) => item.key === 'disposal')?.mode).toBe('action')
+  })
+
   it('filters out fixed-asset-only actions for real estate', () => {
     expect(
       buildLifecycleActions({ assetType: '2', assetStatus: '1' }).map((item) => item.key)

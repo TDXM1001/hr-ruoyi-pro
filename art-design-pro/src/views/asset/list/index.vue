@@ -181,6 +181,7 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, watch, h } from 'vue'
+  import { useRouter } from 'vue-router'
   import { listInfo, delInfo, exportInfo } from '@/api/asset/info'
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
@@ -203,6 +204,7 @@
   import { buildLifecycleActions } from './asset-lifecycle.helper'
 
   defineOptions({ name: 'AssetList' })
+  const router = useRouter()
 
   // 状态管理
   const filterText = ref('')
@@ -419,8 +421,47 @@
     ElMessage.info(action.message || `${action.label}入口待规划`)
   }
 
+  /**
+   * 把资产上下文带到生命周期台账页。
+   *
+   * 当前阶段优先保证固定资产动作“能跳、能带参、能直接发起申请”，
+   * 复杂的选择器与批量动作留到后续体验优化批次处理。
+   */
+  const openLifecycleLedger = (path: string, row: AssetListItem) => {
+    void router.push({
+      path,
+      query: {
+        assetId: String(row.assetId),
+        assetNo: row.assetNo,
+        assetName: row.assetName,
+        assetStatus: row.assetStatus,
+        openCreate: '1'
+      }
+    })
+  }
+
+  const handleMaintenance = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/maintenance/index', row)
+  }
+
+  const handleDisposal = (row: AssetListItem) => {
+    openLifecycleLedger('/asset/disposal/index', row)
+  }
+
   /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */
   const renderLifecycleActionButton = (row: AssetListItem, action: AssetLifecycleAction) => {
+    if (action.mode === 'placeholder') {
+      return h(
+        ElButton,
+        {
+          type: action.tone || 'primary',
+          link: true,
+          onClick: () => handleLifecyclePlaceholder(action)
+        },
+        () => action.label
+      )
+    }
+
     if (action.key === 'delete') {
       return h(ArtButtonTable, {
         type: 'delete',
@@ -430,10 +471,9 @@
 
     const actionHandlerMap: Partial<Record<AssetLifecycleAction['key'], () => void>> = {
       requisition: () => handleRequisition(row),
-      repair: () => handleLifecyclePlaceholder(action),
-      disposal: () => handleLifecyclePlaceholder(action),
-      change: () => handleLifecyclePlaceholder(action),
-      realEstateChange: () => handleLifecyclePlaceholder(action)
+      repair: () => handleMaintenance(row),
+      disposal: () => handleDisposal(row),
+      change: () => handleLifecyclePlaceholder(action)
     }
 
     return h(

@@ -182,3 +182,98 @@
 - 旧前端类型定义中仍存在 `deptId`、`status`、`assetType: 1=不动产/2=固定资产` 的旧口径
 - 新后端内部主键统一为 `assetId`，`assetNo` 只保留为业务编码和展示字段
 - 若前端继续使用旧请求体，将无法满足新接口的必填校验和聚合写入逻辑
+
+## 七、固定资产生命周期与审批中心接口
+
+### 审批中心
+
+- `GET /workflow/task/todo`
+  用途：查询当前登录人的待办任务
+- `GET /workflow/task/done`
+  用途：查询当前登录人的已办任务
+- `POST /workflow/task/approve`
+  用途：提交审批动作，当前只支持 `approve`、`reject`
+
+审批请求体示例：
+
+```json
+{
+  "instanceId": 1003,
+  "action": "approve",
+  "comment": "同意"
+}
+```
+
+补充说明：
+
+- `businessType` 已统一映射为前端字典口径：`REQUISITION`、`RETURN`、`REPAIR`、`SCRAP`
+- `status` 已统一映射为 `wf_status` 字典值：`IN_PROGRESS`、`COMPLETED`、`REJECTED`
+
+### 领用归还
+
+- `POST /asset/requisition/return/{requisitionNo}`
+  用途：归还已审批通过的领用单
+
+补充说明：
+
+- 仅 `status=1` 的领用单允许归还
+- 归还成功后领用单状态更新为 `3`，资产状态回退为 `1=在用`
+
+### 维修台账
+
+- `GET /asset/maintenance/list`
+  用途：分页查询维修记录
+- `GET /asset/maintenance/{maintenanceNo}`
+  用途：查询维修单详情
+- `POST /asset/maintenance`
+  用途：发起维修申请
+- `POST /asset/maintenance/complete/{maintenanceNo}`
+  用途：完成已审批通过的维修单
+
+补充说明：
+
+- 维修申请支持前端优先传 `assetId`，也允许仅传 `assetNo` 由后端解析主档
+- 完成维修后维修单状态更新为 `3`，资产状态回退为 `1=在用`
+
+### 报废/处置台账
+
+- `GET /asset/disposal/list`
+  用途：分页查询报废/处置记录
+- `GET /asset/disposal/{disposalNo}`
+  用途：查询报废/处置单详情
+- `POST /asset/disposal`
+  用途：发起报废/处置申请
+
+补充说明：
+
+- 当前阶段审批通过后统一把资产状态收敛为 `5=已报废`
+- 后续如需区分“已报废 / 已处置”，会在 `disposalType` 正式入模后单独扩展
+
+## 八、菜单路径与权限最终口径
+
+- `asset/requisition/index`
+  页面权限：`asset:requisition:list`
+  按钮权限：`asset:requisition:return`
+- `asset/maintenance/index`
+  页面权限：`asset:maintenance:list`
+  按钮权限：`asset:maintenance:query`、`asset:maintenance:add`、`asset:maintenance:complete`
+- `asset/disposal/index`
+  页面权限：`asset:disposal:list`
+  按钮权限：`asset:disposal:query`、`asset:disposal:add`
+- `asset/workflow/todo/index`
+  页面权限：`workflow:task:todo`
+  按钮权限：`workflow:task:approve`
+- `asset/workflow/done/index`
+  页面权限：`workflow:task:done`
+
+## 九、当前构建阻塞说明
+
+`art-design-pro` 的 `npm run build` 仍被以下历史 TypeScript 问题阻塞，本次资产生命周期改动未新增这些报错：
+
+- `src/views/monitor/job/index.vue`
+- `src/views/monitor/logininfor/index.vue`
+- `src/views/monitor/operlog/index.vue`
+- `src/views/monitor/server/index.vue`
+- `src/views/system/log/logininfor/index.vue`
+- `src/views/system/log/operlog/index.vue`
+- `src/views/system/operlog/index.vue`

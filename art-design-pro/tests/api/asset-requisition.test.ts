@@ -14,7 +14,7 @@ vi.mock('@/utils/http', () => ({
   default: http
 }))
 
-import { applyRequisition } from '../../src/api/asset/requisition'
+import { applyRequisition, returnAsset } from '../../src/api/asset/requisition'
 
 describe('Asset Requisition API', () => {
   beforeEach(() => {
@@ -35,6 +35,14 @@ describe('Asset Requisition API', () => {
     expect(http.post).toHaveBeenCalledWith({
       url: '/asset/requisition',
       data: { assetId: 101, assetNo: 'FA-2026-0001', reason: '领用测试' }
+    })
+  })
+
+  it('posts return request to requisition return endpoint', async () => {
+    await returnAsset('REQ-20260315-001')
+
+    expect(http.post).toHaveBeenCalledWith({
+      url: '/asset/requisition/return/REQ-20260315-001'
     })
   })
 })

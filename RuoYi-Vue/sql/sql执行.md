@@ -54,11 +54,18 @@
         *   为 `asset_requisition`、`asset_maintenance`、`asset_disposal` 补充 `asset_id` 字段。
         *   根据 `asset_no` 回填历史数据。
         *   补充索引并收紧为非空约束。
+10. **`20260315_asset_lifecycle_workflow_menu_patch.sql`**
+    *   **适用场景**：数据库已经执行过旧版 `20260312_asset_workflow_menu.sql`，菜单仍保留 `repair/scrap` 命名或 workflow 权限标识尚未收敛到 `workflow:task:*`。
+    *   **用途**：
+        *   把维修、报废/处置菜单组件路径修正为 `asset/maintenance/index`、`asset/disposal/index`。
+        *   把审批中心菜单权限修正为 `workflow:task:todo`、`workflow:task:done`，并补充 `workflow:task:approve` 按钮权限。
+        *   补齐 `asset:requisition:return`、`asset:maintenance:*`、`asset:disposal:*` 等按钮权限。
+    *   **说明**：脚本顶部提供 `@enable_workflow_center_menu` 开关；若当前环境暂不开放审批中心，可先改为 `0` 再执行。
 
 ## 执行建议
 
-*   **全新库初始化**：按 1 到 8 的顺序执行即可，不需要执行第 9 个补丁脚本。
-*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本。
+*   **全新库初始化**：按 1 到 8 的顺序执行即可；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
+*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本。
 *   **补丁执行失败时**：如果第 9 个脚本在收紧非空约束时失败，通常说明某些业务单据的 `asset_no` 无法匹配到 `asset_info`，需要先修正历史数据后再重跑补丁。
 
 ---
