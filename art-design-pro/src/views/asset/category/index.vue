@@ -9,41 +9,51 @@
       @search="handleSearch"
     />
 
-    <ElCard class="art-table-card" shadow="never">
-      <!-- 表格头部 -->
-      <ArtTableHeader
-        :showZebra="false"
-        :loading="loading"
-        v-model:columns="columnChecks"
-        @refresh="handleRefresh"
-      >
-        <template #left>
-          <ElButton v-auth="'asset:category:add'" type="primary" @click="handleAdd" v-ripple>
-            新增分类
-          </ElButton>
-          <ElButton @click="toggleExpand" v-ripple>
-            {{ isExpanded ? '收起' : '展开' }}
-          </ElButton>
-        </template>
-      </ArtTableHeader>
+    <div class="asset-category-layout">
+      <ElCard class="art-table-card category-list-card" shadow="never">
+        <!-- 表格头部 -->
+        <ArtTableHeader
+          :showZebra="false"
+          :loading="loading"
+          v-model:columns="columnChecks"
+          @refresh="handleRefresh"
+        >
+          <template #left>
+            <ElButton v-auth="'asset:category:add'" type="primary" @click="handleAdd" v-ripple>
+              新增分类
+            </ElButton>
+            <ElButton @click="toggleExpand" v-ripple>
+              {{ isExpanded ? '收起' : '展开' }}
+            </ElButton>
+          </template>
+        </ArtTableHeader>
 
-      <ArtTable
-        ref="tableRef"
-        rowKey="id"
-        :loading="loading"
-        :columns="columns"
-        :data="categoryList"
-        :stripe="false"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        :default-expand-all="isExpanded"
+        <ArtTable
+          ref="tableRef"
+          rowKey="id"
+          :loading="loading"
+          :columns="columns"
+          :data="categoryList"
+          :stripe="false"
+          highlight-current-row
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          :default-expand-all="isExpanded"
+          @current-change="handleCurrentChange"
+          @row-click="handleCurrentChange"
+        />
+      </ElCard>
+
+      <CategoryAttrManager
+        :category-id="currentCategory?.id"
+        :category-name="currentCategory?.name"
       />
-    </ElCard>
+    </div>
 
     <!-- 资产分类编辑弹窗 -->
     <CategoryEditDialog
       v-model="dialogVisible"
       :dialog-type="dialogType"
-      :category-data="currentData"
+      :category-data="editingCategory"
       @success="getList"
     />
   </div>
@@ -57,6 +67,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ElMessageBox, ElMessage } from 'element-plus'
   import CategoryEditDialog from './modules/category-edit-dialog.vue'
+  import CategoryAttrManager from './modules/category-attr-manager.vue'
 
   defineOptions({ name: 'AssetCategory' })
 
@@ -65,11 +76,12 @@
   const isExpanded = ref(true)
   const tableRef = ref()
   const categoryList = ref<any[]>([])
+  const currentCategory = ref<any>()
 
   // 弹窗相关
   const dialogVisible = ref(false)
   const dialogType = ref<'add' | 'edit'>('add')
-  const currentData = ref<any>()
+  const editingCategory = ref<any>()
 
   // 搜索相关
   const initialSearchState = {
@@ -148,11 +160,39 @@
       const response: any = await listCategory(formFilters)
       const data = Array.isArray(response) ? response : response.data || response.rows || []
       categoryList.value = handleTree(data, 'id')
+      syncCurrentCategory()
     } catch (error) {
       console.error('获取资产分类列表失败:', error)
     } finally {
       loading.value = false
     }
+  }
+
+  /** 刷新分类树后，同步当前高亮行，保证模板面板上下文稳定。 */
+  const syncCurrentCategory = () => {
+    const currentCategoryId = currentCategory.value?.id
+    if (!currentCategoryId) return
+    const matchedCategory = findCategoryById(categoryList.value, currentCategoryId)
+    currentCategory.value = matchedCategory
+    nextTick(() => {
+      tableRef.value?.elTableRef?.setCurrentRow?.(matchedCategory || null)
+    })
+  }
+
+  /** 在树形分类中递归查找指定节点。 */
+  const findCategoryById = (rows: any[], categoryId: number): any => {
+    for (const row of rows) {
+      if (row.id === categoryId) {
+        return row
+      }
+      if (row.children?.length) {
+        const childMatch = findCategoryById(row.children, categoryId)
+        if (childMatch) {
+          return childMatch
+        }
+      }
+    }
+    return undefined
   }
 
   /**
@@ -202,7 +242,7 @@
    */
   const handleAdd = (row?: any) => {
     dialogType.value = 'add'
-    currentData.value = row
+    editingCategory.value = row
     dialogVisible.value = true
   }
 
@@ -211,8 +251,15 @@
    */
   const handleEdit = (row: any) => {
     dialogType.value = 'edit'
-    currentData.value = { ...row }
+    editingCategory.value = { ...row }
     dialogVisible.value = true
+  }
+
+  /**
+   * 切换当前分类，右侧模板管理区跟随刷新。
+   */
+  const handleCurrentChange = (row?: any) => {
+    currentCategory.value = row
   }
 
   /**
@@ -225,6 +272,9 @@
       })
       await delCategory(row.id)
       ElMessage.success('删除成功')
+      if (currentCategory.value?.id === row.id) {
+        currentCategory.value = undefined
+      }
       getList()
     } catch (error) {
       if (error !== 'cancel') {
@@ -241,5 +291,22 @@
 <style lang="scss" scoped>
   .asset-category-page {
     padding: 12px;
+  }
+
+  .asset-category-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .category-list-card {
+    min-width: 0;
+  }
+
+  @media (max-width: 1280px) {
+    .asset-category-layout {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
