@@ -110,6 +110,22 @@ export interface AssetDynamicAttrDefinition {
   remark?: string
 }
 
+/** 分类动态属性定义请求体。 */
+export interface AssetDynamicAttrDefinitionReq {
+  attrId?: number
+  categoryId: number
+  attrCode: string
+  attrName: string
+  dataType?: string
+  isRequired?: string
+  defaultValue?: string
+  optionSourceType?: string
+  optionSource?: string
+  validationRule?: string
+  status?: string
+  remark?: string
+}
+
 /** 动态属性值。 */
 export interface AssetDynamicAttrValue {
   valueId?: number
