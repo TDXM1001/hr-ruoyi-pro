@@ -158,9 +158,9 @@
   ]
 
   const optionSourceTypeOptions = [
-    { label: '手工维护', value: 'manual' },
-    { label: '字典来源', value: 'dict' },
-    { label: '远程来源', value: 'remote' }
+    { label: '手工维护', value: '1' },
+    { label: '字典来源', value: '2' },
+    { label: '远程来源', value: '3' }
   ]
 
   const createInitialFormData = (): CategoryAttrFormData => ({
@@ -169,8 +169,11 @@
     attrName: '',
     dataType: 'text',
     isRequired: '0',
+    isUnique: '0',
+    isListDisplay: '0',
+    isQueryCondition: '0',
     defaultValue: '',
-    optionSourceType: 'manual',
+    optionSourceType: '1',
     optionSource: '',
     validationRule: '',
     status: '0',
@@ -218,7 +221,13 @@
     formData.attrName = String(formData.attrName || '')
     formData.dataType = formData.dataType || 'text'
     formData.isRequired = formData.isRequired || '0'
-    formData.optionSourceType = formData.optionSourceType || 'manual'
+    formData.isUnique = formData.isUnique || '0'
+    formData.isListDisplay = formData.isListDisplay || '0'
+    formData.isQueryCondition = formData.isQueryCondition || '0'
+    // 编辑旧数据时统一转成后端编码值，避免表单回显和提交口径不一致。
+    formData.optionSourceType = buildCategoryAttrSubmitPayload({
+      optionSourceType: formData.optionSourceType || '1'
+    }).optionSourceType
     formData.status = formData.status || '0'
   }
 

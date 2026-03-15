@@ -19,6 +19,9 @@
 - 批次一已完成，对应提交：`e5ef306`、`5ede2e7`、`407fab3`
 - 批次二已完成，对应提交：`b057683`
 - 批次三已完成，对应提交：`cacb09f`
+- 2026-03-15 分类属性模板新增回归修复已完成：
+  - 已提交 `2fd3057`，修复新增模板时 `attr_type` 为空导致的数据库非空约束错误。
+  - 当前批次补齐模板新增默认字段兜底与选项来源编码归一，避免 `is_unique`、`is_list_display`、`is_query_condition` 等字段缺失时再次插入失败。
 - 2026-03-15 复核结果：
   - `npx vitest run tests/api/asset-category-attr.test.ts tests/views/asset/category-attr.helper.test.ts tests/views/asset/asset-dynamic-attr.helper.test.ts tests/views/asset/asset-form.mapper.test.ts tests/views/asset/asset-lifecycle.helper.test.ts` 通过，`5` 个测试文件、`18` 个用例全部通过。
   - `npm run lint -- src/api/asset/category-attr.ts src/views/asset/category src/views/asset/list` 通过。

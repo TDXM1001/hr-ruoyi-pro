@@ -7,10 +7,24 @@ interface CategoryAttrSubmitPayload {
   attrCode?: string
   attrType?: string
   dataType?: string
+  isRequired?: string
+  isUnique?: string
+  isListDisplay?: string
+  isQueryCondition?: string
+  optionSourceType?: string
   [key: string]: unknown
 }
 
 const RESERVED_ATTR_CODES = ['asset_no', 'asset_name', 'original_value', 'property_cert_no']
+/** 统一把前端语义值转换成后端约定的数据库编码。 */
+const OPTION_SOURCE_TYPE_MAP: Record<string, string> = {
+  manual: '1',
+  dict: '2',
+  remote: '3',
+  '1': '1',
+  '2': '2',
+  '3': '3'
+}
 
 const normalizeAttrCode = (attrCode?: string) =>
   String(attrCode || '')
@@ -41,11 +55,18 @@ export function getReservedCodeMessage(attrCode: string) {
 export function buildCategoryAttrSubmitPayload<T extends CategoryAttrSubmitPayload>(payload: T) {
   const dataType = String(payload.dataType || 'text').trim() || 'text'
   const attrType = String(payload.attrType || dataType).trim() || dataType
+  // 新增模板时补齐数据库非空字段，保证旧表单数据也能平滑提交。
+  const optionSourceType = OPTION_SOURCE_TYPE_MAP[String(payload.optionSourceType || '1').trim()] || '1'
 
   return {
     ...payload,
     attrCode: normalizeAttrCode(payload.attrCode),
     dataType,
-    attrType
+    attrType,
+    isRequired: String(payload.isRequired || '0'),
+    isUnique: String(payload.isUnique || '0'),
+    isListDisplay: String(payload.isListDisplay || '0'),
+    isQueryCondition: String(payload.isQueryCondition || '0'),
+    optionSourceType
   }
 }

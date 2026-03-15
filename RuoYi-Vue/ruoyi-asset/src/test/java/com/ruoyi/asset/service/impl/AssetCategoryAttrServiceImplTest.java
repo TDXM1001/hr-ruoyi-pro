@@ -33,6 +33,7 @@ class AssetCategoryAttrServiceImplTest {
         assetCategoryAttr.setAttrCode("Manufacturer");
         assetCategoryAttr.setAttrName("厂商");
         assetCategoryAttr.setDataType("text");
+        assetCategoryAttr.setOptionSourceType("manual");
 
         when(assetCategoryAttrMapper.selectAssetCategoryAttrList(any(AssetCategoryAttr.class)))
             .thenReturn(Collections.emptyList());
@@ -46,6 +47,11 @@ class AssetCategoryAttrServiceImplTest {
         verify(assetCategoryAttrMapper).insertAssetCategoryAttr(captor.capture());
         assertEquals("manufacturer", captor.getValue().getAttrCode());
         assertEquals("text", captor.getValue().getAttrType());
+        assertEquals("0", captor.getValue().getIsRequired());
+        assertEquals("0", captor.getValue().getIsUnique());
+        assertEquals("0", captor.getValue().getIsListDisplay());
+        assertEquals("0", captor.getValue().getIsQueryCondition());
+        assertEquals("1", captor.getValue().getOptionSourceType());
         assertNotNull(captor.getValue().getCreateTime());
         assertNotNull(captor.getValue().getUpdateTime());
     }

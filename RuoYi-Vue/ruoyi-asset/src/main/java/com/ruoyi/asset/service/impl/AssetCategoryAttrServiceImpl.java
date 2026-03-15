@@ -31,6 +31,7 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
         "original_value",
         "property_cert_no"
     ));
+    private static final Set<String> OPTION_SOURCE_TYPE_CODES = new HashSet<>(Arrays.asList("1", "2", "3"));
 
     @Autowired
     private AssetCategoryAttrMapper assetCategoryAttrMapper;
@@ -118,6 +119,11 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
         } else {
             assetCategoryAttr.setAttrType(normalizeFieldType(assetCategoryAttr.getAttrType()));
         }
+        assetCategoryAttr.setIsRequired(defaultFlag(assetCategoryAttr.getIsRequired()));
+        assetCategoryAttr.setIsUnique(defaultFlag(assetCategoryAttr.getIsUnique()));
+        assetCategoryAttr.setIsListDisplay(defaultFlag(assetCategoryAttr.getIsListDisplay()));
+        assetCategoryAttr.setIsQueryCondition(defaultFlag(assetCategoryAttr.getIsQueryCondition()));
+        assetCategoryAttr.setOptionSourceType(normalizeOptionSourceType(assetCategoryAttr.getOptionSourceType()));
         if (RESERVED_ATTR_CODES.contains(normalizedAttrCode)) {
             throw new ServiceException("字段编码[" + normalizedAttrCode + "]为系统保留字段，不允许使用");
         }
@@ -145,5 +151,30 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
      */
     private String normalizeFieldType(String fieldType) {
         return StringUtils.trimToEmpty(fieldType).toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * 统一布尔标记默认值，避免前端未传时直接触发数据库非空约束。
+     */
+    private String defaultFlag(String flagValue) {
+        return StringUtils.isBlank(flagValue) ? "0" : StringUtils.trim(flagValue);
+    }
+
+    /**
+     * 选项来源兼容前端语义值与数据库编码值。
+     */
+    private String normalizeOptionSourceType(String optionSourceType) {
+        String normalizedValue = StringUtils.trimToEmpty(optionSourceType).toLowerCase(Locale.ROOT);
+        if (StringUtils.isBlank(normalizedValue)) {
+            return "1";
+        }
+        if (OPTION_SOURCE_TYPE_CODES.contains(normalizedValue)) {
+            return normalizedValue;
+        }
+        return switch (normalizedValue) {
+            case "dict" -> "2";
+            case "remote" -> "3";
+            default -> "1";
+        };
     }
 }

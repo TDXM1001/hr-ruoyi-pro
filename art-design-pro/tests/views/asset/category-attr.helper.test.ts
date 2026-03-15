@@ -27,14 +27,20 @@ describe('category attr helper', () => {
         categoryId: 10,
         attrCode: ' Manufacturer ',
         attrName: '厂商',
-        dataType: 'text'
+        dataType: 'text',
+        optionSourceType: 'manual'
       })
     ).toMatchObject({
       categoryId: 10,
       attrCode: 'manufacturer',
       attrName: '厂商',
       attrType: 'text',
-      dataType: 'text'
+      dataType: 'text',
+      isRequired: '0',
+      isUnique: '0',
+      isListDisplay: '0',
+      isQueryCondition: '0',
+      optionSourceType: '1'
     })
   })
 
@@ -45,12 +51,20 @@ describe('category attr helper', () => {
         attrCode: 'status',
         attrName: '状态',
         attrType: 'radio',
-        dataType: 'select'
+        dataType: 'select',
+        isUnique: '1',
+        isListDisplay: '1',
+        isQueryCondition: '1',
+        optionSourceType: '2'
       })
     ).toMatchObject({
       attrCode: 'status',
       attrType: 'radio',
-      dataType: 'select'
+      dataType: 'select',
+      isUnique: '1',
+      isListDisplay: '1',
+      isQueryCondition: '1',
+      optionSourceType: '2'
     })
   })
 })

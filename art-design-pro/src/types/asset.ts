@@ -119,6 +119,9 @@ export interface AssetDynamicAttrDefinitionReq {
   attrType?: string
   dataType?: string
   isRequired?: string
+  isUnique?: string
+  isListDisplay?: string
+  isQueryCondition?: string
   defaultValue?: string
   optionSourceType?: string
   optionSource?: string
