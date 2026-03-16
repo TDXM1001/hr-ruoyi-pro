@@ -41,7 +41,14 @@ export interface AssetWarningItem {
   assetNo?: string
   assetName?: string
   assetType?: string
+  /** 资产状态：描述资产本体当前状态。 */
   assetStatus?: string
+  /** 单据状态：描述业务单据当前处理阶段。 */
+  status?: string
+  /** 流程状态：描述审批流当前推进状态。 */
+  wfStatus?: string
+  /** 归档状态：描述资产是否已从日常台账归档。 */
+  archiveStatus?: string
   deptId?: number
   deptName?: string
   businessNo?: string

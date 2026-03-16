@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -18,20 +20,30 @@ import {
   applyMaintenance,
   completeMaintenance,
   getMaintenance,
-  listMaintenance
+  listMaintenance,
+  type AssetMaintenanceItem
 } from '../../src/api/asset/maintenance'
 
 describe('Asset Maintenance API', () => {
+  const maintenanceApiSource = readFileSync(resolve(process.cwd(), 'src/api/asset/maintenance.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and assetNo in maintenance payload type', () => {
     expectTypeOf<Parameters<typeof applyMaintenance>[0]>().toEqualTypeOf<{
-      assetId?: number
+      assetId: number
       assetNo: string
       reason: string
     }>()
+  })
+
+  it('locks maintenance row contract with assetId and wfStatus', () => {
+    expectTypeOf<AssetMaintenanceItem>()
+    expect(maintenanceApiSource).toContain('assetId: number')
+    expect(maintenanceApiSource).toContain('assetNo: string')
+    expect(maintenanceApiSource).toContain('wfStatus?: string')
   })
 
   it('queries maintenance list from maintenance endpoint', async () => {

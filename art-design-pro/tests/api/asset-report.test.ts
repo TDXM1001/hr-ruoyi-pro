@@ -1,4 +1,6 @@
-﻿import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
   http: {
@@ -15,8 +17,11 @@ vi.mock('@/utils/http', () => ({
 }))
 
 import * as assetReportApi from '../../src/api/asset/report'
+import type { AssetWarningItem } from '../../src/api/asset/report'
 
 describe('Asset Report API', () => {
+  const reportApiSource = readFileSync(resolve(process.cwd(), 'src/api/asset/report.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -42,5 +47,13 @@ describe('Asset Report API', () => {
       url: '/asset/report/warnings',
       params: { landTermWithinDays: 45 }
     })
+  })
+
+  it('locks warning row contract with unified status fields', () => {
+    expectTypeOf<AssetWarningItem>()
+    expect(reportApiSource).toContain('assetStatus?: string')
+    expect(reportApiSource).toContain('status?: string')
+    expect(reportApiSource).toContain('wfStatus?: string')
+    expect(reportApiSource).toContain('archiveStatus?: string')
   })
 })

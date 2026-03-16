@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -17,21 +19,31 @@ vi.mock('@/utils/http', () => ({
 import {
   createStatusChange,
   getStatusChangeDetail,
-  listStatusChange
+  listStatusChange,
+  type StatusChangeItem
 } from '../../src/api/asset/real-estate-status'
 
 describe('Real Estate Status API', () => {
+  const statusApiSource = readFileSync(resolve(process.cwd(), 'src/api/asset/real-estate-status.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and target status in payload type', () => {
     expectTypeOf<Parameters<typeof createStatusChange>[0]>().toEqualTypeOf<{
-      assetId?: number
-      assetNo?: string
+      assetId: number
+      assetNo: string
       targetAssetStatus: string
       reason: string
     }>()
+  })
+
+  it('locks status change row contract with assetId and wfStatus', () => {
+    expectTypeOf<StatusChangeItem>()
+    expect(statusApiSource).toContain('assetId: number')
+    expect(statusApiSource).toContain('assetNo: string')
+    expect(statusApiSource).toContain('wfStatus?: string')
   })
 
   it('queries status list from real estate status endpoint', async () => {

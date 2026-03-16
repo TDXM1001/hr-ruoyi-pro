@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /**
@@ -14,24 +15,25 @@ export interface MaintenanceQuery {
 /**
  * 发起维修申请请求
  *
- * 资产列表跳转场景会优先传 assetId，
- * 菜单直接进入台账页时则允许只传 assetNo，由后端兜底解析主档。
+ * 统一要求显式携带 `assetId` 与 `assetNo`，
+ * 避免不同入口继续依赖后端按编号反查主档。
  */
 export interface ApplyMaintenanceReq {
-  assetId?: number
+  assetId: number
   assetNo: string
   reason: string
 }
 
 /**
- * 维修台账最小行结构
+ * 维修台账最小行结构。
  */
-export interface AssetMaintenanceItem {
+export interface AssetMaintenanceItem extends AssetBusinessOrderBase {
   maintenanceNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   reason?: string
   status: number
+  wfStatus?: string
   applyUserId?: number
   createTime?: string
 }

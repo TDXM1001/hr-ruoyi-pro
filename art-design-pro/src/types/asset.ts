@@ -39,6 +39,35 @@ export function formatFixedAssetDisposalType(value?: string) {
   return FIXED_ASSET_DISPOSAL_TYPE_OPTIONS.find((item) => item.value === value)?.label || '--'
 }
 
+/** 统一资产引用，供台账、业务单据和流程页共享。 */
+export interface AssetRef {
+  assetId: number
+  assetNo: string
+  assetName: string
+  assetType: string
+  /** 资产状态：描述资产本体当前所处业务状态。 */
+  assetStatus: string
+}
+
+/** 统一业务单据基础字段。 */
+export interface AssetBusinessOrderBase {
+  bizNo?: string
+  bizType?: string
+  assetId: number
+  assetNo: string
+  assetName?: string
+  /** 资产状态：描述资产本体当前状态快照。 */
+  assetStatus?: string
+  /** 单据状态：描述业务单据当前处理阶段。 */
+  status: string | number
+  /** 流程状态：描述审批流当前推进状态。 */
+  wfStatus?: string
+  /** 归档状态：描述资产是否已从日常台账归档。 */
+  archiveStatus?: string
+  reason?: string
+  createTime?: string
+}
+
 /** 资产基础信息。 */
 export interface AssetBasicInfo {
   assetId?: number
@@ -62,6 +91,8 @@ export interface AssetBasicInfo {
   enableDate?: string
   /** 资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置。 */
   assetStatus: string
+  /** 归档状态：active=日常台账 archived=已归档。 */
+  archiveStatus?: string
   remark?: string
   createTime?: string
   updateTime?: string
@@ -264,6 +295,8 @@ export interface AssetListItem {
   locationText?: string
   /** 资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置。 */
   assetStatus: string
+  /** 归档状态：active=日常台账 archived=已归档。 */
+  archiveStatus?: string
   purchaseDate?: string
   capitalizationDate?: string
   createTime?: string

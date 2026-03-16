@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -17,22 +19,32 @@ vi.mock('@/utils/http', () => ({
 import {
   createUsageChange,
   getUsageChangeDetail,
-  listUsageChange
+  listUsageChange,
+  type UsageChangeItem
 } from '../../src/api/asset/real-estate-usage'
 
 describe('Real Estate Usage API', () => {
+  const usageApiSource = readFileSync(resolve(process.cwd(), 'src/api/asset/real-estate-usage.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and usage target fields in payload type', () => {
     expectTypeOf<Parameters<typeof createUsageChange>[0]>().toEqualTypeOf<{
-      assetId?: number
-      assetNo?: string
+      assetId: number
+      assetNo: string
       targetLandUse?: string
       targetBuildingUse?: string
       reason: string
     }>()
+  })
+
+  it('locks usage change row contract with assetId and wfStatus', () => {
+    expectTypeOf<UsageChangeItem>()
+    expect(usageApiSource).toContain('assetId: number')
+    expect(usageApiSource).toContain('assetNo: string')
+    expect(usageApiSource).toContain('wfStatus?: string')
   })
 
   it('queries usage list from real estate usage endpoint', async () => {

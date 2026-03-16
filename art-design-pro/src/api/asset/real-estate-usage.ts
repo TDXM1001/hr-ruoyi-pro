@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产用途变更查询参数。 */
@@ -11,19 +12,20 @@ export interface UsageChangeQuery {
 
 /** 新增不动产用途变更请求。 */
 export interface CreateUsageChangeReq {
-  assetId?: number
-  assetNo?: string
+  assetId: number
+  assetNo: string
   targetLandUse?: string
   targetBuildingUse?: string
   reason: string
 }
 
 /** 不动产用途变更台账最小行结构。 */
-export interface UsageChangeItem {
+export interface UsageChangeItem extends AssetBusinessOrderBase {
   usageChangeNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   status: string
+  wfStatus?: string
   oldLandUse?: string
   targetLandUse?: string
   oldBuildingUse?: string

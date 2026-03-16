@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /**
@@ -24,9 +25,9 @@ export interface ApplyRequisitionReq {
  * 领用台账最小行结构。
  * 前端优先依赖 assetId 做内部关联，assetNo 继续承担展示职责。
  */
-export interface AssetRequisitionItem {
+export interface AssetRequisitionItem extends AssetBusinessOrderBase {
   requisitionNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   assetName?: string
   reason?: string

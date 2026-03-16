@@ -1,5 +1,5 @@
 import request from '@/utils/http'
-import type { FixedAssetDisposalType } from '@/types/asset'
+import type { AssetBusinessOrderBase, FixedAssetDisposalType } from '@/types/asset'
 
 /**
  * 处置台账列表查询参数
@@ -15,26 +15,26 @@ export interface DisposalQuery {
 /**
  * 发起处置申请请求
  *
- * 和维修台账保持同一口径：优先使用 assetId，
- * 无主键上下文时允许只传 assetNo 由后端解析。
+ * 和维修台账保持同一口径：创建时必须显式携带 `assetId` 与 `assetNo`。
  */
 export interface ApplyDisposalReq {
-  assetId?: number
+  assetId: number
   assetNo: string
   disposalType: FixedAssetDisposalType
   reason: string
 }
 
 /**
- * 处置台账最小行结构
+ * 处置台账最小行结构。
  */
-export interface AssetDisposalItem {
+export interface AssetDisposalItem extends AssetBusinessOrderBase {
   disposalNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   disposalType?: FixedAssetDisposalType
   reason?: string
   status: number
+  wfStatus?: string
   applyUserId?: number
   createTime?: string
 }

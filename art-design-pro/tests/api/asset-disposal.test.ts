@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -14,20 +16,34 @@ vi.mock('@/utils/http', () => ({
   default: http
 }))
 
-import { applyDisposal, getDisposal, listDisposal } from '../../src/api/asset/disposal'
+import {
+  applyDisposal,
+  getDisposal,
+  listDisposal,
+  type AssetDisposalItem
+} from '../../src/api/asset/disposal'
 
 describe('Asset Disposal API', () => {
+  const disposalApiSource = readFileSync(resolve(process.cwd(), 'src/api/asset/disposal.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and assetNo in disposal payload type', () => {
     expectTypeOf<Parameters<typeof applyDisposal>[0]>().toEqualTypeOf<{
-      assetId?: number
+      assetId: number
       assetNo: string
       disposalType: 'scrap' | 'sell' | 'transfer' | 'donate'
       reason: string
     }>()
+  })
+
+  it('locks disposal row contract with assetId and wfStatus', () => {
+    expectTypeOf<AssetDisposalItem>()
+    expect(disposalApiSource).toContain('assetId: number')
+    expect(disposalApiSource).toContain('assetNo: string')
+    expect(disposalApiSource).toContain('wfStatus?: string')
   })
 
   it('queries disposal list from disposal endpoint', async () => {

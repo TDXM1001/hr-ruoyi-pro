@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -17,23 +19,36 @@ vi.mock('@/utils/http', () => ({
 import {
   createOwnershipChange,
   getOwnershipChangeDetail,
-  listOwnershipChange
+  listOwnershipChange,
+  type OwnershipChangeItem
 } from '../../src/api/asset/real-estate-ownership'
 
 describe('Real Estate Ownership API', () => {
+  const ownershipApiSource = readFileSync(
+    resolve(process.cwd(), 'src/api/asset/real-estate-ownership.ts'),
+    'utf8'
+  )
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and ownership target fields in payload type', () => {
     expectTypeOf<Parameters<typeof createOwnershipChange>[0]>().toEqualTypeOf<{
-      assetId?: number
-      assetNo?: string
+      assetId: number
+      assetNo: string
       targetRightsHolder: string
       targetPropertyCertNo?: string
       targetRegistrationDate?: string
       reason: string
     }>()
+  })
+
+  it('locks ownership change row contract with assetId and wfStatus', () => {
+    expectTypeOf<OwnershipChangeItem>()
+    expect(ownershipApiSource).toContain('assetId: number')
+    expect(ownershipApiSource).toContain('assetNo: string')
+    expect(ownershipApiSource).toContain('wfStatus?: string')
   })
 
   it('queries ownership list from real estate ownership endpoint', async () => {

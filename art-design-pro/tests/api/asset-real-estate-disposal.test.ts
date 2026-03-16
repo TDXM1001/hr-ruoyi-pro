@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -17,22 +19,35 @@ vi.mock('@/utils/http', () => ({
 import {
   createRealEstateDisposal,
   getRealEstateDisposalDetail,
-  listRealEstateDisposal
+  listRealEstateDisposal,
+  type RealEstateDisposalItem
 } from '../../src/api/asset/real-estate-disposal'
 
 describe('Real Estate Disposal API', () => {
+  const realEstateDisposalApiSource = readFileSync(
+    resolve(process.cwd(), 'src/api/asset/real-estate-disposal.ts'),
+    'utf8'
+  )
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('accepts assetId and disposal fields in payload type', () => {
     expectTypeOf<Parameters<typeof createRealEstateDisposal>[0]>().toEqualTypeOf<{
-      assetId?: number
-      assetNo?: string
+      assetId: number
+      assetNo: string
       disposalType?: string
       targetAssetStatus?: string
       reason: string
     }>()
+  })
+
+  it('locks real estate disposal row contract with assetId and wfStatus', () => {
+    expectTypeOf<RealEstateDisposalItem>()
+    expect(realEstateDisposalApiSource).toContain('assetId: number')
+    expect(realEstateDisposalApiSource).toContain('assetNo: string')
+    expect(realEstateDisposalApiSource).toContain('wfStatus?: string')
   })
 
   it('queries disposal list from real estate disposal endpoint', async () => {

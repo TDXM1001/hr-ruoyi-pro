@@ -16,7 +16,7 @@ vi.mock('@/utils/http', () => ({
   default: http
 }))
 
-import type { AssetAggregateReq } from '../../src/types/asset'
+import type { AssetAggregateReq, AssetBusinessOrderBase, AssetRef } from '../../src/types/asset'
 import * as assetInfoApi from '../../src/api/asset/info'
 
 describe('Asset Info API', () => {
@@ -42,5 +42,31 @@ describe('Asset Info API', () => {
   it('locks aggregate detail timeline contract in shared asset types', () => {
     expect(assetTypesSource).toContain('export interface AssetTimelineItem')
     expect(assetTypesSource).toContain('timeline: AssetTimelineItem[]')
+  })
+
+  it('locks shared asset ref and business order base contracts', () => {
+    expectTypeOf<AssetRef>().toEqualTypeOf<{
+      assetId: number
+      assetNo: string
+      assetName: string
+      assetType: string
+      assetStatus: string
+    }>()
+
+    expectTypeOf<AssetBusinessOrderBase>().toEqualTypeOf<{
+      bizNo?: string
+      bizType?: string
+      assetId: number
+      assetNo: string
+      assetName?: string
+      assetStatus?: string
+      status: string | number
+      wfStatus?: string
+      archiveStatus?: string
+      reason?: string
+      createTime?: string
+    }>()
+
+    expect(assetTypesSource).toContain('archiveStatus')
   })
 })

@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产权属变更查询参数。 */
@@ -11,8 +12,8 @@ export interface OwnershipChangeQuery {
 
 /** 新增不动产权属变更请求。 */
 export interface CreateOwnershipChangeReq {
-  assetId?: number
-  assetNo?: string
+  assetId: number
+  assetNo: string
   targetRightsHolder: string
   targetPropertyCertNo?: string
   targetRegistrationDate?: string
@@ -20,11 +21,12 @@ export interface CreateOwnershipChangeReq {
 }
 
 /** 不动产权属变更台账最小行结构。 */
-export interface OwnershipChangeItem {
+export interface OwnershipChangeItem extends AssetBusinessOrderBase {
   ownershipChangeNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   status: string
+  wfStatus?: string
   oldRightsHolder?: string
   targetRightsHolder?: string
   oldPropertyCertNo?: string

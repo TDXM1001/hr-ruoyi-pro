@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产注销/处置查询参数。 */
@@ -11,19 +12,20 @@ export interface RealEstateDisposalQuery {
 
 /** 新增不动产注销/处置请求。 */
 export interface CreateRealEstateDisposalReq {
-  assetId?: number
-  assetNo?: string
+  assetId: number
+  assetNo: string
   disposalType?: string
   targetAssetStatus?: string
   reason: string
 }
 
 /** 不动产注销/处置台账最小行结构。 */
-export interface RealEstateDisposalItem {
+export interface RealEstateDisposalItem extends AssetBusinessOrderBase {
   disposalNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   status: string
+  wfStatus?: string
   disposalType?: string
   oldAssetStatus?: string
   targetAssetStatus?: string

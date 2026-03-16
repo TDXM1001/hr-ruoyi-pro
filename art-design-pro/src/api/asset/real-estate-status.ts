@@ -1,3 +1,4 @@
+import type { AssetBusinessOrderBase } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产状态变更查询参数。 */
@@ -11,18 +12,19 @@ export interface StatusChangeQuery {
 
 /** 新增不动产状态变更请求。 */
 export interface CreateStatusChangeReq {
-  assetId?: number
-  assetNo?: string
+  assetId: number
+  assetNo: string
   targetAssetStatus: string
   reason: string
 }
 
 /** 不动产状态变更台账最小行结构。 */
-export interface StatusChangeItem {
+export interface StatusChangeItem extends AssetBusinessOrderBase {
   statusChangeNo: string
-  assetId?: number
+  assetId: number
   assetNo: string
   status: string
+  wfStatus?: string
   oldAssetStatus?: string
   targetAssetStatus?: string
   reason?: string
