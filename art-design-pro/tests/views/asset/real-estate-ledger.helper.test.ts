@@ -41,8 +41,48 @@ describe('real estate ledger helper', () => {
     expect(mapRealEstateStatusToWorkflow('rejected')).toBe('REJECTED')
   })
 
+  it('keeps latest timeline snapshot in route context for real estate pages', () => {
+    expect(
+      parseAssetRouteQuery({
+        assetId: '1001',
+        assetNo: 'RE-003',
+        latestActionType: 'REAL_ESTATE_OWNERSHIP_CHANGE',
+        latestDocStatus: 'approved',
+        latestActionTime: '2026-03-15 10:30:00'
+      })
+    ).toMatchObject({
+      assetId: 1001,
+      assetNo: 'RE-003',
+      latestActionType: 'REAL_ESTATE_OWNERSHIP_CHANGE',
+      latestDocStatus: 'approved',
+      latestActionTime: '2026-03-15 10:30:00'
+    })
+  })
+
   it('opens create dialog only when query explicitly asks for it', () => {
     expect(shouldOpenCreateDialog({ openCreate: '1' })).toBe(true)
     expect(shouldOpenCreateDialog({ openCreate: '0' })).toBe(false)
+  })
+
+  it('blocks auto-open when the same real estate action is still pending', () => {
+    expect(
+      shouldOpenCreateDialog({
+        openCreate: '1',
+        actionKey: 'realEstateOwnership',
+        assetStatus: '1',
+        latestActionType: 'REAL_ESTATE_OWNERSHIP_CHANGE',
+        latestDocStatus: 'pending'
+      })
+    ).toBe(false)
+  })
+
+  it('blocks auto-open for disposed real estate assets', () => {
+    expect(
+      shouldOpenCreateDialog({
+        openCreate: '1',
+        actionKey: 'realEstateDisposal',
+        assetStatus: '6'
+      })
+    ).toBe(false)
   })
 })

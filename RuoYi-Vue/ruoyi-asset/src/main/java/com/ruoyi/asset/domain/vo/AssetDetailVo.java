@@ -34,6 +34,9 @@ public class AssetDetailVo {
     /** 折旧日志 */
     private List<AssetDepreciationLog> depreciationLogs = new ArrayList<>();
 
+    /** 最近动作时间线 */
+    private List<AssetTimelineVo> timeline = new ArrayList<>();
+
     public AssetInfo getBasicInfo() {
         return basicInfo;
     }
@@ -80,5 +83,13 @@ public class AssetDetailVo {
 
     public void setDepreciationLogs(List<AssetDepreciationLog> depreciationLogs) {
         this.depreciationLogs = depreciationLogs == null ? new ArrayList<>() : depreciationLogs;
+    }
+
+    public List<AssetTimelineVo> getTimeline() {
+        return timeline;
+    }
+
+    public void setTimeline(List<AssetTimelineVo> timeline) {
+        this.timeline = timeline == null ? new ArrayList<>() : timeline;
     }
 }

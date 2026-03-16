@@ -11,6 +11,7 @@ import com.ruoyi.asset.mapper.AssetAttrValueMapper;
 import com.ruoyi.asset.mapper.AssetDepreciationLogMapper;
 import com.ruoyi.asset.mapper.AssetFinanceMapper;
 import com.ruoyi.asset.mapper.AssetRealEstateMapper;
+import com.ruoyi.asset.mapper.AssetTimelineMapper;
 import com.ruoyi.asset.service.IAssetFinanceService;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.asset.domain.vo.AssetDetailVo;
@@ -46,6 +47,9 @@ class AssetAggregateDetailRecentLogsTest {
     private AssetDepreciationLogMapper assetDepreciationLogMapper;
 
     @Mock
+    private AssetTimelineMapper assetTimelineMapper;
+
+    @Mock
     private IAssetFinanceService assetFinanceService;
 
     @InjectMocks
@@ -60,6 +64,7 @@ class AssetAggregateDetailRecentLogsTest {
         when(assetAttrValueMapper.selectAssetAttrValueByAssetId(1001L)).thenReturn(new ArrayList<AssetAttrValue>());
         when(assetAttachmentMapper.selectAssetAttachmentByAssetId(1001L)).thenReturn(new ArrayList<AssetAttachment>());
         when(assetDepreciationLogMapper.selectAssetDepreciationLogByAssetId(1001L)).thenReturn(buildLogs(15));
+        when(assetTimelineMapper.selectAssetTimelineByAssetId(1001L)).thenReturn(new ArrayList<>());
 
         AssetDetailVo result = assetAggregateService.selectAssetDetailByAssetId(1001L);
 

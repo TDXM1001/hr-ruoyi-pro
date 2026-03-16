@@ -3,9 +3,9 @@
     <ElAlert
       v-if="routeAssetContext"
       class="mb-3"
-      type="info"
+      :type="createGuard.disabled ? 'warning' : 'info'"
       :closable="false"
-      :title="`已从资产台账带入不动产 ${routeAssetContext.assetNo}，可直接发起注销/处置申请。`"
+      :title="routeAlertTitle"
     />
 
     <ArtSearchBar
@@ -27,6 +27,7 @@
           <ElButton
             v-auth="'asset:realEstateDisposal:add'"
             type="primary"
+            :disabled="createGuard.disabled"
             @click="openCreateDialog()"
           >
             发起注销/处置
@@ -160,6 +161,8 @@
     type RealEstateDisposalItem
   } from '@/api/asset/real-estate-disposal'
   import {
+    formatRealEstateLatestAction,
+    getRealEstateActionGuard,
     mapRealEstateStatusToWorkflow,
     parseAssetRouteQuery,
     REAL_ESTATE_APPROVAL_STATUS_OPTIONS,
@@ -174,6 +177,18 @@
 
   const routeAssetContext = ref<RealEstateRouteAssetContext | null>(null)
   const dialogAssetContext = ref<RealEstateRouteAssetContext | null>(null)
+  const createGuard = computed(() =>
+    getRealEstateActionGuard('realEstateDisposal', routeAssetContext.value)
+  )
+  const routeAlertTitle = computed(() => {
+    if (!routeAssetContext.value) return ''
+    const latestActionText = formatRealEstateLatestAction(routeAssetContext.value)
+    const latestActionPrefix = latestActionText ? `最近动作：${latestActionText}。` : ''
+    const actionText = createGuard.value.disabled
+      ? createGuard.value.reason || '当前不能直接发起注销/处置。'
+      : '可直接发起注销/处置申请。'
+    return `已从资产台账带入不动产 ${routeAssetContext.value.assetNo}，${latestActionPrefix}${actionText}`
+  })
 
   const disposalTypeOptions = [
     { label: '注销', value: 'cancel' },
@@ -315,6 +330,11 @@
   const openCreateDialog = (
     context: RealEstateRouteAssetContext | null = routeAssetContext.value
   ) => {
+    const guard = getRealEstateActionGuard('realEstateDisposal', context)
+    if (guard.disabled) {
+      ElMessage.warning(guard.reason || '当前资产暂不支持注销/处置')
+      return
+    }
     dialogAssetContext.value = context
     formData.assetNo = context?.assetNo || ''
     formData.disposalType = 'cancel'

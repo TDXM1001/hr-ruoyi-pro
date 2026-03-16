@@ -210,6 +210,48 @@ export interface AssetDepreciationLog {
   createTime?: string
 }
 
+/** 资产时间线动作类型。 */
+export const ASSET_TIMELINE_ACTION_OPTIONS = [
+  { label: '领用', value: 'REQUISITION' },
+  { label: '维修', value: 'REPAIR' },
+  { label: '报废', value: 'SCRAP' },
+  { label: '处置', value: 'DISPOSAL' },
+  { label: '权属变更', value: 'REAL_ESTATE_OWNERSHIP_CHANGE' },
+  { label: '用途变更', value: 'REAL_ESTATE_USAGE_CHANGE' },
+  { label: '状态变更', value: 'REAL_ESTATE_STATUS_CHANGE' },
+  { label: '注销/处置', value: 'REAL_ESTATE_DISPOSAL' }
+] as const
+
+/** 统一动作时间线单据状态。 */
+export const ASSET_TIMELINE_DOC_STATUS_OPTIONS = [
+  { label: '流转中', value: 'pending' },
+  { label: '已通过', value: 'approved' },
+  { label: '已驳回', value: 'rejected' },
+  { label: '已完成', value: 'completed' }
+] as const
+
+/** 把动作类型翻译成页面文案。 */
+export function formatAssetTimelineAction(value?: string) {
+  return ASSET_TIMELINE_ACTION_OPTIONS.find((item) => item.value === value)?.label || '--'
+}
+
+/** 把时间线状态翻译成页面文案。 */
+export function formatAssetTimelineDocStatus(value?: string) {
+  return ASSET_TIMELINE_DOC_STATUS_OPTIONS.find((item) => item.value === value)?.label || '--'
+}
+
+/** 资产统一动作时间线项。 */
+export interface AssetTimelineItem {
+  actionType: string
+  actionLabel?: string
+  businessNo?: string
+  docStatus: string
+  actionTime?: string
+  reason?: string
+  assetStatusBefore?: string
+  assetStatusAfter?: string
+}
+
 /** 资产台账列表项。 */
 export interface AssetListItem {
   assetId: number
@@ -261,6 +303,7 @@ export interface AssetAggregateDetail {
   dynamicAttrs: AssetDynamicAttrValue[]
   attachments: AssetAttachment[]
   depreciationLogs: AssetDepreciationLog[]
+  timeline: AssetTimelineItem[]
 }
 
 /** 资产聚合新增/修改请求体。 */

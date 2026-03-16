@@ -10,6 +10,7 @@ import com.ruoyi.asset.mapper.AssetAttrValueMapper;
 import com.ruoyi.asset.mapper.AssetDepreciationLogMapper;
 import com.ruoyi.asset.mapper.AssetFinanceMapper;
 import com.ruoyi.asset.mapper.AssetRealEstateMapper;
+import com.ruoyi.asset.mapper.AssetTimelineMapper;
 import com.ruoyi.asset.service.IAssetFinanceService;
 import com.ruoyi.asset.service.IAssetInfoService;
 import com.ruoyi.common.exception.ServiceException;
@@ -46,6 +47,9 @@ class AssetAggregateServiceImplTest {
 
     @Mock
     private AssetDepreciationLogMapper assetDepreciationLogMapper;
+
+    @Mock
+    private AssetTimelineMapper assetTimelineMapper;
 
     @Mock
     private IAssetFinanceService assetFinanceService;

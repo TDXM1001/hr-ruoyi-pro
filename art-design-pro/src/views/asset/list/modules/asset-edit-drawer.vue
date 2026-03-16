@@ -259,6 +259,29 @@
             </ElRow>
           </ElTabPane>
 
+          <ElTabPane v-if="dialogType === 'edit'" label="动作时间线" name="timeline">
+            <ElAlert
+              title="这里展示最近资产动作留痕，审批型动作会保留当前单据状态，驳回记录也不会被覆盖。"
+              type="info"
+              class="mb-4"
+              :closable="false"
+            />
+
+            <ElEmpty
+              v-if="!timelineCardList.length"
+              description="暂无动作时间线"
+              :image-size="80"
+            />
+
+            <ArtTimelineListCard
+              v-else
+              :list="timelineCardList"
+              title="最近动作"
+              subtitle="统一展示固定资产与不动产的最近业务动作"
+              :max-count="6"
+            />
+          </ElTabPane>
+
           <ElTabPane label="不动产信息" name="realEstate" :disabled="!showRealEstateTab">
             <ElAlert
               v-if="!showRealEstateTab"
@@ -508,7 +531,12 @@
   import type {
     AssetAttachment,
     AssetDynamicAttrDefinition,
-    AssetDynamicAttrValue
+    AssetDynamicAttrValue,
+    AssetTimelineItem
+  } from '@/types/asset'
+  import {
+    formatAssetTimelineAction,
+    formatAssetTimelineDocStatus
   } from '@/types/asset'
   import { getInfo, addInfo, updateInfo } from '@/api/asset/info'
   import { listCategory } from '@/api/asset/category'
@@ -517,6 +545,7 @@
   import { listUser, deptTreeSelect } from '@/api/system/user'
   import { handleTree } from '@/utils/ruoyi'
   import { useDict } from '@/utils/dict'
+  import ArtTimelineListCard from '@/components/core/cards/art-timeline-list-card/index.vue'
   import { findReservedAttrCodes, toDynamicAttrFormRecord } from './asset-dynamic-attr.helper'
   import { canEditFinanceBaseFields } from './asset-finance.helper'
   import {
@@ -543,6 +572,7 @@
   const submitLoading = ref(false)
   const activeTab = ref('basic')
   const formRef = ref<FormInstance>()
+  const assetTimeline = ref<AssetTimelineItem[]>([])
 
   // 选项数据
   const categoryOptions = ref<any[]>([])
@@ -570,6 +600,14 @@
   const financeBaseReadonly = computed(() => !canEditFinanceBaseFields(state.financeForm))
   const dynamicAttrConflictCodes = ref<string[]>([])
   const activeBizType = ref('asset')
+  const timelineCardList = computed(() =>
+    assetTimeline.value.map((item) => ({
+      time: item.actionTime || '--',
+      status: getTimelineStatusColor(item.docStatus),
+      content: buildTimelineContent(item),
+      code: item.businessNo
+    }))
+  )
 
   const formRules: FormRules = {
     'basicForm.assetNo': [{ required: true, message: '资产编号不能为空', trigger: 'blur' }],
@@ -595,6 +633,28 @@
   const resetState = () => {
     Object.assign(state, createEmptyDrawerState())
     dynamicAttrConflictCodes.value = []
+    assetTimeline.value = []
+  }
+
+  /** 统一兼容详情接口返回 data 包裹或直接返回对象。 */
+  const unwrapAssetDetail = (response: any) => {
+    return response?.data || response || {}
+  }
+
+  /** 把后端时间线项拼成卡片组件能直接展示的文案。 */
+  const buildTimelineContent = (item: AssetTimelineItem) => {
+    const actionLabel = item.actionLabel || formatAssetTimelineAction(item.actionType)
+    const statusLabel = formatAssetTimelineDocStatus(item.docStatus)
+    const reasonText = item.reason ? `：${item.reason}` : ''
+    return `${actionLabel} · ${statusLabel}${reasonText}`
+  }
+
+  /** 时间线颜色只按单据状态区分，保证审批中/已驳回一眼可识别。 */
+  const getTimelineStatusColor = (status?: string) => {
+    if (status === 'approved') return '#67C23A'
+    if (status === 'rejected') return '#F56C6C'
+    if (status === 'completed') return '#409EFF'
+    return '#E6A23C'
   }
 
   /** 把后端 optionSource 解析成可直接渲染的下拉选项。 */
@@ -764,7 +824,9 @@
           loading.value = true
           try {
             const res: any = await getInfo(props.assetData.assetId)
-            Object.assign(state, hydrateDrawerState(res.data || res))
+            const detail = unwrapAssetDetail(res)
+            Object.assign(state, hydrateDrawerState(detail))
+            assetTimeline.value = detail.timeline || []
             await loadCategoryAttrs(state.basicForm.categoryId, state.dynamicAttrs)
           } finally {
             loading.value = false

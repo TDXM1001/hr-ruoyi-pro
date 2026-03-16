@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetTimelineMapper">
+
+    <resultMap id="AssetTimelineResult" type="com.ruoyi.asset.domain.vo.AssetTimelineVo">
+        <result property="actionType" column="action_type"/>
+        <result property="actionLabel" column="action_label"/>
+        <result property="businessNo" column="business_no"/>
+        <result property="docStatus" column="doc_status"/>
+        <result property="actionTime" column="action_time"/>
+        <result property="reason" column="reason"/>
+        <result property="assetStatusBefore" column="asset_status_before"/>
+        <result property="assetStatusAfter" column="asset_status_after"/>
+    </resultMap>
+
+    <select id="selectAssetTimelineByAssetId" parameterType="Long" resultMap="AssetTimelineResult">
+        select action_type,
+               action_label,
+               business_no,
+               doc_status,
+               action_time,
+               reason,
+               asset_status_before,
+               asset_status_after
+        from (
+            select 'REQUISITION' as action_type,
+                   '领用' as action_label,
+                   requisition_no as business_no,
+                   case status
+                       when 0 then 'pending'
+                       when 1 then 'approved'
+                       when 2 then 'rejected'
+                       when 3 then 'completed'
+                   end as doc_status,
+                   create_time as action_time,
+                   reason,
+                   null as asset_status_before,
+                   case
+                       when status in (0, 1) then '2'
+                       else '1'
+                   end as asset_status_after,
+                   10 as sort_weight
+            from asset_requisition
+            where asset_id = #{assetId}
+
+            union all
+
+            select 'REPAIR' as action_type,
+                   '维修' as action_label,
+                   maintenance_no as business_no,
+                   case status
+                       when 0 then 'pending'
+                       when 1 then 'approved'
+                       when 2 then 'rejected'
+                       when 3 then 'completed'
+                   end as doc_status,
+                   create_time as action_time,
+                   reason,
+                   null as asset_status_before,
+                   case
+                       when status in (0, 1) then '3'
+                       else '1'
+                   end as asset_status_after,
+                   20 as sort_weight
+            from asset_maintenance
+            where asset_id = #{assetId}
+
+            union all
+
+            select case
+                       when disposal_type is null or disposal_type = '' or lower(disposal_type) = 'scrap'
+                           then 'SCRAP'
+                       else 'DISPOSAL'
+                   end as action_type,
+                   case
+                       when disposal_type is null or disposal_type = '' or lower(disposal_type) = 'scrap'
+                           then '报废'
+                       else '处置'
+                   end as action_label,
+                   disposal_no as business_no,
+                   case status
+                       when 0 then 'pending'
+                       when 1 then 'approved'
+                       when 2 then 'rejected'
+                   end as doc_status,
+                   create_time as action_time,
+                   reason,
+                   null as asset_status_before,
+                   case
+                       when status = 1 and (disposal_type is null or disposal_type = '' or lower(disposal_type) = 'scrap')
+                           then '5'
+                       when status = 1 then '6'
+                       else '1'
+                   end as asset_status_after,
+                   30 as sort_weight
+            from asset_disposal
+            where asset_id = #{assetId}
+
+            union all
+
+            select 'REAL_ESTATE_OWNERSHIP_CHANGE' as action_type,
+                   '权属变更' as action_label,
+                   ownership_change_no as business_no,
+                   status as doc_status,
+                   coalesce(update_time, create_time) as action_time,
+                   reason,
+                   null as asset_status_before,
+                   null as asset_status_after,
+                   40 as sort_weight
+            from asset_real_estate_ownership_change
+            where asset_id = #{assetId}
+
+            union all
+
+            select 'REAL_ESTATE_USAGE_CHANGE' as action_type,
+                   '用途变更' as action_label,
+                   usage_change_no as business_no,
+                   status as doc_status,
+                   coalesce(update_time, create_time) as action_time,
+                   reason,
+                   null as asset_status_before,
+                   null as asset_status_after,
+                   50 as sort_weight
+            from asset_real_estate_usage_change
+            where asset_id = #{assetId}
+
+            union all
+
+            select 'REAL_ESTATE_STATUS_CHANGE' as action_type,
+                   '状态变更' as action_label,
+                   status_change_no as business_no,
+                   status as doc_status,
+                   coalesce(update_time, create_time) as action_time,
+                   reason,
+                   old_asset_status as asset_status_before,
+                   target_asset_status as asset_status_after,
+                   60 as sort_weight
+            from asset_real_estate_status_change
+            where asset_id = #{assetId}
+
+            union all
+
+            select 'REAL_ESTATE_DISPOSAL' as action_type,
+                   '注销/处置' as action_label,
+                   disposal_no as business_no,
+                   status as doc_status,
+                   coalesce(update_time, create_time) as action_time,
+                   reason,
+                   old_asset_status as asset_status_before,
+                   target_asset_status as asset_status_after,
+                   70 as sort_weight
+            from asset_real_estate_disposal
+            where asset_id = #{assetId}
+        ) timeline
+        order by action_time desc, sort_weight desc, business_no desc
+    </select>
+</mapper>

@@ -182,10 +182,10 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, watch, h } from 'vue'
   import { useRouter } from 'vue-router'
-  import { archiveInfo, listInfo, exportInfo } from '@/api/asset/info'
+  import { archiveInfo, exportInfo, getInfo, listInfo } from '@/api/asset/info'
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
-  import type { AssetLifecycleAction, AssetListItem } from '@/types/asset'
+  import type { AssetAggregateDetail, AssetLifecycleAction, AssetListItem } from '@/types/asset'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -202,6 +202,11 @@
   } from './asset-list.helper'
   import { buildApplyRequisitionReq } from '../requisition/requisition.helper'
   import { buildLifecycleActions } from './asset-lifecycle.helper'
+  import {
+    getRealEstateActionGuard,
+    type RealEstateActionKey,
+    type RealEstateRouteAssetContext
+  } from '../real-estate/real-estate-lifecycle.helper'
 
   defineOptions({ name: 'AssetList' })
   const router = useRouter()
@@ -468,6 +473,64 @@
     })
   }
 
+  /** 兼容 request 直接返回 data，或返回 AjaxResult 包裹对象。 */
+  const unwrapAssetDetail = (response: any): Partial<AssetAggregateDetail> => {
+    return response?.data || response || {}
+  }
+
+  /** 只把最近一条动作带给不动产页，避免 query 参数膨胀。 */
+  const buildRealEstateRouteContext = async (
+    row: AssetListItem
+  ): Promise<RealEstateRouteAssetContext> => {
+    const detail = unwrapAssetDetail(await getInfo(row.assetId))
+    const latestTimeline = detail.timeline?.[0]
+    return {
+      assetId: row.assetId,
+      assetNo: row.assetNo,
+      assetName: row.assetName,
+      assetStatus: row.assetStatus,
+      latestActionType: latestTimeline?.actionType,
+      latestActionLabel: latestTimeline?.actionLabel,
+      latestDocStatus: latestTimeline?.docStatus,
+      latestActionTime: latestTimeline?.actionTime
+    }
+  }
+
+  /** 不动产入口在跳转前先读取最近动作，避免把“可点但必失败”的入口继续暴露给用户。 */
+  const openRealEstateLifecycleLedger = async (
+    path: string,
+    row: AssetListItem,
+    actionKey: RealEstateActionKey
+  ) => {
+    try {
+      const routeContext = await buildRealEstateRouteContext(row)
+      const guard = getRealEstateActionGuard(actionKey, routeContext)
+      if (guard.disabled) {
+        ElMessage.warning(guard.reason || '当前资产暂不支持该动作')
+        return
+      }
+
+      await router.push({
+        path,
+        query: {
+          assetId: String(routeContext.assetId || ''),
+          assetNo: routeContext.assetNo,
+          assetName: routeContext.assetName || '',
+          assetStatus: routeContext.assetStatus || '',
+          latestActionType: routeContext.latestActionType || '',
+          latestActionLabel: routeContext.latestActionLabel || '',
+          latestDocStatus: routeContext.latestDocStatus || '',
+          latestActionTime: routeContext.latestActionTime || '',
+          openCreate: '1',
+          actionKey
+        }
+      })
+    } catch (error) {
+      console.error('读取资产最近动作失败:', error)
+      ElMessage.error('读取资产最近动作失败，请稍后重试')
+    }
+  }
+
   const handleMaintenance = (row: AssetListItem) => {
     openLifecycleLedger('/asset/maintenance/index', row)
   }
@@ -481,19 +544,19 @@
   }
 
   const handleRealEstateOwnership = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/real-estate/ownership/index', row)
+    void openRealEstateLifecycleLedger('/asset/real-estate/ownership/index', row, 'realEstateOwnership')
   }
 
   const handleRealEstateUsage = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/real-estate/usage/index', row)
+    void openRealEstateLifecycleLedger('/asset/real-estate/usage/index', row, 'realEstateUsage')
   }
 
   const handleRealEstateStatus = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/real-estate/status/index', row)
+    void openRealEstateLifecycleLedger('/asset/real-estate/status/index', row, 'realEstateStatus')
   }
 
   const handleRealEstateDisposal = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/real-estate/disposal/index', row)
+    void openRealEstateLifecycleLedger('/asset/real-estate/disposal/index', row, 'realEstateDisposal')
   }
 
   /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */

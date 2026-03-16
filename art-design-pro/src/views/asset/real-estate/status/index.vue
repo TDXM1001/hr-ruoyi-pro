@@ -3,9 +3,9 @@
     <ElAlert
       v-if="routeAssetContext"
       class="mb-3"
-      type="info"
+      :type="createGuard.disabled ? 'warning' : 'info'"
       :closable="false"
-      :title="`已从资产台账带入不动产 ${routeAssetContext.assetNo}，可直接发起状态变更。`"
+      :title="routeAlertTitle"
     />
 
     <ArtSearchBar
@@ -27,6 +27,7 @@
           <ElButton
             v-auth="'asset:realEstateStatus:add'"
             type="primary"
+            :disabled="createGuard.disabled"
             @click="openCreateDialog()"
           >
             发起状态变更
@@ -141,6 +142,8 @@
     type StatusChangeItem
   } from '@/api/asset/real-estate-status'
   import {
+    formatRealEstateLatestAction,
+    getRealEstateActionGuard,
     mapRealEstateStatusToWorkflow,
     parseAssetRouteQuery,
     REAL_ESTATE_DIRECT_STATUS_OPTIONS,
@@ -155,6 +158,18 @@
 
   const routeAssetContext = ref<RealEstateRouteAssetContext | null>(null)
   const dialogAssetContext = ref<RealEstateRouteAssetContext | null>(null)
+  const createGuard = computed(() =>
+    getRealEstateActionGuard('realEstateStatus', routeAssetContext.value)
+  )
+  const routeAlertTitle = computed(() => {
+    if (!routeAssetContext.value) return ''
+    const latestActionText = formatRealEstateLatestAction(routeAssetContext.value)
+    const latestActionPrefix = latestActionText ? `最近动作：${latestActionText}。` : ''
+    const actionText = createGuard.value.disabled
+      ? createGuard.value.reason || '当前不能直接发起状态变更。'
+      : '可直接发起状态变更。'
+    return `已从资产台账带入不动产 ${routeAssetContext.value.assetNo}，${latestActionPrefix}${actionText}`
+  })
 
   const initialSearchState = {
     statusChangeNo: '',
@@ -289,6 +304,11 @@
   const openCreateDialog = (
     context: RealEstateRouteAssetContext | null = routeAssetContext.value
   ) => {
+    const guard = getRealEstateActionGuard('realEstateStatus', context)
+    if (guard.disabled) {
+      ElMessage.warning(guard.reason || '当前资产暂不支持状态变更')
+      return
+    }
     dialogAssetContext.value = context
     formData.assetNo = context?.assetNo || ''
     formData.targetAssetStatus = ''

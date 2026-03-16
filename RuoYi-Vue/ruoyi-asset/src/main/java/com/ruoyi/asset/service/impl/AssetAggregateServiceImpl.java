@@ -15,11 +15,13 @@ import com.ruoyi.asset.domain.dto.AssetCreateReq;
 import com.ruoyi.asset.domain.dto.AssetUpdateReq;
 import com.ruoyi.asset.domain.vo.AssetDetailVo;
 import com.ruoyi.asset.domain.vo.AssetListVo;
+import com.ruoyi.asset.domain.vo.AssetTimelineVo;
 import com.ruoyi.asset.mapper.AssetAttachmentMapper;
 import com.ruoyi.asset.mapper.AssetAttrValueMapper;
 import com.ruoyi.asset.mapper.AssetDepreciationLogMapper;
 import com.ruoyi.asset.mapper.AssetFinanceMapper;
 import com.ruoyi.asset.mapper.AssetRealEstateMapper;
+import com.ruoyi.asset.mapper.AssetTimelineMapper;
 import com.ruoyi.asset.service.IAssetAggregateService;
 import com.ruoyi.asset.service.IAssetFinanceService;
 import com.ruoyi.asset.service.IAssetInfoService;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetAggregateServiceImpl implements IAssetAggregateService {
     private static final String ASSET_TYPE_REAL_ESTATE = "2";
     private static final int RECENT_DEPRECIATION_LOG_LIMIT = 12;
+    private static final int RECENT_TIMELINE_LIMIT = 12;
 
     @Autowired
     private IAssetInfoService assetInfoService;
@@ -58,6 +61,9 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
 
     @Autowired
     private AssetDepreciationLogMapper assetDepreciationLogMapper;
+
+    @Autowired
+    private AssetTimelineMapper assetTimelineMapper;
 
     @Autowired
     private IAssetFinanceService assetFinanceService;
@@ -91,6 +97,7 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
         detailVo.setDynamicAttrs(assetAttrValueMapper.selectAssetAttrValueByAssetId(assetId));
         detailVo.setAttachments(assetAttachmentMapper.selectAssetAttachmentByAssetId(assetId));
         detailVo.setDepreciationLogs(loadRecentDepreciationLogs(assetId));
+        detailVo.setTimeline(loadRecentTimeline(assetId));
         return detailVo;
     }
 
@@ -292,6 +299,17 @@ public class AssetAggregateServiceImpl implements IAssetAggregateService {
             return depreciationLogs;
         }
         return new ArrayList<>(depreciationLogs.subList(0, RECENT_DEPRECIATION_LOG_LIMIT));
+    }
+
+    /**
+     * 详情页只返回最近动作时间线，既保留关键留痕，也避免把完整历史一次性推给前端。
+     */
+    private List<AssetTimelineVo> loadRecentTimeline(Long assetId) {
+        List<AssetTimelineVo> timeline = assetTimelineMapper.selectAssetTimelineByAssetId(assetId);
+        if (timeline == null || timeline.size() <= RECENT_TIMELINE_LIMIT) {
+            return timeline;
+        }
+        return new ArrayList<>(timeline.subList(0, RECENT_TIMELINE_LIMIT));
     }
 
     /**
