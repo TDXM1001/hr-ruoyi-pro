@@ -182,8 +182,7 @@
           render: (row: any) => {
             return h('div', { class: 'flex justify-end items-center gap-2' }, [
               h(ArtButtonTable, {
-                type: 'info',
-                text: '详情',
+                type: 'view',
                 onClick: () => handleView(row)
               }),
               h(ArtButtonTable, {
