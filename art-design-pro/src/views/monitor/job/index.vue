@@ -128,7 +128,8 @@
               modelValue: row.status === '0',
               activeValue: true,
               inactiveValue: false,
-              onChange: (val: boolean) => handleStatusChange(row, val)
+              // ElSwitch 会回传多种基础类型，这里统一收敛成布尔值。
+              onChange: (val: string | number | boolean) => handleStatusChange(row, Boolean(val))
             })
         },
         { prop: 'createTime', label: '创建时间', width: 180 },

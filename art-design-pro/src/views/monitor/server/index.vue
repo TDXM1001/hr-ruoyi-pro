@@ -138,9 +138,9 @@
                 <template #default="scope">
                   <div class="flex items-center">
                     <ElProgress
-                      :percentage="parseFloat(scope.row.usage)"
+                      :percentage="Number(scope.row.usage)"
                       :color="customColors"
-                      stroke-width="12"
+                      :stroke-width="12"
                       style="width: 100%"
                     />
                   </div>
@@ -160,12 +160,80 @@
 
   defineOptions({ name: 'Server' })
 
-  const loading = ref(true)
-  const serverData = ref<any>({})
+  // 与后端 Server 结构保持一致，避免监控页继续落回 any / unknown。
+  interface ServerCpuInfo {
+    cpuNum: number
+    total: number
+    sys: number
+    used: number
+    wait: number
+    free: number
+  }
 
-  const cpuChartRef = ref<HTMLElement>()
-  const memChartRef = ref<HTMLElement>()
-  const jvmChartRef = ref<HTMLElement>()
+  interface ServerMemInfo {
+    total: number
+    used: number
+    free: number
+    usage: number
+  }
+
+  interface ServerJvmInfo {
+    total: number
+    max: number
+    free: number
+    used: number
+    usage: number
+    name: string
+    version: string
+    home: string
+    startTime: string
+    runTime: string
+    inputArgs: string
+  }
+
+  interface ServerSysInfo {
+    computerName: string
+    computerIp: string
+    userDir: string
+    osName: string
+    osArch: string
+  }
+
+  interface ServerSysFile {
+    dirName: string
+    sysTypeName: string
+    typeName: string
+    total: string
+    free: string
+    used: string
+    usage: number
+  }
+
+  interface ServerInfo {
+    cpu: ServerCpuInfo | null
+    mem: ServerMemInfo | null
+    jvm: ServerJvmInfo | null
+    sys: ServerSysInfo | null
+    sysFiles: ServerSysFile[]
+  }
+
+  type ServerResponse = {
+    data: ServerInfo
+  }
+
+  const loading = ref(true)
+  const serverData = ref<ServerInfo>({
+    cpu: null,
+    mem: null,
+    jvm: null,
+    sys: null,
+    sysFiles: []
+  })
+
+  // 将 DOM 引用与图表实例分离，避免把实例误当成 ref.value 使用。
+  const cpuChartRef = ref<HTMLElement | null>(null)
+  const memChartRef = ref<HTMLElement | null>(null)
+  const jvmChartRef = ref<HTMLElement | null>(null)
 
   let cpuChart: echarts.ECharts | null = null
   let memChart: echarts.ECharts | null = null
@@ -245,14 +313,19 @@
   const fetchServerData = async () => {
     try {
       loading.value = true
-      const res = await getServer()
+      const res = (await getServer()) as ServerResponse
       serverData.value = res.data
 
-      // 更新图表
-      if (cpuChart) cpuChart.setOption(getGaugeOption('CPU', serverData.value.cpu.used, '#409EFF'))
-      if (memChart)
-        memChart.setOption(getGaugeOption('内存', serverData.value.mem.usage, '#67C23A'))
-      if (jvmChart) jvmChart.setOption(getGaugeOption('JVM', serverData.value.jvm.usage, '#E6A23C'))
+      // 数据返回后再更新仪表盘，避免访问空值。
+      if (serverData.value.cpu) {
+        cpuChart?.setOption(getGaugeOption('CPU', serverData.value.cpu.used, '#409EFF'))
+      }
+      if (serverData.value.mem) {
+        memChart?.setOption(getGaugeOption('内存', serverData.value.mem.usage, '#67C23A'))
+      }
+      if (serverData.value.jvm) {
+        jvmChart?.setOption(getGaugeOption('JVM', serverData.value.jvm.usage, '#E6A23C'))
+      }
     } catch (error) {
       console.error('获取监控数据失败', error)
     } finally {
@@ -261,14 +334,15 @@
   }
 
   onMounted(() => {
-    // 初始化图表
-    if (cpuChartRef.value) cpuChart.value = echarts.init(cpuChartRef.value)
-    if (memChartRef.value) memChart.value = echarts.init(memChartRef.value)
-    if (jvmChartRef.value) jvmChart.value = echarts.init(jvmChartRef.value)
-
-    cpuChart = echarts.init(cpuChartRef.value!)
-    memChart = echarts.init(memChartRef.value!)
-    jvmChart = echarts.init(jvmChartRef.value!)
+    if (cpuChartRef.value) {
+      cpuChart = echarts.init(cpuChartRef.value)
+    }
+    if (memChartRef.value) {
+      memChart = echarts.init(memChartRef.value)
+    }
+    if (jvmChartRef.value) {
+      jvmChart = echarts.init(jvmChartRef.value)
+    }
 
     fetchServerData()
   })
