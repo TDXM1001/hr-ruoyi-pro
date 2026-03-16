@@ -26,6 +26,9 @@ public class AssetRealEstateUsageChange extends BaseEntity {
     /** 单据状态 */
     private String status;
 
+    /** 流程状态 */
+    private String wfStatus;
+
     /** 原土地用途 */
     private String oldLandUse;
 
@@ -87,6 +90,14 @@ public class AssetRealEstateUsageChange extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getWfStatus() {
+        return wfStatus;
+    }
+
+    public void setWfStatus(String wfStatus) {
+        this.wfStatus = wfStatus;
     }
 
     public String getOldLandUse() {

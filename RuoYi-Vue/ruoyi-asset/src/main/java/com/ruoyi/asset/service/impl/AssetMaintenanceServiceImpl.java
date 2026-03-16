@@ -23,6 +23,10 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     private static final String ASSET_STATUS_MAINTENANCE = "3";
     private static final String ASSET_STATUS_SCRAPPED = "5";
     private static final String ASSET_STATUS_DISPOSED = "6";
+    private static final String WF_STATUS_PENDING = "pending";
+    private static final String WF_STATUS_APPROVED = "approved";
+    private static final String WF_STATUS_REJECTED = "rejected";
+    private static final String WF_STATUS_COMPLETED = "completed";
     
     @Autowired
     private AssetMaintenanceMapper assetMaintenanceMapper;
@@ -35,12 +39,16 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
 
     @Override
     public AssetMaintenance selectAssetMaintenanceByMaintenanceNo(String maintenanceNo) {
-        return assetMaintenanceMapper.selectAssetMaintenanceByMaintenanceNo(maintenanceNo);
+        return fillWorkflowStatus(assetMaintenanceMapper.selectAssetMaintenanceByMaintenanceNo(maintenanceNo));
     }
 
     @Override
     public List<AssetMaintenance> selectAssetMaintenanceList(AssetMaintenance assetMaintenance) {
-        return assetMaintenanceMapper.selectAssetMaintenanceList(assetMaintenance);
+        List<AssetMaintenance> list = assetMaintenanceMapper.selectAssetMaintenanceList(assetMaintenance);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -48,6 +56,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     public int insertAssetMaintenance(AssetMaintenance assetMaintenance) {
         assetMaintenance.setCreateTime(DateUtils.getNowDate());
         assetMaintenance.setStatus(0); // 审批中
+        assetMaintenance.setWfStatus(WF_STATUS_PENDING);
 
         // 统一解析资产主档，保证维保流程与资产主档通过 assetId 关联。
         AssetInfo assetInfo = resolveAsset(assetMaintenance.getAssetId(), assetMaintenance.getAssetNo());
@@ -80,6 +89,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
         AssetMaintenance updatePayload = new AssetMaintenance();
         updatePayload.setMaintenanceNo(maintenanceNo);
         updatePayload.setStatus(3);
+        updatePayload.setWfStatus(WF_STATUS_COMPLETED);
         int rows = assetMaintenanceMapper.updateAssetMaintenance(updatePayload);
 
         // 维修完成意味着资产重新可用，因此需要回退到“在用”状态。
@@ -119,5 +129,26 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
         assetInfo.setAssetId(assetId);
         assetInfo.setAssetStatus(assetStatus);
         assetInfoMapper.updateAssetInfo(assetInfo);
+    }
+
+    /**
+     * 在未落库 `wfStatus` 之前，统一根据单据状态补齐流程状态。
+     */
+    private AssetMaintenance fillWorkflowStatus(AssetMaintenance assetMaintenance) {
+        if (assetMaintenance == null || StringUtils.isNotBlank(assetMaintenance.getWfStatus())) {
+            return assetMaintenance;
+        }
+        if (assetMaintenance.getStatus() == null) {
+            return assetMaintenance;
+        }
+        switch (assetMaintenance.getStatus()) {
+            case 0 -> assetMaintenance.setWfStatus(WF_STATUS_PENDING);
+            case 1 -> assetMaintenance.setWfStatus(WF_STATUS_APPROVED);
+            case 2 -> assetMaintenance.setWfStatus(WF_STATUS_REJECTED);
+            case 3 -> assetMaintenance.setWfStatus(WF_STATUS_COMPLETED);
+            default -> {
+            }
+        }
+        return assetMaintenance;
     }
 }

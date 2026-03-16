@@ -38,12 +38,16 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
 
     @Override
     public AssetRealEstateOwnershipChange selectOwnershipChangeByNo(String ownershipChangeNo) {
-        return ownershipChangeMapper.selectOwnershipChangeByNo(ownershipChangeNo);
+        return fillWorkflowStatus(ownershipChangeMapper.selectOwnershipChangeByNo(ownershipChangeNo));
     }
 
     @Override
     public List<AssetRealEstateOwnershipChange> selectOwnershipChangeList(AssetRealEstateOwnershipChange ownershipChange) {
-        return ownershipChangeMapper.selectOwnershipChangeList(ownershipChange);
+        List<AssetRealEstateOwnershipChange> list = ownershipChangeMapper.selectOwnershipChangeList(ownershipChange);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -51,6 +55,7 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
     public int insertOwnershipChange(AssetRealEstateOwnershipChange ownershipChange) {
         ownershipChange.setCreateTime(DateUtils.getNowDate());
         ownershipChange.setStatus(STATUS_PENDING);
+        ownershipChange.setWfStatus(STATUS_PENDING);
 
         AssetInfo assetInfo = resolveAsset(ownershipChange.getAssetId(), ownershipChange.getAssetNo());
         validateRealEstateAsset(assetInfo, "仅不动产允许发起权属变更");
@@ -91,5 +96,16 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
         if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
             throw new ServiceException(errorMessage);
         }
+    }
+
+    /**
+     * 不动产权属变更当前仍由单据状态驱动流程态，这里统一补齐响应字段。
+     */
+    private AssetRealEstateOwnershipChange fillWorkflowStatus(AssetRealEstateOwnershipChange ownershipChange) {
+        if (ownershipChange == null || StringUtils.isNotBlank(ownershipChange.getWfStatus())) {
+            return ownershipChange;
+        }
+        ownershipChange.setWfStatus(StringUtils.defaultIfBlank(ownershipChange.getStatus(), STATUS_PENDING));
+        return ownershipChange;
     }
 }

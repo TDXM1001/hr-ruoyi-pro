@@ -24,6 +24,10 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
     private static final String ASSET_STATUS_MAINTENANCE = "3";
     private static final String ASSET_STATUS_SCRAPPED = "5";
     private static final String ASSET_STATUS_DISPOSED = "6";
+    private static final String WF_STATUS_PENDING = "pending";
+    private static final String WF_STATUS_APPROVED = "approved";
+    private static final String WF_STATUS_REJECTED = "rejected";
+    private static final String WF_STATUS_COMPLETED = "completed";
     
     @Autowired
     private AssetRequisitionMapper assetRequisitionMapper;
@@ -36,12 +40,16 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
 
     @Override
     public AssetRequisition selectAssetRequisitionByRequisitionNo(String requisitionNo) {
-        return assetRequisitionMapper.selectAssetRequisitionByRequisitionNo(requisitionNo);
+        return fillWorkflowStatus(assetRequisitionMapper.selectAssetRequisitionByRequisitionNo(requisitionNo));
     }
 
     @Override
     public List<AssetRequisition> selectAssetRequisitionList(AssetRequisition assetRequisition) {
-        return assetRequisitionMapper.selectAssetRequisitionList(assetRequisition);
+        List<AssetRequisition> list = assetRequisitionMapper.selectAssetRequisitionList(assetRequisition);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -50,6 +58,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         // 设置默认值
         assetRequisition.setCreateTime(DateUtils.getNowDate());
         assetRequisition.setStatus(0); // 0=审批中
+        assetRequisition.setWfStatus(WF_STATUS_PENDING);
 
         // 优先基于资产ID解析资产，兼容旧调用方仅传资产编号的情况。
         AssetInfo assetInfo = resolveAsset(assetRequisition.getAssetId(), assetRequisition.getAssetNo());
@@ -83,6 +92,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         AssetRequisition updatePayload = new AssetRequisition();
         updatePayload.setRequisitionNo(requisitionNo);
         updatePayload.setStatus(3);
+        updatePayload.setWfStatus(WF_STATUS_COMPLETED);
         int rows = assetRequisitionMapper.updateAssetRequisition(updatePayload);
 
         // 归还动作是生命周期上的闭环点，完成后资产必须回到“在用”状态。
@@ -131,5 +141,26 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         assetInfo.setAssetId(assetId);
         assetInfo.setAssetStatus(assetStatus);
         assetInfoMapper.updateAssetInfo(assetInfo);
+    }
+
+    /**
+     * 在未落库 `wfStatus` 之前，统一根据单据状态推导流程态，保证接口返回稳定。
+     */
+    private AssetRequisition fillWorkflowStatus(AssetRequisition assetRequisition) {
+        if (assetRequisition == null || StringUtils.isNotBlank(assetRequisition.getWfStatus())) {
+            return assetRequisition;
+        }
+        if (assetRequisition.getStatus() == null) {
+            return assetRequisition;
+        }
+        switch (assetRequisition.getStatus()) {
+            case 0 -> assetRequisition.setWfStatus(WF_STATUS_PENDING);
+            case 1 -> assetRequisition.setWfStatus(WF_STATUS_APPROVED);
+            case 2 -> assetRequisition.setWfStatus(WF_STATUS_REJECTED);
+            case 3 -> assetRequisition.setWfStatus(WF_STATUS_COMPLETED);
+            default -> {
+            }
+        }
+        return assetRequisition;
     }
 }

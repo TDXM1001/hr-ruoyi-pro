@@ -69,4 +69,18 @@ public class AssetCreateReq {
     public void setAttachments(List<AssetAttachment> attachments) {
         this.attachments = attachments == null ? new ArrayList<>() : attachments;
     }
+
+    /**
+     * 统一暴露聚合主档主键，便于控制器、服务和测试按同一口径读取。
+     */
+    public Long getAssetId() {
+        return basicInfo == null ? null : basicInfo.getAssetId();
+    }
+
+    /**
+     * 统一暴露聚合主档资产编号，避免调用方重复钻取 basicInfo。
+     */
+    public String getAssetNo() {
+        return basicInfo == null ? null : basicInfo.getAssetNo();
+    }
 }

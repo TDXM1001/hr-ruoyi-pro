@@ -34,12 +34,16 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
 
     @Override
     public AssetRealEstateDisposal selectDisposalByNo(String disposalNo) {
-        return disposalMapper.selectDisposalByNo(disposalNo);
+        return fillWorkflowStatus(disposalMapper.selectDisposalByNo(disposalNo));
     }
 
     @Override
     public List<AssetRealEstateDisposal> selectDisposalList(AssetRealEstateDisposal disposal) {
-        return disposalMapper.selectDisposalList(disposal);
+        List<AssetRealEstateDisposal> list = disposalMapper.selectDisposalList(disposal);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -47,6 +51,7 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
     public int insertDisposal(AssetRealEstateDisposal disposal) {
         disposal.setCreateTime(DateUtils.getNowDate());
         disposal.setStatus(STATUS_PENDING);
+        disposal.setWfStatus(STATUS_PENDING);
 
         AssetInfo assetInfo = resolveAsset(disposal.getAssetId(), disposal.getAssetNo());
         validateRealEstateAsset(assetInfo, "仅不动产允许发起注销/处置");
@@ -82,5 +87,16 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
         if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
             throw new ServiceException(errorMessage);
         }
+    }
+
+    /**
+     * 注销/处置仍走审批流程，统一用单据状态回填流程态字段。
+     */
+    private AssetRealEstateDisposal fillWorkflowStatus(AssetRealEstateDisposal disposal) {
+        if (disposal == null || StringUtils.isNotBlank(disposal.getWfStatus())) {
+            return disposal;
+        }
+        disposal.setWfStatus(StringUtils.defaultIfBlank(disposal.getStatus(), STATUS_PENDING));
+        return disposal;
     }
 }

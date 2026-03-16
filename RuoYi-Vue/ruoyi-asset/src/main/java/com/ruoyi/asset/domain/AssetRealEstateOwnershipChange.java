@@ -28,6 +28,9 @@ public class AssetRealEstateOwnershipChange extends BaseEntity {
     /** 单据状态 */
     private String status;
 
+    /** 流程状态 */
+    private String wfStatus;
+
     /** 原权属人 */
     private String oldRightsHolder;
 
@@ -97,6 +100,14 @@ public class AssetRealEstateOwnershipChange extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getWfStatus() {
+        return wfStatus;
+    }
+
+    public void setWfStatus(String wfStatus) {
+        this.wfStatus = wfStatus;
     }
 
     public String getOldRightsHolder() {

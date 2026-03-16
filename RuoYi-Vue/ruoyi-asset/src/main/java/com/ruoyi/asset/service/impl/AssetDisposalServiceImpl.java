@@ -21,6 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetDisposalServiceImpl implements IAssetDisposalService {
     private static final String ASSET_STATUS_SCRAPPED = "5";
     private static final String ASSET_STATUS_DISPOSED = "6";
+    private static final String WF_STATUS_PENDING = "pending";
+    private static final String WF_STATUS_APPROVED = "approved";
+    private static final String WF_STATUS_REJECTED = "rejected";
+    private static final String WF_STATUS_COMPLETED = "completed";
     
     @Autowired
     private AssetDisposalMapper assetDisposalMapper;
@@ -33,12 +37,16 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
 
     @Override
     public AssetDisposal selectAssetDisposalByDisposalNo(String disposalNo) {
-        return assetDisposalMapper.selectAssetDisposalByDisposalNo(disposalNo);
+        return fillWorkflowStatus(assetDisposalMapper.selectAssetDisposalByDisposalNo(disposalNo));
     }
 
     @Override
     public List<AssetDisposal> selectAssetDisposalList(AssetDisposal assetDisposal) {
-        return assetDisposalMapper.selectAssetDisposalList(assetDisposal);
+        List<AssetDisposal> list = assetDisposalMapper.selectAssetDisposalList(assetDisposal);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -47,6 +55,7 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
         String disposalType = normalizeAndValidateDisposalType(assetDisposal);
         assetDisposal.setCreateTime(DateUtils.getNowDate());
         assetDisposal.setStatus(0); // 审批中
+        assetDisposal.setWfStatus(WF_STATUS_PENDING);
 
         // 处置流程内部统一绑定 assetId，同时保留 assetNo 供页面展示和查询。
         AssetInfo assetInfo = resolveAsset(assetDisposal.getAssetId(), assetDisposal.getAssetNo());
@@ -119,5 +128,26 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
      */
     private String resolveTargetAssetStatus(String disposalType) {
         return AssetDisposal.isScrapType(disposalType) ? ASSET_STATUS_SCRAPPED : ASSET_STATUS_DISPOSED;
+    }
+
+    /**
+     * 在历史表结构未落库 `wfStatus` 之前，按单据状态补齐流程态。
+     */
+    private AssetDisposal fillWorkflowStatus(AssetDisposal assetDisposal) {
+        if (assetDisposal == null || StringUtils.isNotBlank(assetDisposal.getWfStatus())) {
+            return assetDisposal;
+        }
+        if (assetDisposal.getStatus() == null) {
+            return assetDisposal;
+        }
+        switch (assetDisposal.getStatus()) {
+            case 0 -> assetDisposal.setWfStatus(WF_STATUS_PENDING);
+            case 1 -> assetDisposal.setWfStatus(WF_STATUS_APPROVED);
+            case 2 -> assetDisposal.setWfStatus(WF_STATUS_REJECTED);
+            case 3 -> assetDisposal.setWfStatus(WF_STATUS_COMPLETED);
+            default -> {
+            }
+        }
+        return assetDisposal;
     }
 }

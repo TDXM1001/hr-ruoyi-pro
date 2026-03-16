@@ -35,6 +35,9 @@ public class AssetRequisition extends BaseEntity {
     @Excel(name = "状态", readConverterExp = "0=审批中,1=已通过,2=已驳回,3=已归还")
     private Integer status;
 
+    /** 流程状态：pending=审批中 approved=已通过 rejected=已驳回 completed=已完成 */
+    private String wfStatus;
+
     public void setRequisitionNo(String requisitionNo) {
         this.requisitionNo = requisitionNo;
     }
@@ -89,5 +92,13 @@ public class AssetRequisition extends BaseEntity {
 
     public Integer getStatus() {
         return status;
+    }
+
+    public void setWfStatus(String wfStatus) {
+        this.wfStatus = wfStatus;
+    }
+
+    public String getWfStatus() {
+        return wfStatus;
     }
 }

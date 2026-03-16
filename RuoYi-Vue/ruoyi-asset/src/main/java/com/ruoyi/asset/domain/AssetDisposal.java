@@ -61,6 +61,9 @@ public class AssetDisposal extends BaseEntity {
     @Excel(name = "状态")
     private Integer status;
 
+    /** 流程状态：pending=审批中 approved=已通过 rejected=已驳回 completed=已完成 */
+    private String wfStatus;
+
     public void setDisposalNo(String disposalNo) {
         this.disposalNo = disposalNo;
     }
@@ -123,6 +126,14 @@ public class AssetDisposal extends BaseEntity {
 
     public Integer getStatus() {
         return status;
+    }
+
+    public void setWfStatus(String wfStatus) {
+        this.wfStatus = wfStatus;
+    }
+
+    public String getWfStatus() {
+        return wfStatus;
     }
 
     /**

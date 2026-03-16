@@ -71,7 +71,9 @@ class AssetRealEstateUsageChangeServiceImplTest {
         int rows = service.insertUsageChange(request);
 
         assertEquals(1, rows);
+        assertNotNull(request.getAssetId());
         assertEquals("completed", request.getStatus());
+        assertEquals("completed", request.getWfStatus());
         assertEquals("仓储", request.getOldLandUse());
         assertEquals("工业", request.getOldBuildingUse());
         assertNotNull(request.getCreateTime());

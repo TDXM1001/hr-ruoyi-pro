@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +37,29 @@ class AssetMaintenanceServiceImplTest {
     private AssetMaintenanceServiceImpl assetMaintenanceService;
 
     @Test
+    void shouldInsertMaintenanceAndMarkWorkflowPending() {
+        AssetMaintenance maintenance = new AssetMaintenance();
+        maintenance.setMaintenanceNo("MNT-20260315-001");
+        maintenance.setAssetId(2001L);
+        maintenance.setReason("例行维修");
+
+        AssetInfo assetInfo = new AssetInfo();
+        assetInfo.setAssetId(2001L);
+        assetInfo.setAssetNo("A-2001");
+        assetInfo.setAssetStatus("1");
+        when(assetInfoMapper.selectAssetInfoByAssetId(2001L)).thenReturn(assetInfo);
+        when(assetMaintenanceMapper.insertAssetMaintenance(any(AssetMaintenance.class))).thenReturn(1);
+
+        int rows = assetMaintenanceService.insertAssetMaintenance(maintenance);
+
+        assertEquals(1, rows);
+        assertNotNull(maintenance.getAssetId());
+        assertEquals("A-2001", maintenance.getAssetNo());
+        assertEquals(0, maintenance.getStatus());
+        assertEquals("pending", maintenance.getWfStatus());
+    }
+
+    @Test
     void shouldCompleteMaintenanceAndResetAssetStatus() {
         AssetMaintenance maintenance = new AssetMaintenance();
         maintenance.setMaintenanceNo("MNT-20260315-010");
@@ -48,6 +72,7 @@ class AssetMaintenanceServiceImplTest {
         ArgumentCaptor<AssetMaintenance> maintenanceCaptor = ArgumentCaptor.forClass(AssetMaintenance.class);
         verify(assetMaintenanceMapper).updateAssetMaintenance(maintenanceCaptor.capture());
         assertEquals(3, maintenanceCaptor.getValue().getStatus());
+        assertEquals("completed", maintenanceCaptor.getValue().getWfStatus());
 
         ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
         verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());

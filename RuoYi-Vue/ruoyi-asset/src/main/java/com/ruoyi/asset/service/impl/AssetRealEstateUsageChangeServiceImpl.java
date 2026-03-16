@@ -34,12 +34,16 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
 
     @Override
     public AssetRealEstateUsageChange selectUsageChangeByNo(String usageChangeNo) {
-        return usageChangeMapper.selectUsageChangeByNo(usageChangeNo);
+        return fillWorkflowStatus(usageChangeMapper.selectUsageChangeByNo(usageChangeNo));
     }
 
     @Override
     public List<AssetRealEstateUsageChange> selectUsageChangeList(AssetRealEstateUsageChange usageChange) {
-        return usageChangeMapper.selectUsageChangeList(usageChange);
+        List<AssetRealEstateUsageChange> list = usageChangeMapper.selectUsageChangeList(usageChange);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -47,6 +51,7 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
     public int insertUsageChange(AssetRealEstateUsageChange usageChange) {
         usageChange.setCreateTime(DateUtils.getNowDate());
         usageChange.setStatus(STATUS_COMPLETED);
+        usageChange.setWfStatus(STATUS_COMPLETED);
 
         AssetInfo assetInfo = resolveAsset(usageChange.getAssetId(), usageChange.getAssetNo());
         validateRealEstateAsset(assetInfo, "仅不动产允许发起用途变更");
@@ -90,5 +95,16 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
         if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
             throw new ServiceException(errorMessage);
         }
+    }
+
+    /**
+     * 用途变更是即时生效动作，流程状态始终与单据完成态保持一致。
+     */
+    private AssetRealEstateUsageChange fillWorkflowStatus(AssetRealEstateUsageChange usageChange) {
+        if (usageChange == null || StringUtils.isNotBlank(usageChange.getWfStatus())) {
+            return usageChange;
+        }
+        usageChange.setWfStatus(StringUtils.defaultIfBlank(usageChange.getStatus(), STATUS_COMPLETED));
+        return usageChange;
     }
 }

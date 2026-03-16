@@ -63,15 +63,18 @@ class AssetRealEstateDisposalServiceImplTest {
         int rows = service.insertDisposal(request);
 
         assertEquals(1, rows);
+        assertNotNull(request.getAssetId());
         assertEquals("RE-9102", request.getAssetNo());
         assertEquals("1", request.getOldAssetStatus());
         assertEquals("pending", request.getStatus());
+        assertEquals("pending", request.getWfStatus());
         assertNotNull(request.getCreateTime());
 
         ArgumentCaptor<AssetRealEstateDisposal> captor = ArgumentCaptor.forClass(AssetRealEstateDisposal.class);
         verify(disposalMapper).insertDisposal(captor.capture());
         assertEquals("6", captor.getValue().getTargetAssetStatus());
         assertEquals("pending", captor.getValue().getStatus());
+        assertEquals("pending", captor.getValue().getWfStatus());
 
         verify(approvalEngine).startProcess("RED-20260315-001", "asset_real_estate_disposal");
         verify(assetInfoMapper, never()).updateAssetInfo(any(AssetInfo.class));

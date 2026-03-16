@@ -29,12 +29,16 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
 
     @Override
     public AssetRealEstateStatusChange selectStatusChangeByNo(String statusChangeNo) {
-        return statusChangeMapper.selectStatusChangeByNo(statusChangeNo);
+        return fillWorkflowStatus(statusChangeMapper.selectStatusChangeByNo(statusChangeNo));
     }
 
     @Override
     public List<AssetRealEstateStatusChange> selectStatusChangeList(AssetRealEstateStatusChange statusChange) {
-        return statusChangeMapper.selectStatusChangeList(statusChange);
+        List<AssetRealEstateStatusChange> list = statusChangeMapper.selectStatusChangeList(statusChange);
+        if (list != null) {
+            list.forEach(this::fillWorkflowStatus);
+        }
+        return list;
     }
 
     @Transactional
@@ -42,6 +46,7 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
     public int insertStatusChange(AssetRealEstateStatusChange statusChange) {
         statusChange.setCreateTime(DateUtils.getNowDate());
         statusChange.setStatus(STATUS_COMPLETED);
+        statusChange.setWfStatus(STATUS_COMPLETED);
 
         AssetInfo assetInfo = resolveAsset(statusChange.getAssetId(), statusChange.getAssetNo());
         validateRealEstateAsset(assetInfo, "仅不动产允许发起状态变更");
@@ -78,5 +83,16 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
         if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
             throw new ServiceException(errorMessage);
         }
+    }
+
+    /**
+     * 状态变更为即时动作，流程态直接跟随单据态。
+     */
+    private AssetRealEstateStatusChange fillWorkflowStatus(AssetRealEstateStatusChange statusChange) {
+        if (statusChange == null || StringUtils.isNotBlank(statusChange.getWfStatus())) {
+            return statusChange;
+        }
+        statusChange.setWfStatus(StringUtils.defaultIfBlank(statusChange.getStatus(), STATUS_COMPLETED));
+        return statusChange;
     }
 }

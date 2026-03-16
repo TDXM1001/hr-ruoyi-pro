@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -56,6 +57,19 @@ class AssetAggregateServiceImplTest {
 
     @InjectMocks
     private AssetAggregateServiceImpl assetAggregateService;
+
+    @Test
+    void shouldExposeAggregateIdentityFromNestedBasicInfo() {
+        AssetUpdateReq updateReq = new AssetUpdateReq();
+        AssetInfo basicInfo = new AssetInfo();
+        basicInfo.setAssetId(1000L);
+        basicInfo.setAssetNo("A-1000");
+        updateReq.setBasicInfo(basicInfo);
+
+        assertNotNull(updateReq.getAssetId());
+        assertEquals(1000L, updateReq.getAssetId());
+        assertEquals("A-1000", updateReq.getAssetNo());
+    }
 
     @Test
     void shouldRejectFinancialBaseChangeAfterDepreciationStarted() {

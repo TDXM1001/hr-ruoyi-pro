@@ -60,7 +60,9 @@ class AssetRealEstateStatusChangeServiceImplTest {
         int rows = service.insertStatusChange(request);
 
         assertEquals(1, rows);
+        assertNotNull(request.getAssetId());
         assertEquals("completed", request.getStatus());
+        assertEquals("completed", request.getWfStatus());
         assertEquals("1", request.getOldAssetStatus());
         assertNotNull(request.getCreateTime());
 

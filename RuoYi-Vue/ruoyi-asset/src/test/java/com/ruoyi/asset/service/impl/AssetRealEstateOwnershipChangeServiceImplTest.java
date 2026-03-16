@@ -75,8 +75,10 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
         int rows = service.insertOwnershipChange(request);
 
         assertEquals(1, rows);
+        assertNotNull(request.getAssetId());
         assertEquals("RE-9002", request.getAssetNo());
         assertEquals("pending", request.getStatus());
+        assertEquals("pending", request.getWfStatus());
         assertEquals("原权属人", request.getOldRightsHolder());
         assertEquals("CERT-OLD", request.getOldPropertyCertNo());
         assertNotNull(request.getCreateTime());
@@ -85,6 +87,7 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
         verify(ownershipChangeMapper).insertOwnershipChange(captor.capture());
         assertEquals("张三", captor.getValue().getTargetRightsHolder());
         assertEquals("pending", captor.getValue().getStatus());
+        assertEquals("pending", captor.getValue().getWfStatus());
 
         verify(approvalEngine).startProcess("OWN-20260315-001", "asset_real_estate_ownership_change");
         verify(assetInfoMapper, never()).updateAssetInfo(any(AssetInfo.class));

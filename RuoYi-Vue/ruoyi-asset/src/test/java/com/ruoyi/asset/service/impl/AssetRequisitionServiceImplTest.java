@@ -55,14 +55,17 @@ class AssetRequisitionServiceImplTest {
         int rows = assetRequisitionService.insertAssetRequisition(requisition);
 
         assertEquals(1, rows);
+        assertNotNull(requisition.getAssetId());
         assertEquals("A-001", requisition.getAssetNo());
         assertEquals(0, requisition.getStatus());
+        assertEquals("pending", requisition.getWfStatus());
         assertNotNull(requisition.getCreateTime());
 
         ArgumentCaptor<AssetRequisition> requisitionCaptor = ArgumentCaptor.forClass(AssetRequisition.class);
         verify(assetRequisitionMapper).insertAssetRequisition(requisitionCaptor.capture());
         assertEquals(1001L, requisitionCaptor.getValue().getAssetId());
         assertEquals("A-001", requisitionCaptor.getValue().getAssetNo());
+        assertEquals("pending", requisitionCaptor.getValue().getWfStatus());
 
         ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
         verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
@@ -121,6 +124,7 @@ class AssetRequisitionServiceImplTest {
         verify(assetRequisitionMapper).updateAssetRequisition(requisitionCaptor.capture());
         assertEquals("REQ-20260315-010", requisitionCaptor.getValue().getRequisitionNo());
         assertEquals(3, requisitionCaptor.getValue().getStatus());
+        assertEquals("completed", requisitionCaptor.getValue().getWfStatus());
 
         ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
         verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
