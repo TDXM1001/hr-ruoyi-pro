@@ -5,8 +5,10 @@ import java.util.Date;
 import com.ruoyi.workflow.domain.vo.WorkflowTaskVo;
 import com.ruoyi.workflow.domain.WfApprovalInstance;
 import com.ruoyi.workflow.domain.WfApprovalNode;
+import com.ruoyi.workflow.domain.WfApprovalTemplate;
 import com.ruoyi.workflow.mapper.WfApprovalInstanceMapper;
 import com.ruoyi.workflow.mapper.WfApprovalNodeMapper;
+import com.ruoyi.workflow.mapper.WfApprovalTemplateMapper;
 import com.ruoyi.workflow.service.IApprovalEngine;
 import com.ruoyi.workflow.service.WorkflowBusinessHandlerRegistry;
 import com.ruoyi.common.exception.ServiceException;
@@ -22,8 +24,8 @@ import org.springframework.stereotype.Service;
  *
  * 当前实现有两个明确边界：
  * 1. 实例状态使用最小值域：pending / approved / rejected。
- * 2. 待办先按“全量待处理实例”暴露，approverId 参数只做接口保留位，
- *    等后续引入真实审批模板和待办分配规则时再收敛到按人分派。
+ * 2. 审批模板当前只支持“业务类型 -> 单一审批人”的单节点分派基线，
+ *    先把待办收敛到按人可见，再为后续多级审批留出扩展位。
  */
 @Service
 public class SimpleApprovalEngineImpl implements IApprovalEngine {
@@ -62,16 +64,21 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
     @Autowired
     private WfApprovalNodeMapper approvalNodeMapper;
 
+    @Autowired
+    private WfApprovalTemplateMapper approvalTemplateMapper;
+
     @Autowired(required = false)
     private WorkflowBusinessHandlerRegistry businessHandlerRegistry;
 
     @Override
     public Long startProcess(String businessId, String businessType) {
         log.info("发起审批流程: businessId={}, businessType={}", businessId, businessType);
+        WfApprovalTemplate approvalTemplate = loadEnabledTemplate(businessType);
 
         WfApprovalInstance approvalInstance = new WfApprovalInstance();
         approvalInstance.setBusinessId(businessId);
         approvalInstance.setBusinessType(businessType);
+        approvalInstance.setApproverId(approvalTemplate.getApproverId());
         approvalInstance.setCurrentNode(NODE_NAME_PENDING);
         approvalInstance.setStatus(INSTANCE_STATUS_PENDING);
         approvalInstance.setCreateTime(DateUtils.getNowDate());
@@ -119,6 +126,7 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
         String targetNodeName
     ) {
         WfApprovalInstance approvalInstance = getPendingInstance(instanceId);
+        validateAssignedApprover(approvalInstance, approverId);
 
         WfApprovalNode approvalNode = new WfApprovalNode();
         approvalNode.setInstanceId(instanceId);
@@ -162,6 +170,32 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
     }
 
     /**
+     * 发起审批前必须先命中启用中的模板，避免再次回退到“所有人都可审批”的旧行为。
+     */
+    private WfApprovalTemplate loadEnabledTemplate(String businessType) {
+        WfApprovalTemplate approvalTemplate = approvalTemplateMapper.selectEnabledTemplateByBusinessType(businessType);
+        if (approvalTemplate == null) {
+            throw new ServiceException("业务类型未配置启用中的审批模板: " + businessType);
+        }
+        if (approvalTemplate.getApproverId() == null) {
+            throw new ServiceException("审批模板未配置审批人: " + businessType);
+        }
+        return approvalTemplate;
+    }
+
+    /**
+     * 审批动作必须由实例当前分派的审批人执行，避免手工构造请求越权处理他人待办。
+     */
+    private void validateAssignedApprover(WfApprovalInstance approvalInstance, Long approverId) {
+        if (approvalInstance.getApproverId() == null) {
+            throw new ServiceException("审批实例未分配审批人，请先补齐审批模板");
+        }
+        if (!approvalInstance.getApproverId().equals(approverId)) {
+            throw new ServiceException("当前审批人无权处理该待办");
+        }
+    }
+
+    /**
      * 把数据库里的最小状态值域映射成前端字典已经能识别的值，
      * 这样批次一就能先把真实接口接通，不必等到菜单和字典脚本批次再改页面。
      */
@@ -196,6 +230,10 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
             case "asset_return" -> "RETURN";
             case "asset_maintenance" -> "REPAIR";
             case "asset_disposal" -> "SCRAP";
+            case "asset_real_estate_ownership_change" -> "REAL_ESTATE_OWNERSHIP_CHANGE";
+            case "asset_real_estate_usage_change" -> "REAL_ESTATE_USAGE_CHANGE";
+            case "asset_real_estate_status_change" -> "REAL_ESTATE_STATUS_CHANGE";
+            case "asset_real_estate_disposal" -> "REAL_ESTATE_DISPOSAL";
             default -> businessType;
         };
     }
