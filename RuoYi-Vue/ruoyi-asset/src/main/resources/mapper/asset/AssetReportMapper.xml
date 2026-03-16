@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetReportMapper">
+
+    <resultMap id="AssetTypeSummaryResult" type="com.ruoyi.asset.domain.vo.AssetReportSummaryVo$AssetTypeSummaryItem">
+        <result property="assetType" column="asset_type"/>
+        <result property="assetCount" column="asset_count"/>
+        <result property="originalValueTotal" column="original_value_total"/>
+    </resultMap>
+
+    <resultMap id="AssetStatusSummaryResult" type="com.ruoyi.asset.domain.vo.AssetReportSummaryVo$AssetStatusSummaryItem">
+        <result property="assetStatus" column="asset_status"/>
+        <result property="assetCount" column="asset_count"/>
+        <result property="originalValueTotal" column="original_value_total"/>
+    </resultMap>
+
+    <resultMap id="AssetDeptSummaryResult" type="com.ruoyi.asset.domain.vo.AssetReportSummaryVo$AssetDeptSummaryItem">
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="assetCount" column="asset_count"/>
+        <result property="originalValueTotal" column="original_value_total"/>
+    </resultMap>
+
+    <resultMap id="AssetWarningItemResult" type="com.ruoyi.asset.domain.vo.AssetWarningVo$AssetWarningItem">
+        <result property="assetId" column="asset_id"/>
+        <result property="assetNo" column="asset_no"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="assetStatus" column="asset_status"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="businessNo" column="business_no"/>
+        <result property="businessType" column="business_type"/>
+        <result property="handlerName" column="handler_name"/>
+        <result property="warningCode" column="warning_code"/>
+        <result property="warningLabel" column="warning_label"/>
+        <result property="detail" column="detail"/>
+        <result property="eventTime" column="event_time"/>
+        <result property="dueDate" column="due_date"/>
+    </resultMap>
+
+    <select id="selectAssetTypeSummary" resultMap="AssetTypeSummaryResult">
+        select ai.asset_type,
+               count(1) as asset_count,
+               coalesce(sum(af.original_value), 0.00) as original_value_total
+        from asset_info ai
+        left join asset_finance af on af.asset_id = ai.asset_id
+        where ai.del_flag is null or ai.del_flag != '2'
+        group by ai.asset_type
+        order by ai.asset_type asc
+    </select>
+
+    <select id="selectAssetStatusSummary" resultMap="AssetStatusSummaryResult">
+        select ai.asset_status,
+               count(1) as asset_count,
+               coalesce(sum(af.original_value), 0.00) as original_value_total
+        from asset_info ai
+        left join asset_finance af on af.asset_id = ai.asset_id
+        where ai.del_flag is null or ai.del_flag != '2'
+        group by ai.asset_status
+        order by ai.asset_status asc
+    </select>
+
+    <select id="selectDeptSummary" resultMap="AssetDeptSummaryResult">
+        select ai.use_dept_id as dept_id,
+               coalesce(sd.dept_name, concat('部门#', ai.use_dept_id)) as dept_name,
+               count(1) as asset_count,
+               coalesce(sum(af.original_value), 0.00) as original_value_total
+        from asset_info ai
+        left join asset_finance af on af.asset_id = ai.asset_id
+        left join sys_dept sd on sd.dept_id = ai.use_dept_id
+        where (ai.del_flag is null or ai.del_flag != '2')
+          and ai.asset_status = '1'
+          and ai.use_dept_id is not null
+        group by ai.use_dept_id, sd.dept_name
+        order by asset_count desc, dept_id asc
+    </select>
+
+    <select id="selectIdleAssetWarnings" resultMap="AssetWarningItemResult">
+        select ai.asset_id,
+               ai.asset_no,
+               ai.asset_name,
+               ai.asset_type,
+               ai.asset_status,
+               ai.use_dept_id as dept_id,
+               sd.dept_name,
+               null as business_no,
+               null as business_type,
+               null as handler_name,
+               'IDLE_ASSET' as warning_code,
+               '闲置资产' as warning_label,
+               '资产当前处于闲置状态，请尽快确认继续使用、调拨或处置。' as detail,
+               coalesce(ai.update_time, ai.create_time) as event_time,
+               null as due_date
+        from asset_info ai
+        left join sys_dept sd on sd.dept_id = ai.use_dept_id
+        where (ai.del_flag is null or ai.del_flag != '2')
+          and ai.asset_status = '7'
+        order by coalesce(ai.update_time, ai.create_time) desc, ai.asset_id desc
+    </select>
+
+    <select id="selectMaintenanceWarningItems" resultMap="AssetWarningItemResult">
+        select ai.asset_id,
+               ai.asset_no,
+               ai.asset_name,
+               ai.asset_type,
+               ai.asset_status,
+               ai.use_dept_id as dept_id,
+               sd.dept_name,
+               am.maintenance_no as business_no,
+               'asset_maintenance' as business_type,
+               null as handler_name,
+               'MAINTENANCE_OPEN' as warning_code,
+               '维修中未关闭' as warning_label,
+               concat('维修单 ', am.maintenance_no, ' 仍处于处理中，请确认是否已完成闭环。') as detail,
+               am.create_time as event_time,
+               null as due_date
+        from asset_maintenance am
+        inner join asset_info ai on ai.asset_id = am.asset_id
+        left join sys_dept sd on sd.dept_id = ai.use_dept_id
+        where (ai.del_flag is null or ai.del_flag != '2')
+          and am.status in (0, 1)
+        order by am.create_time desc, am.maintenance_no desc
+    </select>
+
+    <select id="selectPendingApprovalWarningItems" resultMap="AssetWarningItemResult">
+        select ai.asset_id,
+               ai.asset_no,
+               ai.asset_name,
+               ai.asset_type,
+               ai.asset_status,
+               ai.use_dept_id as dept_id,
+               sd.dept_name,
+               wi.business_id as business_no,
+               wi.business_type,
+               coalesce(su.nick_name, su.user_name, cast(wi.approver_id as char)) as handler_name,
+               'PENDING_APPROVAL' as warning_code,
+               '待审批关键动作' as warning_label,
+               concat('当前审批人：', coalesce(su.nick_name, su.user_name, cast(wi.approver_id as char))) as detail,
+               wi.create_time as event_time,
+               null as due_date
+        from wf_approval_instance wi
+        left join asset_disposal ad on wi.business_type = 'asset_disposal' and wi.business_id = ad.disposal_no
+        left join asset_requisition ar on wi.business_type = 'asset_requisition' and wi.business_id = ar.requisition_no
+        left join asset_maintenance am on wi.business_type = 'asset_maintenance' and wi.business_id = am.maintenance_no
+        left join asset_real_estate_ownership_change reoc
+            on wi.business_type = 'asset_real_estate_ownership_change' and wi.business_id = reoc.ownership_change_no
+        left join asset_real_estate_disposal red
+            on wi.business_type = 'asset_real_estate_disposal' and wi.business_id = red.disposal_no
+        left join asset_info ai on ai.asset_id = coalesce(ad.asset_id, ar.asset_id, am.asset_id, reoc.asset_id, red.asset_id)
+        left join sys_dept sd on sd.dept_id = ai.use_dept_id
+        left join sys_user su on su.user_id = wi.approver_id
+        where wi.status = 'pending'
+          and wi.business_type in (
+            'asset_requisition',
+            'asset_maintenance',
+            'asset_disposal',
+            'asset_real_estate_ownership_change',
+            'asset_real_estate_disposal'
+          )
+          and (ai.asset_id is null or ai.del_flag is null or ai.del_flag != '2')
+        order by wi.create_time desc, wi.instance_id desc
+    </select>
+
+    <select id="selectLandTermExpiringWarningItems" parameterType="java.util.Date" resultMap="AssetWarningItemResult">
+        select ai.asset_id,
+               ai.asset_no,
+               ai.asset_name,
+               ai.asset_type,
+               ai.asset_status,
+               ai.use_dept_id as dept_id,
+               sd.dept_name,
+               null as business_no,
+               null as business_type,
+               null as handler_name,
+               'LAND_TERM_EXPIRING' as warning_code,
+               '土地期限即将到期' as warning_label,
+               concat('土地使用期限将于 ', date_format(are.land_term_end_date, '%Y-%m-%d'), ' 到期。') as detail,
+               coalesce(ai.update_time, ai.create_time) as event_time,
+               are.land_term_end_date as due_date
+        from asset_real_estate are
+        inner join asset_info ai on ai.asset_id = are.asset_id
+        left join sys_dept sd on sd.dept_id = ai.use_dept_id
+        where (ai.del_flag is null or ai.del_flag != '2')
+          and ai.asset_type = '2'
+          and ai.asset_status not in ('5', '6')
+          and are.land_term_end_date is not null
+          and are.land_term_end_date >= curdate()
+          and are.land_term_end_date <= #{thresholdDate}
+        order by are.land_term_end_date asc, ai.asset_id desc
+    </select>
+</mapper>

@@ -342,7 +342,26 @@
 - 免审批动作：用途变更、状态变更
 - 资产列表页不再暴露 `realEstateChange` 占位键，而是拆分为 `realEstateOwnership`、`realEstateUsage`、`realEstateStatus`、`realEstateDisposal`
 
-## 十、当前构建阻塞说明
+## 十、批次六收口补充
+
+### 1. 台账归档语义
+
+- `DELETE /asset/info/{assetId}`
+  用途：归档资产并移出日常台账，不再表示物理删除
+- `GET /asset/info/list`
+  补充参数：`showArchived=true` 时查看已归档资产
+
+### 2. 报表与预警接口
+
+- `GET /asset/report/summary`
+  用途：返回按资产类型、状态、部门汇总的最小管理视图
+- `GET /asset/report/warnings`
+  用途：返回闲置资产、维修中未关闭资产、待审批关键动作、土地期限临近到期四类预警
+- `landTermWithinDays`
+  用途：控制土地期限预警窗口，默认值为 `90`
+- 当前阶段为避免新增菜单 SQL，报表接口权限复用 `asset:info:list`
+
+## 十一、当前构建阻塞说明
 
 `art-design-pro` 的 `npm run build` 仍被以下历史 TypeScript 问题阻塞，本次资产生命周期改动未新增这些报错：
 
