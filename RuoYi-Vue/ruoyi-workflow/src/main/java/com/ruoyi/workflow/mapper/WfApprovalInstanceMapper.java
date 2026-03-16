@@ -39,8 +39,6 @@ public interface WfApprovalInstanceMapper {
     /**
      * 查询待办任务列表。
      *
-     * 当前最小实现先保留 approverId 参数位，方便后续接入真实待办分配逻辑。
-     *
      * @param approverId 审批人 ID
      * @return 待办任务
      */

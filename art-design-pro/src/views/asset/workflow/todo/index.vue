@@ -36,7 +36,10 @@
           <ElInput v-model="currentTask.businessId" disabled />
         </ElFormItem>
         <ElFormItem label="业务类型" prop="businessType">
-          <DictTag :options="business_type" :value="currentTask.businessType" />
+          <DictTag :options="workflowBusinessTypeOptions" :value="currentTask.businessType" />
+        </ElFormItem>
+        <ElFormItem label="审批人">
+          <ElInput :model-value="formatApproverName(currentTask)" disabled />
         </ElFormItem>
         <ElFormItem label="审批意见" prop="comment">
           <ElInput
@@ -67,7 +70,13 @@
   import { ref, reactive, computed, onMounted, h } from 'vue'
   import { ElMessage, ElButton } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
-  import { listTodo, approveTask, type ApproveReq } from '@/api/workflow/task'
+  import {
+    listTodo,
+    approveTask,
+    mergeWorkflowBusinessTypeOptions,
+    type ApproveReq,
+    type WorkflowTaskItem
+  } from '@/api/workflow/task'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import DictTag from '@/components/DictTag/index.vue'
@@ -75,6 +84,9 @@
   defineOptions({ name: 'WorkflowTodo' })
 
   const { business_type, wf_status } = useDict('business_type', 'wf_status')
+  const workflowBusinessTypeOptions = computed(() =>
+    mergeWorkflowBusinessTypeOptions(business_type.value as Array<{ label: string; value: string }>)
+  )
 
   // 查询参数
   const formFilters = reactive({
@@ -96,10 +108,23 @@
       props: {
         placeholder: '业务类型',
         clearable: true,
-        options: business_type.value
+        options: workflowBusinessTypeOptions.value
       }
     }
   ])
+
+  /**
+   * 审批人优先展示姓名，姓名缺失时回退到 ID，避免表格出现空白列。
+   */
+  const formatApproverName = (task?: Partial<WorkflowTaskItem>) => {
+    if (task?.approverName) {
+      return task.approverName
+    }
+    if (task?.approverId != null) {
+      return `用户#${task.approverId}`
+    }
+    return '未分配'
+  }
 
   // 表格逻辑
   const {
@@ -123,10 +148,17 @@
         {
           prop: 'businessType',
           label: '业务类型',
-          width: 120,
+          width: 140,
           align: 'center',
           formatter: (row: any) =>
-            h(DictTag, { options: business_type.value, value: row.businessType })
+            h(DictTag, { options: workflowBusinessTypeOptions.value, value: row.businessType })
+        },
+        {
+          prop: 'approverName',
+          label: '审批人',
+          width: 120,
+          align: 'center',
+          formatter: (row: WorkflowTaskItem) => formatApproverName(row)
         },
         { prop: 'currentNode', label: '当前节点', width: 120, align: 'center' },
         {
@@ -174,7 +206,7 @@
   const dialogVisible = ref(false)
   const formRef = ref<FormInstance>()
   const submitting = ref(false)
-  const currentTask = ref<any>({})
+  const currentTask = ref<WorkflowTaskItem>({} as WorkflowTaskItem)
 
   const formData = reactive({
     comment: ''
@@ -224,7 +256,7 @@
   }
 
   onMounted(() => {
-    void business_type.value
+    void workflowBusinessTypeOptions.value
     void wf_status.value
   })
 </script>

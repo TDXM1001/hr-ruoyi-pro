@@ -35,6 +35,9 @@ public class WorkflowTaskVo extends BaseEntity {
     /** 最近一次处理人 ID。 */
     private Long approverId;
 
+    /** 审批人名称。 */
+    private String approverName;
+
     public Long getInstanceId() {
         return instanceId;
     }
@@ -97,5 +100,13 @@ public class WorkflowTaskVo extends BaseEntity {
 
     public void setApproverId(Long approverId) {
         this.approverId = approverId;
+    }
+
+    public String getApproverName() {
+        return approverName;
+    }
+
+    public void setApproverName(String approverName) {
+        this.approverName = approverName;
     }
 }

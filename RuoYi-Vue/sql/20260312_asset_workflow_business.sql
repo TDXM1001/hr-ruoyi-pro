@@ -2,19 +2,31 @@
 CREATE TABLE `wf_approval_template` (
   `template_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '模板ID',
   `business_type` varchar(50) NOT NULL COMMENT '业务类型(如: asset_requisition)',
-  `chain_config` json DEFAULT NULL COMMENT '审批链配置JSON',
+  `template_name` varchar(100) NOT NULL COMMENT '模板名称',
+  `approver_id` bigint(20) NOT NULL COMMENT '默认审批人ID',
+  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态：0=启用 1=停用',
   `create_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`template_id`)
+  PRIMARY KEY (`template_id`),
+  UNIQUE KEY `uk_wf_approval_template_business_type` (`business_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批模板表';
+
+INSERT INTO `wf_approval_template` (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+VALUES ('asset_requisition', '固定资产领用审批', 1, '0', sysdate()),
+       ('asset_maintenance', '固定资产维修审批', 1, '0', sysdate()),
+       ('asset_disposal', '固定资产处置审批', 1, '0', sysdate()),
+       ('asset_real_estate_ownership_change', '不动产权属变更审批', 1, '0', sysdate()),
+       ('asset_real_estate_disposal', '不动产处置审批', 1, '0', sysdate());
 
 CREATE TABLE `wf_approval_instance` (
   `instance_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '实例ID',
   `business_id` varchar(50) NOT NULL COMMENT '业务单据ID',
   `business_type` varchar(50) NOT NULL COMMENT '业务类型',
+  `approver_id` bigint(20) DEFAULT NULL COMMENT '当前审批人ID',
   `current_node` varchar(50) DEFAULT NULL COMMENT '当前审批节点',
   `status` varchar(20) DEFAULT 'pending' COMMENT '状态: pending/approved/rejected',
   `create_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`instance_id`)
+  PRIMARY KEY (`instance_id`),
+  KEY `idx_wf_approval_instance_status_approver` (`status`, `approver_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批实例表';
 
 CREATE TABLE `wf_approval_node` (

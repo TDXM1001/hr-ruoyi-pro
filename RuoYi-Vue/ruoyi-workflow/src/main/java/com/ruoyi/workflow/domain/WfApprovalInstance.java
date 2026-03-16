@@ -18,6 +18,9 @@ public class WfApprovalInstance extends BaseEntity {
     /** 业务类型 */
     private String businessType;
 
+    /** 当前审批人ID */
+    private Long approverId;
+
     /** 当前审批节点 */
     private String currentNode;
 
@@ -46,6 +49,14 @@ public class WfApprovalInstance extends BaseEntity {
 
     public void setBusinessType(String businessType) {
         this.businessType = businessType;
+    }
+
+    public Long getApproverId() {
+        return approverId;
+    }
+
+    public void setApproverId(Long approverId) {
+        this.approverId = approverId;
     }
 
     public String getCurrentNode() {

@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <id property="instanceId" column="instance_id"/>
         <result property="businessId" column="business_id"/>
         <result property="businessType" column="business_type"/>
+        <result property="approverId" column="approver_id"/>
         <result property="currentNode" column="current_node"/>
         <result property="status" column="status"/>
         <result property="createTime" column="create_time"/>
@@ -22,6 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="action" column="action"/>
         <result property="comment" column="comment"/>
         <result property="approverId" column="approver_id"/>
+        <result property="approverName" column="approver_name"/>
         <result property="createTime" column="create_time"/>
     </resultMap>
 
@@ -30,12 +32,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into wf_approval_instance (
             business_id,
             business_type,
+            approver_id,
             current_node,
             status,
             create_time
         ) values (
             #{businessId},
             #{businessType},
+            #{approverId},
             #{currentNode},
             #{status},
             #{createTime}
@@ -46,6 +50,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select instance_id,
                business_id,
                business_type,
+               approver_id,
                current_node,
                status,
                create_time
@@ -63,15 +68,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </update>
 
     <select id="selectTodoTaskList" parameterType="Long" resultMap="WorkflowTaskVoResult">
-        select instance_id,
-               business_id,
-               business_type,
-               current_node,
-               status,
-               create_time
-        from wf_approval_instance
-        where status = 'pending'
-        order by create_time desc
+        select i.instance_id,
+               i.business_id,
+               i.business_type,
+               i.current_node,
+               i.status,
+               i.approver_id,
+               coalesce(nullif(u.nick_name, ''), u.user_name) as approver_name,
+               i.create_time
+        from wf_approval_instance i
+                 left join sys_user u
+                           on u.user_id = i.approver_id
+        where i.status = 'pending'
+          and i.approver_id = #{approverId}
+        order by i.create_time desc
     </select>
 
     <select id="selectDoneTaskList" parameterType="Long" resultMap="WorkflowTaskVoResult">
@@ -83,6 +93,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                n.action,
                n.comment,
                n.approver_id,
+               coalesce(nullif(u.nick_name, ''), u.user_name) as approver_name,
                n.process_time as create_time
         from wf_approval_instance i
                  inner join wf_approval_node n
@@ -93,6 +104,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                                   and n2.approver_id = #{approverId}
                                   and n2.action in ('approve', 'reject')
                             )
+                 left join sys_user u
+                           on u.user_id = n.approver_id
         order by n.process_time desc
     </select>
 </mapper>

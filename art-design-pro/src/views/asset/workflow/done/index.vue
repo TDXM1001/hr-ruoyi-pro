@@ -33,8 +33,11 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { ElButton } from 'element-plus'
-  import { listDone } from '@/api/workflow/task'
+  import {
+    listDone,
+    mergeWorkflowBusinessTypeOptions,
+    type WorkflowTaskItem
+  } from '@/api/workflow/task'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import DictTag from '@/components/DictTag/index.vue'
@@ -42,6 +45,9 @@
   defineOptions({ name: 'WorkflowDone' })
 
   const { business_type, wf_status } = useDict('business_type', 'wf_status')
+  const workflowBusinessTypeOptions = computed(() =>
+    mergeWorkflowBusinessTypeOptions(business_type.value as Array<{ label: string; value: string }>)
+  )
 
   // 查询参数
   const formFilters = reactive({
@@ -63,10 +69,23 @@
       props: {
         placeholder: '业务类型',
         clearable: true,
-        options: business_type.value
+        options: workflowBusinessTypeOptions.value
       }
     }
   ])
+
+  /**
+   * 已办页同样优先展示审批人名称，避免只看到裸 ID。
+   */
+  const formatApproverName = (task?: Partial<WorkflowTaskItem>) => {
+    if (task?.approverName) {
+      return task.approverName
+    }
+    if (task?.approverId != null) {
+      return `用户#${task.approverId}`
+    }
+    return '未分配'
+  }
 
   // 表格逻辑
   const {
@@ -90,10 +109,17 @@
         {
           prop: 'businessType',
           label: '业务类型',
-          width: 120,
+          width: 140,
           align: 'center',
           formatter: (row: any) =>
-            h(DictTag, { options: business_type.value, value: row.businessType })
+            h(DictTag, { options: workflowBusinessTypeOptions.value, value: row.businessType })
+        },
+        {
+          prop: 'approverName',
+          label: '审批人',
+          width: 120,
+          align: 'center',
+          formatter: (row: WorkflowTaskItem) => formatApproverName(row)
         },
         { prop: 'currentNode', label: '审批节点', width: 120, align: 'center' },
         {
@@ -103,26 +129,13 @@
           align: 'center',
           formatter: (row: any) => h(DictTag, { options: wf_status.value, value: row.status })
         },
-        { prop: 'createTime', label: '处理时间', width: 170, align: 'center' },
         {
-          prop: 'operation',
-          label: '操作',
-          width: 120,
-          align: 'right',
-          formatter: (row: any) => {
-            return h('div', { class: 'flex justify-end' }, [
-              h(
-                ElButton,
-                {
-                  type: 'primary',
-                  link: true,
-                  onClick: () => handleView(row)
-                },
-                () => '查看详情'
-              )
-            ])
-          }
-        }
+          prop: 'comment',
+          label: '审批意见',
+          minWidth: 220,
+          formatter: (row: WorkflowTaskItem) => row.comment || '无'
+        },
+        { prop: 'createTime', label: '处理时间', width: 170, align: 'center' },
       ]
     }
   })
@@ -139,13 +152,8 @@
     getData()
   }
 
-  const handleView = (row: any) => {
-    // 这里可以后续扩展查看详情逻辑
-    console.log('查看详情:', row)
-  }
-
   onMounted(() => {
-    void business_type.value
+    void workflowBusinessTypeOptions.value
     void wf_status.value
   })
 </script>

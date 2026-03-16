@@ -2,9 +2,11 @@ package com.ruoyi.workflow.service.impl;
 
 import java.util.List;
 import com.ruoyi.workflow.domain.WfApprovalInstance;
+import com.ruoyi.workflow.domain.WfApprovalTemplate;
 import com.ruoyi.workflow.domain.vo.WorkflowTaskVo;
 import com.ruoyi.workflow.mapper.WfApprovalInstanceMapper;
 import com.ruoyi.workflow.mapper.WfApprovalNodeMapper;
+import com.ruoyi.workflow.mapper.WfApprovalTemplateMapper;
 import com.ruoyi.workflow.service.WorkflowBusinessHandlerRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +36,9 @@ class SimpleApprovalEngineImplTest {
     private WfApprovalNodeMapper approvalNodeMapper;
 
     @Mock
+    private WfApprovalTemplateMapper approvalTemplateMapper;
+
+    @Mock
     private WorkflowBusinessHandlerRegistry businessHandlerRegistry;
 
     @InjectMocks
@@ -41,6 +46,8 @@ class SimpleApprovalEngineImplTest {
 
     @Test
     void shouldPersistPendingInstanceWhenStartProcess() {
+        when(approvalTemplateMapper.selectEnabledTemplateByBusinessType("asset_requisition"))
+            .thenReturn(buildTemplate("asset_requisition", 4001L));
         when(approvalInstanceMapper.insertWfApprovalInstance(any(WfApprovalInstance.class))).thenAnswer(invocation -> {
             WfApprovalInstance instance = invocation.getArgument(0);
             instance.setInstanceId(1001L);
@@ -55,6 +62,7 @@ class SimpleApprovalEngineImplTest {
         verify(approvalInstanceMapper).insertWfApprovalInstance(captor.capture());
         assertEquals("REQ-20260315-001", captor.getValue().getBusinessId());
         assertEquals("asset_requisition", captor.getValue().getBusinessType());
+        assertEquals(4001L, captor.getValue().getApproverId());
         assertEquals("pending", captor.getValue().getStatus());
         assertNotNull(captor.getValue().getCreateTime());
     }
@@ -100,6 +108,7 @@ class SimpleApprovalEngineImplTest {
         instance.setInstanceId(1003L);
         instance.setBusinessId("REQ-20260315-002");
         instance.setBusinessType("asset_requisition");
+        instance.setApproverId(3001L);
         instance.setStatus("pending");
         when(approvalInstanceMapper.selectWfApprovalInstanceByInstanceId(1003L)).thenReturn(instance);
 
@@ -120,6 +129,7 @@ class SimpleApprovalEngineImplTest {
         instance.setInstanceId(1004L);
         instance.setBusinessId("MNT-20260315-001");
         instance.setBusinessType("asset_maintenance");
+        instance.setApproverId(3002L);
         instance.setStatus("pending");
         when(approvalInstanceMapper.selectWfApprovalInstanceByInstanceId(1004L)).thenReturn(instance);
 
@@ -132,5 +142,17 @@ class SimpleApprovalEngineImplTest {
         assertEquals(1004L, captor.getValue().getInstanceId());
         assertEquals("rejected", captor.getValue().getStatus());
         verify(businessHandlerRegistry).handleRejected("asset_maintenance", "MNT-20260315-001");
+    }
+
+    /**
+     * 当前引擎按业务类型绑定单一审批人，测试里复用这个最小模板即可。
+     */
+    private WfApprovalTemplate buildTemplate(String businessType, Long approverId) {
+        WfApprovalTemplate template = new WfApprovalTemplate();
+        template.setBusinessType(businessType);
+        template.setTemplateName("默认审批模板");
+        template.setApproverId(approverId);
+        template.setStatus("0");
+        return template;
     }
 }
