@@ -16,7 +16,6 @@ interface CategoryAttrSubmitPayload {
 }
 
 const RESERVED_ATTR_CODES = ['asset_no', 'asset_name', 'original_value', 'property_cert_no']
-/** 统一把前端语义值转换成后端约定的数据库编码。 */
 const OPTION_SOURCE_TYPE_MAP: Record<string, string> = {
   manual: '1',
   dict: '2',
@@ -26,36 +25,48 @@ const OPTION_SOURCE_TYPE_MAP: Record<string, string> = {
   '3': '3'
 }
 
-const normalizeAttrCode = (attrCode?: string) =>
-  String(attrCode || '')
-    .trim()
-    .toLowerCase()
-
-/** 只有选中分类后，才展示右侧属性模板面板。 */
+/** 判断分类是否已选中，未选中时不展示动态属性面板。 */
 export function shouldShowAttrPanel(categoryId?: number) {
   return Boolean(categoryId)
 }
 
-/** 把后端状态值映射成页面标签。 */
+/** 列表状态标记统一映射。 */
 export function buildAttrStatusTag(status?: string): AttrStatusTag {
   return status === '1' ? { type: 'info', label: '停用' } : { type: 'success', label: '启用' }
 }
 
-/** 判断字段编码是否命中系统保留字段。 */
+/** 将属性编码统一收口为后端约定的 snake_case 形式。 */
+export function normalizeAttrCode(attrCode?: string) {
+  return String(attrCode || '')
+    .trim()
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase()
+}
+
+/** 判断是否命中系统保留字段。 */
 export function isReservedAttrCode(attrCode?: string) {
   return RESERVED_ATTR_CODES.includes(normalizeAttrCode(attrCode))
 }
 
-/** 统一保留字段提示文案，保证前后端提示语义一致。 */
+/** 返回系统保留字段提示文案。 */
 export function getReservedCodeMessage(attrCode: string) {
-  return `字段编码[${attrCode}]为系统保留字段，请调整后重试`
+  return `字段编码[${attrCode}]为系统保留字段，不允许使用`
 }
 
-/** 统一分类模板提交口径，避免组件类型缺失导致后端插入失败。 */
+/** 在提交前拦截系统保留字段，避免无效请求进入后端。 */
+export function validateReservedAttrCode(attrCode?: string) {
+  const normalizedAttrCode = normalizeAttrCode(attrCode)
+  if (isReservedAttrCode(normalizedAttrCode)) {
+    throw new Error(getReservedCodeMessage(normalizedAttrCode))
+  }
+  return normalizedAttrCode
+}
+
+/** 构建提交给后端的动态属性载荷，统一补齐默认值和枚举口径。 */
 export function buildCategoryAttrSubmitPayload<T extends CategoryAttrSubmitPayload>(payload: T) {
   const dataType = String(payload.dataType || 'text').trim() || 'text'
   const attrType = String(payload.attrType || dataType).trim() || dataType
-  // 新增模板时补齐数据库非空字段，保证旧表单数据也能平滑提交。
   const optionSourceType =
     OPTION_SOURCE_TYPE_MAP[String(payload.optionSourceType || '1').trim()] || '1'
 

@@ -112,6 +112,9 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
         }
 
         String normalizedAttrCode = normalizeAttrCode(assetCategoryAttr.getAttrCode());
+        if (StringUtils.isBlank(normalizedAttrCode)) {
+            throw new ServiceException("字段编码不能为空");
+        }
         assetCategoryAttr.setAttrCode(normalizedAttrCode);
         assetCategoryAttr.setDataType(normalizeFieldType(assetCategoryAttr.getDataType()));
         if (StringUtils.isBlank(assetCategoryAttr.getAttrType())) {
@@ -143,7 +146,10 @@ public class AssetCategoryAttrServiceImpl implements IAssetCategoryAttrService {
      * 字段编码统一转为小写下划线风格，便于后续接口契约稳定。
      */
     private String normalizeAttrCode(String attrCode) {
-        return StringUtils.trimToEmpty(attrCode).toLowerCase(Locale.ROOT);
+        return StringUtils.trimToEmpty(attrCode)
+            .replaceAll("[^A-Za-z0-9]+", "_")
+            .replaceAll("^_+|_+$", "")
+            .toLowerCase(Locale.ROOT);
     }
 
     /**

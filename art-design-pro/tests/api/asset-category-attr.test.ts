@@ -36,12 +36,22 @@ describe('Asset Category Attr API', () => {
 
   it('supports attr crud routes', async () => {
     await getCategoryAttr(1)
-    await addCategoryAttr({ categoryId: 10, attrCode: 'manufacturer', attrName: '厂商' })
+    await addCategoryAttr({
+      categoryId: 10,
+      attrCode: 'manufacturer_name',
+      attrName: '厂商',
+      isListDisplay: '1',
+      isQueryCondition: '1',
+      validationRule: '^[A-Za-z0-9_]+$'
+    })
     await updateCategoryAttr({
       attrId: 1,
       categoryId: 10,
-      attrCode: 'manufacturer',
-      attrName: '生产厂商'
+      attrCode: 'manufacturer_name',
+      attrName: '生产厂商',
+      isListDisplay: '1',
+      isQueryCondition: '1',
+      validationRule: '^[A-Za-z0-9_]+$'
     })
     await disableCategoryAttr(1)
     await delCategoryAttr([1, 2])
@@ -49,15 +59,25 @@ describe('Asset Category Attr API', () => {
     expect(http.get).toHaveBeenCalledWith({ url: '/asset/categoryAttr/1' })
     expect(http.post).toHaveBeenCalledWith({
       url: '/asset/categoryAttr',
-      data: { categoryId: 10, attrCode: 'manufacturer', attrName: '厂商' }
+      data: {
+        categoryId: 10,
+        attrCode: 'manufacturer_name',
+        attrName: '厂商',
+        isListDisplay: '1',
+        isQueryCondition: '1',
+        validationRule: '^[A-Za-z0-9_]+$'
+      }
     })
     expect(http.put).toHaveBeenCalledWith({
       url: '/asset/categoryAttr',
       data: {
         attrId: 1,
         categoryId: 10,
-        attrCode: 'manufacturer',
-        attrName: '生产厂商'
+        attrCode: 'manufacturer_name',
+        attrName: '生产厂商',
+        isListDisplay: '1',
+        isQueryCondition: '1',
+        validationRule: '^[A-Za-z0-9_]+$'
       }
     })
     expect(http.put).toHaveBeenCalledWith({ url: '/asset/categoryAttr/disable/1' })
