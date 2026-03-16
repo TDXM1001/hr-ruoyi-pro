@@ -3,13 +3,19 @@ import { describe, expect, it } from 'vitest'
 import {
   buildDepreciationRows,
   buildFinanceSummaryRows,
-  canEditFinanceBaseFields
+  canEditFinanceBaseFields,
+  isFinanceFieldReadonly
 } from '../../../src/views/asset/list/modules/asset-finance.helper'
 
 describe('asset finance helper', () => {
   it('locks base fields after depreciation starts', () => {
     expect(canEditFinanceBaseFields({ accumulatedDepreciation: 0 })).toBe(true)
     expect(canEditFinanceBaseFields({ accumulatedDepreciation: 10 })).toBe(false)
+  })
+
+  it('treats depreciation period as readonly signal', () => {
+    expect(isFinanceFieldReadonly({ lastDepreciationPeriod: '2026-03' })).toBe(true)
+    expect(canEditFinanceBaseFields({ lastDepreciationPeriod: '2026-03' } as any)).toBe(false)
   })
 
   it('builds finance summary rows', () => {

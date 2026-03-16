@@ -53,6 +53,33 @@ describe('asset form mapper', () => {
     expect(editPayload.basicInfo.assetId).toBe(1)
   })
 
+  it('keeps attachments in aggregate payload', () => {
+    const state = createEmptyDrawerState()
+    state.basicForm.assetId = 1
+    state.basicForm.assetNo = 'FA-001'
+    state.basicForm.assetName = '办公楼'
+    state.basicForm.assetType = '2'
+    state.basicForm.assetStatus = '1'
+    state.attachments = [
+      {
+        bizType: 'asset',
+        fileName: 'property-cert.pdf',
+        fileUrl: '/profile/upload/2026/property-cert.pdf',
+        fileSize: 2048,
+        fileSuffix: 'pdf'
+      }
+    ]
+
+    const payload = buildAggregatePayload(state, 'edit')
+
+    expect(payload.basicInfo.assetId).toBe(1)
+    expect(payload.attachments).toHaveLength(1)
+    expect(payload.attachments[0]).toMatchObject({
+      bizType: 'asset',
+      fileName: 'property-cert.pdf'
+    })
+  })
+
   it('sets realEstateInfo to null for fixed assets', () => {
     const state = createEmptyDrawerState()
     state.basicForm.assetNo = 'FA-001'

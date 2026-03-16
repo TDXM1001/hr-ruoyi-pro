@@ -18,8 +18,22 @@ export interface AssetDepreciationRow {
 }
 
 /** 只要已经产生累计折旧，就锁定财务基础字段。 */
-export function canEditFinanceBaseFields(finance: { accumulatedDepreciation?: number }): boolean {
-  return !finance.accumulatedDepreciation || finance.accumulatedDepreciation <= 0
+export interface AssetFinanceReadonlyContext {
+  accumulatedDepreciation?: number
+  lastDepreciationPeriod?: string
+}
+
+/** 财务基础字段一旦发生折旧，就必须转为只读口径。 */
+export function isFinanceFieldReadonly(finance: AssetFinanceReadonlyContext): boolean {
+  if ((finance.accumulatedDepreciation || 0) > 0) {
+    return true
+  }
+  return Boolean(String(finance.lastDepreciationPeriod || '').trim())
+}
+
+/** 兼容现有调用方，沿用“可编辑”语义暴露结果。 */
+export function canEditFinanceBaseFields(finance: AssetFinanceReadonlyContext): boolean {
+  return !isFinanceFieldReadonly(finance)
 }
 
 /** 构建财务摘要区，保证页面展示顺序稳定。 */
