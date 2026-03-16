@@ -60,13 +60,14 @@
 
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { list, delOperlog, cleanOperlog } from '@/api/system/operlog'
+  // 复用 system/log 下已经收敛好的操作日志实现，避免历史路径漂移。
+  import { list, delOperlog, cleanOperlog } from '@/api/system/log/operlog'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import DictTag from '@/components/DictTag/index.vue'
   import { ElMessageBox, ElMessage } from 'element-plus'
-  import OperlogDetailDialog from './modules/operlog-detail-dialog.vue'
+  import OperlogDetailDialog from '../log/operlog/modules/operlog-detail-dialog.vue'
 
   defineOptions({ name: 'Operlog' })
 
@@ -151,7 +152,7 @@
           align: 'right',
           render: (row: any) =>
             h('div', { class: 'flex justify-end gap-2' }, [
-              h(ArtButtonTable, { type: 'info', onClick: () => handleView(row) }),
+              h(ArtButtonTable, { type: 'view', onClick: () => handleView(row) }),
               h(ArtButtonTable, { type: 'delete', onClick: () => handleDelete(row) })
             ])
         }
@@ -191,7 +192,11 @@
       await delOperlog(operIds)
       ElMessage.success('删除成功')
       refreshData()
-    } catch (error) {}
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除系统操作日志失败:', error)
+      }
+    }
   }
 
   const handleClean = async () => {
@@ -200,7 +205,11 @@
       await cleanOperlog()
       ElMessage.success('清空成功')
       refreshData()
-    } catch (error) {}
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('清空系统操作日志失败:', error)
+      }
+    }
   }
 
   onMounted(() => {
