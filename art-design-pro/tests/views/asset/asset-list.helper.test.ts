@@ -23,6 +23,22 @@ describe('asset list helper', () => {
     })
   })
 
+  it('builds query with archived filter when requested', () => {
+    expect(
+      buildAssetListQuery({
+        assetNo: '  FA-009  ',
+        assetName: '  闲置显示器  ',
+        showArchived: true
+      } as any)
+    ).toEqual({
+      assetNo: 'FA-009',
+      assetName: '闲置显示器',
+      assetStatus: undefined,
+      categoryId: undefined,
+      showArchived: true
+    })
+  })
+
   it('collects asset ids for bulk actions', () => {
     expect(collectAssetIds([{ assetId: 1 }, { assetId: 2 }])).toEqual([1, 2])
   })

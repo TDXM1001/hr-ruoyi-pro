@@ -14,12 +14,14 @@ export function buildAssetListQuery(filters: {
   assetName?: string
   assetStatus?: string
   categoryId?: number
+  showArchived?: boolean
 }) {
   return {
     assetNo: filters.assetNo?.trim() || undefined,
     assetName: filters.assetName?.trim() || undefined,
     assetStatus: filters.assetStatus || undefined,
-    categoryId: filters.categoryId
+    categoryId: filters.categoryId,
+    showArchived: filters.showArchived || undefined
   }
 }
 

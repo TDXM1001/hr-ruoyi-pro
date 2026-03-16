@@ -45,10 +45,10 @@ export function updateInfo(data: AssetAggregateReq) {
 }
 
 /**
- * 删除资产信息
+ * 归档资产信息
  * @param assetId 资产主键
  */
-export function delInfo(assetId: number | string) {
+export function archiveInfo(assetId: number | string) {
   return request.del({
     url: `/asset/info/${assetId}`
   })

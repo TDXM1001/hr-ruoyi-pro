@@ -24,6 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="capitalizationDate" column="capitalization_date" />
         <result property="enableDate" column="enable_date" />
         <result property="assetStatus" column="asset_status" />
+        <result property="delFlag" column="del_flag" />
         <result property="remark" column="remark" />
         <result property="createTime" column="create_time" />
         <result property="updateTime" column="update_time" />
@@ -33,13 +34,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select asset_id, asset_no, asset_name, category_id, asset_type, spec_model, unit,
                ownership_org_id, manage_dept_id, use_dept_id, responsible_user_id, user_id,
                location_id, location_text, acquire_method, purchase_date, capitalization_date,
-               enable_date, asset_status, remark, create_time, update_time
+               enable_date, asset_status, del_flag, remark, create_time, update_time
         from asset_info
     </sql>
 
     <select id="selectAssetInfoList" parameterType="com.ruoyi.asset.domain.AssetInfo" resultMap="AssetInfoResult">
         <include refid="selectAssetInfoVo"/>
         <where>
+            <choose>
+                <when test="showArchived != null and showArchived">
+                    and del_flag = '2'
+                </when>
+                <otherwise>
+                    and (del_flag is null or del_flag != '2')
+                </otherwise>
+            </choose>
             <if test="assetId != null"> and asset_id = #{assetId}</if>
             <if test="assetNo != null and assetNo != ''"> and asset_no = #{assetNo}</if>
             <if test="assetName != null and assetName != ''"> and asset_name like concat('%', #{assetName}, '%')</if>
@@ -86,6 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="capitalizationDate != null">capitalization_date,</if>
             <if test="enableDate != null">enable_date,</if>
             <if test="assetStatus != null and assetStatus != ''">asset_status,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
             <if test="remark != null and remark != ''">remark,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
@@ -109,6 +119,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="capitalizationDate != null">#{capitalizationDate},</if>
             <if test="enableDate != null">#{enableDate},</if>
             <if test="assetStatus != null and assetStatus != ''">#{assetStatus},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
@@ -136,6 +147,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="capitalizationDate != null">capitalization_date = #{capitalizationDate},</if>
             <if test="enableDate != null">enable_date = #{enableDate},</if>
             <if test="assetStatus != null">asset_status = #{assetStatus},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
             <if test="remark != null">remark = #{remark},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>

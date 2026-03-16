@@ -53,6 +53,8 @@ public interface AssetInfoMapper {
     /**
      * 按资产ID删除资产主档。
      *
+     * 保留该接口仅为了兼容历史调用方，批次二开始删除语义由服务层收口为“归档”。
+     *
      * @param assetId 资产ID
      * @return 结果
      */
@@ -60,6 +62,8 @@ public interface AssetInfoMapper {
 
     /**
      * 批量删除资产主档。
+     *
+     * 保留该接口仅为了兼容历史调用方，批次二开始删除语义由服务层收口为“归档”。
      *
      * @param assetIds 资产ID集合
      * @return 结果

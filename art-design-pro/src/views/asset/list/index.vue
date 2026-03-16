@@ -92,11 +92,11 @@
               v-auth="'asset:info:remove'"
               type="danger"
               plain
-              :disabled="!multiple"
-              @click="() => handleDelete()"
+              :disabled="archiveActionDisabled"
+              @click="() => handleArchive()"
               v-ripple
             >
-              删除
+              批量归档
             </ElButton>
             <ElButton
               v-auth="'asset:info:export'"
@@ -182,7 +182,7 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted, watch, h } from 'vue'
   import { useRouter } from 'vue-router'
-  import { listInfo, delInfo, exportInfo } from '@/api/asset/info'
+  import { archiveInfo, listInfo, exportInfo } from '@/api/asset/info'
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
   import type { AssetLifecycleAction, AssetListItem } from '@/types/asset'
@@ -229,7 +229,8 @@
   const initialSearchState = {
     assetNo: '',
     assetName: '',
-    assetStatus: undefined as string | undefined
+    assetStatus: undefined as string | undefined,
+    showArchived: false
   }
 
   const formFilters = reactive({ ...initialSearchState })
@@ -256,8 +257,20 @@
         clearable: true,
         options: asset_status.value
       }
+    },
+    {
+      label: '查看已归档',
+      key: 'showArchived',
+      type: 'switch',
+      props: {
+        inlinePrompt: true,
+        activeText: '是',
+        inactiveText: '否'
+      }
     }
   ])
+
+  const archiveActionDisabled = computed(() => multiple.value || Boolean(formFilters.showArchived))
 
   // 表格
   const {
@@ -361,6 +374,7 @@
   const handleReset = () => {
     Object.assign(formFilters, initialSearchState)
     searchParams.categoryId = undefined
+    searchParams.showArchived = undefined
     resetSearchParams()
   }
 
@@ -396,22 +410,24 @@
     financeVisible.value = true
   }
 
-  const handleDelete = async (row?: AssetListItem) => {
+  const handleArchive = async (row?: AssetListItem) => {
     const assetIds = row?.assetId || ids.value
     if (!assetIds || (Array.isArray(assetIds) && assetIds.length === 0)) return
 
     const displayAssetNos = row?.assetNo || selectedAssetNos.value.join('、')
 
     try {
-      await ElMessageBox.confirm(`是否确认删除资产编号为"${displayAssetNos}"的数据项？`, '提示', {
-        type: 'warning'
-      })
-      await delInfo(Array.isArray(assetIds) ? assetIds.join(',') : assetIds)
-      ElMessage.success('删除成功')
+      await ElMessageBox.confirm(
+        `是否确认将资产编号为“${displayAssetNos}”的记录归档并移出日常台账？`,
+        '归档确认',
+        { type: 'warning' }
+      )
+      await archiveInfo(Array.isArray(assetIds) ? assetIds.join(',') : assetIds)
+      ElMessage.success('归档成功')
       refreshData()
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('删除资产失败:', error)
+        console.error('归档资产失败:', error)
       }
     }
   }
@@ -479,10 +495,15 @@
     }
 
     if (action.key === 'delete') {
-      return h(ArtButtonTable, {
-        type: 'delete',
-        onClick: () => handleDelete(row)
-      })
+      return h(
+        ElButton,
+        {
+          type: 'danger',
+          link: true,
+          onClick: () => handleArchive(row)
+        },
+        () => '归档'
+      )
     }
 
     const actionHandlerMap: Partial<Record<AssetLifecycleAction['key'], () => void>> = {
@@ -509,6 +530,10 @@
 
   /** 统一拼装操作列，保留“编辑”与“变更”的独立语义。 */
   const buildOperationButtons = (row: AssetListItem) => {
+    if (formFilters.showArchived) {
+      return [h('span', { class: 'text-[12px] text-[var(--art-gray-500)]' }, '已归档，仅供查看')]
+    }
+
     const lifecycleActions = buildLifecycleActions(row)
     const deleteAction = lifecycleActions.find((item) => item.key === 'delete')
     const otherLifecycleActions = lifecycleActions.filter((item) => item.key !== 'delete')

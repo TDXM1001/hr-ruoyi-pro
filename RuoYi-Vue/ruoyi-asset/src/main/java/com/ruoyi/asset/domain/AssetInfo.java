@@ -2,6 +2,7 @@ package com.ruoyi.asset.domain;
 
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -86,6 +87,13 @@ public class AssetInfo extends BaseEntity {
     /** 资产状态 */
     @Excel(name = "资产状态", readConverterExp = "1=在用,2=领用中,3=维修中,4=盘点中,5=已报废,6=已处置,7=闲置")
     private String assetStatus;
+
+    /** 删除标记：0=存在 2=归档 */
+    private String delFlag;
+
+    /** 仅用于列表查询时切换“查看已归档”视图。 */
+    @JsonIgnore
+    private Boolean showArchived;
 
     public Long getAssetId() {
         return assetId;
@@ -239,6 +247,22 @@ public class AssetInfo extends BaseEntity {
         this.assetStatus = assetStatus;
     }
 
+    public String getDelFlag() {
+        return delFlag;
+    }
+
+    public void setDelFlag(String delFlag) {
+        this.delFlag = delFlag;
+    }
+
+    public Boolean getShowArchived() {
+        return showArchived;
+    }
+
+    public void setShowArchived(Boolean showArchived) {
+        this.showArchived = showArchived;
+    }
+
     /**
      * 兼容旧调用方写入使用部门。
      */
@@ -275,6 +299,7 @@ public class AssetInfo extends BaseEntity {
             .append("capitalizationDate", getCapitalizationDate())
             .append("enableDate", getEnableDate())
             .append("assetStatus", getAssetStatus())
+            .append("delFlag", getDelFlag())
             .append("remark", getRemark())
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())

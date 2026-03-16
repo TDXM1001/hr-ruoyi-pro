@@ -95,12 +95,12 @@ public class AssetInfoController extends BaseController {
     }
 
     /**
-     * 删除资产主档。
+     * 归档资产主档。
      */
     @PreAuthorize("@ss.hasPermi('asset:info:remove')")
-    @Log(title = "资产主档", businessType = BusinessType.DELETE)
+    @Log(title = "资产主档归档", businessType = BusinessType.DELETE)
     @DeleteMapping("/{assetIds}")
-    public AjaxResult remove(@PathVariable Long[] assetIds) {
+    public AjaxResult archive(@PathVariable Long[] assetIds) {
         return toAjax(assetInfoService.deleteAssetInfoByAssetIds(assetIds));
     }
 }
