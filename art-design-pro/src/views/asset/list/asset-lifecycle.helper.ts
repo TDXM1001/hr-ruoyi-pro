@@ -77,9 +77,15 @@ export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecy
           mode: 'action'
         },
         {
-          key: 'disposal',
-          label: '报废/处置',
+          key: 'scrap',
+          label: '报废',
           tone: 'warning',
+          mode: 'action'
+        },
+        {
+          key: 'dispose',
+          label: '处置',
+          tone: 'danger',
           mode: 'action'
         }
       ]

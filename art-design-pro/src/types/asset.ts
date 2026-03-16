@@ -23,6 +23,22 @@ export const ASSET_STATUS_OPTIONS = [
 /** 已报废、已处置属于固定资产终态，不再开放固定资产生命周期动作。 */
 export const FIXED_ASSET_TERMINAL_STATUSES = ['5', '6'] as const
 
+/** 固定资产处置类型。 */
+export const FIXED_ASSET_DISPOSAL_TYPE_OPTIONS = [
+  { label: '报废', value: 'scrap' },
+  { label: '出售', value: 'sell' },
+  { label: '划转', value: 'transfer' },
+  { label: '捐赠', value: 'donate' }
+] as const
+
+/** 固定资产处置类型联合类型。 */
+export type FixedAssetDisposalType = (typeof FIXED_ASSET_DISPOSAL_TYPE_OPTIONS)[number]['value']
+
+/** 把固定资产处置类型翻译成页面文案。 */
+export function formatFixedAssetDisposalType(value?: string) {
+  return FIXED_ASSET_DISPOSAL_TYPE_OPTIONS.find((item) => item.value === value)?.label || '--'
+}
+
 /** 资产基础信息。 */
 export interface AssetBasicInfo {
   assetId?: number
@@ -224,7 +240,8 @@ export interface AssetLifecycleAction {
     | 'delete'
     | 'requisition'
     | 'repair'
-    | 'disposal'
+    | 'scrap'
+    | 'dispose'
     | 'realEstateOwnership'
     | 'realEstateUsage'
     | 'realEstateStatus'

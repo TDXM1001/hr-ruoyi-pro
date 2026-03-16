@@ -15,32 +15,33 @@ describe('asset lifecycle helper', () => {
   it('returns fixed asset actions for active assets', () => {
     expect(
       buildLifecycleActions({ assetType: '1', assetStatus: '1' }).map((item) => item.key)
-    ).toEqual(expect.arrayContaining(['change', 'delete', 'requisition', 'repair', 'disposal']))
+    ).toEqual(expect.arrayContaining(['change', 'delete', 'requisition', 'repair', 'scrap', 'dispose']))
   })
 
   it('keeps lifecycle actions for idle fixed assets', () => {
     expect(
       buildLifecycleActions({ assetType: '1', assetStatus: '7' }).map((item) => item.key)
-    ).toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
+    ).toEqual(expect.arrayContaining(['requisition', 'repair', 'scrap', 'dispose']))
   })
 
-  it('uses real actions for active fixed asset repair and disposal entries', () => {
+  it('uses split actions for active fixed asset scrap and disposal entries', () => {
     const actions = buildLifecycleActions({ assetType: '1', assetStatus: '1' })
 
     expect(actions.find((item) => item.key === 'repair')?.mode).toBe('action')
-    expect(actions.find((item) => item.key === 'disposal')?.mode).toBe('action')
+    expect(actions.find((item) => item.key === 'scrap')?.label).toBe('报废')
+    expect(actions.find((item) => item.key === 'dispose')?.label).toBe('处置')
   })
 
   it('hides fixed asset lifecycle actions after the asset is scrapped', () => {
     expect(
       buildLifecycleActions({ assetType: '1', assetStatus: '5' }).map((item) => item.key)
-    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
+    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'scrap', 'dispose']))
   })
 
   it('hides fixed asset lifecycle actions after the asset is disposed', () => {
     expect(
       buildLifecycleActions({ assetType: '1', assetStatus: '6' }).map((item) => item.key)
-    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
+    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'scrap', 'dispose']))
   })
 
   it('filters out fixed-asset-only actions for real estate', () => {

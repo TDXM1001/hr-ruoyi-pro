@@ -12,7 +12,7 @@ import com.ruoyi.asset.service.IAssetDisposalService;
 import com.ruoyi.common.utils.SecurityUtils;
 
 /**
- * 资产报废 Controller
+ * 固定资产报废/处置 Controller。
  */
 @RestController
 @RequestMapping("/asset/disposal")

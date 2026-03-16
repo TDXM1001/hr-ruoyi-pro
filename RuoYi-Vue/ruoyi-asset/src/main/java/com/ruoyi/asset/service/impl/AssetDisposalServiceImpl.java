@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 资产报废服务实现
+ * 固定资产报废/处置服务实现。
  */
 @Service
 public class AssetDisposalServiceImpl implements IAssetDisposalService {
@@ -44,6 +44,7 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
     @Transactional
     @Override
     public int insertAssetDisposal(AssetDisposal assetDisposal) {
+        String disposalType = normalizeAndValidateDisposalType(assetDisposal);
         assetDisposal.setCreateTime(DateUtils.getNowDate());
         assetDisposal.setStatus(0); // 审批中
 
@@ -55,8 +56,8 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
         
         int rows = assetDisposalMapper.insertAssetDisposal(assetDisposal);
 
-        // 状态更新也切换为使用 assetId，避免和业务编号耦合。
-        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_SCRAPPED);
+        // 提交申请后就要把资产切到对应生命周期分支，方便台账动作及时收敛。
+        updateAssetStatus(assetInfo.getAssetId(), resolveTargetAssetStatus(disposalType));
 
         // 发起审批流程
         approvalEngine.startProcess(assetDisposal.getDisposalNo(), "asset_disposal");
@@ -96,5 +97,27 @@ public class AssetDisposalServiceImpl implements IAssetDisposalService {
         assetInfo.setAssetId(assetId);
         assetInfo.setAssetStatus(assetStatus);
         assetInfoMapper.updateAssetInfo(assetInfo);
+    }
+
+    /**
+     * 新增申请必须显式说明是报废还是处置，避免再次回到“混合语义”。
+     */
+    private String normalizeAndValidateDisposalType(AssetDisposal assetDisposal) {
+        String disposalType = AssetDisposal.normalizeDisposalType(assetDisposal.getDisposalType());
+        if (StringUtils.isBlank(disposalType)) {
+            throw new ServiceException("处置类型不能为空");
+        }
+        if (!AssetDisposal.isSupportedDisposalType(disposalType)) {
+            throw new ServiceException("不支持的处置类型: " + assetDisposal.getDisposalType());
+        }
+        assetDisposal.setDisposalType(disposalType);
+        return disposalType;
+    }
+
+    /**
+     * scrap 进入“已报废”，出售/划转/捐赠统一进入“已处置”。
+     */
+    private String resolveTargetAssetStatus(String disposalType) {
+        return AssetDisposal.isScrapType(disposalType) ? ASSET_STATUS_SCRAPPED : ASSET_STATUS_DISPOSED;
     }
 }

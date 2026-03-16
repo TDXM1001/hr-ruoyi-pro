@@ -4,7 +4,7 @@ import java.util.List;
 import com.ruoyi.asset.domain.AssetDisposal;
 
 /**
- * 资产报废服务接口
+ * 固定资产报废/处置服务接口。
  */
 public interface IAssetDisposalService {
     public AssetDisposal selectAssetDisposalByDisposalNo(String disposalNo);

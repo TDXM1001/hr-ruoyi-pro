@@ -25,6 +25,7 @@ describe('Asset Disposal API', () => {
     expectTypeOf<Parameters<typeof applyDisposal>[0]>().toEqualTypeOf<{
       assetId?: number
       assetNo: string
+      disposalType: 'scrap' | 'sell' | 'transfer' | 'donate'
       reason: string
     }>()
   })
@@ -49,11 +50,21 @@ describe('Asset Disposal API', () => {
   })
 
   it('posts disposal apply payload', async () => {
-    await applyDisposal({ assetId: 103, assetNo: 'FA-2026-0003', reason: '报废测试' })
+    await applyDisposal({
+      assetId: 103,
+      assetNo: 'FA-2026-0003',
+      disposalType: 'sell',
+      reason: '处置测试'
+    })
 
     expect(http.post).toHaveBeenCalledWith({
       url: '/asset/disposal',
-      data: { assetId: 103, assetNo: 'FA-2026-0003', reason: '报废测试' }
+      data: {
+        assetId: 103,
+        assetNo: 'FA-2026-0003',
+        disposalType: 'sell',
+        reason: '处置测试'
+      }
     })
   })
 })

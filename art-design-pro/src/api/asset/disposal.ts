@@ -1,4 +1,5 @@
 import request from '@/utils/http'
+import type { FixedAssetDisposalType } from '@/types/asset'
 
 /**
  * 处置台账列表查询参数
@@ -20,6 +21,7 @@ export interface DisposalQuery {
 export interface ApplyDisposalReq {
   assetId?: number
   assetNo: string
+  disposalType: FixedAssetDisposalType
   reason: string
 }
 
@@ -30,6 +32,7 @@ export interface AssetDisposalItem {
   disposalNo: string
   assetId?: number
   assetNo: string
+  disposalType?: FixedAssetDisposalType
   reason?: string
   status: number
   applyUserId?: number

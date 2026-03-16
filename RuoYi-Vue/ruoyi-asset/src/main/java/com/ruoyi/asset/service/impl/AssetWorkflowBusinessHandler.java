@@ -162,10 +162,7 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
     }
 
     /**
-     * 处置审批通过后，当前阶段统一按“已报废”收口。
-     *
-     * 当前域模型还没有把 disposalType 正式扩成“报废/处置”两条精细分支，
-     * 因此本批次先落到状态 5，等后续处置类型细化时再扩展到状态 6。
+     * 处置审批通过后，按处置类型把资产收敛到“已报废”或“已处置”。
      */
     private void approveDisposal(String businessId) {
         AssetDisposal disposal = requireDisposal(businessId);
@@ -174,7 +171,7 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
         updatePayload.setStatus(1);
         assetDisposalMapper.updateAssetDisposal(updatePayload);
 
-        updateAssetStatus(disposal.getAssetId(), ASSET_STATUS_SCRAPPED);
+        updateAssetStatus(disposal.getAssetId(), resolveApprovedDisposalStatus(disposal));
     }
 
     /**
@@ -314,5 +311,14 @@ public class AssetWorkflowBusinessHandler implements WorkflowBusinessHandler {
         assetInfo.setAssetId(assetId);
         assetInfo.setAssetStatus(assetStatus);
         assetInfoMapper.updateAssetInfo(assetInfo);
+    }
+
+    /**
+     * 历史空值仍按报废兼容，新增单据已由服务层强制填写 disposalType。
+     */
+    private String resolveApprovedDisposalStatus(AssetDisposal disposal) {
+        return AssetDisposal.isScrapType(disposal.getDisposalType())
+            ? ASSET_STATUS_SCRAPPED
+            : ASSET_STATUS_DISPOSED;
     }
 }

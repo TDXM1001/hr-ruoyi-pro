@@ -320,7 +320,7 @@
         {
           prop: 'operation',
           label: '操作',
-          width: 420,
+          width: 500,
           align: 'right',
           formatter: (row: any) => {
             return h(
@@ -444,6 +444,17 @@
    * 复杂的选择器与批量动作留到后续体验优化批次处理。
    */
   const openLifecycleLedger = (path: string, row: AssetListItem) => {
+    openLifecycleLedgerWithQuery(path, row)
+  }
+
+  /**
+   * 生命周期入口统一携带资产上下文，必要时带上动作意图。
+   */
+  const openLifecycleLedgerWithQuery = (
+    path: string,
+    row: AssetListItem,
+    extraQuery: Record<string, string> = {}
+  ) => {
     void router.push({
       path,
       query: {
@@ -451,7 +462,8 @@
         assetNo: row.assetNo,
         assetName: row.assetName,
         assetStatus: row.assetStatus,
-        openCreate: '1'
+        openCreate: '1',
+        ...extraQuery
       }
     })
   }
@@ -461,7 +473,11 @@
   }
 
   const handleDisposal = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/disposal/index', row)
+    openLifecycleLedgerWithQuery('/asset/disposal/index', row, { disposalIntent: 'dispose' })
+  }
+
+  const handleScrap = (row: AssetListItem) => {
+    openLifecycleLedgerWithQuery('/asset/disposal/index', row, { disposalIntent: 'scrap' })
   }
 
   const handleRealEstateOwnership = (row: AssetListItem) => {
@@ -509,7 +525,8 @@
     const actionHandlerMap: Partial<Record<AssetLifecycleAction['key'], () => void>> = {
       requisition: () => handleRequisition(row),
       repair: () => handleMaintenance(row),
-      disposal: () => handleDisposal(row),
+      scrap: () => handleScrap(row),
+      dispose: () => handleDisposal(row),
       realEstateOwnership: () => handleRealEstateOwnership(row),
       realEstateUsage: () => handleRealEstateUsage(row),
       realEstateStatus: () => handleRealEstateStatus(row),

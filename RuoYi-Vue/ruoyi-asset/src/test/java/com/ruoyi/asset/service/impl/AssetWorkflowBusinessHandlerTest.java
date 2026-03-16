@@ -150,6 +150,7 @@ class AssetWorkflowBusinessHandlerTest {
         disposal.setDisposalNo("DIS-20260315-001");
         disposal.setAssetId(3001L);
         disposal.setStatus(0);
+        disposal.setDisposalType("scrap");
         when(assetDisposalMapper.selectAssetDisposalByDisposalNo("DIS-20260315-001")).thenReturn(disposal);
 
         assetWorkflowBusinessHandler.onApprove("asset_disposal", "DIS-20260315-001");
@@ -164,11 +165,32 @@ class AssetWorkflowBusinessHandlerTest {
     }
 
     @Test
+    void shouldMarkDisposalApprovedAndKeepAssetAsDisposedWhenApprovalPasses() {
+        AssetDisposal disposal = new AssetDisposal();
+        disposal.setDisposalNo("DIS-20260315-003");
+        disposal.setAssetId(3003L);
+        disposal.setStatus(0);
+        disposal.setDisposalType("sell");
+        when(assetDisposalMapper.selectAssetDisposalByDisposalNo("DIS-20260315-003")).thenReturn(disposal);
+
+        assetWorkflowBusinessHandler.onApprove("asset_disposal", "DIS-20260315-003");
+
+        ArgumentCaptor<AssetDisposal> disposalCaptor = ArgumentCaptor.forClass(AssetDisposal.class);
+        verify(assetDisposalMapper).updateAssetDisposal(disposalCaptor.capture());
+        assertEquals(1, disposalCaptor.getValue().getStatus());
+
+        ArgumentCaptor<AssetInfo> assetCaptor = ArgumentCaptor.forClass(AssetInfo.class);
+        verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
+        assertEquals("6", assetCaptor.getValue().getAssetStatus());
+    }
+
+    @Test
     void shouldRollbackDisposalAssetStatusWhenApprovalRejected() {
         AssetDisposal disposal = new AssetDisposal();
         disposal.setDisposalNo("DIS-20260315-002");
         disposal.setAssetId(3002L);
         disposal.setStatus(0);
+        disposal.setDisposalType("transfer");
         when(assetDisposalMapper.selectAssetDisposalByDisposalNo("DIS-20260315-002")).thenReturn(disposal);
 
         assetWorkflowBusinessHandler.onReject("asset_disposal", "DIS-20260315-002");
