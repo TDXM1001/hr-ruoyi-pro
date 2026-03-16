@@ -188,7 +188,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and ai.asset_status not in ('5', '6')
           and are.land_term_end_date is not null
           and are.land_term_end_date >= curdate()
-          and are.land_term_end_date <= #{thresholdDate}
+          and are.land_term_end_date &lt;= #{thresholdDate}
         order by are.land_term_end_date asc, ai.asset_id desc
     </select>
 </mapper>
