@@ -77,11 +77,21 @@
     *   **用途**：
         *   创建 `asset/real-estate/ownership/index`、`asset/real-estate/usage/index`、`asset/real-estate/status/index`、`asset/real-estate/disposal/index` 四个台账菜单。
         *   补齐 `asset:realEstateOwnership:*`、`asset:realEstateUsage:*`、`asset:realEstateStatus:*`、`asset:realEstateDisposal:*` 的最小按钮权限。
+13. **`20260316_asset_governance_patch.sql`**
+    *   **适用场景**：数据库已执行过旧版字典或生命周期脚本，仍存在资产类型、资产状态、处置类型口径漂移。
+    *   **依赖**：
+        *   建议 `20260314_asset_data_model_refactor.sql` 已执行，主档字段已统一为 `asset_type`、`asset_status`。
+        *   `20260312_asset_workflow_business.sql` 已执行，`asset_disposal.disposal_type` 字段已存在。
+    *   **用途**：
+        *   把 `asset_type` 字典统一为 `1=固定资产 2=不动产`。
+        *   把 `asset_status` 字典统一为 `1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置`。
+        *   为历史 `asset_disposal.disposal_type` 空值回填默认 `scrap`，并给出 sell/transfer/donate 的治理说明。
+        *   明确旧菜单旧命名需继续配合 `20260315_asset_lifecycle_workflow_menu_patch.sql` 收口。
 
 ## 执行建议
 
-*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11、12 个脚本；只有在菜单或业务流水来自旧版脚本时，才需要补充执行第 9、10 个补丁脚本。
-*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11、12 个脚本。
+*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11、12 个脚本。全新库使用最新 `20260311_asset_dicts.sql` 时，一般不需要执行第 13 个治理补丁。
+*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11、12 个脚本；如字典、状态或 disposal_type 仍是旧口径，再执行第 13 个治理补丁脚本。
 *   **补丁执行失败时**：如果第 9 个脚本在收紧非空约束时失败，通常说明某些业务单据的 `asset_no` 无法匹配到 `asset_info`，需要先修正历史数据后再重跑补丁。
 
 ---

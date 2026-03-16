@@ -3,6 +3,26 @@
  * 这里收敛前端和后端聚合接口共用的核心数据结构，避免页面重复声明。
  */
 
+/** 资产类型：1=固定资产，2=不动产。 */
+export const ASSET_TYPE_OPTIONS = [
+  { label: '固定资产', value: '1' },
+  { label: '不动产', value: '2' }
+] as const
+
+/** 资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置。 */
+export const ASSET_STATUS_OPTIONS = [
+  { label: '在用', value: '1' },
+  { label: '领用中', value: '2' },
+  { label: '维修中', value: '3' },
+  { label: '盘点中', value: '4' },
+  { label: '已报废', value: '5' },
+  { label: '已处置', value: '6' },
+  { label: '闲置', value: '7' }
+] as const
+
+/** 已报废、已处置属于固定资产终态，不再开放固定资产生命周期动作。 */
+export const FIXED_ASSET_TERMINAL_STATUSES = ['5', '6'] as const
+
 /** 资产基础信息。 */
 export interface AssetBasicInfo {
   assetId?: number
@@ -24,6 +44,7 @@ export interface AssetBasicInfo {
   purchaseDate?: string
   capitalizationDate?: string
   enableDate?: string
+  /** 资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置。 */
   assetStatus: string
   remark?: string
   createTime?: string
@@ -183,6 +204,7 @@ export interface AssetListItem {
   specModel?: string
   useDeptId?: number
   locationText?: string
+  /** 资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置。 */
   assetStatus: string
   purchaseDate?: string
   capitalizationDate?: string

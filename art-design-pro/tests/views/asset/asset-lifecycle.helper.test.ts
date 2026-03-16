@@ -1,19 +1,46 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { buildLifecycleActions } from '../../../src/views/asset/list/asset-lifecycle.helper'
 
 describe('asset lifecycle helper', () => {
-  it('returns fixed asset actions', () => {
+  const assetTypesSource = readFileSync(resolve(process.cwd(), 'src/types/asset.ts'), 'utf8')
+
+  it('locks shared asset status semantics in the type definition file', () => {
+    expect(assetTypesSource).toContain('1=固定资产，2=不动产')
+    expect(assetTypesSource).toContain('1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置')
+  })
+
+  it('returns fixed asset actions for active assets', () => {
     expect(
       buildLifecycleActions({ assetType: '1', assetStatus: '1' }).map((item) => item.key)
     ).toEqual(expect.arrayContaining(['change', 'delete', 'requisition', 'repair', 'disposal']))
   })
 
-  it('uses real actions for fixed asset repair and disposal entries', () => {
+  it('keeps lifecycle actions for idle fixed assets', () => {
+    expect(
+      buildLifecycleActions({ assetType: '1', assetStatus: '7' }).map((item) => item.key)
+    ).toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
+  })
+
+  it('uses real actions for active fixed asset repair and disposal entries', () => {
     const actions = buildLifecycleActions({ assetType: '1', assetStatus: '1' })
 
     expect(actions.find((item) => item.key === 'repair')?.mode).toBe('action')
     expect(actions.find((item) => item.key === 'disposal')?.mode).toBe('action')
+  })
+
+  it('hides fixed asset lifecycle actions after the asset is scrapped', () => {
+    expect(
+      buildLifecycleActions({ assetType: '1', assetStatus: '5' }).map((item) => item.key)
+    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
+  })
+
+  it('hides fixed asset lifecycle actions after the asset is disposed', () => {
+    expect(
+      buildLifecycleActions({ assetType: '1', assetStatus: '6' }).map((item) => item.key)
+    ).not.toEqual(expect.arrayContaining(['requisition', 'repair', 'disposal']))
   })
 
   it('filters out fixed-asset-only actions for real estate', () => {

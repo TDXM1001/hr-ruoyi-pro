@@ -84,13 +84,14 @@ CREATE TABLE `asset_maintenance` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='资产维修单表';
 
 -- 资产处置/报废单表
+-- 当前阶段通过 disposal_type 区分 scrap/sell/transfer/donate 等业务语义。
 CREATE TABLE `asset_disposal` (
   `disposal_no` varchar(50) NOT NULL COMMENT '处置单号',
   `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
   `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
   `apply_user_id` bigint(20) NOT NULL COMMENT '申请人',
   `apply_dept_id` bigint(20) NOT NULL COMMENT '申请部门',
-  `disposal_type` varchar(20) DEFAULT NULL COMMENT '处置类型(如: scrap 报废, sell 变卖)',
+  `disposal_type` varchar(20) DEFAULT NULL COMMENT '处置类型（scrap=报废 sell=出售 transfer=划转 donate=捐赠）',
   `reason` varchar(500) DEFAULT NULL COMMENT '处置原因',
   `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回',
   `create_time` datetime DEFAULT NULL,

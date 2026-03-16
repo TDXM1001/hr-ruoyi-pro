@@ -1,4 +1,15 @@
-import type { AssetLifecycleAction, AssetLifecycleContext } from '@/types/asset'
+import {
+  FIXED_ASSET_TERMINAL_STATUSES,
+  type AssetLifecycleAction,
+  type AssetLifecycleContext
+} from '@/types/asset'
+
+/** 已报废、已处置资产保留查看和编辑入口，但隐藏固定资产生命周期动作。 */
+function shouldHideFixedAssetLifecycleActions(assetStatus?: string) {
+  return FIXED_ASSET_TERMINAL_STATUSES.includes(
+    assetStatus as (typeof FIXED_ASSET_TERMINAL_STATUSES)[number]
+  )
+}
 
 /** 生命周期入口负责声明“哪些动作已经能走通”，不在这里写页面跳转细节。 */
 export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecycleAction[] {
@@ -48,25 +59,30 @@ export function buildLifecycleActions(asset: AssetLifecycleContext): AssetLifecy
     ]
   }
 
-  return [
-    {
-      key: 'requisition',
-      label: '领用',
-      tone: 'primary',
-      mode: 'action'
-    },
-    {
-      key: 'repair',
-      label: '维修',
-      tone: 'warning',
-      mode: 'action'
-    },
-    {
-      key: 'disposal',
-      label: '报废/处置',
-      tone: 'warning',
-      mode: 'action'
-    },
-    ...commonActions
-  ]
+  const fixedAssetActions: AssetLifecycleAction[] = shouldHideFixedAssetLifecycleActions(
+    asset.assetStatus
+  )
+    ? []
+    : [
+        {
+          key: 'requisition',
+          label: '领用',
+          tone: 'primary',
+          mode: 'action'
+        },
+        {
+          key: 'repair',
+          label: '维修',
+          tone: 'warning',
+          mode: 'action'
+        },
+        {
+          key: 'disposal',
+          label: '报废/处置',
+          tone: 'warning',
+          mode: 'action'
+        }
+      ]
+
+  return [...fixedAssetActions, ...commonActions]
 }
