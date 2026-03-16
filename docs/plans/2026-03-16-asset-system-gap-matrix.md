@@ -1,40 +1,25 @@
-﻿# 资产系统联调差异矩阵
+# 资产系统全菜单差异矩阵
 
-## 执行拆分与进度
+## 基线说明
 
-- [ ] 批次 1A：基线矩阵与冻结项
-- [ ] 批次 1B：前端共享契约基础收口（固定资产业务）
-- [ ] 批次 1C：后端固定资产业务单据口径收口
-- [ ] 批次 2A：前端共享契约扩展到不动产业务
-- [ ] 批次 2B：后端不动产业务单据口径收口
-- [ ] 批次 3A：资产分类与动态属性建模收口
-- [ ] 批次 3B：资产台账聚合表单、附件、财务收口
-- [ ] 批次 4A：固定资产业务页面联调
-- [ ] 批次 4B：不动产业务页面联调
-- [ ] 批次 5A：流程中心、报表预警与治理收口
-- [ ] 批次 5B：全菜单联调回归与上线前验证
+- 盘点范围覆盖左侧资产系统 9 个业务菜单，不含流程中心和报表页。
+- 主数据唯一内部主键冻结为 `assetId`，分类与属性管理继续使用 `categoryId`、`attrId` 作为局部主键。
+- 状态口径统一拆分为 `assetStatus`、`status`、`wfStatus`、`archiveStatus`，本矩阵用来标识当前代码是否已经完全对齐。
 
-## 现状差异矩阵
+## 现状矩阵
 
 | 菜单 | 前端页面 | 前端 API | 后端 Controller | 主键口径 | 状态口径 | 已知缺口 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 资产分类 | `art-design-pro/src/views/asset/category/index.vue` | `art-design-pro/src/api/asset/category.ts` `art-design-pro/src/api/asset/category-attr.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetCategoryController.java` `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetCategoryAttrController.java` | 分类主键与属性主键已分离 | 以分类状态与属性状态为主 | 需要补齐动态表单元数据、保留字段冲突和建模规则统一 |
-| 资产台账 | `art-design-pro/src/views/asset/list/index.vue` | `art-design-pro/src/api/asset/info.ts` `art-design-pro/src/api/asset/finance.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetInfoController.java` `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetFinanceController.java` | 已切到 `assetId` | `assetStatus` 已存在，`archiveStatus` 未完全显式化 | 需要继续统一聚合表单、附件、财务和归档口径 |
-| 领用归还 | `art-design-pro/src/views/asset/requisition/index.vue` | `art-design-pro/src/api/asset/requisition.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRequisitionController.java` | 已支持 `assetId + assetNo` | `status` 已有，`wfStatus` 未统一导出 | 需要收敛共享单据模型与流程状态导出 |
-| 维修管理 | `art-design-pro/src/views/asset/maintenance/index.vue` | `art-design-pro/src/api/asset/maintenance.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetMaintenanceController.java` | 已支持 `assetId/assetNo` 双口径 | `status` 已有，`wfStatus` 未统一导出 | 需要收敛共享单据模型与流程状态导出 |
-| 报废处置 | `art-design-pro/src/views/asset/disposal/index.vue` | `art-design-pro/src/api/asset/disposal.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetDisposalController.java` | 已支持 `assetId/assetNo` 双口径 | `status` 已有，`wfStatus` 未统一导出 | 需要收敛共享单据模型与流程状态导出 |
-| 权属变更 | `art-design-pro/src/views/asset/real-estate/ownership/index.vue` | `art-design-pro/src/api/asset/real-estate-ownership.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateOwnershipChangeController.java` | 已支持 `assetId/assetNo` | `status` 已有，`wfStatus` 未统一导出 | 需要进入第二批收敛共享单据模型 |
-| 用途变更 | `art-design-pro/src/views/asset/real-estate/usage/index.vue` | `art-design-pro/src/api/asset/real-estate-usage.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateUsageChangeController.java` | 已支持 `assetId/assetNo` | 以 `status` 为主 | 需要进入第二批收敛共享单据模型 |
-| 状态变更 | `art-design-pro/src/views/asset/real-estate/status/index.vue` | `art-design-pro/src/api/asset/real-estate-status.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateStatusChangeController.java` | 已支持 `assetId/assetNo` | 以 `status` 为主 | 需要进入第二批收敛共享单据模型 |
-| 注销处置 | `art-design-pro/src/views/asset/real-estate/disposal/index.vue` | `art-design-pro/src/api/asset/real-estate-disposal.ts` | `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateDisposalController.java` | 已支持 `assetId/assetNo` | `status` 已有，`wfStatus` 未统一导出 | 需要进入第二批收敛共享单据模型 |
-
-## 冻结项
-
-- 主键冻结：资产主档及所有业务单据统一以 `assetId` 作为内部关联主键，`assetNo` 只承担展示与业务编码职责。
-- 状态冻结：本轮联调明确区分 `assetStatus`、`status`、`wfStatus`、`archiveStatus` 四套语义，不再接受混用。
-- 菜单冻结：左侧资产系统菜单名称与层级本轮不再新增变体，只做联调收口。
-- 权限冻结：现有权限前缀保持稳定，优先在返回口径和页面联调层收口，不同步改造权限体系命名。
+| 资产分类 | `art-design-pro/src/views/asset/category/index.vue` | `art-design-pro/src/api/asset/category.ts`、`art-design-pro/src/api/asset/category-attr.ts` | `AssetCategoryController`、`AssetCategoryAttrController` | 分类使用 `categoryId`，属性使用 `attrId`，与资产主档通过 `categoryId` 关联 | 分类启停沿用 `status`，未纳入统一业务单据状态体系 | 保留字段冲突校验、属性元数据返回和动态表单驱动能力仍需收口 |
+| 资产台账 | `art-design-pro/src/views/asset/list/index.vue` | `art-design-pro/src/api/asset/info.ts`、`art-design-pro/src/api/asset/finance.ts` | `AssetInfoController`、`AssetFinanceController` | 已以 `assetId` 为主，`assetNo` 仍承担展示与业务编码 | 主档展示 `assetStatus`，归档能力与 `archiveStatus` 仍待显式收口 | 聚合详情、动态属性、附件、财务重算和折旧日志还需统一落地 |
+| 领用归还 | `art-design-pro/src/views/asset/requisition/index.vue` | `art-design-pro/src/api/asset/requisition.ts` | `AssetRequisitionController` | 创建已要求 `assetId + assetNo`，单据主键为 `requisitionNo` | 已有 `status`、`wfStatus` 字段，但未沉淀统一单据基类 | 共享单据模型缺失，列表/详情响应与资产快照字段还需统一 |
+| 维修管理 | `art-design-pro/src/views/asset/maintenance/index.vue` | `art-design-pro/src/api/asset/maintenance.ts` | `AssetMaintenanceController` | 当前仍允许仅传 `assetNo`，`assetId` 未完全强制 | 页面侧仅稳定暴露 `status`，`wfStatus` 缺失 | 创建契约、列表契约和状态回写规则尚未与统一模型对齐 |
+| 报废处置 | `art-design-pro/src/views/asset/disposal/index.vue` | `art-design-pro/src/api/asset/disposal.ts` | `AssetDisposalController` | 当前仍允许仅传 `assetNo`，`assetId` 未完全强制 | 页面侧仅稳定暴露 `status`，`wfStatus` 缺失 | 固定资产处置单据的统一基类、终态回写和时间线同步仍待补齐 |
+| 权属变更 | `art-design-pro/src/views/asset/real-estate/ownership/index.vue` | `art-design-pro/src/api/asset/real-estate-ownership.ts` | `AssetRealEstateOwnershipChangeController` | 当前 `assetId`、`assetNo` 仍为可选组合，未冻结为统一引用 | 仅暴露 `status`，未体现 `wfStatus` 语义 | 不动产单据未完全接入统一 `AssetRef`，审批态与主档回写需收口 |
+| 用途变更 | `art-design-pro/src/views/asset/real-estate/usage/index.vue` | `art-design-pro/src/api/asset/real-estate-usage.ts` | `AssetRealEstateUsageChangeController` | 当前 `assetId`、`assetNo` 仍为可选组合，未冻结为统一引用 | 仅暴露 `status`，未体现 `wfStatus` 语义 | 目标用途字段已独立，但统一业务单据基础字段仍不完整 |
+| 状态变更 | `art-design-pro/src/views/asset/real-estate/status/index.vue` | `art-design-pro/src/api/asset/real-estate-status.ts` | `AssetRealEstateStatusChangeController` | 当前 `assetId`、`assetNo` 仍为可选组合，未冻结为统一引用 | 使用 `status` 与 `targetAssetStatus`，未补足 `wfStatus` | 目标状态变更与资产主档状态回写规则还未统一建模 |
+| 注销处置 | `art-design-pro/src/views/asset/real-estate/disposal/index.vue` | `art-design-pro/src/api/asset/real-estate-disposal.ts` | `AssetRealEstateDisposalController` | 当前 `assetId`、`assetNo` 仍为可选组合，未冻结为统一引用 | 使用 `status` 与 `targetAssetStatus`，未补足 `wfStatus` | 注销/处置动作的扩展字段、终态回写和统一单据模型仍待收口 |
 
 ## 回归结果
 
-- 待第一批实现后补充。
+- 待批次 9 完成后回填全菜单联调与阻塞情况。
