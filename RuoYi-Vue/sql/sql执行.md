@@ -94,20 +94,29 @@
         *   为旧版 `wf_approval_instance` 自动补齐 `approver_id` 字段，并按模板回填历史实例的审批人。
         *   自动补齐最小审批模板数据，确保待办不会继续以“所有人可见”的旧方式运行。
         *   明确旧菜单旧命名需继续配合 `20260315_asset_lifecycle_workflow_menu_patch.sql` 收口。
+14. **`20260317_asset_menu_permission_patch.sql`**
+    *   **适用场景**：页面操作依赖 `asset:requisition:add/query` 或 `asset:finance:query`，但数据库未补齐对应按钮权限菜单。
+    *   **依赖**：
+        *   `20260311_asset_menu_init.sql` 已执行（需要 `asset:info:list` 菜单作为父节点）。
+        *   `20260312_asset_workflow_menu.sql` 已执行（需要 `asset/requisition/index` 菜单作为父节点）。
+    *   **用途**：
+        *   补齐领用台账按钮权限：`asset:requisition:query`、`asset:requisition:add`。
+        *   补齐资产台账财务查看权限：`asset:finance:query`。
+        *   解决“前端按钮存在但因权限缺失被禁用”的问题。
 
 ## 执行建议
 
-*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11、12 个脚本。全新库直接执行最新版 `20260312_asset_workflow_business.sql` 时，审批模板相关字段已经在脚本里，不一定需要第 13 个脚本；但如果你希望统一历史字典/处置口径，或者想让脚本可重复执行，也可以继续执行第 13 个脚本。
-*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11、12 个脚本；如字典、状态、`disposal_type` 或审批模板结构仍是旧口径，必须再执行第 13 个治理补丁脚本。
+*   **全新库初始化**：按 1 到 8 的顺序执行；如果需要不动产生命周期动作，再继续执行第 11、12 个脚本。全新库直接执行最新版 `20260312_asset_workflow_business.sql` 时，审批模板相关字段已经在脚本里，不一定需要第 13 个脚本；但如果你希望统一历史字典/处置口径，或者想让脚本可重复执行，也可以继续执行第 13 个脚本。若要使用资产台账里的“领用申请/财务查看”动作，请再执行第 14 个脚本补齐按钮权限。
+*   **已执行旧版脚本的升级库**：在完成现有初始化脚本后，额外执行第 9 个补丁脚本；如菜单仍是旧命名，再执行第 10 个补丁脚本；如需不动产生命周期，再执行第 11、12 个脚本；如字典、状态、`disposal_type` 或审批模板结构仍是旧口径，必须再执行第 13 个治理补丁脚本；如果前端按钮被权限判断禁用，再执行第 14 个菜单权限补丁脚本。
 *   **审批模板执行后的必要动作**：无论是新库还是升级库，执行完第 7 或第 13 个脚本后，都建议立刻检查 `wf_approval_template.approver_id`。当前初始化默认写入 `1`，如果实际审批人不是 `admin`，请手工改成真实用户 ID，否则待办都会落到用户 `1`。
-*   **推荐核对 SQL**：执行完第 7 和第 13 个脚本后，建议至少核对下面几条：
+*   **推荐核对 SQL**：执行完第 7、13、14 个脚本后，建议至少核对下面几条：
     *   `select template_id, business_type, template_name, approver_id, status from wf_approval_template order by template_id;`
     *   `select instance_id, business_id, business_type, approver_id, status from wf_approval_instance order by instance_id desc limit 20;`
     *   `select dict_label, dict_value from sys_dict_data where dict_type = 'asset_status' order by dict_sort;`
     *   `select disposal_no, disposal_type from asset_disposal where disposal_type is null or disposal_type = '';`
 *   **补丁执行失败时**：如果第 9 个脚本在收紧非空约束时失败，通常说明某些业务单据的 `asset_no` 无法匹配到 `asset_info`，需要先修正历史数据后再重跑补丁。
 
-*   **报表预警 MVP（批次六）**：本批次不新增 SQL 脚本，直接复用 `asset_info`、`asset_finance`、`asset_real_estate`、`asset_maintenance`、`wf_approval_instance` 等现有表；只要前述第 3 至第 13 个脚本按顺序完成，`/asset/report/summary` 与 `/asset/report/warnings` 即可工作。
+*   **报表预警 MVP（批次六）**：本批次不新增业务表结构 SQL，直接复用 `asset_info`、`asset_finance`、`asset_real_estate`、`asset_maintenance`、`wf_approval_instance` 等现有表；只要前述第 3 至第 14 个脚本按顺序完成，`/asset/report/summary` 与 `/asset/report/warnings` 即可工作。
 
 ## 典型执行方式
 
@@ -127,6 +136,7 @@
 10. `20260315_asset_real_estate_lifecycle.sql`（如果需要不动产动作）
 11. `20260315_asset_real_estate_lifecycle_menu.sql`（如果需要不动产菜单）
 12. `20260316_asset_governance_patch.sql`（建议执行一次，做字典与审批模板口径兜底）
+13. `20260317_asset_menu_permission_patch.sql`（建议执行一次，补齐领用申请与财务查看按钮权限）
 
 执行完成后，如果审批人不是 `admin`，再执行类似：
 
@@ -143,12 +153,18 @@ WHERE business_type IN ('asset_requisition', 'asset_maintenance', 'asset_disposa
 1. `20260314_asset_workflow_asset_id_patch.sql`（如果业务单据表还没有 `asset_id`）
 2. `20260315_asset_lifecycle_workflow_menu_patch.sql`（如果菜单还是 `repair/scrap` 老命名）
 3. `20260316_asset_governance_patch.sql`
+4. `20260317_asset_menu_permission_patch.sql`（如果资产台账中的领用/财务操作被权限禁用）
 
 这个场景下，第 13 个脚本会额外帮你做三件事：
 
 *   补齐 `wf_approval_template.template_name / approver_id / status`
 *   补齐 `wf_approval_instance.approver_id`
 *   把历史实例按模板回填审批人
+
+第 14 个脚本会额外补齐两类常见缺口权限：
+
+*   `asset:requisition:add`、`asset:requisition:query`
+*   `asset:finance:query`
 
 执行完成后，同样要检查并修正 `wf_approval_template.approver_id` 是否为你的真实审批人。
 

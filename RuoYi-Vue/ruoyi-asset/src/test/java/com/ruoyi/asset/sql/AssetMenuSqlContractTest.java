@@ -18,6 +18,7 @@ class AssetMenuSqlContractTest {
     private static final Path LEGACY_MENU_SQL_PATH = Path.of("..", "sql", "20260312_asset_workflow_menu.sql");
     private static final Path PATCH_MENU_SQL_PATH = Path.of("..", "sql", "20260315_asset_lifecycle_workflow_menu_patch.sql");
     private static final Path REAL_ESTATE_MENU_SQL_PATH = Path.of("..", "sql", "20260315_asset_real_estate_lifecycle_menu.sql");
+    private static final Path MENU_PERMISSION_PATCH_SQL_PATH = Path.of("..", "sql", "20260317_asset_menu_permission_patch.sql");
     private static final Path SQL_EXECUTION_DOC_PATH = Path.of("..", "sql", "sql执行.md");
 
     @Test
@@ -73,6 +74,17 @@ class AssetMenuSqlContractTest {
     }
 
     @Test
+    void shouldExposeRequisitionAndFinancePermissionPatch() throws IOException {
+        String permissionPatchSql = Files.readString(MENU_PERMISSION_PATCH_SQL_PATH, StandardCharsets.UTF_8);
+
+        assertAll(
+            () -> assertTrue(permissionPatchSql.contains("asset:requisition:query"), "菜单补丁缺少领用详情权限"),
+            () -> assertTrue(permissionPatchSql.contains("asset:requisition:add"), "菜单补丁缺少领用新增权限"),
+            () -> assertTrue(permissionPatchSql.contains("asset:finance:query"), "菜单补丁缺少财务查看权限")
+        );
+    }
+
+    @Test
     void shouldDocumentMenuPatchExecutionOrder() throws IOException {
         String executionDoc = Files.readString(SQL_EXECUTION_DOC_PATH, StandardCharsets.UTF_8);
 
@@ -84,6 +96,10 @@ class AssetMenuSqlContractTest {
             () -> assertTrue(
                 executionDoc.contains("20260315_asset_real_estate_lifecycle_menu.sql"),
                 "SQL 执行说明缺少不动产生命周期菜单脚本"
+            ),
+            () -> assertTrue(
+                executionDoc.contains("20260317_asset_menu_permission_patch.sql"),
+                "SQL 执行说明缺少领用/财务权限补丁脚本"
             )
         );
     }

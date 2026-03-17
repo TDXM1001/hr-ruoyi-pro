@@ -186,12 +186,21 @@
   import { applyRequisition } from '@/api/asset/requisition'
   import { listCategory } from '@/api/asset/category'
   import type { AssetAggregateDetail, AssetLifecycleAction, AssetListItem } from '@/types/asset'
+  import type { AppRouteRecord } from '@/types/router'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
-  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import { useMenuStore } from '@/store/modules/menu'
+  import { useUserStore } from '@/store/modules/user'
   import DictTag from '@/components/DictTag/index.vue'
   import { handleTree } from '@/utils/ruoyi'
-  import { ElMessageBox, ElMessage, ElButton } from 'element-plus'
+  import {
+    ElMessageBox,
+    ElMessage,
+    ElButton,
+    ElDropdown,
+    ElDropdownMenu,
+    ElDropdownItem
+  } from 'element-plus'
   import AssetEditDrawer from './modules/asset-edit-drawer.vue'
   import AssetFinanceDialog from './modules/asset-finance-dialog.vue'
   import {
@@ -210,6 +219,8 @@
 
   defineOptions({ name: 'AssetList' })
   const router = useRouter()
+  const menuStore = useMenuStore()
+  const userStore = useUserStore()
 
   // 状态管理
   const filterText = ref('')
@@ -229,6 +240,121 @@
   const currentData = ref<AssetListItem>()
   const financeVisible = ref(false)
   const currentFinanceAsset = ref<AssetListItem>()
+
+  const ALL_PERMISSION = '*:*:*'
+  const DYNAMIC_ROUTE_SQL_HINT = '后端可能尚未执行对应动态路由 SQL，请先配置菜单后再操作'
+
+  const OPERATION_PERMISSION_MAP: Partial<Record<AssetLifecycleAction['key'], string>> = {
+    delete: 'asset:info:remove',
+    requisition: 'asset:requisition:add',
+    repair: 'asset:maintenance:add',
+    scrap: 'asset:disposal:add',
+    dispose: 'asset:disposal:add',
+    realEstateOwnership: 'asset:realEstateOwnership:add',
+    realEstateUsage: 'asset:realEstateUsage:add',
+    realEstateStatus: 'asset:realEstateStatus:add',
+    realEstateDisposal: 'asset:realEstateDisposal:add'
+  }
+
+  const OPERATION_COMPONENT_CANDIDATES: Partial<Record<AssetLifecycleAction['key'], string[]>> = {
+    repair: ['/asset/maintenance/index'],
+    scrap: ['/asset/disposal/index'],
+    dispose: ['/asset/disposal/index'],
+    realEstateOwnership: ['/asset/real-estate/ownership/index'],
+    realEstateUsage: ['/asset/real-estate/usage/index'],
+    realEstateStatus: ['/asset/real-estate/status/index'],
+    realEstateDisposal: ['/asset/real-estate/disposal/index']
+  }
+
+  const OPERATION_LABEL_MAP: Record<AssetLifecycleAction['key'], string> = {
+    change: '变更',
+    delete: '归档',
+    requisition: '领用',
+    repair: '维修',
+    scrap: '报废',
+    dispose: '处置',
+    realEstateOwnership: '权属变更',
+    realEstateUsage: '用途变更',
+    realEstateStatus: '状态变更',
+    realEstateDisposal: '注销/处置'
+  }
+
+  interface OperationGuard {
+    disabled: boolean
+    reason?: string
+  }
+
+  const hasPermission = (permission?: string) => {
+    if (!permission) return true
+    const permissions = userStore.permissions || []
+    return permissions.includes(ALL_PERMISSION) || permissions.includes(permission)
+  }
+
+  const normalizeRoutePath = (path: string) => {
+    return path.startsWith('/') ? path : `/${path}`
+  }
+
+  const normalizeComponentPath = (componentPath: string) => {
+    const path = componentPath.trim()
+    if (!path) return ''
+    return path.startsWith('/') ? path : `/${path}`
+  }
+
+  const findRoutePathByComponent = (
+    routes: AppRouteRecord[],
+    componentCandidates: string[] = []
+  ): string => {
+    if (!routes.length || !componentCandidates.length) return ''
+    const targetComponents = new Set(componentCandidates.map(normalizeComponentPath))
+
+    const visit = (items: AppRouteRecord[]): string => {
+      for (const item of items) {
+        const componentPath =
+          typeof item.component === 'string' ? normalizeComponentPath(item.component) : ''
+
+        if (componentPath && targetComponents.has(componentPath)) {
+          return normalizeRoutePath(String(item.path || ''))
+        }
+
+        if (item.children?.length) {
+          const childResult = visit(item.children)
+          if (childResult) return childResult
+        }
+      }
+      return ''
+    }
+
+    return visit(routes)
+  }
+
+  const resolveConfiguredRoutePath = (actionKey: AssetLifecycleAction['key']) => {
+    const componentCandidates = OPERATION_COMPONENT_CANDIDATES[actionKey] || []
+    return findRoutePathByComponent(menuStore.menuList || [], componentCandidates)
+  }
+
+  const buildPermissionGuard = (permission: string | undefined, actionLabel: string): OperationGuard => {
+    if (!permission || hasPermission(permission)) {
+      return { disabled: false }
+    }
+    return {
+      disabled: true,
+      reason: `当前账号没有“${actionLabel}”权限（${permission}）`
+    }
+  }
+
+  const buildRouteGuard = (actionKey: AssetLifecycleAction['key'], actionLabel: string): OperationGuard => {
+    if (!OPERATION_COMPONENT_CANDIDATES[actionKey]?.length) {
+      return { disabled: false }
+    }
+    const resolvedPath = resolveConfiguredRoutePath(actionKey)
+    if (resolvedPath) {
+      return { disabled: false }
+    }
+    return {
+      disabled: true,
+      reason: `${actionLabel}菜单未配置。${DYNAMIC_ROUTE_SQL_HINT}`
+    }
+  }
 
   // 搜索相关
   const initialSearchState = {
@@ -326,6 +452,7 @@
           prop: 'operation',
           label: '操作',
           width: 500,
+          fixed: 'right',
           align: 'right',
           formatter: (row: any) => {
             return h(
@@ -442,19 +569,70 @@
     ElMessage.info(action.message || `${action.label}入口待规划`)
   }
 
-  /**
-   * 把资产上下文带到生命周期台账页。
-   *
-   * 当前阶段优先保证固定资产动作“能跳、能带参、能直接发起申请”，
-   * 复杂的选择器与批量动作留到后续体验优化批次处理。
-   */
-  const openLifecycleLedger = (path: string, row: AssetListItem) => {
-    openLifecycleLedgerWithQuery(path, row)
+  const REAL_ESTATE_ACTION_KEY_SET = new Set<RealEstateActionKey>([
+    'realEstateOwnership',
+    'realEstateUsage',
+    'realEstateStatus',
+    'realEstateDisposal'
+  ])
+
+  const isRealEstateActionKey = (
+    actionKey: AssetLifecycleAction['key']
+  ): actionKey is RealEstateActionKey => {
+    return REAL_ESTATE_ACTION_KEY_SET.has(actionKey as RealEstateActionKey)
   }
 
-  /**
-   * 生命周期入口统一携带资产上下文，必要时带上动作意图。
-   */
+  const getLifecycleActionLabel = (action: AssetLifecycleAction) => {
+    return action.key === 'delete' ? '归档' : action.label || OPERATION_LABEL_MAP[action.key]
+  }
+
+  const resolveLifecycleActionPath = (actionKey: AssetLifecycleAction['key']) => {
+    return resolveConfiguredRoutePath(actionKey)
+  }
+
+  const getLifecycleActionGuard = (row: AssetListItem, action: AssetLifecycleAction): OperationGuard => {
+    if (action.mode === 'placeholder') {
+      return { disabled: false }
+    }
+
+    const actionLabel = getLifecycleActionLabel(action)
+    const permissionGuard = buildPermissionGuard(OPERATION_PERMISSION_MAP[action.key], actionLabel)
+    if (permissionGuard.disabled) {
+      return permissionGuard
+    }
+
+    const routeGuard = buildRouteGuard(action.key, actionLabel)
+    if (routeGuard.disabled) {
+      return routeGuard
+    }
+
+    if (isRealEstateActionKey(action.key)) {
+      const realEstateGuard = getRealEstateActionGuard(action.key, {
+        assetId: row.assetId,
+        assetNo: row.assetNo,
+        assetName: row.assetName,
+        assetStatus: row.assetStatus
+      })
+      if (realEstateGuard.disabled) {
+        return {
+          disabled: true,
+          reason: realEstateGuard.reason || `当前资产暂不支持${actionLabel}`
+        }
+      }
+    }
+
+    return { disabled: false }
+  }
+
+  const getFinanceActionGuard = (): OperationGuard => {
+    return buildPermissionGuard('asset:finance:query', '财务查看')
+  }
+
+  const getEditActionGuard = (): OperationGuard => {
+    return buildPermissionGuard('asset:info:edit', '编辑')
+  }
+
+  /** 生命周期入口统一携带资产上下文，必要时带上动作意图。 */
   const openLifecycleLedgerWithQuery = (
     path: string,
     row: AssetListItem,
@@ -471,6 +649,20 @@
         ...extraQuery
       }
     })
+  }
+
+  const openLifecycleActionRoute = (
+    row: AssetListItem,
+    actionKey: AssetLifecycleAction['key'],
+    actionLabel: string,
+    extraQuery: Record<string, string> = {}
+  ) => {
+    const path = resolveLifecycleActionPath(actionKey)
+    if (!path) {
+      ElMessage.warning(`${actionLabel}菜单未配置。${DYNAMIC_ROUTE_SQL_HINT}`)
+      return
+    }
+    openLifecycleLedgerWithQuery(path, row, extraQuery)
   }
 
   /** 兼容 request 直接返回 data，或返回 AjaxResult 包裹对象。 */
@@ -497,11 +689,13 @@
   }
 
   /** 不动产入口在跳转前先读取最近动作，避免把“可点但必失败”的入口继续暴露给用户。 */
-  const openRealEstateLifecycleLedger = async (
-    path: string,
-    row: AssetListItem,
-    actionKey: RealEstateActionKey
-  ) => {
+  const openRealEstateLifecycleLedger = async (row: AssetListItem, actionKey: RealEstateActionKey) => {
+    const path = resolveLifecycleActionPath(actionKey)
+    if (!path) {
+      ElMessage.warning(`${OPERATION_LABEL_MAP[actionKey]}菜单未配置。${DYNAMIC_ROUTE_SQL_HINT}`)
+      return
+    }
+
     try {
       const routeContext = await buildRealEstateRouteContext(row)
       const guard = getRealEstateActionGuard(actionKey, routeContext)
@@ -532,57 +726,64 @@
   }
 
   const handleMaintenance = (row: AssetListItem) => {
-    openLifecycleLedger('/asset/maintenance/index', row)
+    openLifecycleActionRoute(row, 'repair', '维修')
   }
 
   const handleDisposal = (row: AssetListItem) => {
-    openLifecycleLedgerWithQuery('/asset/disposal/index', row, { disposalIntent: 'dispose' })
+    openLifecycleActionRoute(row, 'dispose', '处置', { disposalIntent: 'dispose' })
   }
 
   const handleScrap = (row: AssetListItem) => {
-    openLifecycleLedgerWithQuery('/asset/disposal/index', row, { disposalIntent: 'scrap' })
+    openLifecycleActionRoute(row, 'scrap', '报废', { disposalIntent: 'scrap' })
   }
 
   const handleRealEstateOwnership = (row: AssetListItem) => {
-    void openRealEstateLifecycleLedger('/asset/real-estate/ownership/index', row, 'realEstateOwnership')
+    void openRealEstateLifecycleLedger(row, 'realEstateOwnership')
   }
 
   const handleRealEstateUsage = (row: AssetListItem) => {
-    void openRealEstateLifecycleLedger('/asset/real-estate/usage/index', row, 'realEstateUsage')
+    void openRealEstateLifecycleLedger(row, 'realEstateUsage')
   }
 
   const handleRealEstateStatus = (row: AssetListItem) => {
-    void openRealEstateLifecycleLedger('/asset/real-estate/status/index', row, 'realEstateStatus')
+    void openRealEstateLifecycleLedger(row, 'realEstateStatus')
   }
 
   const handleRealEstateDisposal = (row: AssetListItem) => {
-    void openRealEstateLifecycleLedger('/asset/real-estate/disposal/index', row, 'realEstateDisposal')
+    void openRealEstateLifecycleLedger(row, 'realEstateDisposal')
   }
 
-  /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */
-  const renderLifecycleActionButton = (row: AssetListItem, action: AssetLifecycleAction) => {
+  const PRIMARY_LIFECYCLE_ACTION_LIMIT = 2
+
+  interface MoreOperationItem {
+    command: string
+    danger?: boolean
+    disabled?: boolean
+    label: string
+    reason?: string
+    onClick: () => void
+  }
+
+  /** 统一执行生命周期动作，确保“外显按钮”与“更多菜单”行为一致。 */
+  const executeLifecycleAction = (
+    row: AssetListItem,
+    action: AssetLifecycleAction,
+    guard?: OperationGuard
+  ) => {
+    const actionGuard = guard || getLifecycleActionGuard(row, action)
+    if (actionGuard.disabled) {
+      ElMessage.warning(actionGuard.reason || `${getLifecycleActionLabel(action)}暂不可操作`)
+      return
+    }
+
     if (action.mode === 'placeholder') {
-      return h(
-        ElButton,
-        {
-          type: action.tone || 'primary',
-          link: true,
-          onClick: () => handleLifecyclePlaceholder(action)
-        },
-        () => action.label
-      )
+      handleLifecyclePlaceholder(action)
+      return
     }
 
     if (action.key === 'delete') {
-      return h(
-        ElButton,
-        {
-          type: 'danger',
-          link: true,
-          onClick: () => handleArchive(row)
-        },
-        () => '归档'
-      )
+      void handleArchive(row)
+      return
     }
 
     const actionHandlerMap: Partial<Record<AssetLifecycleAction['key'], () => void>> = {
@@ -597,18 +798,30 @@
       change: () => handleLifecyclePlaceholder(action)
     }
 
+    actionHandlerMap[action.key]?.()
+  }
+
+  /** 把生命周期动作定义映射为列表页按钮，确保固定资产与不动产入口不混用。 */
+  const renderLifecycleActionButton = (
+    row: AssetListItem,
+    action: AssetLifecycleAction,
+    guard: OperationGuard
+  ) => {
+    const buttonLabel = getLifecycleActionLabel(action)
     return h(
       ElButton,
       {
-        type: action.tone || 'primary',
+        type: action.key === 'delete' ? 'danger' : action.tone || 'primary',
         link: true,
-        onClick: actionHandlerMap[action.key]
+        disabled: guard.disabled,
+        title: guard.reason || '',
+        onClick: () => executeLifecycleAction(row, action, guard)
       },
-      () => action.label
+      () => buttonLabel
     )
   }
 
-  /** 统一拼装操作列，保留“编辑”与“变更”的独立语义。 */
+  /** 统一拼装操作列，保留“编辑”与“变更”的独立语义，同时把低频动作折叠到“更多”。 */
   const buildOperationButtons = (row: AssetListItem) => {
     if (formFilters.showArchived) {
       return [h('span', { class: 'text-[12px] text-[var(--art-gray-500)]' }, '已归档，仅供查看')]
@@ -617,23 +830,114 @@
     const lifecycleActions = buildLifecycleActions(row)
     const deleteAction = lifecycleActions.find((item) => item.key === 'delete')
     const otherLifecycleActions = lifecycleActions.filter((item) => item.key !== 'delete')
+    const primaryLifecycleActions = otherLifecycleActions.slice(0, PRIMARY_LIFECYCLE_ACTION_LIMIT)
+    const collapsedLifecycleActions = otherLifecycleActions.slice(PRIMARY_LIFECYCLE_ACTION_LIMIT)
+    const moreOperationItems: MoreOperationItem[] = [
+      ...collapsedLifecycleActions.map((action) => {
+        const guard = getLifecycleActionGuard(row, action)
+        return {
+          command: `lifecycle:${action.key}`,
+          disabled: guard.disabled,
+          label: action.label,
+          reason: guard.reason,
+          onClick: () => executeLifecycleAction(row, action, guard)
+        }
+      }),
+      ...(deleteAction
+        ? [
+            (() => {
+              const guard = getLifecycleActionGuard(row, deleteAction)
+              return {
+              command: 'lifecycle:delete',
+              disabled: guard.disabled,
+              danger: true,
+              label: '归档',
+              reason: guard.reason,
+              onClick: () => executeLifecycleAction(row, deleteAction, guard)
+              }
+            })()
+          ]
+        : [])
+    ]
+
+    const handleMoreCommand = (command: unknown) => {
+      const commandText = String(command)
+      const target = moreOperationItems.find((item) => item.command === commandText)
+      if (target?.disabled) {
+        ElMessage.warning(target.reason || `${target.label}暂不可操作`)
+        return
+      }
+      target?.onClick()
+    }
+
+    const financeGuard = getFinanceActionGuard()
+    const editGuard = getEditActionGuard()
 
     return [
-      ...otherLifecycleActions.map((item) => renderLifecycleActionButton(row, item)),
+      ...primaryLifecycleActions.map((item) =>
+        renderLifecycleActionButton(row, item, getLifecycleActionGuard(row, item))
+      ),
       h(
         ElButton,
         {
           type: 'primary',
           link: true,
+          disabled: financeGuard.disabled,
+          title: financeGuard.reason || '',
           onClick: () => openFinanceDialog(row)
         },
         () => '财务'
       ),
-      h(ArtButtonTable, {
-        type: 'edit',
-        onClick: () => handleUpdate(row)
-      }),
-      ...(deleteAction ? [renderLifecycleActionButton(row, deleteAction)] : [])
+      h(
+        ElButton,
+        {
+          type: 'primary',
+          link: true,
+          disabled: editGuard.disabled,
+          title: editGuard.reason || '',
+          onClick: () => handleUpdate(row)
+        },
+        () => '编辑'
+      ),
+      ...(moreOperationItems.length
+        ? [
+            h(
+              ElDropdown,
+              {
+                trigger: 'click',
+                placement: 'bottom-end',
+                onCommand: handleMoreCommand
+              },
+              {
+                default: () =>
+                  h(
+                    ElButton,
+                    {
+                      type: 'primary',
+                      link: true
+                    },
+                    () => '更多'
+                  ),
+                dropdown: () =>
+                  h(ElDropdownMenu, null, () =>
+                    moreOperationItems.map((item) =>
+                      h(
+                        ElDropdownItem,
+                        {
+                          key: item.command,
+                          command: item.command,
+                          disabled: item.disabled,
+                          class: item.danger ? 'text-[var(--el-color-danger)]' : undefined,
+                          title: item.reason || ''
+                        },
+                        () => item.label
+                      )
+                    )
+                  )
+              }
+            )
+          ]
+        : [])
     ]
   }
 
