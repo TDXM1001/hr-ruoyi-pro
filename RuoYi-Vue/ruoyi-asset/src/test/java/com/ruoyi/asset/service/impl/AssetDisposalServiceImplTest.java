@@ -5,6 +5,7 @@ import com.ruoyi.asset.domain.AssetDisposal;
 import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.mapper.AssetDisposalMapper;
 import com.ruoyi.asset.mapper.AssetInfoMapper;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.workflow.service.IApprovalEngine;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,12 +15,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 资产处置服务测试。
+ * 资产报废/处置服务单测。
  */
 @ExtendWith(MockitoExtension.class)
 class AssetDisposalServiceImplTest {
@@ -42,7 +46,7 @@ class AssetDisposalServiceImplTest {
         disposal.setDisposalNo("DIS-20260315-001");
         disposal.setAssetId(3001L);
         disposal.setDisposalType("sell");
-        disposal.setReason("出售处置");
+        disposal.setReason("发起处置申请");
 
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetId(3001L);
@@ -77,6 +81,24 @@ class AssetDisposalServiceImplTest {
         assertEquals("DIS-20260315-010", result.getDisposalNo());
         assertEquals(3005L, result.getAssetId());
         assertEquals("pending", result.getWfStatus());
+    }
+
+    @Test
+    void shouldRequireAssetIdWhenInsertDisposal() {
+        AssetDisposal disposal = new AssetDisposal();
+        disposal.setDisposalNo("DIS-20260315-002");
+        disposal.setAssetNo("FA-3002");
+        disposal.setDisposalType("sell");
+        disposal.setReason("发起处置申请");
+
+        ServiceException exception = assertThrows(
+            ServiceException.class,
+            () -> assetDisposalService.insertAssetDisposal(disposal)
+        );
+
+        assertEquals("固定资产业务必须传入资产主键", exception.getMessage());
+        verify(assetDisposalMapper, never()).insertAssetDisposal(any(AssetDisposal.class));
+        verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
 
     @Test

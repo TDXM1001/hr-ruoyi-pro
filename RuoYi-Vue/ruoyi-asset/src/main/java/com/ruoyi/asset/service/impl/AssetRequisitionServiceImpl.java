@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 资产领用服务实现
+ * 固定资产领用服务实现。
  */
 @Service
 public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
@@ -28,7 +28,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
     private static final String WF_STATUS_APPROVED = "approved";
     private static final String WF_STATUS_REJECTED = "rejected";
     private static final String WF_STATUS_COMPLETED = "completed";
-    
+
     @Autowired
     private AssetRequisitionMapper assetRequisitionMapper;
 
@@ -55,26 +55,18 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
     @Transactional
     @Override
     public int insertAssetRequisition(AssetRequisition assetRequisition) {
-        // 设置默认值
         assetRequisition.setCreateTime(DateUtils.getNowDate());
-        assetRequisition.setStatus(0); // 0=审批中
+        assetRequisition.setStatus(0);
         assetRequisition.setWfStatus(WF_STATUS_PENDING);
 
-        // 优先基于资产ID解析资产，兼容旧调用方仅传资产编号的情况。
-        AssetInfo assetInfo = resolveAsset(assetRequisition.getAssetId(), assetRequisition.getAssetNo());
+        AssetInfo assetInfo = resolveAsset(assetRequisition.getAssetId());
         validateAssetForRequisition(assetInfo);
         assetRequisition.setAssetId(assetInfo.getAssetId());
         assetRequisition.setAssetNo(assetInfo.getAssetNo());
-        
-        // 保存领用单
+
         int rows = assetRequisitionMapper.insertAssetRequisition(assetRequisition);
-
-        // 修改资产状态为"领用中"
         updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_REQUISITION);
-
-        // 发起审批流程
         approvalEngine.startProcess(assetRequisition.getRequisitionNo(), "asset_requisition");
-        
         return rows;
     }
 
@@ -86,7 +78,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
             throw new ServiceException("领用单不存在");
         }
         if (!Integer.valueOf(1).equals(requisition.getStatus())) {
-            throw new ServiceException("仅审批通过的领用单允许归还");
+            throw new ServiceException("只有已审批的领用单才能归还资产");
         }
 
         AssetRequisition updatePayload = new AssetRequisition();
@@ -95,23 +87,19 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
         updatePayload.setWfStatus(WF_STATUS_COMPLETED);
         int rows = assetRequisitionMapper.updateAssetRequisition(updatePayload);
 
-        // 归还动作是生命周期上的闭环点，完成后资产必须回到“在用”状态。
         updateAssetStatus(requisition.getAssetId(), ASSET_STATUS_ACTIVE);
         return rows;
     }
 
     /**
-     * 统一解析业务单据关联的资产，内部始终落到 assetId。
+     * 固定资产业务统一要求由资产台账带入资产主键。
      */
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException("固定资产业务必须传入资产主键");
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
             throw new ServiceException("关联资产不存在");
         }
@@ -119,22 +107,22 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
     }
 
     /**
-     * 领用前校验资产生命周期状态，避免和维保、处置流程冲突。
+     * 校验资产当前状态是否允许继续发起领用。
      */
     private void validateAssetForRequisition(AssetInfo assetInfo) {
         if (ASSET_STATUS_MAINTENANCE.equals(assetInfo.getAssetStatus())) {
-            throw new ServiceException("维修中的资产不能领用");
+            throw new ServiceException("维修中的资产不能继续领用");
         }
         if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
-            throw new ServiceException("已处置资产不能领用");
+            throw new ServiceException("已处置资产不能继续领用");
         }
         if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
-            throw new ServiceException("已报废资产不能领用");
+            throw new ServiceException("已报废资产不能继续领用");
         }
     }
 
     /**
-     * 资产状态更新统一使用 assetId，避免继续依赖业务编码更新。
+     * 同步回写资产主档状态。
      */
     private void updateAssetStatus(Long assetId, String assetStatus) {
         AssetInfo assetInfo = new AssetInfo();
@@ -144,7 +132,7 @@ public class AssetRequisitionServiceImpl implements IAssetRequisitionService {
     }
 
     /**
-     * 在未落库 `wfStatus` 之前，统一根据单据状态推导流程态，保证接口返回稳定。
+     * 历史数据可能缺失 `wfStatus`，查询时按单据状态回填。
      */
     private AssetRequisition fillWorkflowStatus(AssetRequisition assetRequisition) {
         if (assetRequisition == null || StringUtils.isNotBlank(assetRequisition.getWfStatus())) {

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 资产领用服务测试。
+ * 资产领用服务单测。
  */
 @ExtendWith(MockitoExtension.class)
 class AssetRequisitionServiceImplTest {
@@ -46,7 +46,7 @@ class AssetRequisitionServiceImplTest {
         requisition.setAssetId(1001L);
         requisition.setApplyUserId(2001L);
         requisition.setApplyDeptId(3001L);
-        requisition.setReason("办公领用");
+        requisition.setReason("领用办公电脑");
 
         AssetInfo assetInfo = buildAssetInfo(1001L, "A-001", "1");
         when(assetInfoMapper.selectAssetInfoByAssetId(1001L)).thenReturn(assetInfo);
@@ -87,7 +87,7 @@ class AssetRequisitionServiceImplTest {
             () -> assetRequisitionService.insertAssetRequisition(requisition)
         );
 
-        assertEquals("已处置资产不能领用", exception.getMessage());
+        assertEquals("已处置资产不能继续领用", exception.getMessage());
         verify(assetRequisitionMapper, never()).insertAssetRequisition(any(AssetRequisition.class));
         verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
@@ -105,7 +105,23 @@ class AssetRequisitionServiceImplTest {
             () -> assetRequisitionService.insertAssetRequisition(requisition)
         );
 
-        assertEquals("维修中的资产不能领用", exception.getMessage());
+        assertEquals("维修中的资产不能继续领用", exception.getMessage());
+        verify(assetRequisitionMapper, never()).insertAssetRequisition(any(AssetRequisition.class));
+        verify(approvalEngine, never()).startProcess(anyString(), anyString());
+    }
+
+    @Test
+    void shouldRequireAssetIdWhenInsertRequisition() {
+        AssetRequisition requisition = new AssetRequisition();
+        requisition.setRequisitionNo("REQ-20260314-004");
+        requisition.setAssetNo("A-004");
+
+        ServiceException exception = assertThrows(
+            ServiceException.class,
+            () -> assetRequisitionService.insertAssetRequisition(requisition)
+        );
+
+        assertEquals("固定资产业务必须传入资产主键", exception.getMessage());
         verify(assetRequisitionMapper, never()).insertAssetRequisition(any(AssetRequisition.class));
         verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }

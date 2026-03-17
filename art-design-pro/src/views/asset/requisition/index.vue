@@ -1,5 +1,5 @@
 <template>
-  <div class="asset-requisition-page art-full-height flex flex-col p-3 overflow-hidden">
+  <div class="asset-requisition-page art-full-height flex flex-col overflow-hidden p-3">
     <ArtSearchBar
       :key="wf_status.length"
       v-model="formFilters"
@@ -8,6 +8,7 @@
       @reset="handleReset"
       @search="handleSearch"
     />
+
     <ElCard class="art-table-card flex-1 overflow-hidden" shadow="never">
       <ArtTableHeader
         :showZebra="false"
@@ -34,11 +35,15 @@
   import { computed, h, onMounted, reactive, ref } from 'vue'
   import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
   import { listRequisition, returnAsset, type AssetRequisitionItem } from '@/api/asset/requisition'
+  import DictTag from '@/components/DictTag/index.vue'
   import { useTable } from '@/hooks/core/useTable'
   import type { ColumnOption } from '@/types/component'
   import { useDict } from '@/utils/dict'
-  import DictTag from '@/components/DictTag/index.vue'
-  import { canReturnAsset, mapRequisitionStatusToWorkflow } from './requisition.helper'
+  import {
+    canReturnAsset,
+    formatFixedAssetBusinessStatus,
+    resolveFixedAssetWorkflowStatus
+  } from './requisition.helper'
 
   defineOptions({ name: 'AssetRequisition' })
 
@@ -54,25 +59,30 @@
 
   const formItems = computed(() => [
     {
-      label: '领用业务编号',
+      label: '领用单号',
       key: 'requisitionNo',
       type: 'input',
-      props: { placeholder: '请输入业务单号', clearable: true }
+      props: { placeholder: '请输入领用单号', clearable: true }
     },
     {
       label: '资产编号',
       key: 'assetNo',
       type: 'input',
-      props: { placeholder: '请输入关联资产编号', clearable: true }
+      props: { placeholder: '请输入资产编号', clearable: true }
     },
     {
-      label: '流转状态',
+      label: '单据状态',
       key: 'status',
       type: 'select',
       props: {
-        placeholder: '请选择流转状态',
+        placeholder: '请选择单据状态',
         clearable: true,
-        options: wf_status.value
+        options: [
+          { label: '待审批', value: 0 },
+          { label: '已审批', value: 1 },
+          { label: '已驳回', value: 2 },
+          { label: '已完成', value: 3 }
+        ]
       }
     }
   ])
@@ -96,19 +106,26 @@
         const baseColumns: ColumnOption<AssetRequisitionItem>[] = [
           { type: 'index', label: '序号', width: 60, align: 'center' },
           { prop: 'requisitionNo', label: '领用单号', width: 150 },
-          { prop: 'assetNo', label: '关联资产', minWidth: 150 },
+          { prop: 'assetNo', label: '资产编号', minWidth: 150 },
           { prop: 'assetName', label: '资产名称', minWidth: 150 },
           { prop: 'applyUserId', label: '申请人ID', width: 120, align: 'center' },
           { prop: 'reason', label: '领用事由', minWidth: 200 },
           {
             prop: 'status',
-            label: '状态',
+            label: '单据状态',
+            width: 100,
+            align: 'center',
+            formatter: (row: AssetRequisitionItem) => formatFixedAssetBusinessStatus(Number(row.status))
+          },
+          {
+            prop: 'wfStatus',
+            label: '审批状态',
             width: 100,
             align: 'center',
             formatter: (row: AssetRequisitionItem) =>
               h(DictTag, {
                 options: wf_status.value,
-                value: mapRequisitionStatusToWorkflow(row.status)
+                value: resolveFixedAssetWorkflowStatus(row)
               })
           },
           { prop: 'createTime', label: '申请时间', width: 170, align: 'center' }
@@ -130,7 +147,7 @@
                       link: true,
                       onClick: () => handleReturn(row)
                     },
-                    () => '归还'
+                    () => '归还资产'
                   )
                 : h('span', { class: 'text-[var(--art-gray-400)]' }, '--')
           }
@@ -141,24 +158,24 @@
 
   const tableRef = ref()
 
-  /** 重置查询条件，保持和台账页相同的交互节奏。 */
+  /** 重置搜索条件并回到默认列表。 */
   const handleReset = () => {
     Object.assign(formFilters, initialSearchState)
     resetSearchParams()
   }
 
-  /** 把筛选条件同步到 useTable 的查询状态中。 */
+  /** 将搜索栏条件同步到表格查询参数。 */
   const handleSearch = () => {
     Object.assign(searchParams, formFilters)
     getData()
   }
 
   /**
-   * 归还动作只对审批通过的记录开放，避免页面侧和后端规则不一致。
+   * 对审批通过的领用单发起归还，完成后刷新列表。
    */
   const handleReturn = async (row: AssetRequisitionItem) => {
     try {
-      await ElMessageBox.confirm(`确认归还领用单“${row.requisitionNo}”对应的资产吗？`, '提示', {
+      await ElMessageBox.confirm(`确认归还领用单 ${row.requisitionNo} 对应的资产吗？`, '提示', {
         type: 'warning'
       })
       await returnAsset(row.requisitionNo)

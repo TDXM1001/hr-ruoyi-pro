@@ -5,6 +5,7 @@ import com.ruoyi.asset.domain.AssetInfo;
 import com.ruoyi.asset.domain.AssetMaintenance;
 import com.ruoyi.asset.mapper.AssetInfoMapper;
 import com.ruoyi.asset.mapper.AssetMaintenanceMapper;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.workflow.service.IApprovalEngine;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,14 +13,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 资产维修服务测试。
+ * 资产维修服务单测。
  */
 @ExtendWith(MockitoExtension.class)
 class AssetMaintenanceServiceImplTest {
@@ -41,7 +45,7 @@ class AssetMaintenanceServiceImplTest {
         AssetMaintenance maintenance = new AssetMaintenance();
         maintenance.setMaintenanceNo("MNT-20260315-001");
         maintenance.setAssetId(2001L);
-        maintenance.setReason("例行维修");
+        maintenance.setReason("发起维修申请");
 
         AssetInfo assetInfo = new AssetInfo();
         assetInfo.setAssetId(2001L);
@@ -78,6 +82,23 @@ class AssetMaintenanceServiceImplTest {
         verify(assetInfoMapper).updateAssetInfo(assetCaptor.capture());
         assertEquals(2005L, assetCaptor.getValue().getAssetId());
         assertEquals("1", assetCaptor.getValue().getAssetStatus());
+    }
+
+    @Test
+    void shouldRequireAssetIdWhenInsertMaintenance() {
+        AssetMaintenance maintenance = new AssetMaintenance();
+        maintenance.setMaintenanceNo("MNT-20260315-002");
+        maintenance.setAssetNo("A-2002");
+        maintenance.setReason("发起维修申请");
+
+        ServiceException exception = assertThrows(
+            ServiceException.class,
+            () -> assetMaintenanceService.insertAssetMaintenance(maintenance)
+        );
+
+        assertEquals("固定资产业务必须传入资产主键", exception.getMessage());
+        verify(assetMaintenanceMapper, never()).insertAssetMaintenance(any(AssetMaintenance.class));
+        verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
 
     @Test

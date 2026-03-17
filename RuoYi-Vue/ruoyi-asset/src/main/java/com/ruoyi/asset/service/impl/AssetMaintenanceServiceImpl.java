@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 资产维修服务实现
+ * 固定资产维修服务实现。
  */
 @Service
 public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
@@ -27,7 +27,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     private static final String WF_STATUS_APPROVED = "approved";
     private static final String WF_STATUS_REJECTED = "rejected";
     private static final String WF_STATUS_COMPLETED = "completed";
-    
+
     @Autowired
     private AssetMaintenanceMapper assetMaintenanceMapper;
 
@@ -55,23 +55,17 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     @Override
     public int insertAssetMaintenance(AssetMaintenance assetMaintenance) {
         assetMaintenance.setCreateTime(DateUtils.getNowDate());
-        assetMaintenance.setStatus(0); // 审批中
+        assetMaintenance.setStatus(0);
         assetMaintenance.setWfStatus(WF_STATUS_PENDING);
 
-        // 统一解析资产主档，保证维保流程与资产主档通过 assetId 关联。
-        AssetInfo assetInfo = resolveAsset(assetMaintenance.getAssetId(), assetMaintenance.getAssetNo());
+        AssetInfo assetInfo = resolveAsset(assetMaintenance.getAssetId());
         validateAssetForMaintenance(assetInfo);
         assetMaintenance.setAssetId(assetInfo.getAssetId());
         assetMaintenance.setAssetNo(assetInfo.getAssetNo());
-        
+
         int rows = assetMaintenanceMapper.insertAssetMaintenance(assetMaintenance);
-
-        // 修改资产状态为"维修中" (状态3为维修中)
         updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_MAINTENANCE);
-
-        // 发起审批流程
         approvalEngine.startProcess(assetMaintenance.getMaintenanceNo(), "asset_maintenance");
-        
         return rows;
     }
 
@@ -83,7 +77,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
             throw new ServiceException("维修单不存在");
         }
         if (!Integer.valueOf(1).equals(maintenance.getStatus())) {
-            throw new ServiceException("仅审批通过的维修单允许完成维修");
+            throw new ServiceException("只有已审批的维修单才能完工");
         }
 
         AssetMaintenance updatePayload = new AssetMaintenance();
@@ -92,20 +86,19 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
         updatePayload.setWfStatus(WF_STATUS_COMPLETED);
         int rows = assetMaintenanceMapper.updateAssetMaintenance(updatePayload);
 
-        // 维修完成意味着资产重新可用，因此需要回退到“在用”状态。
         updateAssetStatus(maintenance.getAssetId(), ASSET_STATUS_ACTIVE);
         return rows;
     }
 
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    /**
+     * 固定资产业务统一要求由资产台账带入资产主键。
+     */
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException("固定资产业务必须传入资产主键");
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
             throw new ServiceException("关联资产不存在");
         }
@@ -113,14 +106,14 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     }
 
     /**
-     * 已处置或已报废资产不允许继续发起维修流程。
+     * 已报废或已处置资产不允许再发起维修。
      */
     private void validateAssetForMaintenance(AssetInfo assetInfo) {
         if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
-            throw new ServiceException("已处置资产不能维修");
+            throw new ServiceException("已处置资产不能发起维修");
         }
         if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
-            throw new ServiceException("已报废资产不能维修");
+            throw new ServiceException("已报废资产不能发起维修");
         }
     }
 
@@ -132,7 +125,7 @@ public class AssetMaintenanceServiceImpl implements IAssetMaintenanceService {
     }
 
     /**
-     * 在未落库 `wfStatus` 之前，统一根据单据状态补齐流程状态。
+     * 历史数据缺失 `wfStatus` 时按单据状态回填。
      */
     private AssetMaintenance fillWorkflowStatus(AssetMaintenance assetMaintenance) {
         if (assetMaintenance == null || StringUtils.isNotBlank(assetMaintenance.getWfStatus())) {

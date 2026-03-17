@@ -1,5 +1,5 @@
 <template>
-  <div class="asset-disposal-page art-full-height flex flex-col p-3 overflow-hidden">
+  <div class="asset-disposal-page art-full-height flex flex-col overflow-hidden p-3">
     <ElAlert
       v-if="routeAssetContext"
       class="mb-3"
@@ -26,7 +26,7 @@
       >
         <template #left>
           <ElButton v-auth="'asset:disposal:add'" type="primary" @click="openCreateDialog()">
-            发起{{ entryActionLabel }}
+            新增{{ entryActionLabel }}
           </ElButton>
         </template>
       </ArtTableHeader>
@@ -50,7 +50,7 @@
       draggable
       destroy-on-close
     >
-      <ElForm :model="formData" :rules="rules" ref="formRef" label-width="100px">
+      <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px">
         <ElFormItem label="资产编号" prop="assetNo">
           <ElInput
             v-model="formData.assetNo"
@@ -60,15 +60,15 @@
           />
         </ElFormItem>
         <ElFormItem v-if="dialogAssetContext?.assetName" label="资产名称">
-          <ElInput :model-value="dialogAssetContext?.assetName" disabled />
+          <ElInput :model-value="dialogAssetContext.assetName" disabled />
         </ElFormItem>
         <ElFormItem v-if="dialogAssetContext?.assetStatus" label="当前状态">
-          <ElInput :model-value="dialogAssetContext?.assetStatus" disabled />
+          <ElInput :model-value="dialogAssetContext.assetStatus" disabled />
         </ElFormItem>
-        <ElFormItem label="业务类型" prop="disposalType">
+        <ElFormItem label="处置类型" prop="disposalType">
           <ElSelect
             v-model="formData.disposalType"
-            placeholder="请选择业务类型"
+            placeholder="请选择处置类型"
             class="w-full"
             clearable
           >
@@ -80,12 +80,12 @@
             />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="处置原因" prop="reason">
+        <ElFormItem label="处置事由" prop="reason">
           <ElInput
             v-model="formData.reason"
             type="textarea"
             :rows="4"
-            :placeholder="`请输入${entryActionLabel}原因`"
+            :placeholder="`请输入${entryActionLabel}事由`"
             clearable
           />
         </ElFormItem>
@@ -93,7 +93,7 @@
       <template #footer>
         <span class="dialog-footer">
           <ElButton @click="dialogVisible = false">取消</ElButton>
-          <ElButton type="primary" :loading="submitting" @click="submitDisposal">提交申请</ElButton>
+          <ElButton type="primary" :loading="submitting" @click="submitDisposal">提交</ElButton>
         </span>
       </template>
     </ElDialog>
@@ -106,19 +106,28 @@
         <ElDescriptionsItem label="资产编号">
           {{ detailData?.assetNo || '--' }}
         </ElDescriptionsItem>
+        <ElDescriptionsItem label="资产名称">
+          {{ detailData?.assetName || '--' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="单据状态">
+          {{ formatFixedAssetBusinessStatus(Number(detailData?.status)) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="审批状态">
+          <DictTag
+            :options="wf_status"
+            :value="resolveFixedAssetWorkflowStatus(detailData || {})"
+          />
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="处置类型">
+          {{ formatDisposalType(detailData?.disposalType) }}
+        </ElDescriptionsItem>
         <ElDescriptionsItem label="申请人ID">
           {{ detailData?.applyUserId ?? '--' }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="状态">
-          <DictTag :options="wf_status" :value="mapDisposalStatusToWorkflow(detailData?.status)" />
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="业务类型">
-          {{ formatDisposalType(detailData?.disposalType) }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="处置原因">
+        <ElDescriptionsItem label="处置事由">
           {{ detailData?.reason || '--' }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="创建时间">
+        <ElDescriptionsItem label="申请时间">
           {{ detailData?.createTime || '--' }}
         </ElDescriptionsItem>
       </ElDescriptions>
@@ -131,15 +140,7 @@
   import { useRoute } from 'vue-router'
   import { ElButton, ElMessage } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
-  import type { ColumnOption } from '@/types/component'
-  import {
-    FIXED_ASSET_DISPOSAL_TYPE_OPTIONS,
-    formatFixedAssetDisposalType,
-    type FixedAssetDisposalType
-  } from '@/types/asset'
   import DictTag from '@/components/DictTag/index.vue'
-  import { useTable } from '@/hooks/core/useTable'
-  import { useDict } from '@/utils/dict'
   import {
     applyDisposal,
     getDisposal,
@@ -147,6 +148,19 @@
     type ApplyDisposalReq,
     type AssetDisposalItem
   } from '@/api/asset/disposal'
+  import { useTable } from '@/hooks/core/useTable'
+  import type { ColumnOption } from '@/types/component'
+  import {
+    FIXED_ASSET_DISPOSAL_TYPE_OPTIONS,
+    formatFixedAssetDisposalType,
+    type FixedAssetDisposalType
+  } from '@/types/asset'
+  import { useDict } from '@/utils/dict'
+  import {
+    buildFixedAssetBusinessPayload,
+    formatFixedAssetBusinessStatus,
+    resolveFixedAssetWorkflowStatus
+  } from '../requisition/requisition.helper'
 
   defineOptions({ name: 'AssetDisposal' })
 
@@ -189,13 +203,18 @@
       props: { placeholder: '请输入资产编号', clearable: true }
     },
     {
-      label: '流转状态',
+      label: '单据状态',
       key: 'status',
       type: 'select',
       props: {
-        placeholder: '请选择流转状态',
+        placeholder: '请选择单据状态',
         clearable: true,
-        options: wf_status.value
+        options: [
+          { label: '待审批', value: 0 },
+          { label: '已审批', value: 1 },
+          { label: '已驳回', value: 2 },
+          { label: '已完成', value: 3 }
+        ]
       }
     }
   ])
@@ -212,7 +231,7 @@
     return '报废/处置'
   })
 
-  const dialogTitle = computed(() => `发起${entryActionLabel.value}申请`)
+  const dialogTitle = computed(() => `新增${entryActionLabel.value}申请`)
 
   const {
     columns,
@@ -252,24 +271,32 @@
           { type: 'index', label: '序号', width: 60, align: 'center' },
           { prop: 'disposalNo', label: '处置单号', width: 160 },
           { prop: 'assetNo', label: '资产编号', minWidth: 140 },
+          { prop: 'assetName', label: '资产名称', minWidth: 150 },
           {
             prop: 'disposalType',
-            label: '业务类型',
+            label: '处置类型',
             width: 100,
             align: 'center',
             formatter: (row: AssetDisposalItem) => formatDisposalType(row.disposalType)
           },
           { prop: 'applyUserId', label: '申请人ID', width: 120, align: 'center' },
-          { prop: 'reason', label: '处置原因', minWidth: 220 },
+          { prop: 'reason', label: '处置事由', minWidth: 220 },
           {
             prop: 'status',
-            label: '状态',
+            label: '单据状态',
+            width: 110,
+            align: 'center',
+            formatter: (row: AssetDisposalItem) => formatFixedAssetBusinessStatus(Number(row.status))
+          },
+          {
+            prop: 'wfStatus',
+            label: '审批状态',
             width: 110,
             align: 'center',
             formatter: (row: AssetDisposalItem) =>
               h(DictTag, {
                 options: wf_status.value,
-                value: mapDisposalStatusToWorkflow(row.status)
+                value: resolveFixedAssetWorkflowStatus(row)
               })
           },
           { prop: 'createTime', label: '申请时间', width: 170, align: 'center' },
@@ -295,18 +322,19 @@
 
   const rules: FormRules = {
     assetNo: [{ required: true, message: '请输入资产编号', trigger: 'blur' }],
-    disposalType: [{ required: true, message: '请选择业务类型', trigger: 'change' }],
-    reason: [{ required: true, message: '请输入处置原因', trigger: 'blur' }]
+    disposalType: [{ required: true, message: '请选择处置类型', trigger: 'change' }],
+    reason: [{ required: true, message: '请输入处置事由', trigger: 'blur' }]
   }
 
   /**
-   * 路由带参进入台账页时，优先把资产主档上下文还原出来。
+   * 读取资产台账传入的处置上下文。
    */
   const readRouteAssetContext = (): RouteAssetContext | null => {
     const assetNo = String(route.query.assetNo || '').trim()
     if (!assetNo) {
       return null
     }
+
     const assetId = Number(route.query.assetId)
     return {
       assetId: Number.isNaN(assetId) ? undefined : assetId,
@@ -327,17 +355,15 @@
     getData()
   }
 
-  const mapDisposalStatusToWorkflow = (status?: number) => {
-    if (status === 0) return 'IN_PROGRESS'
-    if (status === 1) return 'COMPLETED'
-    if (status === 2) return 'REJECTED'
-    return ''
-  }
-
   const openCreateDialog = (context: RouteAssetContext | null = routeAssetContext.value) => {
+    if (!context?.assetId) {
+      ElMessage.warning('请从资产台账发起报废或处置业务，确保自动带入资产主键')
+      return
+    }
+
     dialogAssetContext.value = context
-    formData.assetNo = context?.assetNo || ''
-    formData.disposalType = context?.disposalIntent === 'scrap' ? 'scrap' : ''
+    formData.assetNo = context.assetNo
+    formData.disposalType = context.disposalIntent === 'scrap' ? 'scrap' : ''
     formData.reason = ''
     dialogVisible.value = true
   }
@@ -347,19 +373,21 @@
       await formRef.value?.validate()
 
       submitting.value = true
+      const basePayload = buildFixedAssetBusinessPayload(dialogAssetContext.value || {}, formData.reason)
       const payload: ApplyDisposalReq = {
-        assetId: dialogAssetContext.value?.assetId,
-        assetNo: formData.assetNo.trim(),
-        disposalType: formData.disposalType as FixedAssetDisposalType,
-        reason: formData.reason.trim()
+        ...basePayload,
+        disposalType: formData.disposalType as FixedAssetDisposalType
       }
 
       await applyDisposal(payload)
-      ElMessage.success(`${formatDisposalType(payload.disposalType)}申请已提交`)
+      ElMessage.success(`${formatDisposalType(payload.disposalType)}申请提交成功`)
       dialogVisible.value = false
       refreshData()
     } catch (error) {
       if (error !== 'cancel') {
+        if (error instanceof Error) {
+          ElMessage.warning(error.message)
+        }
         console.error('提交处置申请失败:', error)
       }
     } finally {
@@ -374,7 +402,7 @@
       detailData.value = await getDisposal(row.disposalNo)
     } catch (error) {
       detailVisible.value = false
-      console.error('获取处置详情失败:', error)
+      console.error('读取处置详情失败:', error)
     } finally {
       detailLoading.value = false
     }
@@ -383,7 +411,7 @@
   const formatDisposalType = (value?: string) => formatFixedAssetDisposalType(value)
 
   /**
-   * 列表入口只区分“报废”和“处置”两种意图，具体处置类型仍在表单中显式选择。
+   * 解析资产台账路由带入的处置意图。
    */
   const parseDisposalIntent = (value: unknown): DisposalIntent | undefined => {
     const normalized = String(value || '').trim()

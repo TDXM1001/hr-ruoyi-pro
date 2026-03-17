@@ -1,5 +1,5 @@
 <template>
-  <div class="asset-maintenance-page art-full-height flex flex-col p-3 overflow-hidden">
+  <div class="asset-maintenance-page art-full-height flex flex-col overflow-hidden p-3">
     <ElAlert
       v-if="routeAssetContext"
       class="mb-3"
@@ -26,7 +26,7 @@
       >
         <template #left>
           <ElButton v-auth="'asset:maintenance:add'" type="primary" @click="openCreateDialog()">
-            发起维修
+            新增维修申请
           </ElButton>
         </template>
       </ArtTableHeader>
@@ -43,8 +43,8 @@
       />
     </ElCard>
 
-    <ElDialog v-model="dialogVisible" title="发起维修申请" width="520px" draggable destroy-on-close>
-      <ElForm :model="formData" :rules="rules" ref="formRef" label-width="100px">
+    <ElDialog v-model="dialogVisible" title="新增维修申请" width="520px" draggable destroy-on-close>
+      <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px">
         <ElFormItem label="资产编号" prop="assetNo">
           <ElInput
             v-model="formData.assetNo"
@@ -54,17 +54,17 @@
           />
         </ElFormItem>
         <ElFormItem v-if="dialogAssetContext?.assetName" label="资产名称">
-          <ElInput :model-value="dialogAssetContext?.assetName" disabled />
+          <ElInput :model-value="dialogAssetContext.assetName" disabled />
         </ElFormItem>
         <ElFormItem v-if="dialogAssetContext?.assetStatus" label="当前状态">
-          <ElInput :model-value="dialogAssetContext?.assetStatus" disabled />
+          <ElInput :model-value="dialogAssetContext.assetStatus" disabled />
         </ElFormItem>
-        <ElFormItem label="维修原因" prop="reason">
+        <ElFormItem label="维修事由" prop="reason">
           <ElInput
             v-model="formData.reason"
             type="textarea"
             :rows="4"
-            placeholder="请输入维修原因"
+            placeholder="请输入维修事由"
             clearable
           />
         </ElFormItem>
@@ -72,9 +72,7 @@
       <template #footer>
         <span class="dialog-footer">
           <ElButton @click="dialogVisible = false">取消</ElButton>
-          <ElButton type="primary" :loading="submitting" @click="submitMaintenance"
-            >提交申请</ElButton
-          >
+          <ElButton type="primary" :loading="submitting" @click="submitMaintenance">提交</ElButton>
         </span>
       </template>
     </ElDialog>
@@ -87,19 +85,25 @@
         <ElDescriptionsItem label="资产编号">
           {{ detailData?.assetNo || '--' }}
         </ElDescriptionsItem>
+        <ElDescriptionsItem label="资产名称">
+          {{ detailData?.assetName || '--' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="单据状态">
+          {{ formatFixedAssetBusinessStatus(Number(detailData?.status)) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="审批状态">
+          <DictTag
+            :options="wf_status"
+            :value="resolveFixedAssetWorkflowStatus(detailData || {})"
+          />
+        </ElDescriptionsItem>
         <ElDescriptionsItem label="申请人ID">
           {{ detailData?.applyUserId ?? '--' }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="状态">
-          <DictTag
-            :options="wf_status"
-            :value="mapMaintenanceStatusToWorkflow(detailData?.status)"
-          />
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="维修原因">
+        <ElDescriptionsItem label="维修事由">
           {{ detailData?.reason || '--' }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="创建时间">
+        <ElDescriptionsItem label="申请时间">
           {{ detailData?.createTime || '--' }}
         </ElDescriptionsItem>
       </ElDescriptions>
@@ -112,10 +116,7 @@
   import { useRoute } from 'vue-router'
   import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
-  import type { ColumnOption } from '@/types/component'
   import DictTag from '@/components/DictTag/index.vue'
-  import { useTable } from '@/hooks/core/useTable'
-  import { useDict } from '@/utils/dict'
   import {
     applyMaintenance,
     completeMaintenance,
@@ -124,6 +125,14 @@
     type ApplyMaintenanceReq,
     type AssetMaintenanceItem
   } from '@/api/asset/maintenance'
+  import { useTable } from '@/hooks/core/useTable'
+  import type { ColumnOption } from '@/types/component'
+  import { useDict } from '@/utils/dict'
+  import {
+    buildFixedAssetBusinessPayload,
+    formatFixedAssetBusinessStatus,
+    resolveFixedAssetWorkflowStatus
+  } from '../requisition/requisition.helper'
 
   defineOptions({ name: 'AssetMaintenance' })
 
@@ -162,13 +171,18 @@
       props: { placeholder: '请输入资产编号', clearable: true }
     },
     {
-      label: '流转状态',
+      label: '单据状态',
       key: 'status',
       type: 'select',
       props: {
-        placeholder: '请选择流转状态',
+        placeholder: '请选择单据状态',
         clearable: true,
-        options: wf_status.value
+        options: [
+          { label: '待审批', value: 0 },
+          { label: '已审批', value: 1 },
+          { label: '已驳回', value: 2 },
+          { label: '已完成', value: 3 }
+        ]
       }
     }
   ])
@@ -203,17 +217,25 @@
           { type: 'index', label: '序号', width: 60, align: 'center' },
           { prop: 'maintenanceNo', label: '维修单号', width: 160 },
           { prop: 'assetNo', label: '资产编号', minWidth: 140 },
+          { prop: 'assetName', label: '资产名称', minWidth: 150 },
           { prop: 'applyUserId', label: '申请人ID', width: 120, align: 'center' },
-          { prop: 'reason', label: '维修原因', minWidth: 220 },
+          { prop: 'reason', label: '维修事由', minWidth: 220 },
           {
             prop: 'status',
-            label: '状态',
+            label: '单据状态',
+            width: 110,
+            align: 'center',
+            formatter: (row: AssetMaintenanceItem) => formatFixedAssetBusinessStatus(Number(row.status))
+          },
+          {
+            prop: 'wfStatus',
+            label: '审批状态',
             width: 110,
             align: 'center',
             formatter: (row: AssetMaintenanceItem) =>
               h(DictTag, {
                 options: wf_status.value,
-                value: mapMaintenanceStatusToWorkflow(row.status)
+                value: resolveFixedAssetWorkflowStatus(row)
               })
           },
           { prop: 'createTime', label: '申请时间', width: 170, align: 'center' },
@@ -238,17 +260,18 @@
 
   const rules: FormRules = {
     assetNo: [{ required: true, message: '请输入资产编号', trigger: 'blur' }],
-    reason: [{ required: true, message: '请输入维修原因', trigger: 'blur' }]
+    reason: [{ required: true, message: '请输入维修事由', trigger: 'blur' }]
   }
 
   /**
-   * 把路由查询转换成资产上下文，供页面带入新增表单和默认筛选。
+   * 读取从资产台账跳转带入的资产快照。
    */
   const readRouteAssetContext = (): RouteAssetContext | null => {
     const assetNo = String(route.query.assetNo || '').trim()
     if (!assetNo) {
       return null
     }
+
     const assetId = Number(route.query.assetId)
     return {
       assetId: Number.isNaN(assetId) ? undefined : assetId,
@@ -269,18 +292,16 @@
   }
 
   /**
-   * 维修页直接消费工作流状态字典，不再额外维护一套前端枚举。
+   * 维修申请必须从资产台账携带统一资产主键进入。
    */
-  const mapMaintenanceStatusToWorkflow = (status?: number) => {
-    if (status === 0) return 'IN_PROGRESS'
-    if (status === 1 || status === 3) return 'COMPLETED'
-    if (status === 2) return 'REJECTED'
-    return ''
-  }
-
   const openCreateDialog = (context: RouteAssetContext | null = routeAssetContext.value) => {
+    if (!context?.assetId) {
+      ElMessage.warning('请从资产台账发起维修业务，确保自动带入资产主键')
+      return
+    }
+
     dialogAssetContext.value = context
-    formData.assetNo = context?.assetNo || ''
+    formData.assetNo = context.assetNo
     formData.reason = ''
     dialogVisible.value = true
   }
@@ -290,18 +311,20 @@
       await formRef.value?.validate()
 
       submitting.value = true
+      const basePayload = buildFixedAssetBusinessPayload(dialogAssetContext.value || {}, formData.reason)
       const payload: ApplyMaintenanceReq = {
-        assetId: dialogAssetContext.value?.assetId,
-        assetNo: formData.assetNo.trim(),
-        reason: formData.reason.trim()
+        ...basePayload
       }
 
       await applyMaintenance(payload)
-      ElMessage.success('维修申请已提交')
+      ElMessage.success('维修申请提交成功')
       dialogVisible.value = false
       refreshData()
     } catch (error) {
       if (error !== 'cancel') {
+        if (error instanceof Error) {
+          ElMessage.warning(error.message)
+        }
         console.error('提交维修申请失败:', error)
       }
     } finally {
@@ -316,7 +339,7 @@
       detailData.value = await getMaintenance(row.maintenanceNo)
     } catch (error) {
       detailVisible.value = false
-      console.error('获取维修详情失败:', error)
+      console.error('读取维修详情失败:', error)
     } finally {
       detailLoading.value = false
     }
@@ -324,15 +347,15 @@
 
   const handleComplete = async (row: AssetMaintenanceItem) => {
     try {
-      await ElMessageBox.confirm(`确认完成维修单“${row.maintenanceNo}”吗？`, '提示', {
+      await ElMessageBox.confirm(`确认完工维修单 ${row.maintenanceNo} 吗？`, '提示', {
         type: 'warning'
       })
       await completeMaintenance(row.maintenanceNo)
-      ElMessage.success('维修已完成')
+      ElMessage.success('维修单已完工')
       refreshData()
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('完成维修失败:', error)
+        console.error('完工维修单失败:', error)
       }
     }
   }
@@ -350,7 +373,7 @@
       )
     ]
 
-    if (row.status === 1) {
+    if (row.status === 1 && resolveFixedAssetWorkflowStatus(row) === 'approved') {
       buttons.push(
         h(
           ElButton,
@@ -359,7 +382,7 @@
             link: true,
             onClick: () => handleComplete(row)
           },
-          () => '完成维修'
+          () => '维修完工'
         )
       )
     }
