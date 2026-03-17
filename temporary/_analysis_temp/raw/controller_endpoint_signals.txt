@@ -1,0 +1,113 @@
+﻿ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:28:@RequestMapping("/workflow/task")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:38:    @GetMapping("/todo")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:39:    public TableDataInfo todo(WorkflowTaskQueryReq queryReq) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:48:    @GetMapping("/done")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:49:    public TableDataInfo done(WorkflowTaskQueryReq queryReq) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:58:    @PostMapping("/approve")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow\WorkflowTaskController.java:59:    public AjaxResult approve(@RequestBody WorkflowApproveReq approveReq) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:18:@RequestMapping("/asset/requisition")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:28:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:29:    public TableDataInfo list(AssetRequisition assetRequisition) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:39:    @GetMapping(value = "/{requisitionNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:40:    public AjaxResult getInfo(@PathVariable("requisitionNo") String requisitionNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:48:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:49:    public AjaxResult add(@RequestBody AssetRequisition assetRequisition) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:63:    @PostMapping("/return/{requisitionNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRequisitionController.java:64:    public AjaxResult returnAsset(@PathVariable("requisitionNo") String requisitionNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetReportController.java:20:@RequestMapping("/asset/report")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetReportController.java:30:    @GetMapping("/summary")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetReportController.java:31:    public AjaxResult summary() {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetReportController.java:39:    @GetMapping("/warnings")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetReportController.java:40:    public AjaxResult warnings(@RequestParam(value = "landTermWithinDays", required = false) Integer landTermWithinDays) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:21:@RequestMapping("/asset/finance")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:34:    @PostMapping("/{assetId}/recalculate")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:35:    public AjaxResult recalculate(@PathVariable("assetId") Long assetId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:43:    @GetMapping("/{assetId}/depreciation-logs")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:44:    public AjaxResult logs(@PathVariable("assetId") Long assetId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:53:    @PostMapping("/accrue/{period}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetFinanceController.java:54:    public AjaxResult accrueByPeriod(@PathVariable("period") String period) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:23:@RequestMapping("/asset/real-estate/usage")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:30:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:31:    public TableDataInfo list(AssetRealEstateUsageChange usageChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:38:    @GetMapping("/{usageChangeNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:39:    public AjaxResult getInfo(@PathVariable("usageChangeNo") String usageChangeNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:44:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateUsageChangeController.java:45:    public AjaxResult add(@RequestBody AssetRealEstateUsageChange usageChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:18:@RequestMapping("/asset/disposal")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:25:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:26:    public TableDataInfo list(AssetDisposal assetDisposal) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:36:    @GetMapping("/{disposalNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:37:    public AjaxResult getInfo(@PathVariable("disposalNo") String disposalNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:42:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetDisposalController.java:43:    public AjaxResult add(@RequestBody AssetDisposal assetDisposal) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:28:@RequestMapping("/asset/categoryAttr")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:37:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:38:    public AjaxResult list(AssetCategoryAttr assetCategoryAttr) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:47:    @GetMapping("/category/{categoryId}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:48:    public AjaxResult listByCategoryId(@PathVariable("categoryId") Long categoryId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:56:    @GetMapping("/{attrId}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:57:    public AjaxResult getInfo(@PathVariable("attrId") Long attrId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:66:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:67:    public AjaxResult add(@RequestBody AssetCategoryAttr assetCategoryAttr) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:78:    @PutMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:79:    public AjaxResult edit(@RequestBody AssetCategoryAttr assetCategoryAttr) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:89:    @PutMapping("/disable/{attrId}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:90:    public AjaxResult disable(@PathVariable("attrId") Long attrId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:99:    @DeleteMapping("/{attrIds}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryAttrController.java:100:    public AjaxResult remove(@PathVariable Long[] attrIds) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:23:@RequestMapping("/asset/real-estate/status")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:30:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:31:    public TableDataInfo list(AssetRealEstateStatusChange statusChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:38:    @GetMapping("/{statusChangeNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:39:    public AjaxResult getInfo(@PathVariable("statusChangeNo") String statusChangeNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:44:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateStatusChangeController.java:45:    public AjaxResult add(@RequestBody AssetRealEstateStatusChange statusChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:18:@RequestMapping("/asset/maintenance")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:25:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:26:    public TableDataInfo list(AssetMaintenance assetMaintenance) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:36:    @GetMapping("/{maintenanceNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:37:    public AjaxResult getInfo(@PathVariable("maintenanceNo") String maintenanceNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:42:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:43:    public AjaxResult add(@RequestBody AssetMaintenance assetMaintenance) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:56:    @PostMapping("/complete/{maintenanceNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetMaintenanceController.java:57:    public AjaxResult complete(@PathVariable("maintenanceNo") String maintenanceNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:35:@RequestMapping("/asset/info")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:47:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:48:    public TableDataInfo list(AssetInfo assetInfo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:59:    @PostMapping("/export")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:60:    public void export(HttpServletResponse response, AssetInfo assetInfo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:72:    @GetMapping("/{assetId}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:73:    public AjaxResult getInfo(@PathVariable("assetId") Long assetId) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:82:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:83:    public AjaxResult add(@RequestBody AssetCreateReq assetCreateReq) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:92:    @PutMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:93:    public AjaxResult edit(@RequestBody AssetUpdateReq assetUpdateReq) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:102:    @DeleteMapping("/{assetIds}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetInfoController.java:103:    public AjaxResult archive(@PathVariable Long[] assetIds) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:23:@RequestMapping("/asset/real-estate/ownership")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:30:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:31:    public TableDataInfo list(AssetRealEstateOwnershipChange ownershipChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:38:    @GetMapping("/{ownershipChangeNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:39:    public AjaxResult getInfo(@PathVariable("ownershipChangeNo") String ownershipChangeNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:44:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateOwnershipChangeController.java:45:    public AjaxResult add(@RequestBody AssetRealEstateOwnershipChange ownershipChange) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:29:@RequestMapping("/asset/category")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:41:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:42:    public AjaxResult list(AssetCategory assetCategory) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:51:    @GetMapping(value = "/{id}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:52:    public AjaxResult getInfo(@PathVariable("id") Long id) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:60:    @GetMapping("/{id}/attrs")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:61:    public AjaxResult getCategoryAttrs(@PathVariable("id") Long id) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:70:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:71:    public AjaxResult add(@RequestBody AssetCategory assetCategory) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:80:    @PutMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:81:    public AjaxResult edit(@RequestBody AssetCategory assetCategory) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:90:    @DeleteMapping("/{ids}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetCategoryController.java:91:    public AjaxResult remove(@PathVariable Long[] ids) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:23:@RequestMapping("/asset/real-estate/disposal")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:30:    @GetMapping("/list")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:31:    public TableDataInfo list(AssetRealEstateDisposal disposal) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:38:    @GetMapping("/{disposalNo}")
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:39:    public AjaxResult getInfo(@PathVariable("disposalNo") String disposalNo) {
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:44:    @PostMapping
+ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset\AssetRealEstateDisposalController.java:45:    public AjaxResult add(@RequestBody AssetRealEstateDisposal disposal) {

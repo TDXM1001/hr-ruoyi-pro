@@ -1,0 +1,8 @@
+﻿ruoyi-common\src\main\java\com\ruoyi\common\enums\UserStatus.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\OperatorType.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\LimitType.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\HttpMethod.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\DesensitizedType.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\DataSourceType.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\BusinessType.java
+ruoyi-common\src\main\java\com\ruoyi\common\enums\BusinessStatus.java

@@ -1,0 +1,549 @@
+﻿ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:31:     * @return 资产分类
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:35:        return assetCategoryMapper.selectAssetCategoryById(id);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:42:     * @return 资产分类
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:46:        return assetCategoryMapper.selectAssetCategoryList(assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:53:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:58:        return assetCategoryMapper.insertAssetCategory(assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:65:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:69:        return assetCategoryMapper.updateAssetCategory(assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:76:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:83:        return assetCategoryMapper.deleteAssetCategoryByIds(ids);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:90:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:95:        return assetCategoryMapper.deleteAssetCategoryById(id);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:102:        if (!assetCategoryAttrService.selectAssetCategoryAttrByCategoryId(categoryId).isEmpty()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryServiceImpl.java:103:            throw new ServiceException("当前分类已配置扩展字段，请先停用或删除扩展字段后再删除分类");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:62:     * @return 资产主档
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:66:        return assetInfoMapper.selectAssetInfoByAssetId(assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:73:     * @return 资产主档
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:77:        return assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:84:     * @return 资产主档集合
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:88:        return assetInfoMapper.selectAssetInfoList(assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:95:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:102:        return assetInfoMapper.insertAssetInfo(assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:109:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:115:        return assetInfoMapper.updateAssetInfo(assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:122:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:127:        if (assetIds == null || assetIds.length == 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:128:            return 0;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:133:            if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:134:                throw new ServiceException("待归档的资产不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:148:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:155:     * @return 结果
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:160:        return deleteAssetInfoByAssetIds(new Long[]{assetId});
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:167:        if (DEL_FLAG_ARCHIVED.equals(assetInfo.getDelFlag())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:168:            throw new ServiceException("资产已归档，无需重复归档");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:170:        if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:171:            throw new ServiceException("已报废资产不能归档，请保留生命周期审计记录");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:173:        if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:174:            throw new ServiceException("已处置资产不能归档，请保留生命周期审计记录");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:176:        if (StringUtils.isNotBlank(assetInfo.getAssetStatus())
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:177:            && !StringUtils.equalsAny(assetInfo.getAssetStatus(), ASSET_STATUS_ACTIVE, ASSET_STATUS_IDLE)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:178:            throw new ServiceException("当前资产状态不允许归档，请先结束领用、维修或盘点流程");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:180:        if (hasBlockingBusinessDocuments(assetInfo.getAssetId())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:181:            throw new ServiceException("资产存在未完成的领用、维修、处置或不动产动作单据，不能归档");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:189:        return hasBlockingRequisition(assetId)
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:198:        return assetRequisitionMapper.selectAssetRequisitionList(query).stream()
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:199:            .anyMatch(item -> item != null && item.getStatus() != null && item.getStatus() != 2 && item.getStatus() != 3);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:205:        return assetMaintenanceMapper.selectAssetMaintenanceList(query).stream()
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:206:            .anyMatch(item -> item != null && item.getStatus() != null && item.getStatus() != 2 && item.getStatus() != 3);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:212:        return assetDisposalMapper.selectAssetDisposalList(query).stream()
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:213:            .anyMatch(item -> item != null && item.getStatus() != null && item.getStatus() == 0);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:219:        ownershipChange.setStatus(DOC_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:223:        disposal.setStatus(DOC_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:225:        return !assetRealEstateOwnershipChangeMapper.selectOwnershipChangeList(ownershipChange).isEmpty()
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:233:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:234:            return;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:242:        if (StringUtils.isBlank(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetInfoServiceImpl.java:243:            assetInfo.setAssetStatus("1");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:11:import com.ruoyi.workflow.service.IApprovalEngine;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:25:    private static final String WF_STATUS_APPROVED = "approved";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:26:    private static final String WF_STATUS_REJECTED = "rejected";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:27:    private static final String WF_STATUS_COMPLETED = "completed";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:40:        return fillWorkflowStatus(assetDisposalMapper.selectAssetDisposalByDisposalNo(disposalNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:46:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:47:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:49:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:55:        String disposalType = normalizeAndValidateDisposalType(assetDisposal);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:57:        assetDisposal.setStatus(0);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:58:        assetDisposal.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:66:        updateAssetStatus(assetInfo.getAssetId(), resolveTargetAssetStatus(disposalType));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:68:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:75:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:76:            throw new ServiceException("固定资产业务必须传入资产主键");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:80:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:81:            throw new ServiceException("关联资产不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:83:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:90:        if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:91:            throw new ServiceException("已处置资产不能再次发起处置");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:93:        if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:94:            throw new ServiceException("已报废资产不能再次发起处置");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:98:    private void updateAssetStatus(Long assetId, String assetStatus) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:101:        assetInfo.setAssetStatus(assetStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:109:        String disposalType = AssetDisposal.normalizeDisposalType(assetDisposal.getDisposalType());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:110:        if (StringUtils.isBlank(disposalType)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:111:            throw new ServiceException("处置类型不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:113:        if (!AssetDisposal.isSupportedDisposalType(disposalType)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:114:            throw new ServiceException("不支持的处置类型: " + assetDisposal.getDisposalType());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:116:        assetDisposal.setDisposalType(disposalType);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:117:        return disposalType;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:123:    private String resolveTargetAssetStatus(String disposalType) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:124:        return AssetDisposal.isScrapType(disposalType) ? ASSET_STATUS_SCRAPPED : ASSET_STATUS_DISPOSED;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:128:     * 历史数据缺失 `wfStatus` 时按单据状态回填。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:130:    private AssetDisposal fillWorkflowStatus(AssetDisposal assetDisposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:131:        if (assetDisposal == null || StringUtils.isNotBlank(assetDisposal.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:132:            return assetDisposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:134:        if (assetDisposal.getStatus() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:135:            return assetDisposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:137:        switch (assetDisposal.getStatus()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:138:            case 0 -> assetDisposal.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:139:            case 1 -> assetDisposal.setWfStatus(WF_STATUS_APPROVED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:140:            case 2 -> assetDisposal.setWfStatus(WF_STATUS_REJECTED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:141:            case 3 -> assetDisposal.setWfStatus(WF_STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDisposalServiceImpl.java:145:        return assetDisposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:41:        return assetCategoryAttrMapper.selectAssetCategoryAttrByAttrId(attrId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:46:        return assetCategoryAttrMapper.selectAssetCategoryAttrList(assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:51:        return assetCategoryAttrMapper.selectAssetCategoryAttrByCategoryId(categoryId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:59:        if (StringUtils.isBlank(assetCategoryAttr.getStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:60:            assetCategoryAttr.setStatus("0");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:62:        return assetCategoryAttrMapper.insertAssetCategoryAttr(assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:69:        return assetCategoryAttrMapper.updateAssetCategoryAttr(assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:75:        if (currentAttr == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:76:            throw new ServiceException("待禁用的扩展字段不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:80:        disabledAttr.setStatus("1");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:83:        return assetCategoryAttrMapper.updateAssetCategoryAttr(disabledAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:88:        return assetCategoryAttrMapper.deleteAssetCategoryAttrByAttrIds(attrIds);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:95:        if (assetCategoryAttr == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:96:            throw new ServiceException("扩展字段定义不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:98:        if (update && assetCategoryAttr.getAttrId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:99:            throw new ServiceException("修改扩展字段时字段ID不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:101:        if (assetCategoryAttr.getCategoryId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:102:            throw new ServiceException("所属分类不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:104:        if (StringUtils.isBlank(assetCategoryAttr.getAttrCode())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:105:            throw new ServiceException("字段编码不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:107:        if (StringUtils.isBlank(assetCategoryAttr.getAttrName())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:108:            throw new ServiceException("字段名称不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:110:        if (StringUtils.isBlank(assetCategoryAttr.getDataType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:111:            throw new ServiceException("数据类型不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:115:        if (StringUtils.isBlank(normalizedAttrCode)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:116:            throw new ServiceException("字段编码不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:120:        if (StringUtils.isBlank(assetCategoryAttr.getAttrType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:130:        if (RESERVED_ATTR_CODES.contains(normalizedAttrCode)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:131:            throw new ServiceException("字段编码[" + normalizedAttrCode + "]为系统保留字段，不允许使用");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:139:            if (!update || !existsAttr.getAttrId().equals(assetCategoryAttr.getAttrId())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:140:                throw new ServiceException("同一分类下字段编码已存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:149:        return StringUtils.trimToEmpty(attrCode)
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:159:        return StringUtils.trimToEmpty(fieldType).toLowerCase(Locale.ROOT);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:166:        return StringUtils.isBlank(flagValue) ? "0" : StringUtils.trim(flagValue);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:174:        if (StringUtils.isBlank(normalizedValue)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:175:            return "1";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:177:        if (OPTION_SOURCE_TYPE_CODES.contains(normalizedValue)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:178:            return normalizedValue;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetCategoryAttrServiceImpl.java:180:        return switch (normalizedValue) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:39:        return assetDepreciationLogMapper.selectAssetDepreciationLogByAssetId(assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:45:        if (assetId == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:46:            throw new ServiceException("资产ID不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:48:        if (StringUtils.isBlank(period)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:49:            throw new ServiceException("折旧期间不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:52:        if (assetFinance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:53:            throw new ServiceException("资产财务信息不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:55:        if (assetDepreciationLogMapper.selectAssetDepreciationLogByAssetIdAndPeriod(assetId, period) != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:56:            throw new ServiceException("该期间已执行过折旧计提");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:60:        if (assetFinance.getUsefulLifeMonth() != null && nextPeriod > assetFinance.getUsefulLifeMonth()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:61:            throw new ServiceException("资产已完成全部折旧期间");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:80:        return depreciationLog;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:89:        if (StringUtils.isBlank(period)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:90:            throw new ServiceException("折旧期间不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:95:            if (!canAccrueByPeriod(assetFinance, period)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:100:        return result;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:107:        if (assetFinance == null || assetFinance.getAssetId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:108:            return false;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:110:        if (FINANCE_STATUS_DISPOSED.equals(assetFinance.getFinanceStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:111:            return false;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:113:        if (assetFinance.getOriginalValue() == null
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:117:            return false;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:119:        if (assetDepreciationLogMapper.selectAssetDepreciationLogByAssetIdAndPeriod(assetFinance.getAssetId(), period) != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:120:            return false;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetDepreciationServiceImpl.java:123:        return depreciationLogs.size() < assetFinance.getUsefulLifeMonth();
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:5:import com.ruoyi.asset.domain.AssetRealEstateStatusChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:7:import com.ruoyi.asset.mapper.AssetRealEstateStatusChangeMapper;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:8:import com.ruoyi.asset.service.IAssetRealEstateStatusChangeService;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:20:public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateStatusChangeService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:22:    private static final String STATUS_COMPLETED = "completed";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:28:    private AssetRealEstateStatusChangeMapper statusChangeMapper;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:34:    public AssetRealEstateStatusChange selectStatusChangeByNo(String statusChangeNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:35:        return fillWorkflowStatus(statusChangeMapper.selectStatusChangeByNo(statusChangeNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:39:    public List<AssetRealEstateStatusChange> selectStatusChangeList(AssetRealEstateStatusChange statusChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:40:        List<AssetRealEstateStatusChange> list = statusChangeMapper.selectStatusChangeList(statusChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:41:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:42:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:44:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:49:    public int insertStatusChange(AssetRealEstateStatusChange statusChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:50:        statusChange.setCreateTime(DateUtils.getNowDate());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:51:        statusChange.setStatus(STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:52:        statusChange.setWfStatus(STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:54:        AssetInfo assetInfo = resolveAsset(statusChange.getAssetId());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:57:        statusChange.setAssetId(assetInfo.getAssetId());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:58:        statusChange.setAssetNo(assetInfo.getAssetNo());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:59:        statusChange.setOldAssetStatus(assetInfo.getAssetStatus());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:61:        int rows = statusChangeMapper.insertStatusChange(statusChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:65:        updatePayload.setAssetStatus(statusChange.getTargetAssetStatus());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:67:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:74:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:75:            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:79:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:80:            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:82:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:86:        if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:87:            throw new ServiceException(errorMessage);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:92:     * 老数据未回填 wfStatus 时，统一按已完成展示。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:94:    private AssetRealEstateStatusChange fillWorkflowStatus(AssetRealEstateStatusChange statusChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:95:        if (statusChange == null || StringUtils.isNotBlank(statusChange.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:96:            return statusChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:98:        statusChange.setWfStatus(StringUtils.defaultIfBlank(statusChange.getStatus(), STATUS_COMPLETED));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateStatusChangeServiceImpl.java:99:        return statusChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:32:        summary.setStatusSummaries(safeList(assetReportMapper.selectAssetStatusSummary()));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:42:            if (ASSET_TYPE_FIXED.equals(item.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:46:            if (ASSET_TYPE_REAL_ESTATE.equals(item.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:53:        return summary;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:65:        return warningVo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:72:        if (landTermWithinDays == null || landTermWithinDays <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:73:            return DEFAULT_LAND_TERM_WITHIN_DAYS;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:75:        return landTermWithinDays;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:79:        return items == null ? new ArrayList<>() : items;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:83:        return value == null ? 0L : value;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetReportServiceImpl.java:87:        return value == null ? BigDecimal.ZERO : value;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:11:import com.ruoyi.workflow.service.IApprovalEngine;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:27:    private static final String WF_STATUS_APPROVED = "approved";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:28:    private static final String WF_STATUS_REJECTED = "rejected";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:29:    private static final String WF_STATUS_COMPLETED = "completed";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:42:        return fillWorkflowStatus(assetMaintenanceMapper.selectAssetMaintenanceByMaintenanceNo(maintenanceNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:48:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:49:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:51:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:58:        assetMaintenance.setStatus(0);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:59:        assetMaintenance.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:67:        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_MAINTENANCE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:69:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:74:    public int completeMaintenance(String maintenanceNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:76:        if (maintenance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:77:            throw new ServiceException("维修单不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:79:        if (!Integer.valueOf(1).equals(maintenance.getStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:80:            throw new ServiceException("只有已审批的维修单才能完工");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:85:        updatePayload.setStatus(3);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:86:        updatePayload.setWfStatus(WF_STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:89:        updateAssetStatus(maintenance.getAssetId(), ASSET_STATUS_ACTIVE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:90:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:97:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:98:            throw new ServiceException("固定资产业务必须传入资产主键");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:102:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:103:            throw new ServiceException("关联资产不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:105:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:112:        if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:113:            throw new ServiceException("已处置资产不能发起维修");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:115:        if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:116:            throw new ServiceException("已报废资产不能发起维修");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:120:    private void updateAssetStatus(Long assetId, String assetStatus) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:123:        assetInfo.setAssetStatus(assetStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:128:     * 历史数据缺失 `wfStatus` 时按单据状态回填。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:130:    private AssetMaintenance fillWorkflowStatus(AssetMaintenance assetMaintenance) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:131:        if (assetMaintenance == null || StringUtils.isNotBlank(assetMaintenance.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:132:            return assetMaintenance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:134:        if (assetMaintenance.getStatus() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:135:            return assetMaintenance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:137:        switch (assetMaintenance.getStatus()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:138:            case 0 -> assetMaintenance.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:139:            case 1 -> assetMaintenance.setWfStatus(WF_STATUS_APPROVED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:140:            case 2 -> assetMaintenance.setWfStatus(WF_STATUS_REJECTED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:141:            case 3 -> assetMaintenance.setWfStatus(WF_STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetMaintenanceServiceImpl.java:145:        return assetMaintenance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:43:        return assetFinanceMapper.selectAssetFinanceByAssetId(assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:49:        if (assetFinance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:50:            throw new ServiceException("资产财务信息不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:55:        return calculatedFinance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:60:        return calculateDepreciatedFinance(assetFinance, 0);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:68:        if (strategy == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:69:            throw new ServiceException("暂不支持的折旧方法: " + assetFinance.getDepreciationMethod());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:77:        if (normalizedPeriod > usefulLifeMonth) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:83:        if (normalizedPeriod == 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:109:        if (netBookValue.compareTo(salvageValue) < 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:124:        return assetFinance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:140:        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:141:            return ZERO;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:143:        if (currentPeriod >= usefulLifeMonth) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:144:            return remainingAmount;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:146:        return limitByRemaining(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:164:        if (assetFinance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:165:            throw new ServiceException("资产财务信息不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:167:        if (assetFinance.getOriginalValue() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:168:            throw new ServiceException("资产原值不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:170:        if (assetFinance.getUsefulLifeMonth() == null || assetFinance.getUsefulLifeMonth() <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:171:            throw new ServiceException("使用月数必须大于0");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:173:        if (StringUtils.isBlank(assetFinance.getDepreciationMethod())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:174:            throw new ServiceException("折旧方法不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:183:        if (StringUtils.equalsAnyIgnoreCase(method, "1", "STRAIGHT_LINE", "年限平均法", "直线法")) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:184:            return "STRAIGHT_LINE";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:186:        if (StringUtils.equalsAnyIgnoreCase(method, "2", "DOUBLE_DECLINING", "双倍余额递减法")) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:187:            return "DOUBLE_DECLINING";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:189:        if (StringUtils.equalsAnyIgnoreCase(method, "3", "SUM_OF_YEARS", "年数总和法")) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:190:            return "SUM_OF_YEARS";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:192:        return method.toUpperCase();
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:199:        if (salvageRate == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:200:            return BigDecimal.ZERO;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:202:        if (salvageRate.compareTo(BigDecimal.ONE) > 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:203:            return salvageRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:205:        return salvageRate;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:213:        return scale(originalValue.multiply(normalizedRate));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:222:        if (currentAmount.compareTo(remainingAmount) > 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:225:        if (currentAmount.compareTo(BigDecimal.ZERO) < 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:226:            return ZERO;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:228:        return scale(currentAmount);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:238:        if (bookValue.compareTo(BigDecimal.ZERO) < 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:239:            return ZERO;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:241:        return scale(bookValue);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:248:        return value == null ? BigDecimal.ZERO : value;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:255:        if (value == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:256:            return ZERO;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetFinanceServiceImpl.java:258:        return value.setScale(2, RoundingMode.HALF_UP);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:11:import com.ruoyi.workflow.service.IApprovalEngine;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:40:        return fillWorkflowStatus(disposalMapper.selectDisposalByNo(disposalNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:46:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:47:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:49:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:56:        disposal.setStatus(STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:57:        disposal.setWfStatus(STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:64:        disposal.setOldAssetStatus(assetInfo.getAssetStatus());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:65:        if (StringUtils.isBlank(disposal.getTargetAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:66:            disposal.setTargetAssetStatus(TARGET_STATUS_DISPOSED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:71:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:78:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:79:            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:83:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:84:            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:86:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:90:        if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:91:            throw new ServiceException(errorMessage);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:96:     * 老数据未回填 wfStatus 时，统一按待审批展示。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:98:    private AssetRealEstateDisposal fillWorkflowStatus(AssetRealEstateDisposal disposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:99:        if (disposal == null || StringUtils.isNotBlank(disposal.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:100:            return disposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:102:        disposal.setWfStatus(StringUtils.defaultIfBlank(disposal.getStatus(), STATUS_PENDING));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateDisposalServiceImpl.java:103:        return disposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:81:        return result;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:90:        if (basicInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:91:            return null;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:101:        return detailVo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:119:        return 1;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:131:        if (currentInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:132:            throw new ServiceException("待修改的资产不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:140:        if (financeToPersist != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:146:        return 1;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:162:        listVo.setAssetStatus(assetInfo.getAssetStatus());
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:165:        return listVo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:172:        if (assetReq == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:173:            throw new ServiceException("资产请求体不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:176:        if (basicInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:177:            throw new ServiceException("资产基础信息不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:179:        if (update && basicInfo.getAssetId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:180:            throw new ServiceException("修改资产时资产ID不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:182:        if (StringUtils.isBlank(basicInfo.getAssetNo())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:183:            throw new ServiceException("资产编号不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:185:        if (StringUtils.isBlank(basicInfo.getAssetName())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:186:            throw new ServiceException("资产名称不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:188:        if (basicInfo.getCategoryId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:189:            throw new ServiceException("资产分类不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:191:        if (StringUtils.isBlank(basicInfo.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:192:            throw new ServiceException("资产类型不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:194:        if (assetReq.getFinanceInfo() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:195:            throw new ServiceException("资产财务信息不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:197:        if (ASSET_TYPE_REAL_ESTATE.equals(basicInfo.getAssetType()) && assetReq.getRealEstateInfo() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:198:            throw new ServiceException("不动产必须填写不动产信息");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:207:        if (assetInfo != null && !Objects.equals(assetInfo.getAssetId(), currentAssetId)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:208:            throw new ServiceException("资产编号已存在，请调整后一物一码编码");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:223:        if (StringUtils.isBlank(financeInfo.getFinanceStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:224:            financeInfo.setFinanceStatus("0");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:226:        if (financeInfo.getVersionNo() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:237:        if (!ASSET_TYPE_REAL_ESTATE.equals(assetType) || realEstateInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:238:            return;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:253:        if (dynamicAttrs == null || dynamicAttrs.isEmpty()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:254:            return;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:258:            if (attrValue == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:263:            if (attrValue.getCategoryId() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:277:        if (attachments == null || attachments.isEmpty()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:278:            return;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:282:            if (attachment == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:298:        if (depreciationLogs == null || depreciationLogs.size() <= RECENT_DEPRECIATION_LOG_LIMIT) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:299:            return depreciationLogs;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:301:        return new ArrayList<>(depreciationLogs.subList(0, RECENT_DEPRECIATION_LOG_LIMIT));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:309:        if (timeline == null || timeline.size() <= RECENT_TIMELINE_LIMIT) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:310:            return timeline;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:312:        return new ArrayList<>(timeline.subList(0, RECENT_TIMELINE_LIMIT));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:319:        if (currentFinance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:320:            return incomingFinance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:322:        if (!hasDepreciationStarted(currentFinance)) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:323:            return incomingFinance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:326:        return null;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:333:        if (incomingFinance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:334:            throw new ServiceException("资产财务信息不能为空");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:336:        if (isBigDecimalChanged(currentFinance.getOriginalValue(), incomingFinance.getOriginalValue())
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:341:            throw new ServiceException("资产已开始折旧，不能直接修改财务基础数据");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:349:        return StringUtils.isNotBlank(assetFinance.getLastDepreciationPeriod())
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:351:            || StringUtils.equalsAny(assetFinance.getFinanceStatus(), "1", "2");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:355:        return defaultZero(currentValue).compareTo(defaultZero(incomingValue)) != 0;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:359:        return !StringUtils.equals(StringUtils.trimToEmpty(currentValue), StringUtils.trimToEmpty(incomingValue));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetAggregateServiceImpl.java:363:        return value == null ? BigDecimal.ZERO : value;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:20:import com.ruoyi.workflow.service.WorkflowBusinessHandler;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:48:    private static final String DOC_STATUS_APPROVED = "approved";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:51:    private static final String DOC_STATUS_REJECTED = "rejected";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:76:        return List.of(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:88:            case "asset_requisition" -> approveRequisition(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:89:            case "asset_maintenance" -> approveMaintenance(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:90:            case "asset_disposal" -> approveDisposal(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:91:            case "asset_real_estate_ownership_change" -> approveRealEstateOwnershipChange(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:92:            case "asset_real_estate_disposal" -> approveRealEstateDisposal(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:93:            default -> throw new ServiceException("不支持的资产业务类型: " + businessType);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:100:            case "asset_requisition" -> rejectRequisition(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:101:            case "asset_maintenance" -> rejectMaintenance(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:102:            case "asset_disposal" -> rejectDisposal(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:103:            case "asset_real_estate_ownership_change" -> rejectRealEstateOwnershipChange(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:104:            case "asset_real_estate_disposal" -> rejectRealEstateDisposal(businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:105:            default -> throw new ServiceException("不支持的资产业务类型: " + businessType);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:115:    private void approveRequisition(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:119:        updatePayload.setStatus(1);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:122:        updateAssetStatus(requisition.getAssetId(), ASSET_STATUS_REQUISITION);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:128:    private void rejectRequisition(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:132:        updatePayload.setStatus(2);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:135:        updateAssetStatus(requisition.getAssetId(), ASSET_STATUS_ACTIVE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:141:    private void approveMaintenance(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:145:        updatePayload.setStatus(1);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:148:        updateAssetStatus(maintenance.getAssetId(), ASSET_STATUS_MAINTENANCE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:154:    private void rejectMaintenance(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:158:        updatePayload.setStatus(2);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:161:        updateAssetStatus(maintenance.getAssetId(), ASSET_STATUS_ACTIVE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:167:    private void approveDisposal(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:171:        updatePayload.setStatus(1);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:174:        updateAssetStatus(disposal.getAssetId(), resolveApprovedDisposalStatus(disposal));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:180:    private void rejectDisposal(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:184:        updatePayload.setStatus(2);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:187:        updateAssetStatus(disposal.getAssetId(), ASSET_STATUS_ACTIVE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:193:    private void approveRealEstateOwnershipChange(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:197:        updatePayload.setStatus(DOC_STATUS_APPROVED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:212:    private void rejectRealEstateOwnershipChange(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:216:        updatePayload.setStatus(DOC_STATUS_REJECTED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:224:    private void approveRealEstateDisposal(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:228:        updatePayload.setStatus(DOC_STATUS_APPROVED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:232:        updateAssetStatus(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:234:            disposal.getTargetAssetStatus() == null ? ASSET_STATUS_DISPOSED : disposal.getTargetAssetStatus()
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:241:    private void rejectRealEstateDisposal(String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:245:        updatePayload.setStatus(DOC_STATUS_REJECTED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:255:        if (requisition == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:256:            throw new ServiceException("领用单不存在: " + businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:258:        return requisition;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:266:        if (maintenance == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:267:            throw new ServiceException("维修单不存在: " + businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:269:        return maintenance;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:277:        if (disposal == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:278:            throw new ServiceException("处置单不存在: " + businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:280:        return disposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:289:        if (ownershipChange == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:290:            throw new ServiceException("权属变更单不存在: " + businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:292:        return ownershipChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:300:        if (disposal == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:301:            throw new ServiceException("不动产注销/处置单不存在: " + businessId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:303:        return disposal;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:309:    private void updateAssetStatus(Long assetId, String assetStatus) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:312:        assetInfo.setAssetStatus(assetStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:317:     * 历史空值仍按报废兼容，新增单据已由服务层强制填写 disposalType。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:319:    private String resolveApprovedDisposalStatus(AssetDisposal disposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetWorkflowBusinessHandler.java:320:        return AssetDisposal.isScrapType(disposal.getDisposalType())
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:13:import com.ruoyi.workflow.service.IApprovalEngine;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:45:        return fillWorkflowStatus(ownershipChangeMapper.selectOwnershipChangeByNo(ownershipChangeNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:51:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:52:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:54:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:61:        ownershipChange.setStatus(STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:62:        ownershipChange.setWfStatus(STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:68:        if (realEstate == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:69:            throw new ServiceException(REAL_ESTATE_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:81:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:88:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:89:            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:93:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:94:            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:96:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:100:        if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:101:            throw new ServiceException(errorMessage);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:106:     * 老数据未回填 wfStatus 时，前端仍可按统一流程状态展示。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:108:    private AssetRealEstateOwnershipChange fillWorkflowStatus(AssetRealEstateOwnershipChange ownershipChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:109:        if (ownershipChange == null || StringUtils.isNotBlank(ownershipChange.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:110:            return ownershipChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:112:        ownershipChange.setWfStatus(StringUtils.defaultIfBlank(ownershipChange.getStatus(), STATUS_PENDING));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateOwnershipChangeServiceImpl.java:113:        return ownershipChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:11:import com.ruoyi.workflow.service.IApprovalEngine;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:28:    private static final String WF_STATUS_APPROVED = "approved";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:29:    private static final String WF_STATUS_REJECTED = "rejected";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:30:    private static final String WF_STATUS_COMPLETED = "completed";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:43:        return fillWorkflowStatus(assetRequisitionMapper.selectAssetRequisitionByRequisitionNo(requisitionNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:49:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:50:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:52:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:59:        assetRequisition.setStatus(0);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:60:        assetRequisition.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:68:        updateAssetStatus(assetInfo.getAssetId(), ASSET_STATUS_REQUISITION);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:70:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:75:    public int returnAsset(String requisitionNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:77:        if (requisition == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:78:            throw new ServiceException("领用单不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:80:        if (!Integer.valueOf(1).equals(requisition.getStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:81:            throw new ServiceException("只有已审批的领用单才能归还资产");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:86:        updatePayload.setStatus(3);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:87:        updatePayload.setWfStatus(WF_STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:90:        updateAssetStatus(requisition.getAssetId(), ASSET_STATUS_ACTIVE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:91:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:98:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:99:            throw new ServiceException("固定资产业务必须传入资产主键");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:103:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:104:            throw new ServiceException("关联资产不存在");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:106:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:113:        if (ASSET_STATUS_MAINTENANCE.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:114:            throw new ServiceException("维修中的资产不能继续领用");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:116:        if (ASSET_STATUS_DISPOSED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:117:            throw new ServiceException("已处置资产不能继续领用");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:119:        if (ASSET_STATUS_SCRAPPED.equals(assetInfo.getAssetStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:120:            throw new ServiceException("已报废资产不能继续领用");
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:127:    private void updateAssetStatus(Long assetId, String assetStatus) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:130:        assetInfo.setAssetStatus(assetStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:135:     * 历史数据可能缺失 `wfStatus`，查询时按单据状态回填。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:137:    private AssetRequisition fillWorkflowStatus(AssetRequisition assetRequisition) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:138:        if (assetRequisition == null || StringUtils.isNotBlank(assetRequisition.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:139:            return assetRequisition;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:141:        if (assetRequisition.getStatus() == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:142:            return assetRequisition;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:144:        switch (assetRequisition.getStatus()) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:145:            case 0 -> assetRequisition.setWfStatus(WF_STATUS_PENDING);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:146:            case 1 -> assetRequisition.setWfStatus(WF_STATUS_APPROVED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:147:            case 2 -> assetRequisition.setWfStatus(WF_STATUS_REJECTED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:148:            case 3 -> assetRequisition.setWfStatus(WF_STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRequisitionServiceImpl.java:152:        return assetRequisition;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:24:    private static final String STATUS_COMPLETED = "completed";
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:41:        return fillWorkflowStatus(usageChangeMapper.selectUsageChangeByNo(usageChangeNo));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:47:        if (list != null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:48:            list.forEach(this::fillWorkflowStatus);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:50:        return list;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:57:        usageChange.setStatus(STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:58:        usageChange.setWfStatus(STATUS_COMPLETED);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:64:        if (realEstate == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:65:            throw new ServiceException(REAL_ESTATE_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:81:        return rows;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:88:        if (assetId == null || assetId <= 0) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:89:            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:93:        if (assetInfo == null) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:94:            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:96:        return assetInfo;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:100:        if (!REAL_ESTATE_ASSET_TYPE.equals(assetInfo.getAssetType())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:101:            throw new ServiceException(errorMessage);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:106:     * 老数据未回填 wfStatus 时，统一按已完成展示。
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:108:    private AssetRealEstateUsageChange fillWorkflowStatus(AssetRealEstateUsageChange usageChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:109:        if (usageChange == null || StringUtils.isNotBlank(usageChange.getWfStatus())) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:110:            return usageChange;
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:112:        usageChange.setWfStatus(StringUtils.defaultIfBlank(usageChange.getStatus(), STATUS_COMPLETED));
+ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl\AssetRealEstateUsageChangeServiceImpl.java:113:        return usageChange;

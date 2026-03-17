@@ -1,0 +1,55 @@
+﻿ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\WorkflowBusinessHandlerRegistry.java:41:        if (handler == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\WorkflowBusinessHandlerRegistry.java:53:        if (handler == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:26: * 1. 实例状态使用最小值域：pending / approved / rejected。
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:36:    private static final String INSTANCE_STATUS_APPROVED = "approved";
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:39:    private static final String INSTANCE_STATUS_REJECTED = "rejected";
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:74:    public Long startProcess(String businessId, String businessType) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:91:    public void approve(Long instanceId, Long approverId, String comment) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:92:        log.info("审批通过: instanceId={}, approverId={}, comment={}", instanceId, approverId, comment);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:93:        updateInstanceAfterAction(instanceId, approverId, "approve", comment, INSTANCE_STATUS_APPROVED, NODE_NAME_APPROVED);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:97:    public void reject(Long instanceId, Long approverId, String comment) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:98:        log.info("审批驳回: instanceId={}, approverId={}, comment={}", instanceId, approverId, comment);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:99:        updateInstanceAfterAction(instanceId, approverId, "reject", comment, INSTANCE_STATUS_REJECTED, NODE_NAME_REJECTED);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:103:    public List<WorkflowTaskVo> getTasks(Long approverId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:104:        log.info("获取待办列表: approverId={}", approverId);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:105:        return normalizeTasks(approvalInstanceMapper.selectTodoTaskList(approverId));
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:109:    public List<WorkflowTaskVo> getDoneTasks(Long approverId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:110:        log.info("获取已办列表: approverId={}", approverId);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:111:        return normalizeTasks(approvalInstanceMapper.selectDoneTaskList(approverId));
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:117:     * 这样做可以避免 approve / reject 两套逻辑各自维护节点流水和实例状态，
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:122:        Long approverId,
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:129:        validateAssignedApprover(approvalInstance, approverId);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:133:        approvalNode.setApproverId(approverId);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:146:        if (businessHandlerRegistry != null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:147:            if ("approve".equals(action)) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:149:            } else if ("reject".equals(action)) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:163:        if (approvalInstance == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:164:            throw new ServiceException("审批实例不存在");
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:166:        if (!INSTANCE_STATUS_PENDING.equals(approvalInstance.getStatus())) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:167:            throw new ServiceException("当前审批实例已处理，不能重复审批");
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:177:        if (approvalTemplate == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:178:            throw new ServiceException("业务类型未配置启用中的审批模板: " + businessType);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:180:        if (approvalTemplate.getApproverId() == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:181:            throw new ServiceException("审批模板未配置审批人: " + businessType);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:189:    private void validateAssignedApprover(WfApprovalInstance approvalInstance, Long approverId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:190:        if (approvalInstance.getApproverId() == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:191:            throw new ServiceException("审批实例未分配审批人，请先补齐审批模板");
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:193:        if (!approvalInstance.getApproverId().equals(approverId)) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:194:            throw new ServiceException("当前审批人无权处理该待办");
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:203:        if (tasks == null || tasks.isEmpty()) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:229:        if (businessType == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:239:            case "asset_real_estate_status_change" -> "REAL_ESTATE_STATUS_CHANGE";
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:246:     * 把实例状态映射成前端 `wf_status` 字典值。
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:248:    private String normalizeStatus(String status) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:249:        if (status == null) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:252:        return switch (status) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:256:            default -> status;
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:21:    Long startProcess(String businessId, String businessType);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:27:     * @param approverId 审批人ID
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:30:    void approve(Long instanceId, Long approverId, String comment);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:36:     * @param approverId 审批人ID
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:39:    void reject(Long instanceId, Long approverId, String comment);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:44:     * @param approverId 审批人ID
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:47:    List<WorkflowTaskVo> getTasks(Long approverId);
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:55:     * @param approverId 审批人ID
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:58:    List<WorkflowTaskVo> getDoneTasks(Long approverId);

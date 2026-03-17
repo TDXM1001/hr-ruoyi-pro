@@ -1,0 +1,381 @@
+﻿ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:13:public interface ISysJobService
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:21:    public List<SysJob> selectJobList(SysJob job);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:29:    public SysJob selectJobById(Long jobId);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:37:    public int pauseJob(SysJob job) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:45:    public int resumeJob(SysJob job) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:53:    public int deleteJob(SysJob job) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:61:    public void deleteJobByIds(Long[] jobIds) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:69:    public int changeStatus(SysJob job) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:77:    public boolean run(SysJob job) throws SchedulerException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:85:    public int insertJob(SysJob job) throws SchedulerException, TaskException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:93:    public int updateJob(SysJob job) throws SchedulerException, TaskException;
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobService.java:101:    public boolean checkCronExpressionIsValid(String cronExpression);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:11:public interface ISysJobLogService
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:19:    public List<SysJobLog> selectJobLogList(SysJobLog jobLog);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:27:    public SysJobLog selectJobLogById(Long jobLogId);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:34:    public void addJobLog(SysJobLog jobLog);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:42:    public int deleteJobLogByIds(Long[] logIds);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:50:    public int deleteJobLogById(Long jobId);
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\ISysJobLogService.java:55:    public void cleanJobLog();
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:38:    public void init() throws SchedulerException, TaskException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:55:    public List<SysJob> selectJobList(SysJob job)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:67:    public SysJob selectJobById(Long jobId)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:79:    public int pauseJob(SysJob job) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:99:    public int resumeJob(SysJob job) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:119:    public int deleteJob(SysJob job) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:139:    public void deleteJobByIds(Long[] jobIds) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:155:    public int changeStatus(SysJob job) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:177:    public boolean run(SysJob job) throws SchedulerException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:202:    public int insertJob(SysJob job) throws SchedulerException, TaskException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:220:    public int updateJob(SysJob job) throws SchedulerException, TaskException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:237:    public void updateSchedulerJob(SysJob job, String jobGroup) throws SchedulerException, TaskException
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobServiceImpl.java:257:    public boolean checkCronExpressionIsValid(String cronExpression)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:28:    public List<SysJobLog> selectJobLogList(SysJobLog jobLog)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:40:    public SysJobLog selectJobLogById(Long jobLogId)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:51:    public void addJobLog(SysJobLog jobLog)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:63:    public int deleteJobLogByIds(Long[] logIds)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:74:    public int deleteJobLogById(Long jobId)
+ruoyi-quartz/src/main/java/com/ruoyi/quartz/service\impl\SysJobLogServiceImpl.java:83:    public void cleanJobLog()
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:12:public interface ISysDeptService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:20:    public List<SysDept> selectDeptList(SysDept dept);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:28:    public List<TreeSelect> selectDeptTreeList(SysDept dept);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:36:    public List<SysDept> buildDeptTree(List<SysDept> depts);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:44:    public List<TreeSelect> buildDeptTreeSelect(List<SysDept> depts);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:52:    public List<Long> selectDeptListByRoleId(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:60:    public SysDept selectDeptById(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:68:    public int selectNormalChildrenDeptById(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:76:    public boolean hasChildByDeptId(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:84:    public boolean checkDeptExistUser(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:92:    public boolean checkDeptNameUnique(SysDept dept);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:99:    public void checkDeptDataScope(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:107:    public int insertDept(SysDept dept);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:115:    public int updateDept(SysDept dept);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDeptService.java:123:    public int deleteDeptById(Long deptId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:11:public interface ISysConfigService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:19:    public SysConfig selectConfigById(Long configId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:27:    public String selectConfigByKey(String configKey);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:34:    public boolean selectCaptchaEnabled();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:42:    public List<SysConfig> selectConfigList(SysConfig config);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:50:    public int insertConfig(SysConfig config);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:58:    public int updateConfig(SysConfig config);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:65:    public void deleteConfigByIds(Long[] configIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:70:    public void loadingConfigCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:75:    public void clearConfigCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:80:    public void resetConfigCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysConfigService.java:88:    public boolean checkConfigKeyUnique(SysConfig config);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:11:public interface ISysDictDataService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:19:    public List<SysDictData> selectDictDataList(SysDictData dictData);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:28:    public String selectDictLabel(String dictType, String dictValue);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:36:    public SysDictData selectDictDataById(Long dictCode);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:43:    public void deleteDictDataByIds(Long[] dictCodes);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:51:    public int insertDictData(SysDictData dictData);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictDataService.java:59:    public int updateDictData(SysDictData dictData);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:12:public interface ISysDictTypeService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:20:    public List<SysDictType> selectDictTypeList(SysDictType dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:27:    public List<SysDictType> selectDictTypeAll();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:35:    public List<SysDictData> selectDictDataByType(String dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:43:    public SysDictType selectDictTypeById(Long dictId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:51:    public SysDictType selectDictTypeByType(String dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:58:    public void deleteDictTypeByIds(Long[] dictIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:63:    public void loadingDictCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:68:    public void clearDictCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:73:    public void resetDictCache();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:81:    public int insertDictType(SysDictType dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:89:    public int updateDictType(SysDictType dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysDictTypeService.java:97:    public boolean checkDictTypeUnique(SysDictType dictType);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysLogininforService.java:11:public interface ISysLogininforService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysLogininforService.java:18:    public void insertLogininfor(SysLogininfor logininfor);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysLogininforService.java:26:    public List<SysLogininfor> selectLogininforList(SysLogininfor logininfor);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysLogininforService.java:34:    public int deleteLogininforByIds(Long[] infoIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysLogininforService.java:39:    public void cleanLogininfor();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:14:public interface ISysMenuService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:22:    public List<SysMenu> selectMenuList(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:31:    public List<SysMenu> selectMenuList(SysMenu menu, Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:39:    public Set<String> selectMenuPermsByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:47:    public Set<String> selectMenuPermsByRoleId(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:55:    public List<SysMenu> selectMenuTreeByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:63:    public List<Long> selectMenuListByRoleId(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:71:    public List<RouterVo> buildMenus(List<SysMenu> menus);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:79:    public List<SysMenu> buildMenuTree(List<SysMenu> menus);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:87:    public List<TreeSelect> buildMenuTreeSelect(List<SysMenu> menus);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:95:    public SysMenu selectMenuById(Long menuId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:103:    public boolean hasChildByMenuId(Long menuId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:111:    public boolean checkMenuExistRole(Long menuId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:119:    public int insertMenu(SysMenu menu);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:127:    public int updateMenu(SysMenu menu);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:135:    public int deleteMenuById(Long menuId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:143:    public boolean checkMenuNameUnique(SysMenu menu);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysMenuService.java:151:    public boolean checkRouteConfigUnique(SysMenu menu);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:11:public interface ISysOperLogService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:18:    public void insertOperlog(SysOperLog operLog);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:26:    public List<SysOperLog> selectOperLogList(SysOperLog operLog);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:34:    public int deleteOperLogByIds(Long[] operIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:42:    public SysOperLog selectOperLogById(Long operId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysOperLogService.java:47:    public void cleanOperLog();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:11:public interface ISysNoticeService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:19:    public SysNotice selectNoticeById(Long noticeId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:27:    public List<SysNotice> selectNoticeList(SysNotice notice);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:35:    public int insertNotice(SysNotice notice);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:43:    public int updateNotice(SysNotice notice);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:51:    public int deleteNoticeById(Long noticeId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysNoticeService.java:59:    public int deleteNoticeByIds(Long[] noticeIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:13:public interface ISysRoleService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:21:    public List<SysRole> selectRoleList(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:29:    public List<SysRole> selectRolesByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:37:    public Set<String> selectRolePermissionByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:44:    public List<SysRole> selectRoleAll();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:52:    public List<Long> selectRoleListByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:60:    public SysRole selectRoleById(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:68:    public boolean checkRoleNameUnique(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:76:    public boolean checkRoleKeyUnique(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:83:    public void checkRoleAllowed(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:90:    public void checkRoleDataScope(Long... roleIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:98:    public int countUserRoleByRoleId(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:106:    public int insertRole(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:114:    public int updateRole(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:122:    public int updateRoleStatus(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:130:    public int authDataScope(SysRole role);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:138:    public int deleteRoleById(Long roleId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:146:    public int deleteRoleByIds(Long[] roleIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:154:    public int deleteAuthUser(SysUserRole userRole);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:163:    public int deleteAuthUsers(Long roleId, Long[] userIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysRoleService.java:172:    public int insertAuthUsers(Long roleId, Long[] userIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:12:public interface ISysUserService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:20:    public List<SysUser> selectUserList(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:28:    public List<SysUser> selectAllocatedList(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:36:    public List<SysUser> selectUnallocatedList(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:44:    public SysUser selectUserByUserName(String userName);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:52:    public SysUser selectUserById(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:60:    public String selectUserRoleGroup(String userName);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:68:    public String selectUserPostGroup(String userName);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:76:    public boolean checkUserNameUnique(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:84:    public boolean checkPhoneUnique(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:92:    public boolean checkEmailUnique(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:99:    public void checkUserAllowed(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:106:    public void checkUserDataScope(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:114:    public int insertUser(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:122:    public boolean registerUser(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:130:    public int updateUser(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:138:    public void insertUserAuth(Long userId, Long[] roleIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:146:    public int updateUserStatus(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:154:    public int updateUserProfile(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:163:    public boolean updateUserAvatar(Long userId, String avatar);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:173:    public void updateLoginInfo(Long userId, String loginIp, Date loginDate);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:181:    public int resetPwd(SysUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:190:    public int resetUserPwd(Long userId, String password);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:198:    public int deleteUserById(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:206:    public int deleteUserByIds(Long[] userIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserService.java:216:    public String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:11:public interface ISysPostService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:19:    public List<SysPost> selectPostList(SysPost post);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:26:    public List<SysPost> selectPostAll();
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:34:    public SysPost selectPostById(Long postId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:42:    public List<Long> selectPostListByUserId(Long userId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:50:    public boolean checkPostNameUnique(SysPost post);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:58:    public boolean checkPostCodeUnique(SysPost post);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:66:    public int countUserPostById(Long postId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:74:    public int deletePostById(Long postId);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:82:    public int deletePostByIds(Long[] postIds);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:90:    public int insertPost(SysPost post);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysPostService.java:98:    public int updatePost(SysPost post);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserOnlineService.java:11:public interface ISysUserOnlineService
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserOnlineService.java:20:    public SysUserOnline selectOnlineByIpaddr(String ipaddr, LoginUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserOnlineService.java:29:    public SysUserOnline selectOnlineByUserName(String userName, LoginUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserOnlineService.java:39:    public SysUserOnline selectOnlineByInfo(String ipaddr, String userName, LoginUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\ISysUserOnlineService.java:47:    public SysUserOnline loginUserToUserOnline(LoginUser user);
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:77:    public List<SysUser> selectUserList(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:90:    public List<SysUser> selectAllocatedList(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:103:    public List<SysUser> selectUnallocatedList(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:115:    public SysUser selectUserByUserName(String userName)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:127:    public SysUser selectUserById(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:139:    public String selectUserRoleGroup(String userName)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:156:    public String selectUserPostGroup(String userName)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:173:    public boolean checkUserNameUnique(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:191:    public boolean checkPhoneUnique(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:209:    public boolean checkEmailUnique(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:226:    public void checkUserAllowed(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:240:    public void checkUserDataScope(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:262:    public int insertUser(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:280:    public boolean registerUser(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:293:    public int updateUser(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:315:    public void insertUserAuth(Long userId, Long[] roleIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:328:    public int updateUserStatus(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:340:    public int updateUserProfile(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:353:    public boolean updateUserAvatar(Long userId, String avatar)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:366:    public void updateLoginInfo(Long userId, String loginIp, Date loginDate)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:378:    public int resetPwd(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:391:    public int resetUserPwd(Long userId, String password)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:401:    public void insertUserRole(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:411:    public void insertUserPost(SysUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:435:    public void insertUserRole(Long userId, Long[] roleIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:460:    public int deleteUserById(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:477:    public int deleteUserByIds(Long[] userIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserServiceImpl.java:500:    public String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:12:public interface IGenTableService
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:20:    public List<GenTable> selectGenTableList(GenTable genTable);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:28:    public List<GenTable> selectDbTableList(GenTable genTable);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:36:    public List<GenTable> selectDbTableListByNames(String[] tableNames);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:43:    public List<GenTable> selectGenTableAll();
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:51:    public GenTable selectGenTableById(Long id);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:59:    public void updateGenTable(GenTable genTable);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:67:    public void deleteGenTableByIds(Long[] tableIds);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:75:    public boolean createTable(String sql);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:83:    public void importGenTable(List<GenTable> tableList, String operName);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:91:    public Map<String, String> previewCode(Long tableId);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:99:    public byte[] downloadCode(String tableName);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:107:    public void generatorCode(String tableName);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:114:    public void synchDb(String tableName);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:122:    public byte[] downloadCode(String[] tableNames);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableService.java:129:    public void validateEdit(GenTable genTable);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:62:    public GenTable selectGenTableById(Long id)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:76:    public List<GenTable> selectGenTableList(GenTable genTable)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:88:    public List<GenTable> selectDbTableList(GenTable genTable)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:100:    public List<GenTable> selectDbTableListByNames(String[] tableNames)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:111:    public List<GenTable> selectGenTableAll()
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:124:    public void updateGenTable(GenTable genTable)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:146:    public void deleteGenTableByIds(Long[] tableIds)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:159:    public boolean createTable(String sql)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:171:    public void importGenTable(List<GenTable> tableList, String operName)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:205:    public Map<String, String> previewCode(Long tableId)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:238:    public byte[] downloadCode(String tableName)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:253:    public void generatorCode(String tableName)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:296:    public void synchDb(String tableName)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:351:    public byte[] downloadCode(String[] tableNames)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:409:    public void validateEdit(GenTable genTable)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:446:    public void setPkColumn(GenTable table)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:482:    public void setSubTable(GenTable table)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:496:    public void setTableFromOptions(GenTable genTable)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableServiceImpl.java:522:    public static String getGenPath(GenTable table, String template)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysLogininforServiceImpl.java:28:    public void insertLogininfor(SysLogininfor logininfor)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysLogininforServiceImpl.java:40:    public List<SysLogininfor> selectLogininforList(SysLogininfor logininfor)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysLogininforServiceImpl.java:52:    public int deleteLogininforByIds(Long[] infoIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysLogininforServiceImpl.java:61:    public void cleanLogininfor()
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableColumnServiceImpl.java:28:	public List<GenTableColumn> selectGenTableColumnListByTableId(Long tableId)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableColumnServiceImpl.java:40:	public int insertGenTableColumn(GenTableColumn genTableColumn)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableColumnServiceImpl.java:52:	public int updateGenTableColumn(GenTableColumn genTableColumn)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\GenTableColumnServiceImpl.java:64:	public int deleteGenTableColumnByIds(String ids)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:29:    public List<SysDictData> selectDictDataList(SysDictData dictData)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:42:    public String selectDictLabel(String dictType, String dictValue)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:54:    public SysDictData selectDictDataById(Long dictCode)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:65:    public void deleteDictDataByIds(Long[] dictCodes)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:83:    public int insertDictData(SysDictData data)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictDataServiceImpl.java:101:    public int updateDictData(SysDictData data)
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableColumnService.java:11:public interface IGenTableColumnService
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableColumnService.java:19:    public List<GenTableColumn> selectGenTableColumnListByTableId(Long tableId);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableColumnService.java:27:    public int insertGenTableColumn(GenTableColumn genTableColumn);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableColumnService.java:35:    public int updateGenTableColumn(GenTableColumn genTableColumn);
+ruoyi-generator/src/main/java/com/ruoyi/generator/service\IGenTableColumnService.java:43:    public int deleteGenTableColumnByIds(String ids);
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:59:    public List<SysMenu> selectMenuList(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:71:    public List<SysMenu> selectMenuList(SysMenu menu, Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:94:    public Set<String> selectMenuPermsByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:115:    public Set<String> selectMenuPermsByRoleId(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:136:    public List<SysMenu> selectMenuTreeByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:157:    public List<Long> selectMenuListByRoleId(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:170:    public List<RouterVo> buildMenus(List<SysMenu> menus)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:228:    public List<SysMenu> buildMenuTree(List<SysMenu> menus)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:256:    public List<TreeSelect> buildMenuTreeSelect(List<SysMenu> menus)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:269:    public SysMenu selectMenuById(Long menuId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:281:    public boolean hasChildByMenuId(Long menuId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:294:    public boolean checkMenuExistRole(Long menuId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:307:    public int insertMenu(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:319:    public int updateMenu(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:331:    public int deleteMenuById(Long menuId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:343:    public boolean checkMenuNameUnique(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:361:    public boolean checkRouteConfigUnique(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:401:    public String getRouteName(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:418:    public String getRouteName(String name, String path)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:430:    public String getRouterPath(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:458:    public String getComponent(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:482:    public boolean isMenuFrame(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:494:    public boolean isParentView(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:505:    public boolean isInnerLink(SysMenu menu)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:517:    public List<SysMenu> getChildPerms(List<SysMenu> list, long parentId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysMenuServiceImpl.java:584:    public String innerLinkReplaceEach(String path)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:39:    public void init()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:51:    public List<SysDictType> selectDictTypeList(SysDictType dictType)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:62:    public List<SysDictType> selectDictTypeAll()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:74:    public List<SysDictData> selectDictDataByType(String dictType)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:97:    public SysDictType selectDictTypeById(Long dictId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:109:    public SysDictType selectDictTypeByType(String dictType)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:120:    public void deleteDictTypeByIds(Long[] dictIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:138:    public void loadingDictCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:153:    public void clearDictCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:162:    public void resetDictCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:175:    public int insertDictType(SysDictType dict)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:193:    public int updateDictType(SysDictType dict)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDictTypeServiceImpl.java:213:    public boolean checkDictTypeUnique(SysDictType dict)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:36:    public void init()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:48:    public SysConfig selectConfigById(Long configId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:62:    public String selectConfigByKey(String configKey)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:86:    public boolean selectCaptchaEnabled()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:103:    public List<SysConfig> selectConfigList(SysConfig config)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:115:    public int insertConfig(SysConfig config)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:132:    public int updateConfig(SysConfig config)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:154:    public void deleteConfigByIds(Long[] configIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:172:    public void loadingConfigCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:185:    public void clearConfigCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:195:    public void resetConfigCache()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysConfigServiceImpl.java:208:    public boolean checkConfigKeyUnique(SysConfig config)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:55:    public List<SysRole> selectRoleList(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:67:    public List<SysRole> selectRolesByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:92:    public Set<String> selectRolePermissionByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:112:    public List<SysRole> selectRoleAll()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:124:    public List<Long> selectRoleListByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:136:    public SysRole selectRoleById(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:148:    public boolean checkRoleNameUnique(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:166:    public boolean checkRoleKeyUnique(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:183:    public void checkRoleAllowed(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:197:    public void checkRoleDataScope(Long... roleIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:221:    public int countUserRoleByRoleId(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:234:    public int insertRole(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:249:    public int updateRole(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:265:    public int updateRoleStatus(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:278:    public int authDataScope(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:293:    public int insertRoleMenu(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:317:    public int insertRoleDept(SysRole role)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:344:    public int deleteRoleById(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:361:    public int deleteRoleByIds(Long[] roleIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:387:    public int deleteAuthUser(SysUserRole userRole)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:400:    public int deleteAuthUsers(Long roleId, Long[] userIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysRoleServiceImpl.java:413:    public int insertAuthUsers(Long roleId, Long[] userIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:35:    public List<SysPost> selectPostList(SysPost post)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:46:    public List<SysPost> selectPostAll()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:58:    public SysPost selectPostById(Long postId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:70:    public List<Long> selectPostListByUserId(Long userId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:82:    public boolean checkPostNameUnique(SysPost post)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:100:    public boolean checkPostCodeUnique(SysPost post)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:118:    public int countUserPostById(Long postId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:130:    public int deletePostById(Long postId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:142:    public int deletePostByIds(Long[] postIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:162:    public int insertPost(SysPost post)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysPostServiceImpl.java:174:    public int updatePost(SysPost post)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserOnlineServiceImpl.java:25:    public SysUserOnline selectOnlineByIpaddr(String ipaddr, LoginUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserOnlineServiceImpl.java:42:    public SysUserOnline selectOnlineByUserName(String userName, LoginUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserOnlineServiceImpl.java:60:    public SysUserOnline selectOnlineByInfo(String ipaddr, String userName, LoginUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysUserOnlineServiceImpl.java:76:    public SysUserOnline loginUserToUserOnline(LoginUser user)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:28:    public SysNotice selectNoticeById(Long noticeId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:40:    public List<SysNotice> selectNoticeList(SysNotice notice)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:52:    public int insertNotice(SysNotice notice)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:64:    public int updateNotice(SysNotice notice)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:76:    public int deleteNoticeById(Long noticeId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysNoticeServiceImpl.java:88:    public int deleteNoticeByIds(Long[] noticeIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysOperLogServiceImpl.java:27:    public void insertOperlog(SysOperLog operLog)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysOperLogServiceImpl.java:39:    public List<SysOperLog> selectOperLogList(SysOperLog operLog)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysOperLogServiceImpl.java:51:    public int deleteOperLogByIds(Long[] operIds)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysOperLogServiceImpl.java:63:    public SysOperLog selectOperLogById(Long operId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysOperLogServiceImpl.java:72:    public void cleanOperLog()
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:45:    public List<SysDept> selectDeptList(SysDept dept)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:57:    public List<TreeSelect> selectDeptTreeList(SysDept dept)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:70:    public List<SysDept> buildDeptTree(List<SysDept> depts)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:97:    public List<TreeSelect> buildDeptTreeSelect(List<SysDept> depts)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:110:    public List<Long> selectDeptListByRoleId(Long roleId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:123:    public SysDept selectDeptById(Long deptId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:135:    public int selectNormalChildrenDeptById(Long deptId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:147:    public boolean hasChildByDeptId(Long deptId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:160:    public boolean checkDeptExistUser(Long deptId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:173:    public boolean checkDeptNameUnique(SysDept dept)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:190:    public void checkDeptDataScope(Long deptId)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:211:    public int insertDept(SysDept dept)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:230:    public int updateDept(SysDept dept)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:270:    public void updateDeptChildren(Long deptId, String newAncestors, String oldAncestors)
+ruoyi-system/src/main/java/com/ruoyi/system/service\impl\SysDeptServiceImpl.java:290:    public int deleteDeptById(Long deptId)

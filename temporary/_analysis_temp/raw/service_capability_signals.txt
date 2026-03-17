@@ -1,0 +1,147 @@
+﻿ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\WorkflowBusinessHandlerRegistry.java:23:    public WorkflowBusinessHandlerRegistry(List<WorkflowBusinessHandler> handlers) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\WorkflowBusinessHandlerRegistry.java:39:    public void handleApproved(String businessType, String businessId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\WorkflowBusinessHandlerRegistry.java:51:    public void handleRejected(String businessType, String businessId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\IApprovalEngine.java:12:public interface IApprovalEngine {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:74:    public Long startProcess(String businessId, String businessType) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:91:    public void approve(Long instanceId, Long approverId, String comment) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:97:    public void reject(Long instanceId, Long approverId, String comment) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:103:    public List<WorkflowTaskVo> getTasks(Long approverId) {
+ruoyi-workflow/src/main/java/com/ruoyi/workflow/service\impl\SimpleApprovalEngineImpl.java:109:    public List<WorkflowTaskVo> getDoneTasks(Long approverId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateStatusChangeService.java:9:public interface IAssetRealEstateStatusChangeService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateStatusChangeService.java:10:    public AssetRealEstateStatusChange selectStatusChangeByNo(String statusChangeNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateStatusChangeService.java:12:    public List<AssetRealEstateStatusChange> selectStatusChangeList(AssetRealEstateStatusChange statusChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateStatusChangeService.java:14:    public int insertStatusChange(AssetRealEstateStatusChange statusChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateDisposalService.java:9:public interface IAssetRealEstateDisposalService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateDisposalService.java:10:    public AssetRealEstateDisposal selectDisposalByNo(String disposalNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateDisposalService.java:12:    public List<AssetRealEstateDisposal> selectDisposalList(AssetRealEstateDisposal disposal);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateDisposalService.java:14:    public int insertDisposal(AssetRealEstateDisposal disposal);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:12:public interface IAssetInfoService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:19:    public AssetInfo selectAssetInfoByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:27:    public AssetInfo selectAssetInfoByAssetNo(String assetNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:35:    public List<AssetInfo> selectAssetInfoList(AssetInfo assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:43:    public int insertAssetInfo(AssetInfo assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:51:    public int updateAssetInfo(AssetInfo assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:59:    public int deleteAssetInfoByAssetIds(Long[] assetIds);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetInfoService.java:67:    public int deleteAssetInfoByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetMaintenanceService.java:9:public interface IAssetMaintenanceService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetMaintenanceService.java:10:    public AssetMaintenance selectAssetMaintenanceByMaintenanceNo(String maintenanceNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetMaintenanceService.java:11:    public List<AssetMaintenance> selectAssetMaintenanceList(AssetMaintenance assetMaintenance);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetMaintenanceService.java:12:    public int insertAssetMaintenance(AssetMaintenance assetMaintenance);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetMaintenanceService.java:20:    public int completeMaintenance(String maintenanceNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateOwnershipChangeService.java:9:public interface IAssetRealEstateOwnershipChangeService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateOwnershipChangeService.java:10:    public AssetRealEstateOwnershipChange selectOwnershipChangeByNo(String ownershipChangeNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateOwnershipChangeService.java:12:    public List<AssetRealEstateOwnershipChange> selectOwnershipChangeList(AssetRealEstateOwnershipChange ownershipChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateOwnershipChangeService.java:14:    public int insertOwnershipChange(AssetRealEstateOwnershipChange ownershipChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetAggregateServiceImpl.java:75:    public List<AssetListVo> selectAssetList(AssetInfo assetInfo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetAggregateServiceImpl.java:88:    public AssetDetailVo selectAssetDetailByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetAggregateServiceImpl.java:109:    public int insertAsset(AssetCreateReq assetCreateReq) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetAggregateServiceImpl.java:127:    public int updateAsset(AssetUpdateReq assetUpdateReq) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRequisitionService.java:9:public interface IAssetRequisitionService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRequisitionService.java:11:    public AssetRequisition selectAssetRequisitionByRequisitionNo(String requisitionNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRequisitionService.java:14:    public List<AssetRequisition> selectAssetRequisitionList(AssetRequisition assetRequisition);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRequisitionService.java:17:    public int insertAssetRequisition(AssetRequisition assetRequisition);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRequisitionService.java:25:    public int returnAsset(String requisitionNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:34:    public AssetCategory selectAssetCategoryById(Long id) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:45:    public List<AssetCategory> selectAssetCategoryList(AssetCategory assetCategory) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:56:    public int insertAssetCategory(AssetCategory assetCategory) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:68:    public int updateAssetCategory(AssetCategory assetCategory) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:79:    public int deleteAssetCategoryByIds(Long[] ids) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryServiceImpl.java:93:    public int deleteAssetCategoryById(Long id) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:40:    public AssetCategoryAttr selectAssetCategoryAttrByAttrId(Long attrId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:45:    public List<AssetCategoryAttr> selectAssetCategoryAttrList(AssetCategoryAttr assetCategoryAttr) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:50:    public List<AssetCategoryAttr> selectAssetCategoryAttrByCategoryId(Long categoryId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:55:    public int insertAssetCategoryAttr(AssetCategoryAttr assetCategoryAttr) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:66:    public int updateAssetCategoryAttr(AssetCategoryAttr assetCategoryAttr) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:73:    public int disableAssetCategoryAttr(Long attrId, String updateBy) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetCategoryAttrServiceImpl.java:87:    public int deleteAssetCategoryAttrByAttrIds(Long[] attrIds) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDisposalServiceImpl.java:39:    public AssetDisposal selectAssetDisposalByDisposalNo(String disposalNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDisposalServiceImpl.java:44:    public List<AssetDisposal> selectAssetDisposalList(AssetDisposal assetDisposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDisposalServiceImpl.java:54:    public int insertAssetDisposal(AssetDisposal assetDisposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetFinanceService.java:11:public interface IAssetFinanceService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetFinanceService.java:20:    public AssetFinance selectAssetFinanceByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetFinanceService.java:30:    public AssetFinance recalculateFinanceByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetFinanceService.java:38:    public AssetFinance calculateFinance(AssetFinance assetFinance);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetFinanceService.java:47:    public AssetFinance calculateDepreciatedFinance(AssetFinance assetFinance, int periodIndex);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetReportService.java:9:public interface IAssetReportService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetReportService.java:11:    public AssetReportSummaryVo getSummary();
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetReportService.java:14:    public AssetWarningVo getWarnings(Integer landTermWithinDays);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDepreciationServiceImpl.java:38:    public List<AssetDepreciationLog> selectAssetDepreciationLogByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDepreciationServiceImpl.java:44:    public AssetDepreciationLog accrueDepreciation(Long assetId, String period) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetDepreciationServiceImpl.java:88:    public List<AssetDepreciationLog> accrueDepreciationByPeriod(String period) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:12:public interface IAssetCategoryAttrService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:19:    public AssetCategoryAttr selectAssetCategoryAttrByAttrId(Long attrId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:27:    public List<AssetCategoryAttr> selectAssetCategoryAttrList(AssetCategoryAttr assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:35:    public List<AssetCategoryAttr> selectAssetCategoryAttrByCategoryId(Long categoryId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:43:    public int insertAssetCategoryAttr(AssetCategoryAttr assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:51:    public int updateAssetCategoryAttr(AssetCategoryAttr assetCategoryAttr);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:60:    public int disableAssetCategoryAttr(Long attrId, String updateBy);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryAttrService.java:68:    public int deleteAssetCategoryAttrByAttrIds(Long[] attrIds);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetFinanceServiceImpl.java:35:    public AssetFinanceServiceImpl() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetFinanceServiceImpl.java:42:    public AssetFinance selectAssetFinanceByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetFinanceServiceImpl.java:47:    public AssetFinance recalculateFinanceByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetFinanceServiceImpl.java:59:    public AssetFinance calculateFinance(AssetFinance assetFinance) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetFinanceServiceImpl.java:64:    public AssetFinance calculateDepreciatedFinance(AssetFinance assetFinance, int periodIndex) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDisposalService.java:9:public interface IAssetDisposalService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDisposalService.java:10:    public AssetDisposal selectAssetDisposalByDisposalNo(String disposalNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDisposalService.java:11:    public List<AssetDisposal> selectAssetDisposalList(AssetDisposal assetDisposal);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDisposalService.java:12:    public int insertAssetDisposal(AssetDisposal assetDisposal);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetAggregateService.java:16:public interface IAssetAggregateService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetAggregateService.java:23:    public List<AssetListVo> selectAssetList(AssetInfo assetInfo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetAggregateService.java:31:    public AssetDetailVo selectAssetDetailByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetAggregateService.java:39:    public int insertAsset(AssetCreateReq assetCreateReq);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetAggregateService.java:47:    public int updateAsset(AssetUpdateReq assetUpdateReq);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateUsageChangeService.java:9:public interface IAssetRealEstateUsageChangeService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateUsageChangeService.java:10:    public AssetRealEstateUsageChange selectUsageChangeByNo(String usageChangeNo);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateUsageChangeService.java:12:    public List<AssetRealEstateUsageChange> selectUsageChangeList(AssetRealEstateUsageChange usageChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetRealEstateUsageChangeService.java:14:    public int insertUsageChange(AssetRealEstateUsageChange usageChange);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:65:    public AssetInfo selectAssetInfoByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:76:    public AssetInfo selectAssetInfoByAssetNo(String assetNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:87:    public List<AssetInfo> selectAssetInfoList(AssetInfo assetInfo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:98:    public int insertAssetInfo(AssetInfo assetInfo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:112:    public int updateAssetInfo(AssetInfo assetInfo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:126:    public int deleteAssetInfoByAssetIds(Long[] assetIds) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetInfoServiceImpl.java:159:    public int deleteAssetInfoByAssetId(Long assetId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDepreciationService.java:12:public interface IAssetDepreciationService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDepreciationService.java:19:    public List<AssetDepreciationLog> selectAssetDepreciationLogByAssetId(Long assetId);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDepreciationService.java:28:    public AssetDepreciationLog accrueDepreciation(Long assetId, String period);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetDepreciationService.java:36:    public List<AssetDepreciationLog> accrueDepreciationByPeriod(String period);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetMaintenanceServiceImpl.java:41:    public AssetMaintenance selectAssetMaintenanceByMaintenanceNo(String maintenanceNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetMaintenanceServiceImpl.java:46:    public List<AssetMaintenance> selectAssetMaintenanceList(AssetMaintenance assetMaintenance) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetMaintenanceServiceImpl.java:56:    public int insertAssetMaintenance(AssetMaintenance assetMaintenance) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetMaintenanceServiceImpl.java:74:    public int completeMaintenance(String maintenanceNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:12:public interface IAssetCategoryService {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:19:    public AssetCategory selectAssetCategoryById(Long id);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:27:    public List<AssetCategory> selectAssetCategoryList(AssetCategory assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:35:    public int insertAssetCategory(AssetCategory assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:43:    public int updateAssetCategory(AssetCategory assetCategory);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:51:    public int deleteAssetCategoryByIds(Long[] ids);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\IAssetCategoryService.java:59:    public int deleteAssetCategoryById(Long id);
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateDisposalServiceImpl.java:39:    public AssetRealEstateDisposal selectDisposalByNo(String disposalNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateDisposalServiceImpl.java:44:    public List<AssetRealEstateDisposal> selectDisposalList(AssetRealEstateDisposal disposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateDisposalServiceImpl.java:54:    public int insertDisposal(AssetRealEstateDisposal disposal) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\DepreciationStrategy.java:17:    public String getMethodCode();
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\DepreciationStrategy.java:28:    public BigDecimal calculateCurrentPeriodDepreciation(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateStatusChangeServiceImpl.java:34:    public AssetRealEstateStatusChange selectStatusChangeByNo(String statusChangeNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateStatusChangeServiceImpl.java:39:    public List<AssetRealEstateStatusChange> selectStatusChangeList(AssetRealEstateStatusChange statusChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateStatusChangeServiceImpl.java:49:    public int insertStatusChange(AssetRealEstateStatusChange statusChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateOwnershipChangeServiceImpl.java:44:    public AssetRealEstateOwnershipChange selectOwnershipChangeByNo(String ownershipChangeNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateOwnershipChangeServiceImpl.java:49:    public List<AssetRealEstateOwnershipChange> selectOwnershipChangeList(AssetRealEstateOwnershipChange ownershipChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateOwnershipChangeServiceImpl.java:59:    public int insertOwnershipChange(AssetRealEstateOwnershipChange ownershipChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\DoubleDecliningDepreciation.java:14:    public String getMethodCode() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\DoubleDecliningDepreciation.java:19:    public BigDecimal calculateCurrentPeriodDepreciation(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateUsageChangeServiceImpl.java:40:    public AssetRealEstateUsageChange selectUsageChangeByNo(String usageChangeNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateUsageChangeServiceImpl.java:45:    public List<AssetRealEstateUsageChange> selectUsageChangeList(AssetRealEstateUsageChange usageChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRealEstateUsageChangeServiceImpl.java:55:    public int insertUsageChange(AssetRealEstateUsageChange usageChange) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\SumOfYearsDepreciation.java:14:    public String getMethodCode() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\SumOfYearsDepreciation.java:19:    public BigDecimal calculateCurrentPeriodDepreciation(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\StraightLineDepreciation.java:14:    public String getMethodCode() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\finance\StraightLineDepreciation.java:19:    public BigDecimal calculateCurrentPeriodDepreciation(
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetWorkflowBusinessHandler.java:75:    public List<String> getSupportedBusinessTypes() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetWorkflowBusinessHandler.java:86:    public void onApprove(String businessType, String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetWorkflowBusinessHandler.java:98:    public void onReject(String businessType, String businessId) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetReportServiceImpl.java:28:    public AssetReportSummaryVo getSummary() {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetReportServiceImpl.java:57:    public AssetWarningVo getWarnings(Integer landTermWithinDays) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRequisitionServiceImpl.java:42:    public AssetRequisition selectAssetRequisitionByRequisitionNo(String requisitionNo) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRequisitionServiceImpl.java:47:    public List<AssetRequisition> selectAssetRequisitionList(AssetRequisition assetRequisition) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRequisitionServiceImpl.java:57:    public int insertAssetRequisition(AssetRequisition assetRequisition) {
+ruoyi-asset/src/main/java/com/ruoyi/asset/service\impl\AssetRequisitionServiceImpl.java:75:    public int returnAsset(String requisitionNo) {

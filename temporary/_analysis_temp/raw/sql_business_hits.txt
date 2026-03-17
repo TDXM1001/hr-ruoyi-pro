@@ -1,0 +1,605 @@
+﻿sql\ry_20250522.sql:14:  status            char(1)         default '0'                comment '部门状态（0正常 1停用）',
+sql\ry_20250522.sql:53:  status            char(1)         default '0'                comment '账号状态（0正常 1停用）',
+sql\ry_20250522.sql:83:  status        char(1)         not null                   comment '状态（0正常 1停用）',
+sql\ry_20250522.sql:113:  status               char(1)         not null                   comment '角色状态（0正常 1停用）',
+sql\ry_20250522.sql:147:  status            char(1)         default 0                  comment '菜单状态（0正常 1停用）',
+sql\ry_20250522.sql:172:insert into sys_menu values('105',  '字典管理', '1',   '6', 'dict',       'system/dict/index',        '', '', 1, 0, 'C', '0', '0', 'system:dict:list',        'dict',          'admin', sysdate(), '', null, '字典管理菜单');
+sql\ry_20250522.sql:219:insert into sys_menu values('1025', '字典查询', '105', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:query',          '#', 'admin', sysdate(), '', null, '');
+sql\ry_20250522.sql:220:insert into sys_menu values('1026', '字典新增', '105', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:add',            '#', 'admin', sysdate(), '', null, '');
+sql\ry_20250522.sql:221:insert into sys_menu values('1027', '字典修改', '105', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:edit',           '#', 'admin', sysdate(), '', null, '');
+sql\ry_20250522.sql:222:insert into sys_menu values('1028', '字典删除', '105', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:remove',         '#', 'admin', sysdate(), '', null, '');
+sql\ry_20250522.sql:223:insert into sys_menu values('1029', '字典导出', '105', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:export',         '#', 'admin', sysdate(), '', null, '');
+sql\ry_20250522.sql:434:  status            int(1)          default 0                  comment '操作状态（0正常 1异常）',
+sql\ry_20250522.sql:440:  key idx_sys_oper_log_s  (status),
+sql\ry_20250522.sql:448:drop table if exists sys_dict_type;
+sql\ry_20250522.sql:449:create table sys_dict_type
+sql\ry_20250522.sql:451:  dict_id          bigint(20)      not null auto_increment    comment '字典主键',
+sql\ry_20250522.sql:452:  dict_name        varchar(100)    default ''                 comment '字典名称',
+sql\ry_20250522.sql:453:  dict_type        varchar(100)    default ''                 comment '字典类型',
+sql\ry_20250522.sql:454:  status           char(1)         default '0'                comment '状态（0正常 1停用）',
+sql\ry_20250522.sql:460:  primary key (dict_id),
+sql\ry_20250522.sql:461:  unique (dict_type)
+sql\ry_20250522.sql:464:insert into sys_dict_type values(1,  '用户性别', 'sys_user_sex',        '0', 'admin', sysdate(), '', null, '用户性别列表');
+sql\ry_20250522.sql:465:insert into sys_dict_type values(2,  '菜单状态', 'sys_show_hide',       '0', 'admin', sysdate(), '', null, '菜单状态列表');
+sql\ry_20250522.sql:466:insert into sys_dict_type values(3,  '系统开关', 'sys_normal_disable',  '0', 'admin', sysdate(), '', null, '系统开关列表');
+sql\ry_20250522.sql:467:insert into sys_dict_type values(4,  '任务状态', 'sys_job_status',      '0', 'admin', sysdate(), '', null, '任务状态列表');
+sql\ry_20250522.sql:468:insert into sys_dict_type values(5,  '任务分组', 'sys_job_group',       '0', 'admin', sysdate(), '', null, '任务分组列表');
+sql\ry_20250522.sql:469:insert into sys_dict_type values(6,  '系统是否', 'sys_yes_no',          '0', 'admin', sysdate(), '', null, '系统是否列表');
+sql\ry_20250522.sql:470:insert into sys_dict_type values(7,  '通知类型', 'sys_notice_type',     '0', 'admin', sysdate(), '', null, '通知类型列表');
+sql\ry_20250522.sql:471:insert into sys_dict_type values(8,  '通知状态', 'sys_notice_status',   '0', 'admin', sysdate(), '', null, '通知状态列表');
+sql\ry_20250522.sql:472:insert into sys_dict_type values(9,  '操作类型', 'sys_oper_type',       '0', 'admin', sysdate(), '', null, '操作类型列表');
+sql\ry_20250522.sql:473:insert into sys_dict_type values(10, '系统状态', 'sys_common_status',   '0', 'admin', sysdate(), '', null, '登录状态列表');
+sql\ry_20250522.sql:479:drop table if exists sys_dict_data;
+sql\ry_20250522.sql:480:create table sys_dict_data
+sql\ry_20250522.sql:482:  dict_code        bigint(20)      not null auto_increment    comment '字典编码',
+sql\ry_20250522.sql:483:  dict_sort        int(4)          default 0                  comment '字典排序',
+sql\ry_20250522.sql:484:  dict_label       varchar(100)    default ''                 comment '字典标签',
+sql\ry_20250522.sql:485:  dict_value       varchar(100)    default ''                 comment '字典键值',
+sql\ry_20250522.sql:486:  dict_type        varchar(100)    default ''                 comment '字典类型',
+sql\ry_20250522.sql:490:  status           char(1)         default '0'                comment '状态（0正常 1停用）',
+sql\ry_20250522.sql:496:  primary key (dict_code)
+sql\ry_20250522.sql:499:insert into sys_dict_data values(1,  1,  '男',       '0',       'sys_user_sex',        '',   '',        'Y', '0', 'admin', sysdate(), '', null, '性别男');
+sql\ry_20250522.sql:500:insert into sys_dict_data values(2,  2,  '女',       '1',       'sys_user_sex',        '',   '',        'N', '0', 'admin', sysdate(), '', null, '性别女');
+sql\ry_20250522.sql:501:insert into sys_dict_data values(3,  3,  '未知',     '2',       'sys_user_sex',        '',   '',        'N', '0', 'admin', sysdate(), '', null, '性别未知');
+sql\ry_20250522.sql:502:insert into sys_dict_data values(4,  1,  '显示',     '0',       'sys_show_hide',       '',   'primary', 'Y', '0', 'admin', sysdate(), '', null, '显示菜单');
+sql\ry_20250522.sql:503:insert into sys_dict_data values(5,  2,  '隐藏',     '1',       'sys_show_hide',       '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '隐藏菜单');
+sql\ry_20250522.sql:504:insert into sys_dict_data values(6,  1,  '正常',     '0',       'sys_normal_disable',  '',   'primary', 'Y', '0', 'admin', sysdate(), '', null, '正常状态');
+sql\ry_20250522.sql:505:insert into sys_dict_data values(7,  2,  '停用',     '1',       'sys_normal_disable',  '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '停用状态');
+sql\ry_20250522.sql:506:insert into sys_dict_data values(8,  1,  '正常',     '0',       'sys_job_status',      '',   'primary', 'Y', '0', 'admin', sysdate(), '', null, '正常状态');
+sql\ry_20250522.sql:507:insert into sys_dict_data values(9,  2,  '暂停',     '1',       'sys_job_status',      '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '停用状态');
+sql\ry_20250522.sql:508:insert into sys_dict_data values(10, 1,  '默认',     'DEFAULT', 'sys_job_group',       '',   '',        'Y', '0', 'admin', sysdate(), '', null, '默认分组');
+sql\ry_20250522.sql:509:insert into sys_dict_data values(11, 2,  '系统',     'SYSTEM',  'sys_job_group',       '',   '',        'N', '0', 'admin', sysdate(), '', null, '系统分组');
+sql\ry_20250522.sql:510:insert into sys_dict_data values(12, 1,  '是',       'Y',       'sys_yes_no',          '',   'primary', 'Y', '0', 'admin', sysdate(), '', null, '系统默认是');
+sql\ry_20250522.sql:511:insert into sys_dict_data values(13, 2,  '否',       'N',       'sys_yes_no',          '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '系统默认否');
+sql\ry_20250522.sql:512:insert into sys_dict_data values(14, 1,  '通知',     '1',       'sys_notice_type',     '',   'warning', 'Y', '0', 'admin', sysdate(), '', null, '通知');
+sql\ry_20250522.sql:513:insert into sys_dict_data values(15, 2,  '公告',     '2',       'sys_notice_type',     '',   'success', 'N', '0', 'admin', sysdate(), '', null, '公告');
+sql\ry_20250522.sql:514:insert into sys_dict_data values(16, 1,  '正常',     '0',       'sys_notice_status',   '',   'primary', 'Y', '0', 'admin', sysdate(), '', null, '正常状态');
+sql\ry_20250522.sql:515:insert into sys_dict_data values(17, 2,  '关闭',     '1',       'sys_notice_status',   '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '关闭状态');
+sql\ry_20250522.sql:516:insert into sys_dict_data values(18, 99, '其他',     '0',       'sys_oper_type',       '',   'info',    'N', '0', 'admin', sysdate(), '', null, '其他操作');
+sql\ry_20250522.sql:517:insert into sys_dict_data values(19, 1,  '新增',     '1',       'sys_oper_type',       '',   'info',    'N', '0', 'admin', sysdate(), '', null, '新增操作');
+sql\ry_20250522.sql:518:insert into sys_dict_data values(20, 2,  '修改',     '2',       'sys_oper_type',       '',   'info',    'N', '0', 'admin', sysdate(), '', null, '修改操作');
+sql\ry_20250522.sql:519:insert into sys_dict_data values(21, 3,  '删除',     '3',       'sys_oper_type',       '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '删除操作');
+sql\ry_20250522.sql:520:insert into sys_dict_data values(22, 4,  '授权',     '4',       'sys_oper_type',       '',   'primary', 'N', '0', 'admin', sysdate(), '', null, '授权操作');
+sql\ry_20250522.sql:521:insert into sys_dict_data values(23, 5,  '导出',     '5',       'sys_oper_type',       '',   'warning', 'N', '0', 'admin', sysdate(), '', null, '导出操作');
+sql\ry_20250522.sql:522:insert into sys_dict_data values(24, 6,  '导入',     '6',       'sys_oper_type',       '',   'warning', 'N', '0', 'admin', sysdate(), '', null, '导入操作');
+sql\ry_20250522.sql:523:insert into sys_dict_data values(25, 7,  '强退',     '7',       'sys_oper_type',       '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '强退操作');
+sql\ry_20250522.sql:524:insert into sys_dict_data values(26, 8,  '生成代码', '8',       'sys_oper_type',       '',   'warning', 'N', '0', 'admin', sysdate(), '', null, '生成操作');
+sql\ry_20250522.sql:525:insert into sys_dict_data values(27, 9,  '清空数据', '9',       'sys_oper_type',       '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '清空操作');
+sql\ry_20250522.sql:526:insert into sys_dict_data values(28, 1,  '成功',     '0',       'sys_common_status',   '',   'primary', 'N', '0', 'admin', sysdate(), '', null, '正常状态');
+sql\ry_20250522.sql:527:insert into sys_dict_data values(29, 2,  '失败',     '1',       'sys_common_status',   '',   'danger',  'N', '0', 'admin', sysdate(), '', null, '停用状态');
+sql\ry_20250522.sql:569:  status         char(1)        default '0'               comment '登录状态（0成功 1失败）',
+sql\ry_20250522.sql:573:  key idx_sys_logininfor_s  (status),
+sql\ry_20250522.sql:590:  status              char(1)       default '0'                comment '状态（0正常 1暂停）',
+sql\ry_20250522.sql:614:  status              char(1)        default '0'                comment '执行状态（0正常 1失败）',
+sql\ry_20250522.sql:630:  status            char(1)         default '0'                comment '公告状态（0正常 1关闭）',
+sql\ry_20250522.sql:697:  dict_type         varchar(200)    default ''                 comment '字典类型',
+sql\20260314_asset_workflow_asset_id_patch.sql:2:-- 资产业务流水表 asset_id 增量修复脚本
+sql\20260314_asset_workflow_asset_id_patch.sql:4:-- 1. 适用于已经执行过旧版 20260312_asset_workflow_business.sql 的存量库
+sql\20260314_asset_workflow_asset_id_patch.sql:5:-- 2. 依赖 20260314_asset_data_model_refactor.sql 已完成 asset_info.asset_id 升级
+sql\20260314_asset_workflow_asset_id_patch.sql:6:-- 3. 本脚本会为领用、维修、处置单补充 asset_id 字段并回填历史数据
+sql\20260314_asset_workflow_asset_id_patch.sql:10:-- 一、资产领用单补充 asset_id
+sql\20260314_asset_workflow_asset_id_patch.sql:17:              AND table_name = 'asset_requisition'
+sql\20260314_asset_workflow_asset_id_patch.sql:18:              AND column_name = 'asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:20:        'SELECT ''asset_requisition.asset_id 已存在，跳过加列''',
+sql\20260314_asset_workflow_asset_id_patch.sql:21:        'ALTER TABLE `asset_requisition` ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT ''资产ID'' AFTER `requisition_no`'
+sql\20260314_asset_workflow_asset_id_patch.sql:34:              AND table_name = 'asset_requisition'
+sql\20260314_asset_workflow_asset_id_patch.sql:35:              AND index_name = 'idx_asset_requisition_asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:37:        'SELECT ''idx_asset_requisition_asset_id 已存在，跳过建索引''',
+sql\20260314_asset_workflow_asset_id_patch.sql:38:        'ALTER TABLE `asset_requisition` ADD KEY `idx_asset_requisition_asset_id` (`asset_id`)'
+sql\20260314_asset_workflow_asset_id_patch.sql:45:UPDATE `asset_requisition` req
+sql\20260314_asset_workflow_asset_id_patch.sql:46:LEFT JOIN `asset_info` info ON info.`asset_no` = req.`asset_no`
+sql\20260314_asset_workflow_asset_id_patch.sql:47:SET req.`asset_id` = info.`asset_id`
+sql\20260314_asset_workflow_asset_id_patch.sql:48:WHERE req.`asset_id` IS NULL;
+sql\20260314_asset_workflow_asset_id_patch.sql:50:ALTER TABLE `asset_requisition`
+sql\20260314_asset_workflow_asset_id_patch.sql:51:    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
+sql\20260314_asset_workflow_asset_id_patch.sql:53:-- 二、资产维修单补充 asset_id
+sql\20260314_asset_workflow_asset_id_patch.sql:60:              AND table_name = 'asset_maintenance'
+sql\20260314_asset_workflow_asset_id_patch.sql:61:              AND column_name = 'asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:63:        'SELECT ''asset_maintenance.asset_id 已存在，跳过加列''',
+sql\20260314_asset_workflow_asset_id_patch.sql:64:        'ALTER TABLE `asset_maintenance` ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT ''资产ID'' AFTER `maintenance_no`'
+sql\20260314_asset_workflow_asset_id_patch.sql:77:              AND table_name = 'asset_maintenance'
+sql\20260314_asset_workflow_asset_id_patch.sql:78:              AND index_name = 'idx_asset_maintenance_asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:80:        'SELECT ''idx_asset_maintenance_asset_id 已存在，跳过建索引''',
+sql\20260314_asset_workflow_asset_id_patch.sql:81:        'ALTER TABLE `asset_maintenance` ADD KEY `idx_asset_maintenance_asset_id` (`asset_id`)'
+sql\20260314_asset_workflow_asset_id_patch.sql:88:UPDATE `asset_maintenance` maintenance
+sql\20260314_asset_workflow_asset_id_patch.sql:89:LEFT JOIN `asset_info` info ON info.`asset_no` = maintenance.`asset_no`
+sql\20260314_asset_workflow_asset_id_patch.sql:90:SET maintenance.`asset_id` = info.`asset_id`
+sql\20260314_asset_workflow_asset_id_patch.sql:91:WHERE maintenance.`asset_id` IS NULL;
+sql\20260314_asset_workflow_asset_id_patch.sql:93:ALTER TABLE `asset_maintenance`
+sql\20260314_asset_workflow_asset_id_patch.sql:94:    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
+sql\20260314_asset_workflow_asset_id_patch.sql:96:-- 三、资产处置单补充 asset_id
+sql\20260314_asset_workflow_asset_id_patch.sql:103:              AND table_name = 'asset_disposal'
+sql\20260314_asset_workflow_asset_id_patch.sql:104:              AND column_name = 'asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:106:        'SELECT ''asset_disposal.asset_id 已存在，跳过加列''',
+sql\20260314_asset_workflow_asset_id_patch.sql:107:        'ALTER TABLE `asset_disposal` ADD COLUMN `asset_id` bigint(20) DEFAULT NULL COMMENT ''资产ID'' AFTER `disposal_no`'
+sql\20260314_asset_workflow_asset_id_patch.sql:120:              AND table_name = 'asset_disposal'
+sql\20260314_asset_workflow_asset_id_patch.sql:121:              AND index_name = 'idx_asset_disposal_asset_id'
+sql\20260314_asset_workflow_asset_id_patch.sql:123:        'SELECT ''idx_asset_disposal_asset_id 已存在，跳过建索引''',
+sql\20260314_asset_workflow_asset_id_patch.sql:124:        'ALTER TABLE `asset_disposal` ADD KEY `idx_asset_disposal_asset_id` (`asset_id`)'
+sql\20260314_asset_workflow_asset_id_patch.sql:131:UPDATE `asset_disposal` disposal
+sql\20260314_asset_workflow_asset_id_patch.sql:132:LEFT JOIN `asset_info` info ON info.`asset_no` = disposal.`asset_no`
+sql\20260314_asset_workflow_asset_id_patch.sql:133:SET disposal.`asset_id` = info.`asset_id`
+sql\20260314_asset_workflow_asset_id_patch.sql:134:WHERE disposal.`asset_id` IS NULL;
+sql\20260314_asset_workflow_asset_id_patch.sql:136:ALTER TABLE `asset_disposal`
+sql\20260314_asset_workflow_asset_id_patch.sql:137:    MODIFY COLUMN `asset_id` bigint(20) NOT NULL COMMENT '资产ID';
+sql\20260314_asset_workflow_asset_id_patch.sql:140:SELECT 'asset_requisition' AS table_name, COUNT(*) AS missing_asset_id_rows
+sql\20260314_asset_workflow_asset_id_patch.sql:141:FROM `asset_requisition`
+sql\20260314_asset_workflow_asset_id_patch.sql:142:WHERE `asset_id` IS NULL
+sql\20260314_asset_workflow_asset_id_patch.sql:144:SELECT 'asset_maintenance' AS table_name, COUNT(*) AS missing_asset_id_rows
+sql\20260314_asset_workflow_asset_id_patch.sql:145:FROM `asset_maintenance`
+sql\20260314_asset_workflow_asset_id_patch.sql:146:WHERE `asset_id` IS NULL
+sql\20260314_asset_workflow_asset_id_patch.sql:148:SELECT 'asset_disposal' AS table_name, COUNT(*) AS missing_asset_id_rows
+sql\20260314_asset_workflow_asset_id_patch.sql:149:FROM `asset_disposal`
+sql\20260314_asset_workflow_asset_id_patch.sql:150:WHERE `asset_id` IS NULL;
+sql\20260311_asset_dicts.sql:3:INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:4:VALUES ('资产类型', 'asset_type', '0', 'admin', sysdate(), '', null, '资产类型列表');
+sql\20260311_asset_dicts.sql:6:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:7:VALUES (1, '固定资产', '1', 'asset_type', '', 'success', 'Y', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:8:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:9:VALUES (2, '不动产', '2', 'asset_type', '', 'primary', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:12:INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:13:VALUES ('资产状态', 'asset_status', '0', 'admin', sysdate(), '', null, '资产状态列表');
+sql\20260311_asset_dicts.sql:15:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:16:VALUES (1, '在用', '1', 'asset_status', '', 'success', 'Y', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:17:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:18:VALUES (2, '领用中', '2', 'asset_status', '', 'primary', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:19:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:20:VALUES (3, '维修中', '3', 'asset_status', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:21:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:22:VALUES (4, '盘点中', '4', 'asset_status', '', 'info', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:23:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:24:VALUES (5, '已报废', '5', 'asset_status', '', 'danger', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:25:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:26:VALUES (6, '已处置', '6', 'asset_status', '', 'danger', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_dicts.sql:27:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_dicts.sql:28:VALUES (7, '闲置', '7', 'asset_status', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, '');
+sql\quartz.sql:43:    trigger_state        varchar(16)     not null            comment '触发器状态',
+sql\quartz.sql:124:    state                varchar(16)     not null            comment '状态',
+sql\20260311_asset_menu_init.sql:2:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:3:VALUES ('资产系统', 0, 4, 'asset', NULL, 1, 0, 'M', '0', '0', '', 'dict', 'admin', sysdate(), '', null, '资产管理父菜单');
+sql\20260311_asset_menu_init.sql:10:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:11:VALUES ('资产分类', @parent_id, 1, 'category', 'asset/category/index', 1, 0, 'C', '0', '0', 'asset:category:list', 'tree', 'admin', sysdate(), '', null, '资产分类菜单');
+sql\20260311_asset_menu_init.sql:13:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:14:VALUES ('资产台账', @parent_id, 2, 'list', 'asset/list/index', 1, 0, 'C', '0', '0', 'asset:info:list', 'list', 'admin', sysdate(), '', null, '资产台账菜单');
+sql\20260311_asset_menu_init.sql:18:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:19:VALUES ('分类查询', @category_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:category:query', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:20:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:21:VALUES ('分类新增', @category_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:category:add', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:22:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:23:VALUES ('分类修改', @category_id, 3, '#', '', 1, 0, 'F', '0', '0', 'asset:category:edit', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:24:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:25:VALUES ('分类删除', @category_id, 4, '#', '', 1, 0, 'F', '0', '0', 'asset:category:remove', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:33:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:34:VALUES ('资产查询', @info_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:info:query', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:35:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:36:VALUES ('资产新增', @info_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:info:add', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:37:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:38:VALUES ('资产修改', @info_id, 3, '#', '', 1, 0, 'F', '0', '0', 'asset:info:edit', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:39:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:40:VALUES ('资产删除', @info_id, 4, '#', '', 1, 0, 'F', '0', '0', 'asset:info:remove', '#', 'admin', sysdate(), '', null, '');
+sql\20260311_asset_menu_init.sql:41:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+sql\20260311_asset_menu_init.sql:42:VALUES ('资产导出', @info_id, 5, '#', '', 1, 0, 'F', '0', '0', 'asset:info:export', '#', 'admin', sysdate(), '', null, '');
+sql\20260312_asset_workflow_menu.sql:2:-- 审批流字典类型 wf_status
+sql\20260312_asset_workflow_menu.sql:3:INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:4:VALUES ('审批流状态', 'wf_status', '0', 'admin', sysdate(), '审批流处理状态');
+sql\20260312_asset_workflow_menu.sql:6:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:7:VALUES (1, '草稿', 'DRAFT', 'wf_status', '', 'default', 'Y', '0', 'admin', sysdate(), '草稿'),
+sql\20260312_asset_workflow_menu.sql:8:(2, '流转中', 'IN_PROGRESS', 'wf_status', '', 'primary', 'N', '0', 'admin', sysdate(), '流转中'),
+sql\20260312_asset_workflow_menu.sql:9:(3, '已完成', 'COMPLETED', 'wf_status', '', 'success', 'N', '0', 'admin', sysdate(), '已完成'),
+sql\20260312_asset_workflow_menu.sql:10:(4, '已驳回', 'REJECTED', 'wf_status', '', 'danger', 'N', '0', 'admin', sysdate(), '已驳回'),
+sql\20260312_asset_workflow_menu.sql:11:(5, '已取消', 'CANCELLED', 'wf_status', '', 'info', 'N', '0', 'admin', sysdate(), '已取消');
+sql\20260312_asset_workflow_menu.sql:14:INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:17:INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:24:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:25:VALUES ('审批中心', 0, 5, 'workflow', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '审批中心目录');
+sql\20260312_asset_workflow_menu.sql:27:SET @workflow_id = LAST_INSERT_ID();
+sql\20260312_asset_workflow_menu.sql:30:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:31:VALUES ('待办处理', @workflow_id, 1, 'todo', 'asset/workflow/todo/index', 1, 0, 'C', '0', '0', 'workflow:todo:list', 'peoples', 'admin', sysdate(), '待办处理菜单'),
+sql\20260312_asset_workflow_menu.sql:32:       ('已办列表', @workflow_id, 2, 'done', 'asset/workflow/done/index', 1, 0, 'C', '0', '0', 'workflow:done:list', 'documentation', 'admin', sysdate(), '已办列表菜单');
+sql\20260312_asset_workflow_menu.sql:35:SELECT menu_id INTO @asset_parent_id FROM sys_menu WHERE menu_name = '资产系统' AND parent_id = 0 LIMIT 1;
+sql\20260312_asset_workflow_menu.sql:38:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260312_asset_workflow_menu.sql:39:VALUES ('领用归还', @asset_parent_id, 3, 'requisition', 'asset/requisition/index', 1, 0, 'C', '0', '0', 'asset:requisition:list', 'guide', 'admin', sysdate(), '领用归还台账'),
+sql\20260312_asset_workflow_menu.sql:40:       ('维保管理', @asset_parent_id, 4, 'repair', 'asset/repair/index', 1, 0, 'C', '0', '0', 'asset:repair:list', 'tool', 'admin', sysdate(), '维保管理台账'),
+sql\20260312_asset_workflow_menu.sql:41:       ('报废处置', @asset_parent_id, 5, 'scrap', 'asset/scrap/index', 1, 0, 'C', '0', '0', 'asset:scrap:list', 'validCode', 'admin', sysdate(), '报废处置台账');
+sql\20260311_asset_management_init.sql:1:CREATE TABLE `asset_category` (
+sql\20260311_asset_management_init.sql:11:CREATE TABLE `asset_info` (
+sql\20260311_asset_management_init.sql:12:  `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
+sql\20260311_asset_management_init.sql:13:  `asset_name` varchar(100) NOT NULL COMMENT '资产名称',
+sql\20260311_asset_management_init.sql:15:  `asset_type` char(1) NOT NULL COMMENT '类型：1=不动产 2=固定资产',
+sql\20260311_asset_management_init.sql:18:  `status` char(1) DEFAULT '1' COMMENT '状态：1=正常 2=领用中 3=维修中 4=盘点中 5=已报废',
+sql\20260311_asset_management_init.sql:20:  PRIMARY KEY (`asset_no`)
+sql\20260314_asset_data_model_refactor.sql:4:-- 1. 本脚本依赖 20260311_asset_management_init.sql 已执行
+sql\20260314_asset_data_model_refactor.sql:5:-- 2. 本脚本用于将 asset_info 从 asset_no 主键升级为 asset_id 主键
+sql\20260314_asset_data_model_refactor.sql:7:-- 4. 已执行旧版业务流水脚本的库，请额外执行 20260314_asset_workflow_asset_id_patch.sql
+sql\20260314_asset_data_model_refactor.sql:8:-- 5. 已执行旧版字典脚本且治理口径漂移的库，请额外执行 20260316_asset_governance_patch.sql
+sql\20260314_asset_data_model_refactor.sql:14:UPDATE asset_info
+sql\20260314_asset_data_model_refactor.sql:15:SET asset_type = CASE asset_type
+sql\20260314_asset_data_model_refactor.sql:18:    ELSE asset_type
+sql\20260314_asset_data_model_refactor.sql:22:ALTER TABLE `asset_info`
+sql\20260314_asset_data_model_refactor.sql:23:    MODIFY COLUMN `asset_no` varchar(64) NOT NULL COMMENT '资产编号',
+sql\20260314_asset_data_model_refactor.sql:24:    MODIFY COLUMN `asset_name` varchar(200) NOT NULL COMMENT '资产名称',
+sql\20260314_asset_data_model_refactor.sql:26:    CHANGE COLUMN `status` `asset_status` char(2) DEFAULT '1' COMMENT '资产状态：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置',
+sql\20260314_asset_data_model_refactor.sql:27:    MODIFY COLUMN `asset_type` char(1) NOT NULL COMMENT '资产类型：1=固定资产 2=不动产',
+sql\20260314_asset_data_model_refactor.sql:39:    ADD COLUMN `del_flag` char(1) DEFAULT '0' COMMENT '删除标记（0存在 2删除）' AFTER `asset_status`,
+sql\20260314_asset_data_model_refactor.sql:43:ALTER TABLE `asset_info`
+sql\20260314_asset_data_model_refactor.sql:44:    ADD COLUMN `asset_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '资产ID' FIRST,
+sql\20260314_asset_data_model_refactor.sql:46:    ADD PRIMARY KEY (`asset_id`),
+sql\20260314_asset_data_model_refactor.sql:47:    ADD UNIQUE KEY `uk_asset_no` (`asset_no`),
+sql\20260314_asset_data_model_refactor.sql:48:    ADD KEY `idx_asset_category` (`category_id`),
+sql\20260314_asset_data_model_refactor.sql:49:    ADD KEY `idx_asset_type_status` (`asset_type`, `asset_status`),
+sql\20260314_asset_data_model_refactor.sql:50:    ADD KEY `idx_asset_use_dept` (`use_dept_id`);
+sql\20260314_asset_data_model_refactor.sql:52:UPDATE `asset_info`
+sql\20260314_asset_data_model_refactor.sql:56:UPDATE `asset_info`
+sql\20260314_asset_data_model_refactor.sql:61:CREATE TABLE `asset_finance` (
+sql\20260314_asset_data_model_refactor.sql:63:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260314_asset_data_model_refactor.sql:80:  `finance_status` char(2) DEFAULT '0' COMMENT '财务状态：0=未计提 1=计提中 2=计提完成 3=已处置',
+sql\20260314_asset_data_model_refactor.sql:89:  UNIQUE KEY `uk_asset_finance_asset_id` (`asset_id`),
+sql\20260314_asset_data_model_refactor.sql:90:  KEY `idx_asset_finance_status` (`finance_status`)
+sql\20260314_asset_data_model_refactor.sql:93:INSERT INTO `asset_finance` (
+sql\20260314_asset_data_model_refactor.sql:94:  `asset_id`,
+sql\20260314_asset_data_model_refactor.sql:102:  `asset_id`,
+sql\20260314_asset_data_model_refactor.sql:108:FROM `asset_info`;
+sql\20260314_asset_data_model_refactor.sql:111:CREATE TABLE `asset_real_estate` (
+sql\20260314_asset_data_model_refactor.sql:112:  `real_estate_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '不动产记录ID',
+sql\20260314_asset_data_model_refactor.sql:113:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260314_asset_data_model_refactor.sql:116:  `real_estate_unit_no` varchar(100) DEFAULT NULL COMMENT '不动产单元号',
+sql\20260314_asset_data_model_refactor.sql:136:  `mortgage_status` char(1) DEFAULT '0' COMMENT '抵押状态：0=否 1=是',
+sql\20260314_asset_data_model_refactor.sql:138:  `seizure_status` char(1) DEFAULT '0' COMMENT '查封状态：0=否 1=是',
+sql\20260314_asset_data_model_refactor.sql:145:  PRIMARY KEY (`real_estate_id`),
+sql\20260314_asset_data_model_refactor.sql:146:  UNIQUE KEY `uk_asset_real_estate_asset_id` (`asset_id`),
+sql\20260314_asset_data_model_refactor.sql:147:  KEY `idx_asset_real_estate_cert` (`property_cert_no`),
+sql\20260314_asset_data_model_refactor.sql:148:  KEY `idx_asset_real_estate_term_end` (`land_term_end_date`)
+sql\20260314_asset_data_model_refactor.sql:152:CREATE TABLE `asset_category_attr` (
+sql\20260314_asset_data_model_refactor.sql:168:  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态：0=启用 1=停用',
+sql\20260314_asset_data_model_refactor.sql:175:  UNIQUE KEY `uk_asset_category_attr_code` (`category_id`, `attr_code`),
+sql\20260314_asset_data_model_refactor.sql:176:  KEY `idx_asset_category_attr_sort` (`category_id`, `sort_order`)
+sql\20260314_asset_data_model_refactor.sql:180:CREATE TABLE `asset_attr_value` (
+sql\20260314_asset_data_model_refactor.sql:182:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260314_asset_data_model_refactor.sql:196:  KEY `idx_asset_attr_value_asset_attr` (`asset_id`, `attr_id`),
+sql\20260314_asset_data_model_refactor.sql:197:  KEY `idx_asset_attr_value_attr_code` (`attr_code`)
+sql\20260314_asset_data_model_refactor.sql:201:CREATE TABLE `asset_attachment` (
+sql\20260314_asset_data_model_refactor.sql:203:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260314_asset_data_model_refactor.sql:216:  KEY `idx_asset_attachment_asset_id` (`asset_id`),
+sql\20260314_asset_data_model_refactor.sql:217:  KEY `idx_asset_attachment_biz_type` (`biz_type`)
+sql\20260314_asset_data_model_refactor.sql:221:CREATE TABLE `asset_depreciation_log` (
+sql\20260314_asset_data_model_refactor.sql:223:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260314_asset_data_model_refactor.sql:235:  UNIQUE KEY `uk_asset_depreciation_asset_period` (`asset_id`, `period`),
+sql\20260314_asset_data_model_refactor.sql:236:  KEY `idx_asset_depreciation_period` (`period`)
+sql\20260317_asset_menu_permission_patch.sql:4:-- 1. 适用于已执行 20260311_asset_menu_init.sql、20260312_asset_workflow_menu.sql 的数据库
+sql\20260317_asset_menu_permission_patch.sql:5:-- 2. 对齐当前后端控制器权限：asset:requisition:query/add、asset:finance:query
+sql\20260317_asset_menu_permission_patch.sql:10:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260317_asset_menu_permission_patch.sql:11:SELECT '领用详情', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:requisition:query', '#', 'admin', sysdate(), '领用详情按钮'
+sql\20260317_asset_menu_permission_patch.sql:13:WHERE component = 'asset/requisition/index'
+sql\20260317_asset_menu_permission_patch.sql:17:      WHERE perms = 'asset:requisition:query'
+sql\20260317_asset_menu_permission_patch.sql:20:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260317_asset_menu_permission_patch.sql:21:SELECT '发起领用', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:requisition:add', '#', 'admin', sysdate(), '领用申请按钮'
+sql\20260317_asset_menu_permission_patch.sql:23:WHERE component = 'asset/requisition/index'
+sql\20260317_asset_menu_permission_patch.sql:27:      WHERE perms = 'asset:requisition:add'
+sql\20260317_asset_menu_permission_patch.sql:31:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260317_asset_menu_permission_patch.sql:32:SELECT '财务查看', menu_id, 6, '#', '', 1, 0, 'F', '0', '0', 'asset:finance:query', '#', 'admin', sysdate(), '资产财务查询按钮'
+sql\20260317_asset_menu_permission_patch.sql:34:WHERE perms = 'asset:info:list'
+sql\20260317_asset_menu_permission_patch.sql:38:      WHERE perms = 'asset:finance:query'
+sql\20260317_asset_menu_permission_patch.sql:42:SELECT menu_name, parent_id, order_num, path, component, perms, status
+sql\20260317_asset_menu_permission_patch.sql:45:    'asset:requisition:list',
+sql\20260317_asset_menu_permission_patch.sql:46:    'asset:requisition:query',
+sql\20260317_asset_menu_permission_patch.sql:47:    'asset:requisition:add',
+sql\20260317_asset_menu_permission_patch.sql:48:    'asset:requisition:return',
+sql\20260317_asset_menu_permission_patch.sql:49:    'asset:info:list',
+sql\20260317_asset_menu_permission_patch.sql:50:    'asset:finance:query'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:9:SELECT menu_id INTO @asset_parent_id
+sql\20260315_asset_real_estate_lifecycle_menu.sql:16:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:17:SELECT '权属变更', @asset_parent_id, 6, 'real-estate-ownership', 'asset/real-estate/ownership/index', 1, 0, 'C', '0', '0', 'asset:realEstateOwnership:list', 'guide', 'admin', sysdate(), '不动产权属变更台账'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:18:WHERE @asset_parent_id IS NOT NULL
+sql\20260315_asset_real_estate_lifecycle_menu.sql:22:      WHERE perms = 'asset:realEstateOwnership:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:25:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:26:SELECT '用途变更', @asset_parent_id, 7, 'real-estate-usage', 'asset/real-estate/usage/index', 1, 0, 'C', '0', '0', 'asset:realEstateUsage:list', 'office-building', 'admin', sysdate(), '不动产用途变更台账'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:27:WHERE @asset_parent_id IS NOT NULL
+sql\20260315_asset_real_estate_lifecycle_menu.sql:31:      WHERE perms = 'asset:realEstateUsage:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:34:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:35:SELECT '状态变更', @asset_parent_id, 8, 'real-estate-status', 'asset/real-estate/status/index', 1, 0, 'C', '0', '0', 'asset:realEstateStatus:list', 'switch-button', 'admin', sysdate(), '不动产状态变更台账'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:36:WHERE @asset_parent_id IS NOT NULL
+sql\20260315_asset_real_estate_lifecycle_menu.sql:40:      WHERE perms = 'asset:realEstateStatus:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:43:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:44:SELECT '注销处置', @asset_parent_id, 9, 'real-estate-disposal', 'asset/real-estate/disposal/index', 1, 0, 'C', '0', '0', 'asset:realEstateDisposal:list', 'delete-location', 'admin', sysdate(), '不动产注销/处置台账'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:45:WHERE @asset_parent_id IS NOT NULL
+sql\20260315_asset_real_estate_lifecycle_menu.sql:49:      WHERE perms = 'asset:realEstateDisposal:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:53:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:54:SELECT '权属变更查询', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateOwnership:query', '#', 'admin', sysdate(), '权属变更详情按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:56:WHERE perms = 'asset:realEstateOwnership:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:60:      WHERE perms = 'asset:realEstateOwnership:query'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:63:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:64:SELECT '权属变更新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateOwnership:add', '#', 'admin', sysdate(), '权属变更新增按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:66:WHERE perms = 'asset:realEstateOwnership:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:70:      WHERE perms = 'asset:realEstateOwnership:add'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:73:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:74:SELECT '用途变更查询', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateUsage:query', '#', 'admin', sysdate(), '用途变更详情按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:76:WHERE perms = 'asset:realEstateUsage:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:80:      WHERE perms = 'asset:realEstateUsage:query'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:83:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:84:SELECT '用途变更新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateUsage:add', '#', 'admin', sysdate(), '用途变更新增按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:86:WHERE perms = 'asset:realEstateUsage:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:90:      WHERE perms = 'asset:realEstateUsage:add'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:93:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:94:SELECT '状态变更查询', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateStatus:query', '#', 'admin', sysdate(), '状态变更详情按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:96:WHERE perms = 'asset:realEstateStatus:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:100:      WHERE perms = 'asset:realEstateStatus:query'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:103:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:104:SELECT '状态变更新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateStatus:add', '#', 'admin', sysdate(), '状态变更新增按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:106:WHERE perms = 'asset:realEstateStatus:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:110:      WHERE perms = 'asset:realEstateStatus:add'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:113:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:114:SELECT '注销处置查询', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateDisposal:query', '#', 'admin', sysdate(), '注销/处置详情按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:116:WHERE perms = 'asset:realEstateDisposal:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:120:      WHERE perms = 'asset:realEstateDisposal:query'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:123:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_real_estate_lifecycle_menu.sql:124:SELECT '注销处置新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:realEstateDisposal:add', '#', 'admin', sysdate(), '注销/处置新增按钮'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:126:WHERE perms = 'asset:realEstateDisposal:list'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:130:      WHERE perms = 'asset:realEstateDisposal:add'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:134:SELECT menu_name, path, component, perms, status
+sql\20260315_asset_real_estate_lifecycle_menu.sql:137:    'asset/real-estate/ownership/index',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:138:    'asset/real-estate/usage/index',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:139:    'asset/real-estate/status/index',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:140:    'asset/real-estate/disposal/index'
+sql\20260315_asset_real_estate_lifecycle_menu.sql:143:       'asset:realEstateOwnership:query',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:144:       'asset:realEstateOwnership:add',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:145:       'asset:realEstateUsage:query',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:146:       'asset:realEstateUsage:add',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:147:       'asset:realEstateStatus:query',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:148:       'asset:realEstateStatus:add',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:149:       'asset:realEstateDisposal:query',
+sql\20260315_asset_real_estate_lifecycle_menu.sql:150:       'asset:realEstateDisposal:add'
+sql\20260312_asset_workflow_business.sql:2:CREATE TABLE `wf_approval_template` (
+sql\20260312_asset_workflow_business.sql:4:  `business_type` varchar(50) NOT NULL COMMENT '业务类型(如: asset_requisition)',
+sql\20260312_asset_workflow_business.sql:7:  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态：0=启用 1=停用',
+sql\20260312_asset_workflow_business.sql:10:  UNIQUE KEY `uk_wf_approval_template_business_type` (`business_type`)
+sql\20260312_asset_workflow_business.sql:13:INSERT INTO `wf_approval_template` (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260312_asset_workflow_business.sql:14:VALUES ('asset_requisition', '固定资产领用审批', 1, '0', sysdate()),
+sql\20260312_asset_workflow_business.sql:15:       ('asset_maintenance', '固定资产维修审批', 1, '0', sysdate()),
+sql\20260312_asset_workflow_business.sql:16:       ('asset_disposal', '固定资产处置审批', 1, '0', sysdate()),
+sql\20260312_asset_workflow_business.sql:17:       ('asset_real_estate_ownership_change', '不动产权属变更审批', 1, '0', sysdate()),
+sql\20260312_asset_workflow_business.sql:18:       ('asset_real_estate_disposal', '不动产处置审批', 1, '0', sysdate());
+sql\20260312_asset_workflow_business.sql:20:CREATE TABLE `wf_approval_instance` (
+sql\20260312_asset_workflow_business.sql:26:  `status` varchar(20) DEFAULT 'pending' COMMENT '状态: pending/approved/rejected',
+sql\20260312_asset_workflow_business.sql:29:  KEY `idx_wf_approval_instance_status_approver` (`status`, `approver_id`)
+sql\20260312_asset_workflow_business.sql:32:CREATE TABLE `wf_approval_node` (
+sql\20260312_asset_workflow_business.sql:45:CREATE TABLE `asset_requisition` (
+sql\20260312_asset_workflow_business.sql:47:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260312_asset_workflow_business.sql:48:  `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
+sql\20260312_asset_workflow_business.sql:52:  `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回 3=已归还',
+sql\20260312_asset_workflow_business.sql:55:  KEY `idx_asset_requisition_asset_id` (`asset_id`)
+sql\20260312_asset_workflow_business.sql:59:CREATE TABLE `asset_procurement` (
+sql\20260312_asset_workflow_business.sql:65:  `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回',
+sql\20260312_asset_workflow_business.sql:71:CREATE TABLE `asset_transfer` (
+sql\20260312_asset_workflow_business.sql:73:  `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
+sql\20260312_asset_workflow_business.sql:78:  `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回',
+sql\20260312_asset_workflow_business.sql:84:CREATE TABLE `asset_maintenance` (
+sql\20260312_asset_workflow_business.sql:86:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260312_asset_workflow_business.sql:87:  `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
+sql\20260312_asset_workflow_business.sql:92:  `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回 3=维修完成',
+sql\20260312_asset_workflow_business.sql:95:  KEY `idx_asset_maintenance_asset_id` (`asset_id`)
+sql\20260312_asset_workflow_business.sql:100:CREATE TABLE `asset_disposal` (
+sql\20260312_asset_workflow_business.sql:102:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260312_asset_workflow_business.sql:103:  `asset_no` varchar(50) NOT NULL COMMENT '资产编号',
+sql\20260312_asset_workflow_business.sql:108:  `status` tinyint(4) DEFAULT '0' COMMENT '单据状态：0=审批中 1=已通过 2=已驳回',
+sql\20260312_asset_workflow_business.sql:111:  KEY `idx_asset_disposal_asset_id` (`asset_id`)
+sql\20260316_asset_governance_patch.sql:4:-- 1. 数据库已执行过旧版 20260311_asset_dicts.sql，资产类型仍为 1=不动产 2=固定资产
+sql\20260316_asset_governance_patch.sql:6:-- 3. 数据库已执行 20260312_asset_workflow_business.sql，需要统一核对 asset_disposal.disposal_type
+sql\20260316_asset_governance_patch.sql:8:-- 1. 建议已完成 20260314_asset_data_model_refactor.sql，确保 asset_info 已切换到统一字段口径
+sql\20260316_asset_governance_patch.sql:9:-- 2. 如菜单仍保留 repair/scrap 旧命名，请继续执行 20260315_asset_lifecycle_workflow_menu_patch.sql
+sql\20260316_asset_governance_patch.sql:13:UPDATE sys_dict_type
+sql\20260316_asset_governance_patch.sql:14:SET dict_name = '资产类型',
+sql\20260316_asset_governance_patch.sql:18:WHERE dict_type = 'asset_type';
+sql\20260316_asset_governance_patch.sql:20:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:21:SET dict_sort = 1,
+sql\20260316_asset_governance_patch.sql:22:    dict_label = '固定资产',
+sql\20260316_asset_governance_patch.sql:28:WHERE dict_type = 'asset_type' AND dict_value = '1';
+sql\20260316_asset_governance_patch.sql:30:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:31:SET dict_sort = 2,
+sql\20260316_asset_governance_patch.sql:32:    dict_label = '不动产',
+sql\20260316_asset_governance_patch.sql:38:WHERE dict_type = 'asset_type' AND dict_value = '2';
+sql\20260316_asset_governance_patch.sql:40:INSERT INTO sys_dict_data (
+sql\20260316_asset_governance_patch.sql:41:    dict_sort,
+sql\20260316_asset_governance_patch.sql:42:    dict_label,
+sql\20260316_asset_governance_patch.sql:43:    dict_value,
+sql\20260316_asset_governance_patch.sql:44:    dict_type,
+sql\20260316_asset_governance_patch.sql:48:    status,
+sql\20260316_asset_governance_patch.sql:55:SELECT 1, '固定资产', '1', 'asset_type', '', 'success', 'Y', '0', 'admin', sysdate(), '', null, '资产治理口径升级：1=固定资产'
+sql\20260316_asset_governance_patch.sql:58:    FROM sys_dict_data
+sql\20260316_asset_governance_patch.sql:59:    WHERE dict_type = 'asset_type' AND dict_value = '1'
+sql\20260316_asset_governance_patch.sql:62:INSERT INTO sys_dict_data (
+sql\20260316_asset_governance_patch.sql:63:    dict_sort,
+sql\20260316_asset_governance_patch.sql:64:    dict_label,
+sql\20260316_asset_governance_patch.sql:65:    dict_value,
+sql\20260316_asset_governance_patch.sql:66:    dict_type,
+sql\20260316_asset_governance_patch.sql:70:    status,
+sql\20260316_asset_governance_patch.sql:77:SELECT 2, '不动产', '2', 'asset_type', '', 'primary', 'N', '0', 'admin', sysdate(), '', null, '资产治理口径升级：2=不动产'
+sql\20260316_asset_governance_patch.sql:80:    FROM sys_dict_data
+sql\20260316_asset_governance_patch.sql:81:    WHERE dict_type = 'asset_type' AND dict_value = '2'
+sql\20260316_asset_governance_patch.sql:85:UPDATE sys_dict_type
+sql\20260316_asset_governance_patch.sql:86:SET dict_name = '资产状态',
+sql\20260316_asset_governance_patch.sql:90:WHERE dict_type = 'asset_status';
+sql\20260316_asset_governance_patch.sql:92:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:93:SET dict_sort = 1,
+sql\20260316_asset_governance_patch.sql:94:    dict_label = '在用',
+sql\20260316_asset_governance_patch.sql:100:WHERE dict_type = 'asset_status' AND dict_value = '1';
+sql\20260316_asset_governance_patch.sql:102:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:103:SET dict_sort = 2,
+sql\20260316_asset_governance_patch.sql:104:    dict_label = '领用中',
+sql\20260316_asset_governance_patch.sql:110:WHERE dict_type = 'asset_status' AND dict_value = '2';
+sql\20260316_asset_governance_patch.sql:112:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:113:SET dict_sort = 3,
+sql\20260316_asset_governance_patch.sql:114:    dict_label = '维修中',
+sql\20260316_asset_governance_patch.sql:120:WHERE dict_type = 'asset_status' AND dict_value = '3';
+sql\20260316_asset_governance_patch.sql:122:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:123:SET dict_sort = 4,
+sql\20260316_asset_governance_patch.sql:124:    dict_label = '盘点中',
+sql\20260316_asset_governance_patch.sql:130:WHERE dict_type = 'asset_status' AND dict_value = '4';
+sql\20260316_asset_governance_patch.sql:132:UPDATE sys_dict_data
+sql\20260316_asset_governance_patch.sql:133:SET dict_sort = 5,
+sql\20260316_asset_governance_patch.sql:134:    dict_label = '已报废',
+sql\20260316_asset_governance_patch.sql:140:WHERE dict_type = 'asset_status' AND dict_value = '5';
+sql\20260316_asset_governance_patch.sql:142:INSERT INTO sys_dict_data (
+sql\20260316_asset_governance_patch.sql:143:    dict_sort,
+sql\20260316_asset_governance_patch.sql:144:    dict_label,
+sql\20260316_asset_governance_patch.sql:145:    dict_value,
+sql\20260316_asset_governance_patch.sql:146:    dict_type,
+sql\20260316_asset_governance_patch.sql:150:    status,
+sql\20260316_asset_governance_patch.sql:157:SELECT 6, '已处置', '6', 'asset_status', '', 'danger', 'N', '0', 'admin', sysdate(), '', null, '资产治理口径升级：6=已处置'
+sql\20260316_asset_governance_patch.sql:160:    FROM sys_dict_data
+sql\20260316_asset_governance_patch.sql:161:    WHERE dict_type = 'asset_status' AND dict_value = '6'
+sql\20260316_asset_governance_patch.sql:164:INSERT INTO sys_dict_data (
+sql\20260316_asset_governance_patch.sql:165:    dict_sort,
+sql\20260316_asset_governance_patch.sql:166:    dict_label,
+sql\20260316_asset_governance_patch.sql:167:    dict_value,
+sql\20260316_asset_governance_patch.sql:168:    dict_type,
+sql\20260316_asset_governance_patch.sql:172:    status,
+sql\20260316_asset_governance_patch.sql:179:SELECT 7, '闲置', '7', 'asset_status', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, '资产治理口径升级：7=闲置'
+sql\20260316_asset_governance_patch.sql:182:    FROM sys_dict_data
+sql\20260316_asset_governance_patch.sql:183:    WHERE dict_type = 'asset_status' AND dict_value = '7'
+sql\20260316_asset_governance_patch.sql:188:-- asset_type：1=固定资产 2=不动产
+sql\20260316_asset_governance_patch.sql:189:-- asset_status：1=在用 2=领用中 3=维修中 4=盘点中 5=已报废 6=已处置 7=闲置
+sql\20260316_asset_governance_patch.sql:190:-- 注意：主档历史数据的最终纠偏仍以 20260314_asset_data_model_refactor.sql 为准，本补丁不重复执行翻转逻辑。
+sql\20260316_asset_governance_patch.sql:192:-- 四、补齐 asset_disposal.disposal_type 历史默认值
+sql\20260316_asset_governance_patch.sql:194:UPDATE asset_disposal
+sql\20260316_asset_governance_patch.sql:210:      AND TABLE_NAME = 'wf_approval_template'
+sql\20260316_asset_governance_patch.sql:215:    'ALTER TABLE `wf_approval_template` ADD COLUMN `template_name` varchar(100) NOT NULL DEFAULT '''' COMMENT ''模板名称'' AFTER `business_type`',
+sql\20260316_asset_governance_patch.sql:216:    'SELECT ''wf_approval_template.template_name 已存在'''
+sql\20260316_asset_governance_patch.sql:226:      AND TABLE_NAME = 'wf_approval_template'
+sql\20260316_asset_governance_patch.sql:231:    'ALTER TABLE `wf_approval_template` ADD COLUMN `approver_id` bigint(20) DEFAULT NULL COMMENT ''默认审批人ID'' AFTER `template_name`',
+sql\20260316_asset_governance_patch.sql:232:    'SELECT ''wf_approval_template.approver_id 已存在'''
+sql\20260316_asset_governance_patch.sql:238:SET @has_template_status := (
+sql\20260316_asset_governance_patch.sql:242:      AND TABLE_NAME = 'wf_approval_template'
+sql\20260316_asset_governance_patch.sql:243:      AND COLUMN_NAME = 'status'
+sql\20260316_asset_governance_patch.sql:245:SET @sql_add_template_status := IF(
+sql\20260316_asset_governance_patch.sql:246:    @has_template_status = 0,
+sql\20260316_asset_governance_patch.sql:247:    'ALTER TABLE `wf_approval_template` ADD COLUMN `status` char(1) NOT NULL DEFAULT ''0'' COMMENT ''状态：0=启用 1=停用'' AFTER `approver_id`',
+sql\20260316_asset_governance_patch.sql:248:    'SELECT ''wf_approval_template.status 已存在'''
+sql\20260316_asset_governance_patch.sql:250:PREPARE stmt FROM @sql_add_template_status;
+sql\20260316_asset_governance_patch.sql:258:      AND TABLE_NAME = 'wf_approval_instance'
+sql\20260316_asset_governance_patch.sql:263:    'ALTER TABLE `wf_approval_instance` ADD COLUMN `approver_id` bigint(20) DEFAULT NULL COMMENT ''当前审批人ID'' AFTER `business_type`',
+sql\20260316_asset_governance_patch.sql:264:    'SELECT ''wf_approval_instance.approver_id 已存在'''
+sql\20260316_asset_governance_patch.sql:270:UPDATE wf_approval_template
+sql\20260316_asset_governance_patch.sql:272:    WHEN 'asset_requisition' THEN '固定资产领用审批'
+sql\20260316_asset_governance_patch.sql:273:    WHEN 'asset_maintenance' THEN '固定资产维修审批'
+sql\20260316_asset_governance_patch.sql:274:    WHEN 'asset_disposal' THEN '固定资产处置审批'
+sql\20260316_asset_governance_patch.sql:275:    WHEN 'asset_real_estate_ownership_change' THEN '不动产权属变更审批'
+sql\20260316_asset_governance_patch.sql:276:    WHEN 'asset_real_estate_disposal' THEN '不动产处置审批'
+sql\20260316_asset_governance_patch.sql:281:UPDATE wf_approval_template
+sql\20260316_asset_governance_patch.sql:285:UPDATE wf_approval_template
+sql\20260316_asset_governance_patch.sql:286:SET status = '0'
+sql\20260316_asset_governance_patch.sql:287:WHERE status IS NULL OR status = '';
+sql\20260316_asset_governance_patch.sql:289:INSERT INTO wf_approval_template (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260316_asset_governance_patch.sql:290:SELECT 'asset_requisition', '固定资产领用审批', 1, '0', sysdate()
+sql\20260316_asset_governance_patch.sql:293:    FROM wf_approval_template
+sql\20260316_asset_governance_patch.sql:294:    WHERE business_type = 'asset_requisition'
+sql\20260316_asset_governance_patch.sql:297:INSERT INTO wf_approval_template (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260316_asset_governance_patch.sql:298:SELECT 'asset_maintenance', '固定资产维修审批', 1, '0', sysdate()
+sql\20260316_asset_governance_patch.sql:301:    FROM wf_approval_template
+sql\20260316_asset_governance_patch.sql:302:    WHERE business_type = 'asset_maintenance'
+sql\20260316_asset_governance_patch.sql:305:INSERT INTO wf_approval_template (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260316_asset_governance_patch.sql:306:SELECT 'asset_disposal', '固定资产处置审批', 1, '0', sysdate()
+sql\20260316_asset_governance_patch.sql:309:    FROM wf_approval_template
+sql\20260316_asset_governance_patch.sql:310:    WHERE business_type = 'asset_disposal'
+sql\20260316_asset_governance_patch.sql:313:INSERT INTO wf_approval_template (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260316_asset_governance_patch.sql:314:SELECT 'asset_real_estate_ownership_change', '不动产权属变更审批', 1, '0', sysdate()
+sql\20260316_asset_governance_patch.sql:317:    FROM wf_approval_template
+sql\20260316_asset_governance_patch.sql:318:    WHERE business_type = 'asset_real_estate_ownership_change'
+sql\20260316_asset_governance_patch.sql:321:INSERT INTO wf_approval_template (`business_type`, `template_name`, `approver_id`, `status`, `create_time`)
+sql\20260316_asset_governance_patch.sql:322:SELECT 'asset_real_estate_disposal', '不动产处置审批', 1, '0', sysdate()
+sql\20260316_asset_governance_patch.sql:325:    FROM wf_approval_template
+sql\20260316_asset_governance_patch.sql:326:    WHERE business_type = 'asset_real_estate_disposal'
+sql\20260316_asset_governance_patch.sql:329:UPDATE wf_approval_instance i
+sql\20260316_asset_governance_patch.sql:330:         left join wf_approval_template t
+sql\20260316_asset_governance_patch.sql:332:                  and t.status = '0'
+sql\20260316_asset_governance_patch.sql:337:-- 1. 旧菜单若仍使用 repair/scrap 命名，请继续执行 20260315_asset_lifecycle_workflow_menu_patch.sql。
+sql\20260315_asset_real_estate_lifecycle.sql:4:-- 1. 本脚本依赖 20260314_asset_data_model_refactor.sql 已执行
+sql\20260315_asset_real_estate_lifecycle.sql:5:-- 2. asset_info 与 asset_real_estate 只保留当前事实，本脚本中的动作单据负责过程留痕
+sql\20260315_asset_real_estate_lifecycle.sql:10:CREATE TABLE `asset_real_estate_ownership_change` (
+sql\20260315_asset_real_estate_lifecycle.sql:12:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260315_asset_real_estate_lifecycle.sql:13:  `asset_no` varchar(64) DEFAULT NULL COMMENT '资产编号',
+sql\20260315_asset_real_estate_lifecycle.sql:16:  `status` varchar(32) NOT NULL COMMENT '单据状态',
+sql\20260315_asset_real_estate_lifecycle.sql:30:  KEY `idx_re_ownership_asset_id` (`asset_id`),
+sql\20260315_asset_real_estate_lifecycle.sql:31:  KEY `idx_re_ownership_status` (`status`)
+sql\20260315_asset_real_estate_lifecycle.sql:35:CREATE TABLE `asset_real_estate_usage_change` (
+sql\20260315_asset_real_estate_lifecycle.sql:37:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260315_asset_real_estate_lifecycle.sql:38:  `asset_no` varchar(64) DEFAULT NULL COMMENT '资产编号',
+sql\20260315_asset_real_estate_lifecycle.sql:41:  `status` varchar(32) NOT NULL COMMENT '单据状态',
+sql\20260315_asset_real_estate_lifecycle.sql:53:  KEY `idx_re_usage_asset_id` (`asset_id`),
+sql\20260315_asset_real_estate_lifecycle.sql:54:  KEY `idx_re_usage_status` (`status`)
+sql\20260315_asset_real_estate_lifecycle.sql:58:CREATE TABLE `asset_real_estate_status_change` (
+sql\20260315_asset_real_estate_lifecycle.sql:59:  `status_change_no` varchar(50) NOT NULL COMMENT '状态变更单号',
+sql\20260315_asset_real_estate_lifecycle.sql:60:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260315_asset_real_estate_lifecycle.sql:61:  `asset_no` varchar(64) DEFAULT NULL COMMENT '资产编号',
+sql\20260315_asset_real_estate_lifecycle.sql:64:  `status` varchar(32) NOT NULL COMMENT '单据状态',
+sql\20260315_asset_real_estate_lifecycle.sql:65:  `old_asset_status` varchar(32) DEFAULT NULL COMMENT '原资产状态',
+sql\20260315_asset_real_estate_lifecycle.sql:66:  `target_asset_status` varchar(32) DEFAULT NULL COMMENT '目标资产状态',
+sql\20260315_asset_real_estate_lifecycle.sql:73:  PRIMARY KEY (`status_change_no`),
+sql\20260315_asset_real_estate_lifecycle.sql:74:  KEY `idx_re_status_asset_id` (`asset_id`),
+sql\20260315_asset_real_estate_lifecycle.sql:75:  KEY `idx_re_status_status` (`status`)
+sql\20260315_asset_real_estate_lifecycle.sql:79:CREATE TABLE `asset_real_estate_disposal` (
+sql\20260315_asset_real_estate_lifecycle.sql:81:  `asset_id` bigint(20) NOT NULL COMMENT '资产ID',
+sql\20260315_asset_real_estate_lifecycle.sql:82:  `asset_no` varchar(64) DEFAULT NULL COMMENT '资产编号',
+sql\20260315_asset_real_estate_lifecycle.sql:85:  `status` varchar(32) NOT NULL COMMENT '单据状态',
+sql\20260315_asset_real_estate_lifecycle.sql:86:  `old_asset_status` varchar(32) DEFAULT NULL COMMENT '原资产状态',
+sql\20260315_asset_real_estate_lifecycle.sql:87:  `target_asset_status` varchar(32) DEFAULT NULL COMMENT '目标资产状态',
+sql\20260315_asset_real_estate_lifecycle.sql:96:  KEY `idx_re_disposal_asset_id` (`asset_id`),
+sql\20260315_asset_real_estate_lifecycle.sql:97:  KEY `idx_re_disposal_status` (`status`)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:4:-- 1. 适用于已执行 20260312_asset_workflow_menu.sql 的数据库
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:6:-- 3. 如当前环境暂不开放审批中心，可将 @enable_workflow_center_menu 调整为 0
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:10:SET @enable_workflow_center_menu = 1;
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:11:SET @workflow_menu_status = IF(@enable_workflow_center_menu = 1, '0', '1');
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:15:SET perms = 'workflow:task:todo',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:16:    status = @workflow_menu_status,
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:18:WHERE component = 'asset/workflow/todo/index';
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:21:SET perms = 'workflow:task:done',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:22:    status = @workflow_menu_status,
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:24:WHERE component = 'asset/workflow/done/index';
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:26:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:27:SELECT '审批处理', menu_id, 1, '#', '', 1, 0, 'F', '0', @workflow_menu_status, 'workflow:task:approve', '#', 'admin', sysdate(), '审批动作按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:29:WHERE component = 'asset/workflow/todo/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:33:      WHERE perms = 'workflow:task:approve'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:40:    component = 'asset/maintenance/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:41:    perms = 'asset:maintenance:list',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:43:WHERE component = 'asset/repair/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:45:   OR perms = 'asset:repair:list';
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:50:    component = 'asset/disposal/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:51:    perms = 'asset:disposal:list',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:53:WHERE component = 'asset/scrap/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:55:   OR perms = 'asset:scrap:list';
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:58:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:59:SELECT '资产归还', menu_id, 10, '#', '', 1, 0, 'F', '0', '0', 'asset:requisition:return', '#', 'admin', sysdate(), '领用归还按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:61:WHERE component = 'asset/requisition/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:65:      WHERE perms = 'asset:requisition:return'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:68:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:69:SELECT '维修详情', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:maintenance:query', '#', 'admin', sysdate(), '维修详情按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:71:WHERE component = 'asset/maintenance/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:75:      WHERE perms = 'asset:maintenance:query'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:78:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:79:SELECT '维修新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:maintenance:add', '#', 'admin', sysdate(), '维修新增按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:81:WHERE component = 'asset/maintenance/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:85:      WHERE perms = 'asset:maintenance:add'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:88:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:89:SELECT '完成维修', menu_id, 3, '#', '', 1, 0, 'F', '0', '0', 'asset:maintenance:complete', '#', 'admin', sysdate(), '维修完成按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:91:WHERE component = 'asset/maintenance/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:95:      WHERE perms = 'asset:maintenance:complete'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:98:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:99:SELECT '处置详情', menu_id, 1, '#', '', 1, 0, 'F', '0', '0', 'asset:disposal:query', '#', 'admin', sysdate(), '处置详情按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:101:WHERE component = 'asset/disposal/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:105:      WHERE perms = 'asset:disposal:query'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:108:INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:109:SELECT '处置新增', menu_id, 2, '#', '', 1, 0, 'F', '0', '0', 'asset:disposal:add', '#', 'admin', sysdate(), '处置新增按钮'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:111:WHERE component = 'asset/disposal/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:115:      WHERE perms = 'asset:disposal:add'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:119:SELECT menu_name, path, component, perms, status
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:122:    'asset/requisition/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:123:    'asset/maintenance/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:124:    'asset/disposal/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:125:    'asset/workflow/todo/index',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:126:    'asset/workflow/done/index'
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:129:       'asset:requisition:return',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:130:       'asset:maintenance:query',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:131:       'asset:maintenance:add',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:132:       'asset:maintenance:complete',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:133:       'asset:disposal:query',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:134:       'asset:disposal:add',
+sql\20260315_asset_lifecycle_workflow_menu_patch.sql:135:       'workflow:task:approve'
