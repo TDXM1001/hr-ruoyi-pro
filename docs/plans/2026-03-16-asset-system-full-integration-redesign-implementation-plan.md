@@ -1,4 +1,4 @@
-﻿# Asset System Full Integration Redesign Implementation Plan
+# Asset System Full Integration Redesign Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -20,7 +20,7 @@
 | 批次 4 | Task 4 完成资产分类与动态属性建模收口 | 已完成 | 已收口属性编码 snake_case 归一化、前后端保留字段校验与弹窗开关字段 |
 | 批次 5 | Task 5 完成资产台账聚合表单与财务附件收口 | 已完成 | 已补附件聚合映射回归测试，并统一财务基础字段只读口径覆盖 lastDepreciationPeriod |
 | 批次 6 | Task 6 打通固定资产业务菜单 | 已完成 | 已统一固定资产业务建单 assetId 强约束、单据状态 / wfStatus 展示与后端主键校验 |
-| 批次 7 | Task 7 打通不动产业务菜单 | 待开始 | 统一不动产业务单据模型与主档回写 |
+| 批次 7 | Task 7 打通不动产业务菜单 | 已完成 | 已统一不动产业务 AssetRef 建单、单据状态 / wfStatus 展示与后端主档回写校验 |
 | 批次 8 | Task 8 收口流程中心、报表预警与权限治理 | 待开始 | 收口流程跳转、报表聚合、预警口径与治理 SQL |
 | 批次 9 | Task 9 执行全菜单联调回归与上线前验证 | 待开始 | 汇总回归结果并完成上线前验证 |
 

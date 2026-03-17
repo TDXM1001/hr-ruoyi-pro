@@ -37,6 +37,7 @@ describe('Real Estate Status API', () => {
       targetAssetStatus: string
       reason: string
     }>()
+    expect(statusApiSource).toContain("Pick<AssetRef, 'assetId' | 'assetNo'>")
   })
 
   it('locks status change row contract with assetId and wfStatus', () => {

@@ -1,4 +1,4 @@
-import type { AssetBusinessOrderBase } from '@/types/asset'
+import type { AssetBusinessOrderBase, AssetRef } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产用途变更查询参数。 */
@@ -11,9 +11,7 @@ export interface UsageChangeQuery {
 }
 
 /** 新增不动产用途变更请求。 */
-export interface CreateUsageChangeReq {
-  assetId: number
-  assetNo: string
+export interface CreateUsageChangeReq extends Pick<AssetRef, 'assetId' | 'assetNo'> {
   targetLandUse?: string
   targetBuildingUse?: string
   reason: string

@@ -38,6 +38,7 @@ describe('Real Estate Usage API', () => {
       targetBuildingUse?: string
       reason: string
     }>()
+    expect(usageApiSource).toContain("Pick<AssetRef, 'assetId' | 'assetNo'>")
   })
 
   it('locks usage change row contract with assetId and wfStatus', () => {

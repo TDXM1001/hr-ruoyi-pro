@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildOwnershipChangePayload,
+  buildRealEstateDisposalPayload,
+  buildStatusChangePayload,
+  buildUsageChangePayload,
   mapRealEstateStatusToWorkflow,
   parseAssetRouteQuery,
+  resolveRealEstateWorkflowStatus,
   shouldOpenCreateDialog
 } from '../../../src/views/asset/real-estate/real-estate-lifecycle.helper'
 
@@ -41,6 +46,15 @@ describe('real estate ledger helper', () => {
     expect(mapRealEstateStatusToWorkflow('rejected')).toBe('REJECTED')
   })
 
+  it('prefers wfStatus when resolving workflow display', () => {
+    expect(
+      resolveRealEstateWorkflowStatus({
+        status: 'pending',
+        wfStatus: 'completed'
+      })
+    ).toBe('COMPLETED')
+  })
+
   it('keeps latest timeline snapshot in route context for real estate pages', () => {
     expect(
       parseAssetRouteQuery({
@@ -59,8 +73,8 @@ describe('real estate ledger helper', () => {
     })
   })
 
-  it('opens create dialog only when query explicitly asks for it', () => {
-    expect(shouldOpenCreateDialog({ openCreate: '1' })).toBe(true)
+  it('requires route assetId before auto-opening create dialog', () => {
+    expect(shouldOpenCreateDialog({ openCreate: '1' })).toBe(false)
     expect(shouldOpenCreateDialog({ openCreate: '0' })).toBe(false)
   })
 
@@ -81,8 +95,87 @@ describe('real estate ledger helper', () => {
       shouldOpenCreateDialog({
         openCreate: '1',
         actionKey: 'realEstateDisposal',
+        assetId: '1001',
+        assetNo: 'RE-004',
         assetStatus: '6'
       })
     ).toBe(false)
+  })
+
+  it('builds unified real estate business payloads from route asset context', () => {
+    const context = parseAssetRouteQuery({
+      assetId: '1001',
+      assetNo: 'RE-1001',
+      assetName: '不动产 A',
+      assetStatus: '1'
+    })
+
+    expect(
+      buildOwnershipChangePayload(context, {
+        assetNo: '',
+        targetRightsHolder: '张三',
+        targetPropertyCertNo: 'CERT-NEW',
+        targetRegistrationDate: '2026-03-16',
+        reason: '权属变更'
+      })
+    ).toMatchObject({
+      assetId: 1001,
+      assetNo: 'RE-1001',
+      targetRightsHolder: '张三'
+    })
+
+    expect(
+      buildUsageChangePayload(context, {
+        assetNo: '',
+        targetLandUse: '住宅',
+        targetBuildingUse: '商业',
+        reason: '用途调整'
+      })
+    ).toMatchObject({
+      assetId: 1001,
+      assetNo: 'RE-1001',
+      targetLandUse: '住宅'
+    })
+
+    expect(
+      buildStatusChangePayload(context, {
+        assetNo: '',
+        targetAssetStatus: '7',
+        reason: '状态变更'
+      })
+    ).toMatchObject({
+      assetId: 1001,
+      assetNo: 'RE-1001',
+      targetAssetStatus: '7'
+    })
+
+    expect(
+      buildRealEstateDisposalPayload(context, {
+        assetNo: '',
+        disposalType: 'cancel',
+        targetAssetStatus: '',
+        reason: '注销处置'
+      })
+    ).toMatchObject({
+      assetId: 1001,
+      assetNo: 'RE-1001',
+      targetAssetStatus: '6'
+    })
+  })
+
+  it('rejects manual payload build when route assetId is missing', () => {
+    const context = parseAssetRouteQuery({
+      assetNo: 'RE-1002'
+    })
+
+    expect(() =>
+      buildOwnershipChangePayload(context, {
+        assetNo: 'RE-1002',
+        targetRightsHolder: '李四',
+        targetPropertyCertNo: '',
+        targetRegistrationDate: '',
+        reason: '权属变更'
+      })
+    ).toThrow('请从资产台账选择不动产后再发起业务单据')
   })
 })

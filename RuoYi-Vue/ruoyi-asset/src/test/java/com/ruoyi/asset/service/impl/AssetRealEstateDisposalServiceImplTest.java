@@ -49,7 +49,20 @@ class AssetRealEstateDisposalServiceImplTest {
 
         ServiceException exception = assertThrows(ServiceException.class, () -> service.insertDisposal(request));
 
-        assertEquals("仅不动产允许发起注销/处置", exception.getMessage());
+        assertEquals("固定资产不能发起不动产注销/处置", exception.getMessage());
+        verify(disposalMapper, never()).insertDisposal(any(AssetRealEstateDisposal.class));
+        verify(approvalEngine, never()).startProcess(anyString(), anyString());
+    }
+
+    @Test
+    void shouldRejectDisposalWithoutAssetId() {
+        AssetRealEstateDisposal request = buildRequest();
+        request.setAssetId(null);
+        request.setAssetNo("RE-9102");
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> service.insertDisposal(request));
+
+        assertEquals("不动产业务统一要求由资产台账带入资产主键", exception.getMessage());
         verify(disposalMapper, never()).insertDisposal(any(AssetRealEstateDisposal.class));
         verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
@@ -92,7 +105,7 @@ class AssetRealEstateDisposalServiceImplTest {
         request.setAssetId(9102L);
         request.setDisposalType("cancel");
         request.setTargetAssetStatus("6");
-        request.setReason("产权注销");
+        request.setReason("注销处置");
         return request;
     }
 

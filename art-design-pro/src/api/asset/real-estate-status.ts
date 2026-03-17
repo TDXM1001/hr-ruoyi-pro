@@ -1,4 +1,4 @@
-import type { AssetBusinessOrderBase } from '@/types/asset'
+import type { AssetBusinessOrderBase, AssetRef } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产状态变更查询参数。 */
@@ -11,9 +11,7 @@ export interface StatusChangeQuery {
 }
 
 /** 新增不动产状态变更请求。 */
-export interface CreateStatusChangeReq {
-  assetId: number
-  assetNo: string
+export interface CreateStatusChangeReq extends Pick<AssetRef, 'assetId' | 'assetNo'> {
   targetAssetStatus: string
   reason: string
 }

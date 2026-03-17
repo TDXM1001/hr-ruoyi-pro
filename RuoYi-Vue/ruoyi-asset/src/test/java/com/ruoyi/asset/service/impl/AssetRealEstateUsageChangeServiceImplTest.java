@@ -53,7 +53,19 @@ class AssetRealEstateUsageChangeServiceImplTest {
 
         ServiceException exception = assertThrows(ServiceException.class, () -> service.insertUsageChange(request));
 
-        assertEquals("仅不动产允许发起用途变更", exception.getMessage());
+        assertEquals("固定资产不能发起不动产用途变更", exception.getMessage());
+    }
+
+    @Test
+    void shouldRejectUsageChangeWithoutAssetId() {
+        AssetRealEstateUsageChange request = buildRequest();
+        request.setAssetId(null);
+        request.setAssetNo("RE-9202");
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> service.insertUsageChange(request));
+
+        assertEquals("不动产业务统一要求由资产台账带入资产主键", exception.getMessage());
+        verifyNoInteractions(usageChangeMapper, assetRealEstateMapper, approvalEngine);
     }
 
     @Test
@@ -61,8 +73,8 @@ class AssetRealEstateUsageChangeServiceImplTest {
         AssetRealEstateUsageChange request = buildRequest();
         AssetRealEstate realEstate = new AssetRealEstate();
         realEstate.setAssetId(9202L);
-        realEstate.setLandUse("仓储");
-        realEstate.setBuildingUse("工业");
+        realEstate.setLandUse("工业");
+        realEstate.setBuildingUse("办公");
 
         when(assetInfoMapper.selectAssetInfoByAssetId(9202L)).thenReturn(buildRealEstateAssetInfo(9202L, "RE-9202", "1"));
         when(assetRealEstateMapper.selectAssetRealEstateByAssetId(9202L)).thenReturn(realEstate);
@@ -74,14 +86,14 @@ class AssetRealEstateUsageChangeServiceImplTest {
         assertNotNull(request.getAssetId());
         assertEquals("completed", request.getStatus());
         assertEquals("completed", request.getWfStatus());
-        assertEquals("仓储", request.getOldLandUse());
-        assertEquals("工业", request.getOldBuildingUse());
+        assertEquals("工业", request.getOldLandUse());
+        assertEquals("办公", request.getOldBuildingUse());
         assertNotNull(request.getCreateTime());
 
         ArgumentCaptor<AssetRealEstate> estateCaptor = ArgumentCaptor.forClass(AssetRealEstate.class);
         verify(assetRealEstateMapper).updateAssetRealEstate(estateCaptor.capture());
-        assertEquals("住宅", estateCaptor.getValue().getBuildingUse());
-        assertEquals("居住", estateCaptor.getValue().getLandUse());
+        assertEquals("商业", estateCaptor.getValue().getBuildingUse());
+        assertEquals("住宅", estateCaptor.getValue().getLandUse());
 
         verifyNoInteractions(approvalEngine);
     }
@@ -96,8 +108,8 @@ class AssetRealEstateUsageChangeServiceImplTest {
         AssetRealEstateUsageChange request = new AssetRealEstateUsageChange();
         request.setUsageChangeNo("REU-20260315-001");
         request.setAssetId(9202L);
-        request.setTargetLandUse("居住");
-        request.setTargetBuildingUse("住宅");
+        request.setTargetLandUse("住宅");
+        request.setTargetBuildingUse("商业");
         request.setReason("用途调整");
         return request;
     }

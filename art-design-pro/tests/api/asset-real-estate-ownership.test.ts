@@ -42,6 +42,7 @@ describe('Real Estate Ownership API', () => {
       targetRegistrationDate?: string
       reason: string
     }>()
+    expect(ownershipApiSource).toContain("Pick<AssetRef, 'assetId' | 'assetNo'>")
   })
 
   it('locks ownership change row contract with assetId and wfStatus', () => {

@@ -23,6 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEstateOwnershipChangeService {
     private static final String REAL_ESTATE_ASSET_TYPE = "2";
     private static final String STATUS_PENDING = "pending";
+    private static final String MISSING_ASSET_ID_MESSAGE = "不动产业务统一要求由资产台账带入资产主键";
+    private static final String ASSET_NOT_FOUND_MESSAGE = "关联资产不存在";
+    private static final String REAL_ESTATE_NOT_FOUND_MESSAGE = "不动产主档不存在";
+    private static final String FIXED_ASSET_ERROR_MESSAGE = "固定资产不能发起不动产权属变更";
 
     @Autowired
     private AssetRealEstateOwnershipChangeMapper ownershipChangeMapper;
@@ -57,15 +61,15 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
         ownershipChange.setStatus(STATUS_PENDING);
         ownershipChange.setWfStatus(STATUS_PENDING);
 
-        AssetInfo assetInfo = resolveAsset(ownershipChange.getAssetId(), ownershipChange.getAssetNo());
-        validateRealEstateAsset(assetInfo, "仅不动产允许发起权属变更");
+        AssetInfo assetInfo = resolveAsset(ownershipChange.getAssetId());
+        validateRealEstateAsset(assetInfo, FIXED_ASSET_ERROR_MESSAGE);
 
         AssetRealEstate realEstate = assetRealEstateMapper.selectAssetRealEstateByAssetId(assetInfo.getAssetId());
         if (realEstate == null) {
-            throw new ServiceException("不动产主档不存在");
+            throw new ServiceException(REAL_ESTATE_NOT_FOUND_MESSAGE);
         }
 
-        // 单据记录前值和目标值，审批通过前不改当前事实。
+        // 统一以资产主档和不动产主档回填老值，保证单据快照稳定可追溯。
         ownershipChange.setAssetId(assetInfo.getAssetId());
         ownershipChange.setAssetNo(assetInfo.getAssetNo());
         ownershipChange.setOldRightsHolder(realEstate.getRightsHolder());
@@ -77,17 +81,17 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
         return rows;
     }
 
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    /**
+     * 不动产业务统一要求由资产台账带入资产主键，避免单据误关联到错误主档。
+     */
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
-            throw new ServiceException("关联资产不存在");
+            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
         }
         return assetInfo;
     }
@@ -99,7 +103,7 @@ public class AssetRealEstateOwnershipChangeServiceImpl implements IAssetRealEsta
     }
 
     /**
-     * 不动产权属变更当前仍由单据状态驱动流程态，这里统一补齐响应字段。
+     * 老数据未回填 wfStatus 时，前端仍可按统一流程状态展示。
      */
     private AssetRealEstateOwnershipChange fillWorkflowStatus(AssetRealEstateOwnershipChange ownershipChange) {
         if (ownershipChange == null || StringUtils.isNotBlank(ownershipChange.getWfStatus())) {

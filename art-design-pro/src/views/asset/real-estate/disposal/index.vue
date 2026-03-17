@@ -129,8 +129,14 @@
         </ElDescriptionsItem>
         <ElDescriptionsItem label="单据状态">
           <DictTag
+            :options="docStatusOptions"
+            :value="resolveRealEstateDocumentStatus(detailData)"
+          />
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="流程状态">
+          <DictTag
             :options="wf_status"
-            :value="mapRealEstateStatusToWorkflow(detailData?.status)"
+            :value="resolveRealEstateWorkflowStatus(detailData || {})"
           />
         </ElDescriptionsItem>
         <ElDescriptionsItem label="处置原因">
@@ -152,20 +158,22 @@
   import type { ColumnOption } from '@/types/component'
   import DictTag from '@/components/DictTag/index.vue'
   import { useTable } from '@/hooks/core/useTable'
+  import { ASSET_TIMELINE_DOC_STATUS_OPTIONS } from '@/types/asset'
   import { useDict } from '@/utils/dict'
   import {
     createRealEstateDisposal,
     getRealEstateDisposalDetail,
     listRealEstateDisposal,
-    type CreateRealEstateDisposalReq,
     type RealEstateDisposalItem
   } from '@/api/asset/real-estate-disposal'
   import {
+    buildRealEstateDisposalPayload,
     formatRealEstateLatestAction,
     getRealEstateActionGuard,
-    mapRealEstateStatusToWorkflow,
     parseAssetRouteQuery,
     REAL_ESTATE_APPROVAL_STATUS_OPTIONS,
+    resolveRealEstateDocumentStatus,
+    resolveRealEstateWorkflowStatus,
     shouldOpenCreateDialog,
     type RealEstateRouteAssetContext
   } from '../real-estate-lifecycle.helper'
@@ -174,6 +182,7 @@
 
   const route = useRoute()
   const { asset_status, wf_status } = useDict('asset_status', 'wf_status')
+  const docStatusOptions = [...ASSET_TIMELINE_DOC_STATUS_OPTIONS]
 
   const routeAssetContext = ref<RealEstateRouteAssetContext | null>(null)
   const dialogAssetContext = ref<RealEstateRouteAssetContext | null>(null)
@@ -280,8 +289,19 @@
             align: 'center',
             formatter: (row: RealEstateDisposalItem) =>
               h(DictTag, {
+                options: docStatusOptions,
+                value: resolveRealEstateDocumentStatus(row)
+              })
+          },
+          {
+            prop: 'wfStatus',
+            label: '流程状态',
+            width: 110,
+            align: 'center',
+            formatter: (row: RealEstateDisposalItem) =>
+              h(DictTag, {
                 options: wf_status.value,
-                value: mapRealEstateStatusToWorkflow(row.status)
+                value: resolveRealEstateWorkflowStatus(row)
               })
           },
           { prop: 'createTime', label: '申请时间', width: 170, align: 'center' },
@@ -348,13 +368,7 @@
       await formRef.value?.validate()
 
       submitting.value = true
-      const payload: CreateRealEstateDisposalReq = {
-        assetId: dialogAssetContext.value?.assetId,
-        assetNo: formData.assetNo.trim() || undefined,
-        disposalType: formData.disposalType,
-        targetAssetStatus: formData.targetAssetStatus || undefined,
-        reason: formData.reason.trim()
-      }
+      const payload = buildRealEstateDisposalPayload(dialogAssetContext.value, formData)
 
       await createRealEstateDisposal(payload)
       ElMessage.success('注销/处置申请已提交')

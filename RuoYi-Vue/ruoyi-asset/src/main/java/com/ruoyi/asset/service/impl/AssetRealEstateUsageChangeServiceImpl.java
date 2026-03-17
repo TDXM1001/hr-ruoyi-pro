@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUsageChangeService {
     private static final String REAL_ESTATE_ASSET_TYPE = "2";
     private static final String STATUS_COMPLETED = "completed";
+    private static final String MISSING_ASSET_ID_MESSAGE = "不动产业务统一要求由资产台账带入资产主键";
+    private static final String ASSET_NOT_FOUND_MESSAGE = "关联资产不存在";
+    private static final String REAL_ESTATE_NOT_FOUND_MESSAGE = "不动产主档不存在";
+    private static final String FIXED_ASSET_ERROR_MESSAGE = "固定资产不能发起不动产用途变更";
 
     @Autowired
     private AssetRealEstateUsageChangeMapper usageChangeMapper;
@@ -53,14 +57,15 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
         usageChange.setStatus(STATUS_COMPLETED);
         usageChange.setWfStatus(STATUS_COMPLETED);
 
-        AssetInfo assetInfo = resolveAsset(usageChange.getAssetId(), usageChange.getAssetNo());
-        validateRealEstateAsset(assetInfo, "仅不动产允许发起用途变更");
+        AssetInfo assetInfo = resolveAsset(usageChange.getAssetId());
+        validateRealEstateAsset(assetInfo, FIXED_ASSET_ERROR_MESSAGE);
 
         AssetRealEstate realEstate = assetRealEstateMapper.selectAssetRealEstateByAssetId(assetInfo.getAssetId());
         if (realEstate == null) {
-            throw new ServiceException("不动产主档不存在");
+            throw new ServiceException(REAL_ESTATE_NOT_FOUND_MESSAGE);
         }
 
+        // 先从主档回填旧值，再按目标值即时回写主档，保证前后口径一致。
         usageChange.setAssetId(assetInfo.getAssetId());
         usageChange.setAssetNo(assetInfo.getAssetNo());
         usageChange.setOldLandUse(realEstate.getLandUse());
@@ -76,17 +81,17 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
         return rows;
     }
 
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    /**
+     * 不动产业务统一要求由资产台账带入资产主键，避免用途回写误命中错误资产。
+     */
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
-            throw new ServiceException("关联资产不存在");
+            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
         }
         return assetInfo;
     }
@@ -98,7 +103,7 @@ public class AssetRealEstateUsageChangeServiceImpl implements IAssetRealEstateUs
     }
 
     /**
-     * 用途变更是即时生效动作，流程状态始终与单据完成态保持一致。
+     * 老数据未回填 wfStatus 时，统一按已完成展示。
      */
     private AssetRealEstateUsageChange fillWorkflowStatus(AssetRealEstateUsageChange usageChange) {
         if (usageChange == null || StringUtils.isNotBlank(usageChange.getWfStatus())) {

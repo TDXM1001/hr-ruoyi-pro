@@ -22,6 +22,9 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
     private static final String REAL_ESTATE_ASSET_TYPE = "2";
     private static final String STATUS_PENDING = "pending";
     private static final String TARGET_STATUS_DISPOSED = "6";
+    private static final String MISSING_ASSET_ID_MESSAGE = "不动产业务统一要求由资产台账带入资产主键";
+    private static final String ASSET_NOT_FOUND_MESSAGE = "关联资产不存在";
+    private static final String FIXED_ASSET_ERROR_MESSAGE = "固定资产不能发起不动产注销/处置";
 
     @Autowired
     private AssetRealEstateDisposalMapper disposalMapper;
@@ -53,8 +56,8 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
         disposal.setStatus(STATUS_PENDING);
         disposal.setWfStatus(STATUS_PENDING);
 
-        AssetInfo assetInfo = resolveAsset(disposal.getAssetId(), disposal.getAssetNo());
-        validateRealEstateAsset(assetInfo, "仅不动产允许发起注销/处置");
+        AssetInfo assetInfo = resolveAsset(disposal.getAssetId());
+        validateRealEstateAsset(assetInfo, FIXED_ASSET_ERROR_MESSAGE);
 
         disposal.setAssetId(assetInfo.getAssetId());
         disposal.setAssetNo(assetInfo.getAssetNo());
@@ -68,17 +71,17 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
         return rows;
     }
 
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    /**
+     * 不动产业务统一要求由资产台账带入资产主键，避免处置流程误关联到错误资产。
+     */
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
-            throw new ServiceException("关联资产不存在");
+            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
         }
         return assetInfo;
     }
@@ -90,7 +93,7 @@ public class AssetRealEstateDisposalServiceImpl implements IAssetRealEstateDispo
     }
 
     /**
-     * 注销/处置仍走审批流程，统一用单据状态回填流程态字段。
+     * 老数据未回填 wfStatus 时，统一按待审批展示。
      */
     private AssetRealEstateDisposal fillWorkflowStatus(AssetRealEstateDisposal disposal) {
         if (disposal == null || StringUtils.isNotBlank(disposal.getWfStatus())) {

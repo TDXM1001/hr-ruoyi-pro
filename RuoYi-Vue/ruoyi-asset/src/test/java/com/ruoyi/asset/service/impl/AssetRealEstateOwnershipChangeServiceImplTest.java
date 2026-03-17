@@ -54,7 +54,20 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
 
         ServiceException exception = assertThrows(ServiceException.class, () -> service.insertOwnershipChange(request));
 
-        assertEquals("仅不动产允许发起权属变更", exception.getMessage());
+        assertEquals("固定资产不能发起不动产权属变更", exception.getMessage());
+        verify(ownershipChangeMapper, never()).insertOwnershipChange(any(AssetRealEstateOwnershipChange.class));
+        verify(approvalEngine, never()).startProcess(anyString(), anyString());
+    }
+
+    @Test
+    void shouldRejectOwnershipChangeWithoutAssetId() {
+        AssetRealEstateOwnershipChange request = buildRequest();
+        request.setAssetId(null);
+        request.setAssetNo("RE-9002");
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> service.insertOwnershipChange(request));
+
+        assertEquals("不动产业务统一要求由资产台账带入资产主键", exception.getMessage());
         verify(ownershipChangeMapper, never()).insertOwnershipChange(any(AssetRealEstateOwnershipChange.class));
         verify(approvalEngine, never()).startProcess(anyString(), anyString());
     }
@@ -64,7 +77,7 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
         AssetRealEstateOwnershipChange request = buildRequest();
         AssetRealEstate realEstate = new AssetRealEstate();
         realEstate.setAssetId(9002L);
-        realEstate.setRightsHolder("原权属人");
+        realEstate.setRightsHolder("旧权利人");
         realEstate.setPropertyCertNo("CERT-OLD");
         realEstate.setRegistrationDate(new Date(1741996800000L));
 
@@ -79,7 +92,7 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
         assertEquals("RE-9002", request.getAssetNo());
         assertEquals("pending", request.getStatus());
         assertEquals("pending", request.getWfStatus());
-        assertEquals("原权属人", request.getOldRightsHolder());
+        assertEquals("旧权利人", request.getOldRightsHolder());
         assertEquals("CERT-OLD", request.getOldPropertyCertNo());
         assertNotNull(request.getCreateTime());
 
@@ -107,7 +120,7 @@ class AssetRealEstateOwnershipChangeServiceImplTest {
         request.setTargetRightsHolder("张三");
         request.setTargetPropertyCertNo("CERT-NEW");
         request.setTargetRegistrationDate(new Date(1742083200000L));
-        request.setReason("产权过户");
+        request.setReason("权属变更");
         return request;
     }
 

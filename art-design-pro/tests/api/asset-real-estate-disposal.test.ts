@@ -41,6 +41,7 @@ describe('Real Estate Disposal API', () => {
       targetAssetStatus?: string
       reason: string
     }>()
+    expect(realEstateDisposalApiSource).toContain("Pick<AssetRef, 'assetId' | 'assetNo'>")
   })
 
   it('locks real estate disposal row contract with assetId and wfStatus', () => {

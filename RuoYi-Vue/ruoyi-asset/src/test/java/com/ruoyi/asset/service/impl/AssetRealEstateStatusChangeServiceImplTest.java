@@ -48,7 +48,19 @@ class AssetRealEstateStatusChangeServiceImplTest {
 
         ServiceException exception = assertThrows(ServiceException.class, () -> service.insertStatusChange(request));
 
-        assertEquals("仅不动产允许发起状态变更", exception.getMessage());
+        assertEquals("固定资产不能发起不动产状态变更", exception.getMessage());
+    }
+
+    @Test
+    void shouldRejectStatusChangeWithoutAssetId() {
+        AssetRealEstateStatusChange request = buildRequest();
+        request.setAssetId(null);
+        request.setAssetNo("RE-9302");
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> service.insertStatusChange(request));
+
+        assertEquals("不动产业务统一要求由资产台账带入资产主键", exception.getMessage());
+        verifyNoInteractions(statusChangeMapper, approvalEngine);
     }
 
     @Test
@@ -85,7 +97,7 @@ class AssetRealEstateStatusChangeServiceImplTest {
         request.setStatusChangeNo("RES-20260315-001");
         request.setAssetId(9302L);
         request.setTargetAssetStatus("7");
-        request.setReason("转为闲置");
+        request.setReason("状态变更");
         return request;
     }
 

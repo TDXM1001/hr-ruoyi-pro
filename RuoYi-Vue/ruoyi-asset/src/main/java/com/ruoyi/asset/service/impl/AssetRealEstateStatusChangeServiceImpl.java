@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateStatusChangeService {
     private static final String REAL_ESTATE_ASSET_TYPE = "2";
     private static final String STATUS_COMPLETED = "completed";
+    private static final String MISSING_ASSET_ID_MESSAGE = "不动产业务统一要求由资产台账带入资产主键";
+    private static final String ASSET_NOT_FOUND_MESSAGE = "关联资产不存在";
+    private static final String FIXED_ASSET_ERROR_MESSAGE = "固定资产不能发起不动产状态变更";
 
     @Autowired
     private AssetRealEstateStatusChangeMapper statusChangeMapper;
@@ -48,8 +51,8 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
         statusChange.setStatus(STATUS_COMPLETED);
         statusChange.setWfStatus(STATUS_COMPLETED);
 
-        AssetInfo assetInfo = resolveAsset(statusChange.getAssetId(), statusChange.getAssetNo());
-        validateRealEstateAsset(assetInfo, "仅不动产允许发起状态变更");
+        AssetInfo assetInfo = resolveAsset(statusChange.getAssetId());
+        validateRealEstateAsset(assetInfo, FIXED_ASSET_ERROR_MESSAGE);
 
         statusChange.setAssetId(assetInfo.getAssetId());
         statusChange.setAssetNo(assetInfo.getAssetNo());
@@ -64,17 +67,17 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
         return rows;
     }
 
-    private AssetInfo resolveAsset(Long assetId, String assetNo) {
-        AssetInfo assetInfo;
-        if (assetId != null) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
-        } else if (StringUtils.isNotBlank(assetNo)) {
-            assetInfo = assetInfoMapper.selectAssetInfoByAssetNo(assetNo);
-        } else {
-            throw new ServiceException("资产ID或资产编号不能为空");
+    /**
+     * 不动产业务统一要求由资产台账带入资产主键，避免状态回写误伤其他主档。
+     */
+    private AssetInfo resolveAsset(Long assetId) {
+        if (assetId == null || assetId <= 0) {
+            throw new ServiceException(MISSING_ASSET_ID_MESSAGE);
         }
+
+        AssetInfo assetInfo = assetInfoMapper.selectAssetInfoByAssetId(assetId);
         if (assetInfo == null) {
-            throw new ServiceException("关联资产不存在");
+            throw new ServiceException(ASSET_NOT_FOUND_MESSAGE);
         }
         return assetInfo;
     }
@@ -86,7 +89,7 @@ public class AssetRealEstateStatusChangeServiceImpl implements IAssetRealEstateS
     }
 
     /**
-     * 状态变更为即时动作，流程态直接跟随单据态。
+     * 老数据未回填 wfStatus 时，统一按已完成展示。
      */
     private AssetRealEstateStatusChange fillWorkflowStatus(AssetRealEstateStatusChange statusChange) {
         if (statusChange == null || StringUtils.isNotBlank(statusChange.getWfStatus())) {

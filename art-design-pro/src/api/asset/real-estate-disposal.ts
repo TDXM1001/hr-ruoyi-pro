@@ -1,4 +1,4 @@
-import type { AssetBusinessOrderBase } from '@/types/asset'
+import type { AssetBusinessOrderBase, AssetRef } from '@/types/asset'
 import request from '@/utils/http'
 
 /** 不动产注销/处置查询参数。 */
@@ -11,9 +11,7 @@ export interface RealEstateDisposalQuery {
 }
 
 /** 新增不动产注销/处置请求。 */
-export interface CreateRealEstateDisposalReq {
-  assetId: number
-  assetNo: string
+export interface CreateRealEstateDisposalReq extends Pick<AssetRef, 'assetId' | 'assetNo'> {
   disposalType?: string
   targetAssetStatus?: string
   reason: string
