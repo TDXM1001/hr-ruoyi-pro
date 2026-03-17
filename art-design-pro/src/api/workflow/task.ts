@@ -6,14 +6,22 @@ export interface WorkflowTaskOption {
 }
 
 /**
- * 工作流任务项。
+ * 流程任务项。
+ *
+ * 同时保留历史字段和统一别名字段，方便流程中心平滑切换。
  */
 export interface WorkflowTaskItem {
   instanceId: number
   businessId: string
   businessType: string
-  currentNode: string
   status: string
+  /** 统一业务单号别名。 */
+  bizNo?: string
+  /** 统一业务类型别名。 */
+  bizType?: string
+  /** 统一流程状态别名。 */
+  wfStatus?: string
+  currentNode: string
   action?: string
   comment?: string
   approverId?: number
@@ -22,7 +30,7 @@ export interface WorkflowTaskItem {
 }
 
 /**
- * 待办任务查询参数
+ * 流程任务查询参数。
  */
 export interface TaskQuery {
   pageNum?: number
@@ -30,10 +38,16 @@ export interface TaskQuery {
   businessId?: string
   businessType?: string
   status?: string
+  /** 统一业务单号。 */
+  bizNo?: string
+  /** 统一业务类型。 */
+  bizType?: string
+  /** 统一流程状态。 */
+  wfStatus?: string
 }
 
 /**
- * 审批请求参数
+ * 审批请求。
  */
 export interface ApproveReq {
   instanceId: number
@@ -43,16 +57,13 @@ export interface ApproveReq {
 }
 
 /**
- * 工作流业务类型兜底字典。
- *
- * 后端在审批中心会把业务类型统一映射成大写编码，
- * 这里补齐不动产动作的前端显示兜底，避免 DictTag 只渲染原始编码。
+ * 当字典尚未加载完成时，前端本地兜底的业务类型选项。
  */
 export const WORKFLOW_FALLBACK_BUSINESS_TYPE_OPTIONS: WorkflowTaskOption[] = [
   { label: '资产领用', value: 'REQUISITION' },
   { label: '资产归还', value: 'RETURN' },
   { label: '资产维修', value: 'REPAIR' },
-  { label: '资产报废/处置', value: 'SCRAP' },
+  { label: '资产处置', value: 'SCRAP' },
   { label: '不动产权属变更', value: 'REAL_ESTATE_OWNERSHIP_CHANGE' },
   { label: '不动产用途变更', value: 'REAL_ESTATE_USAGE_CHANGE' },
   { label: '不动产状态变更', value: 'REAL_ESTATE_STATUS_CHANGE' },
@@ -60,7 +71,7 @@ export const WORKFLOW_FALLBACK_BUSINESS_TYPE_OPTIONS: WorkflowTaskOption[] = [
 ]
 
 /**
- * 合并后端字典与本地兜底项，优先使用后端字典文案。
+ * 合并后端字典与前端兜底选项。
  */
 export function mergeWorkflowBusinessTypeOptions(
   options: WorkflowTaskOption[] = []
@@ -79,8 +90,7 @@ export function mergeWorkflowBusinessTypeOptions(
 }
 
 /**
- * 查询待办任务列表
- * @param params 查询参数
+ * 查询待办任务。
  */
 export function listTodo(params?: TaskQuery) {
   return request.get<WorkflowTaskItem[]>({
@@ -90,8 +100,7 @@ export function listTodo(params?: TaskQuery) {
 }
 
 /**
- * 查询已办任务列表
- * @param params 查询参数
+ * 查询已办任务。
  */
 export function listDone(params?: TaskQuery) {
   return request.get<WorkflowTaskItem[]>({
@@ -101,8 +110,7 @@ export function listDone(params?: TaskQuery) {
 }
 
 /**
- * 审批任务
- * @param data 审批参数
+ * 提交审批。
  */
 export function approveTask(data: ApproveReq) {
   return request.post({

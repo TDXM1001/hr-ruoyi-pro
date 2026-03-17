@@ -21,7 +21,7 @@
 | 批次 5 | Task 5 完成资产台账聚合表单与财务附件收口 | 已完成 | 已补附件聚合映射回归测试，并统一财务基础字段只读口径覆盖 lastDepreciationPeriod |
 | 批次 6 | Task 6 打通固定资产业务菜单 | 已完成 | 已统一固定资产业务建单 assetId 强约束、单据状态 / wfStatus 展示与后端主键校验 |
 | 批次 7 | Task 7 打通不动产业务菜单 | 已完成 | 已统一不动产业务 AssetRef 建单、单据状态 / wfStatus 展示与后端主档回写校验 |
-| 批次 8 | Task 8 收口流程中心、报表预警与权限治理 | 待开始 | 收口流程跳转、报表聚合、预警口径与治理 SQL |
+| 批次 8 | Task 8 收口流程中心、报表预警与权限治理 | 已完成 | 收口流程跳转、报表聚合、预警口径与治理 SQL |
 | 批次 9 | Task 9 执行全菜单联调回归与上线前验证 | 待开始 | 汇总回归结果并完成上线前验证 |
 
 ---
@@ -471,7 +471,10 @@ git add art-design-pro/src/views/asset/real-estate art-design-pro/src/api/asset/
 git commit -m "feat: align real estate business menus with unified order model"
 ```
 
+
 ### Task 8: 收口流程中心、报表预警与权限治理
+
+> 状态：已完成（2026-03-17）
 
 **Files:**
 - Modify: `art-design-pro/src/views/asset/workflow/todo/index.vue`

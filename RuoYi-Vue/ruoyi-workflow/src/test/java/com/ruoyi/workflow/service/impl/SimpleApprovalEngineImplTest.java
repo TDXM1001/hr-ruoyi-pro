@@ -82,6 +82,9 @@ class SimpleApprovalEngineImplTest {
         assertEquals(1, tasks.size());
         assertEquals("REQUISITION", tasks.get(0).getBusinessType());
         assertEquals("IN_PROGRESS", tasks.get(0).getStatus());
+        assertEquals("REQ-20260315-001", tasks.get(0).getBizNo());
+        assertEquals("REQUISITION", tasks.get(0).getBizType());
+        assertEquals("IN_PROGRESS", tasks.get(0).getWfStatus());
     }
 
     @Test
@@ -100,6 +103,9 @@ class SimpleApprovalEngineImplTest {
         assertEquals(1, tasks.size());
         assertEquals("SCRAP", tasks.get(0).getBusinessType());
         assertEquals("COMPLETED", tasks.get(0).getStatus());
+        assertEquals("DSP-20260315-001", tasks.get(0).getBizNo());
+        assertEquals("SCRAP", tasks.get(0).getBizType());
+        assertEquals("COMPLETED", tasks.get(0).getWfStatus());
     }
 
     @Test

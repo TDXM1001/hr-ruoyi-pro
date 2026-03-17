@@ -26,6 +26,15 @@ public class WorkflowTaskVo extends BaseEntity {
     /** 工作流状态，返回前端时会统一转成字典可识别的值。 */
     private String status;
 
+    /** 统一业务单号别名。 */
+    private String bizNo;
+
+    /** 统一业务类型别名。 */
+    private String bizType;
+
+    /** 统一流程状态别名。 */
+    private String wfStatus;
+
     /** 最近一次处理动作，便于后续已办页扩展展示。 */
     private String action;
 
@@ -76,6 +85,30 @@ public class WorkflowTaskVo extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getBizNo() {
+        return bizNo;
+    }
+
+    public void setBizNo(String bizNo) {
+        this.bizNo = bizNo;
+    }
+
+    public String getBizType() {
+        return bizType;
+    }
+
+    public void setBizType(String bizType) {
+        this.bizType = bizType;
+    }
+
+    public String getWfStatus() {
+        return wfStatus;
+    }
+
+    public void setWfStatus(String wfStatus) {
+        this.wfStatus = wfStatus;
     }
 
     public String getAction() {

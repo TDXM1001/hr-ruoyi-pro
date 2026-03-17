@@ -1,7 +1,7 @@
 <template>
   <div class="workflow-todo-page art-full-height flex flex-col p-3 overflow-hidden">
     <ArtSearchBar
-      :key="business_type.length"
+      :key="business_type.length + wf_status.length"
       v-model="formFilters"
       :items="formItems"
       :showExpand="false"
@@ -29,14 +29,13 @@
       />
     </ElCard>
 
-    <!-- 审批弹窗 -->
-    <ElDialog v-model="dialogVisible" title="任务审批" width="500px" draggable destroy-on-close>
+    <ElDialog v-model="dialogVisible" title="审批任务" width="500px" draggable destroy-on-close>
       <ElForm :model="formData" :rules="rules" ref="formRef" label-width="100px">
-        <ElFormItem label="业务编号" prop="businessId">
-          <ElInput v-model="currentTask.businessId" disabled />
+        <ElFormItem label="业务单号">
+          <ElInput :model-value="resolveBizNo(currentTask)" disabled />
         </ElFormItem>
-        <ElFormItem label="业务类型" prop="businessType">
-          <DictTag :options="workflowBusinessTypeOptions" :value="currentTask.businessType" />
+        <ElFormItem label="业务类型">
+          <DictTag :options="workflowBusinessTypeOptions" :value="resolveBizType(currentTask)" />
         </ElFormItem>
         <ElFormItem label="审批人">
           <ElInput :model-value="formatApproverName(currentTask)" disabled />
@@ -54,12 +53,12 @@
       <template #footer>
         <span class="dialog-footer">
           <ElButton @click="dialogVisible = false">取消</ElButton>
-          <ElButton type="danger" plain @click="submitApproval('reject')" :loading="submitting"
-            >驳回</ElButton
-          >
-          <ElButton type="primary" @click="submitApproval('approve')" :loading="submitting"
-            >同意</ElButton
-          >
+          <ElButton type="danger" plain @click="submitApproval('reject')" :loading="submitting">
+            驳回
+          </ElButton>
+          <ElButton type="primary" @click="submitApproval('approve')" :loading="submitting">
+            通过
+          </ElButton>
         </span>
       </template>
     </ElDialog>
@@ -67,19 +66,19 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted, h } from 'vue'
-  import { ElMessage, ElButton } from 'element-plus'
+  import { computed, h, onMounted, reactive, ref } from 'vue'
+  import { ElButton, ElMessage } from 'element-plus'
   import type { FormInstance, FormRules } from 'element-plus'
   import {
-    listTodo,
     approveTask,
+    listTodo,
     mergeWorkflowBusinessTypeOptions,
     type ApproveReq,
     type WorkflowTaskItem
   } from '@/api/workflow/task'
+  import DictTag from '@/components/DictTag/index.vue'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
-  import DictTag from '@/components/DictTag/index.vue'
 
   defineOptions({ name: 'WorkflowTodo' })
 
@@ -88,34 +87,52 @@
     mergeWorkflowBusinessTypeOptions(business_type.value as Array<{ label: string; value: string }>)
   )
 
-  // 查询参数
-  const formFilters = reactive({
-    businessId: '',
-    businessType: undefined
+  const tableRef = ref()
+
+  // 统一使用别名字段发起查询，历史字段由接口兼容。
+  const formFilters = reactive<{
+    bizNo: string
+    bizType?: string
+    wfStatus?: string
+  }>({
+    bizNo: '',
+    bizType: undefined,
+    wfStatus: undefined
   })
 
   const formItems = computed(() => [
     {
-      label: '业务编号',
-      key: 'businessId',
+      label: '业务单号',
+      key: 'bizNo',
       type: 'input',
-      props: { placeholder: '请输入业务编号', clearable: true }
+      props: { placeholder: '请输入业务单号', clearable: true }
     },
     {
       label: '业务类型',
-      key: 'businessType',
+      key: 'bizType',
       type: 'select',
       props: {
-        placeholder: '业务类型',
+        placeholder: '请选择业务类型',
         clearable: true,
         options: workflowBusinessTypeOptions.value
+      }
+    },
+    {
+      label: '流程状态',
+      key: 'wfStatus',
+      type: 'select',
+      props: {
+        placeholder: '请选择流程状态',
+        clearable: true,
+        options: wf_status.value
       }
     }
   ])
 
-  /**
-   * 审批人优先展示姓名，姓名缺失时回退到 ID，避免表格出现空白列。
-   */
+  const resolveBizNo = (task?: Partial<WorkflowTaskItem>) => task?.bizNo || task?.businessId || '--'
+  const resolveBizType = (task?: Partial<WorkflowTaskItem>) => task?.bizType || task?.businessType
+  const resolveWfStatus = (task?: Partial<WorkflowTaskItem>) => task?.wfStatus || task?.status
+
   const formatApproverName = (task?: Partial<WorkflowTaskItem>) => {
     if (task?.approverName) {
       return task.approverName
@@ -123,10 +140,9 @@
     if (task?.approverId != null) {
       return `用户#${task.approverId}`
     }
-    return '未分配'
+    return '--'
   }
 
-  // 表格逻辑
   const {
     columns,
     columnChecks,
@@ -144,14 +160,19 @@
       apiFn: listTodo,
       columnsFactory: () => [
         { type: 'index', label: '序号', width: 60, align: 'center' },
-        { prop: 'businessId', label: '业务单据编号', minWidth: 150 },
         {
-          prop: 'businessType',
+          prop: 'bizNo',
+          label: '业务单号',
+          minWidth: 150,
+          formatter: (row: WorkflowTaskItem) => resolveBizNo(row)
+        },
+        {
+          prop: 'bizType',
           label: '业务类型',
-          width: 140,
+          width: 160,
           align: 'center',
-          formatter: (row: any) =>
-            h(DictTag, { options: workflowBusinessTypeOptions.value, value: row.businessType })
+          formatter: (row: WorkflowTaskItem) =>
+            h(DictTag, { options: workflowBusinessTypeOptions.value, value: resolveBizType(row) })
         },
         {
           prop: 'approverName',
@@ -160,22 +181,23 @@
           align: 'center',
           formatter: (row: WorkflowTaskItem) => formatApproverName(row)
         },
-        { prop: 'currentNode', label: '当前节点', width: 120, align: 'center' },
+        { prop: 'currentNode', label: '当前节点', width: 140, align: 'center' },
         {
-          prop: 'status',
-          label: '状态',
-          width: 100,
+          prop: 'wfStatus',
+          label: '流程状态',
+          width: 110,
           align: 'center',
-          formatter: (row: any) => h(DictTag, { options: wf_status.value, value: row.status })
+          formatter: (row: WorkflowTaskItem) =>
+            h(DictTag, { options: wf_status.value, value: resolveWfStatus(row) })
         },
-        { prop: 'createTime', label: '到达时间', width: 170, align: 'center' },
+        { prop: 'createTime', label: '创建时间', width: 170, align: 'center' },
         {
           prop: 'operation',
           label: '操作',
           width: 120,
           align: 'right',
-          formatter: (row: any) => {
-            return h('div', { class: 'flex justify-end' }, [
+          formatter: (row: WorkflowTaskItem) =>
+            h('div', { class: 'flex justify-end' }, [
               h(
                 ElButton,
                 {
@@ -183,17 +205,20 @@
                   link: true,
                   onClick: () => handleProcess(row)
                 },
-                () => '处理'
+                () => '审批'
               )
             ])
-          }
         }
       ]
     }
   })
 
   const handleReset = () => {
-    Object.assign(formFilters, { businessId: '', businessType: undefined })
+    Object.assign(formFilters, {
+      bizNo: '',
+      bizType: undefined,
+      wfStatus: undefined
+    })
     resetSearchParams()
   }
 
@@ -202,7 +227,6 @@
     getData()
   }
 
-  // 审批流程处理
   const dialogVisible = ref(false)
   const formRef = ref<FormInstance>()
   const submitting = ref(false)
@@ -212,12 +236,11 @@
     comment: ''
   })
 
-  // 审批意见规则设定
   const rules: FormRules = {
-    comment: [{ max: 200, message: '审批意见不能超过200个字符', trigger: 'blur' }]
+    comment: [{ max: 200, message: '审批意见不能超过 200 个字符', trigger: 'blur' }]
   }
 
-  const handleProcess = (row: any) => {
+  const handleProcess = (row: WorkflowTaskItem) => {
     currentTask.value = row
     formData.comment = ''
     dialogVisible.value = true
@@ -226,7 +249,7 @@
   const submitApproval = async (action: 'approve' | 'reject') => {
     try {
       if (action === 'reject' && !formData.comment.trim()) {
-        ElMessage.warning('驳回时请填写审批意见')
+        ElMessage.warning('驳回时请输入审批意见')
         return
       }
 
@@ -235,20 +258,19 @@
       submitting.value = true
       const req: ApproveReq = {
         instanceId: currentTask.value.instanceId,
-        action: action,
+        action,
         comment: formData.comment || undefined
       }
 
       await approveTask(req)
-      const actionText = action === 'approve' ? '同意' : '驳回'
-      ElMessage.success(`已${actionText}该任务`)
+      ElMessage.success(action === 'approve' ? '审批通过成功' : '审批驳回成功')
       dialogVisible.value = false
       refreshData()
     } catch (error) {
       if (error && (error as any).message) {
         ElMessage.error((error as any).message)
       } else if (error !== 'cancel') {
-        console.error('审批失败:', error)
+        console.error('审批任务失败:', error)
       }
     } finally {
       submitting.value = false

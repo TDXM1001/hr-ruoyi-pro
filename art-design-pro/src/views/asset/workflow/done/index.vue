@@ -1,7 +1,7 @@
 <template>
   <div class="workflow-done-page art-full-height flex flex-col p-3 overflow-hidden">
     <ArtSearchBar
-      :key="business_type.length"
+      :key="business_type.length + wf_status.length"
       v-model="formFilters"
       :items="formItems"
       :showExpand="false"
@@ -32,15 +32,11 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted, h } from 'vue'
-  import {
-    listDone,
-    mergeWorkflowBusinessTypeOptions,
-    type WorkflowTaskItem
-  } from '@/api/workflow/task'
+  import { computed, h, onMounted, reactive, ref } from 'vue'
+  import { listDone, mergeWorkflowBusinessTypeOptions, type WorkflowTaskItem } from '@/api/workflow/task'
+  import DictTag from '@/components/DictTag/index.vue'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
-  import DictTag from '@/components/DictTag/index.vue'
 
   defineOptions({ name: 'WorkflowDone' })
 
@@ -49,34 +45,51 @@
     mergeWorkflowBusinessTypeOptions(business_type.value as Array<{ label: string; value: string }>)
   )
 
-  // 查询参数
-  const formFilters = reactive({
-    businessId: '',
-    businessType: undefined
+  const tableRef = ref()
+
+  const formFilters = reactive<{
+    bizNo: string
+    bizType?: string
+    wfStatus?: string
+  }>({
+    bizNo: '',
+    bizType: undefined,
+    wfStatus: undefined
   })
 
   const formItems = computed(() => [
     {
-      label: '业务编号',
-      key: 'businessId',
+      label: '业务单号',
+      key: 'bizNo',
       type: 'input',
-      props: { placeholder: '请输入业务编号', clearable: true }
+      props: { placeholder: '请输入业务单号', clearable: true }
     },
     {
       label: '业务类型',
-      key: 'businessType',
+      key: 'bizType',
       type: 'select',
       props: {
-        placeholder: '业务类型',
+        placeholder: '请选择业务类型',
         clearable: true,
         options: workflowBusinessTypeOptions.value
+      }
+    },
+    {
+      label: '流程状态',
+      key: 'wfStatus',
+      type: 'select',
+      props: {
+        placeholder: '请选择流程状态',
+        clearable: true,
+        options: wf_status.value
       }
     }
   ])
 
-  /**
-   * 已办页同样优先展示审批人名称，避免只看到裸 ID。
-   */
+  const resolveBizNo = (task?: Partial<WorkflowTaskItem>) => task?.bizNo || task?.businessId || '--'
+  const resolveBizType = (task?: Partial<WorkflowTaskItem>) => task?.bizType || task?.businessType
+  const resolveWfStatus = (task?: Partial<WorkflowTaskItem>) => task?.wfStatus || task?.status
+
   const formatApproverName = (task?: Partial<WorkflowTaskItem>) => {
     if (task?.approverName) {
       return task.approverName
@@ -84,10 +97,9 @@
     if (task?.approverId != null) {
       return `用户#${task.approverId}`
     }
-    return '未分配'
+    return '--'
   }
 
-  // 表格逻辑
   const {
     columns,
     columnChecks,
@@ -105,45 +117,53 @@
       apiFn: listDone,
       columnsFactory: () => [
         { type: 'index', label: '序号', width: 60, align: 'center' },
-        { prop: 'businessId', label: '业务单据编号', minWidth: 150 },
         {
-          prop: 'businessType',
+          prop: 'bizNo',
+          label: '业务单号',
+          minWidth: 150,
+          formatter: (row: WorkflowTaskItem) => resolveBizNo(row)
+        },
+        {
+          prop: 'bizType',
           label: '业务类型',
-          width: 140,
+          width: 160,
           align: 'center',
-          formatter: (row: any) =>
-            h(DictTag, { options: workflowBusinessTypeOptions.value, value: row.businessType })
+          formatter: (row: WorkflowTaskItem) =>
+            h(DictTag, { options: workflowBusinessTypeOptions.value, value: resolveBizType(row) })
         },
         {
           prop: 'approverName',
-          label: '审批人',
+          label: '处理人',
           width: 120,
           align: 'center',
           formatter: (row: WorkflowTaskItem) => formatApproverName(row)
         },
-        { prop: 'currentNode', label: '审批节点', width: 120, align: 'center' },
+        { prop: 'currentNode', label: '当前节点', width: 140, align: 'center' },
         {
-          prop: 'status',
-          label: '状态',
-          width: 100,
+          prop: 'wfStatus',
+          label: '流程状态',
+          width: 110,
           align: 'center',
-          formatter: (row: any) => h(DictTag, { options: wf_status.value, value: row.status })
+          formatter: (row: WorkflowTaskItem) =>
+            h(DictTag, { options: wf_status.value, value: resolveWfStatus(row) })
         },
         {
           prop: 'comment',
           label: '审批意见',
           minWidth: 220,
-          formatter: (row: WorkflowTaskItem) => row.comment || '无'
+          formatter: (row: WorkflowTaskItem) => row.comment || '--'
         },
-        { prop: 'createTime', label: '处理时间', width: 170, align: 'center' },
+        { prop: 'createTime', label: '处理时间', width: 170, align: 'center' }
       ]
     }
   })
 
-  const tableRef = ref()
-
   const handleReset = () => {
-    Object.assign(formFilters, { businessId: '', businessType: undefined })
+    Object.assign(formFilters, {
+      bizNo: '',
+      bizType: undefined,
+      wfStatus: undefined
+    })
     resetSearchParams()
   }
 

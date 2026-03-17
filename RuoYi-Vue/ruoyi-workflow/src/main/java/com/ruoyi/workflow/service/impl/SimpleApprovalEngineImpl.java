@@ -215,6 +215,10 @@ public class SimpleApprovalEngineImpl implements IApprovalEngine {
     private WorkflowTaskVo normalizeTask(WorkflowTaskVo task) {
         task.setBusinessType(normalizeBusinessType(task.getBusinessType()));
         task.setStatus(normalizeStatus(task.getStatus()));
+        // 同步补齐统一别名字段，方便前端和控制器按新口径读取。
+        task.setBizNo(task.getBusinessId());
+        task.setBizType(task.getBusinessType());
+        task.setWfStatus(task.getStatus());
         return task;
     }
 

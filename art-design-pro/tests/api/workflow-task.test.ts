@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 const { http } = vi.hoisted(() => ({
@@ -22,11 +24,13 @@ import {
 } from '../../src/api/workflow/task'
 
 describe('Workflow Task API', () => {
+  const workflowTaskSource = readFileSync(resolve(process.cwd(), 'src/api/workflow/task.ts'), 'utf8')
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('accepts businessId in task query type', () => {
+  it('accepts unified workflow query aliases', () => {
     expectTypeOf<Parameters<typeof listTodo>[0]>().toEqualTypeOf<
       | {
           pageNum?: number
@@ -34,6 +38,9 @@ describe('Workflow Task API', () => {
           businessId?: string
           businessType?: string
           status?: string
+          bizNo?: string
+          bizType?: string
+          wfStatus?: string
         }
       | undefined
     >()
@@ -58,11 +65,11 @@ describe('Workflow Task API', () => {
   })
 
   it('posts approval request payload', async () => {
-    await approveTask({ instanceId: 1001, action: 'approve', comment: '同意处理' })
+    await approveTask({ instanceId: 1001, action: 'approve', comment: '审批通过' })
 
     expect(http.post).toHaveBeenCalledWith({
       url: '/workflow/task/approve',
-      data: { instanceId: 1001, action: 'approve', comment: '同意处理' }
+      data: { instanceId: 1001, action: 'approve', comment: '审批通过' }
     })
   })
 
@@ -75,5 +82,11 @@ describe('Workflow Task API', () => {
         { label: '不动产权属变更', value: 'REAL_ESTATE_OWNERSHIP_CHANGE' }
       ])
     )
+  })
+
+  it('locks workflow task alias contract for bizNo bizType and wfStatus', () => {
+    expect(workflowTaskSource).toContain('bizNo?: string')
+    expect(workflowTaskSource).toContain('bizType?: string')
+    expect(workflowTaskSource).toContain('wfStatus?: string')
   })
 })
