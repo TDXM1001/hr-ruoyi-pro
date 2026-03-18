@@ -18,7 +18,9 @@
           :key="item.value + ''"
           :index="index"
           :type="
-            ['success', 'info', 'warning', 'danger'].includes(item.listClass) ? item.listClass : ''
+            ['primary', 'success', 'info', 'warning', 'danger'].includes(item.listClass)
+              ? item.listClass
+              : undefined
           "
           :class="item.cssClass"
         >
