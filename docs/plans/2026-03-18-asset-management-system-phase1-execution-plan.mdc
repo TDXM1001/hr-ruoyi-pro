@@ -1,0 +1,820 @@
+# Fixed Asset Phase 1 Closed-Loop Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** 在当前仓库中交付固定资产第一期最小闭环，支持资产管理员完成建账、领用/调拨/退还、盘点、处置、导出与基础统计。
+
+**Architecture:** 本期只做固定资产，不同时推进不动产。后端新增独立 `ruoyi-asset` 模块承载资产域，前端在 `art-design-pro` 中新增资产模块页面；业务设计上采用“统一台账 + 交接记录 + 盘点任务 + 处置单”的轻量模型，优先跑通闭环，再做横向扩展。
+
+**Tech Stack:** Spring Boot 3、MyBatis XML、MySQL、RuoYi 权限/字典/Excel 导出、Vue 3、TypeScript、Element Plus、Vitest
+
+---
+
+## 产品视角设计
+
+### 1. 核心角色
+
+- 资产管理员：建账、维护归属、发起交接、组织盘点、推动处置，是第一期主用户。
+- 部门领用人：确认领用、调拨、退还结果，配合盘点，是第二主用户。
+- 财务：查看原值、启用日期、状态、处置结果并导出，是结果使用者。
+- 管理层：查看总量、在用、闲置、待处置、待盘点，是看板消费者。
+
+### 2. 第一期开通的最小用户旅程
+
+第一期必须能完整跑通下面这条旅程：
+
+`新增固定资产 -> 形成正式台账 -> 领用给部门/责任人 -> 调拨或退还 -> 发起盘点 -> 盘点正常回写或进入待处置 -> 处置确认 -> 导出台账/查看统计`
+
+### 3. 第一期开通范围
+
+- 固定资产分类
+- 固定资产台账
+- 领用、调拨、退还
+- 盘点任务与结果回写
+- 处置登记与确认
+- 基础统计卡片
+- 财务导出
+
+### 4. 第一期开通范围外
+
+- 不动产主线
+- 合同/租赁
+- 审批流
+- 移动端盘点
+- 附件、证照、图片档案
+- 外部系统集成
+
+### 5. 产品验收标准
+
+- 资产管理员能独立完成一条资产从建账到处置的完整闭环。
+- 领用、调拨、退还不能直接改字段，必须形成交接记录。
+- 盘点结果必须产生后续动作，不能只停留在备注。
+- 处置完成后资产不能恢复为正常在用。
+- 财务能导出台账口径，管理层能看到基础统计。
+
+## 领域与数据设计
+
+### 1. 最小对象模型
+
+- `ast_asset_category`：资产分类树
+- `ast_asset_ledger`：资产台账主档
+- `ast_asset_change_log`：所有关键动作留痕
+- `ast_asset_handover`：统一承载领用/调拨/退还
+- `ast_asset_inventory_task` / `ast_asset_inventory_item`：盘点任务
+- `ast_asset_disposal`：处置单
+
+### 2. 第一期状态子集
+
+- `DRAFT`
+- `IN_LEDGER`
+- `IN_USE`
+- `IDLE`
+- `INVENTORYING`
+- `PENDING_DISPOSAL`
+- `DISPOSED`
+
+### 3. 关键产品规则
+
+- 同一资产编码不可重复。
+- 未正式建账的资产不能进入交接流程。
+- `DISPOSED` 状态不可回退到 `IN_USE`。
+- 盘点异常必须进入修正或待处置。
+- 处置确认后只允许查询和导出，不允许再次领用。
+
+## 执行前约束
+
+- 执行本计划前先使用 `@using-git-worktrees` 建立隔离工作区。
+- 实施中按 `@executing-plans` 分批推进，不要跳任务顺序。
+- 收尾前必须执行 `@verification-before-completion`。
+
+### Task 1: 固化产品口径并搭建 `ruoyi-asset` 模块骨架
+
+**Files:**
+- Modify: `RuoYi-Vue/pom.xml`
+- Modify: `RuoYi-Vue/ruoyi-admin/pom.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/pom.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/AssetModuleMarker.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/AssetModuleSmokeTest.java`
+
+**Step 1: 更新聚合工程与 admin 依赖**
+
+```xml
+<module>ruoyi-asset</module>
+```
+
+```xml
+<dependency>
+  <groupId>com.ruoyi</groupId>
+  <artifactId>ruoyi-asset</artifactId>
+  <version>${ruoyi.version}</version>
+</dependency>
+```
+
+**Step 2: 创建 `ruoyi-asset/pom.xml` 并补齐测试依赖**
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.ruoyi</groupId>
+    <artifactId>ruoyi-common</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+  </dependency>
+</dependencies>
+```
+
+**Step 3: 创建模块标记类与烟雾测试**
+
+```java
+public final class AssetModuleMarker {
+    private AssetModuleMarker() {
+    }
+}
+```
+
+```java
+class AssetModuleSmokeTest {
+    @Test
+    void shouldLoadAssetModuleMarker() {
+        assertDoesNotThrow(() -> Class.forName("com.ruoyi.asset.AssetModuleMarker"));
+    }
+}
+```
+
+**Step 4: 运行测试验证骨架**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetModuleSmokeTest`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add RuoYi-Vue/pom.xml RuoYi-Vue/ruoyi-admin/pom.xml RuoYi-Vue/ruoyi-asset
+git commit -m "feat: bootstrap asset module"
+```
+
+### Task 2: 落基础表结构与状态机
+
+**Files:**
+- Create: `RuoYi-Vue/sql/asset/00-asset-schema.sql`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/enums/AssetStatus.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/enums/AssetBizType.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/AssetStatusMachine.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/AssetStatusMachineTest.java`
+
+**Step 1: 先写失败测试，固定状态流转**
+
+```java
+class AssetStatusMachineTest {
+    private final AssetStatusMachine machine = new AssetStatusMachine();
+
+    @Test
+    void shouldAllowLedgerToUseFlow() {
+        assertTrue(machine.canTransit(AssetStatus.IN_LEDGER, AssetStatus.IN_USE));
+        assertTrue(machine.canTransit(AssetStatus.IN_USE, AssetStatus.IDLE));
+    }
+
+    @Test
+    void shouldRejectDisposedBackToUse() {
+        assertFalse(machine.canTransit(AssetStatus.DISPOSED, AssetStatus.IN_USE));
+    }
+}
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetStatusMachineTest`
+
+Expected: FAIL
+
+**Step 3: 实现枚举、状态机与基础 SQL**
+
+```java
+public enum AssetStatus {
+    DRAFT, IN_LEDGER, IN_USE, IDLE, INVENTORYING, PENDING_DISPOSAL, DISPOSED
+}
+```
+
+```java
+public boolean canTransit(AssetStatus from, AssetStatus to) {
+    return transitions.getOrDefault(from, EnumSet.noneOf(AssetStatus.class)).contains(to);
+}
+```
+
+```sql
+CREATE TABLE ast_asset_ledger (...);
+CREATE TABLE ast_asset_change_log (...);
+CREATE TABLE ast_asset_handover (...);
+CREATE TABLE ast_asset_inventory_task (...);
+CREATE TABLE ast_asset_inventory_item (...);
+CREATE TABLE ast_asset_disposal (...);
+```
+
+**Step 4: 重新运行测试**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetStatusMachineTest`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add RuoYi-Vue/sql/asset/00-asset-schema.sql RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/enums RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/AssetStatusMachine.java RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/AssetStatusMachineTest.java
+git commit -m "feat: add asset schema and status machine"
+```
+
+### Task 3: 实现资产台账后端
+
+**Files:**
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetLedger.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetChangeLog.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetLedgerBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetLedgerVo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetLedgerMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetChangeLogMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetLedgerService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetLedgerServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetLedgerMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetChangeLogMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetLedgerController.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetLedgerServiceImplTest.java`
+
+**Step 1: 先写失败测试，锁定建账规则**
+
+```java
+@Test
+void shouldRejectDuplicateAssetCode() {
+    when(assetLedgerMapper.selectByAssetCode("FA-0001")).thenReturn(new AssetLedger());
+    assertThrows(ServiceException.class, () -> service.createAsset(buildBo("FA-0001"), "admin"));
+}
+
+@Test
+void shouldWriteChangeLogAfterCreate() {
+    when(assetLedgerMapper.selectByAssetCode("FA-0002")).thenReturn(null);
+    when(assetLedgerMapper.insertAsset(any())).thenReturn(1);
+    service.createAsset(buildBo("FA-0002"), "admin");
+    verify(assetChangeLogMapper).insertAssetChangeLog(any());
+}
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetLedgerServiceImplTest`
+
+Expected: FAIL
+
+**Step 3: 实现台账实体、Mapper、Service、Controller**
+
+```java
+public Long createAsset(AssetLedgerBo bo, String operator) {
+    if (assetLedgerMapper.selectByAssetCode(bo.getAssetCode()) != null) {
+        throw new ServiceException("资产编码已存在");
+    }
+    AssetLedger entity = convert(bo);
+    entity.setStatus(AssetStatus.IN_LEDGER.name());
+    entity.setCreateBy(operator);
+    assetLedgerMapper.insertAsset(entity);
+    assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofCreate(entity.getAssetId(), operator));
+    return entity.getAssetId();
+}
+```
+
+```java
+@RequestMapping("/asset/ledger")
+public class AssetLedgerController extends BaseController {
+    @GetMapping("/list")
+    public TableDataInfo list(AssetLedgerBo bo) { ... }
+    @GetMapping("/{assetId}")
+    public AjaxResult getInfo(@PathVariable Long assetId) { ... }
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody AssetLedgerBo bo) { ... }
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody AssetLedgerBo bo) { ... }
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, AssetLedgerBo bo) { ... }
+}
+```
+
+**Step 4: 运行测试与编译**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetLedgerServiceImplTest`
+
+Expected: PASS
+
+Run: `mvn -pl ruoyi-admin -am -DskipTests compile`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetLedgerController.java
+git commit -m "feat: add asset ledger backend"
+```
+
+### Task 4: 实现资产台账前端
+
+**Files:**
+- Create: `art-design-pro/src/api/asset/ledger.ts`
+- Create: `art-design-pro/src/views/asset/ledger/index.vue`
+- Create: `art-design-pro/src/views/asset/ledger/modules/ledger-edit-dialog.vue`
+- Create: `art-design-pro/src/router/modules/asset.ts`
+- Modify: `art-design-pro/src/router/modules/index.ts`
+- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Test: `art-design-pro/tests/api/asset-ledger.test.ts`
+
+**Step 1: 先写失败测试**
+
+```ts
+describe('Asset Ledger API', () => {
+  it('should expose ledger methods', () => {
+    expect(typeof listAssetLedger).toBe('function')
+    expect(typeof addAssetLedger).toBe('function')
+    expect(typeof updateAssetLedger).toBe('function')
+  })
+})
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `pnpm vitest run tests/api/asset-ledger.test.ts`
+
+Expected: FAIL
+
+**Step 3: 实现 API、页面、路由、文案**
+
+```ts
+export function listAssetLedger(params?: any) {
+  return http.get({ url: '/asset/ledger/list', params })
+}
+```
+
+```vue
+<ArtSearchBar v-model="filters" :items="formItems" @search="handleSearch" @reset="handleReset" />
+<ArtTable :data="data" :columns="columns" :pagination="pagination" />
+<LedgerEditDialog v-model="dialogVisible" :data="currentData" @success="refreshData" />
+```
+
+```ts
+export const assetRoutes: AppRouteRecord = {
+  path: '/asset',
+  name: 'Asset',
+  component: '/index/index',
+  meta: { title: 'menus.asset.title', icon: 'ri:archive-2-line', roles: ['R_SUPER', 'R_ADMIN'] },
+  children: [
+    { path: 'ledger', name: 'AssetLedger', component: '/asset/ledger', meta: { title: 'menus.asset.ledger', keepAlive: true } }
+  ]
+}
+```
+
+**Step 4: 运行测试与构建**
+
+Run: `pnpm vitest run tests/api/asset-ledger.test.ts`
+
+Expected: PASS
+
+Run: `pnpm build`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add art-design-pro/src/api/asset/ledger.ts art-design-pro/src/views/asset/ledger art-design-pro/src/router/modules/asset.ts art-design-pro/src/router/modules/index.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-ledger.test.ts
+git commit -m "feat: add asset ledger frontend"
+```
+
+### Task 5: 实现领用/调拨/退还后端闭环
+
+**Files:**
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandover.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverVo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetHandoverController.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImplTest.java`
+
+**Step 1: 先写失败测试，固定交接规则**
+
+```java
+@Test
+void shouldRejectAssignWhenAssetDisposed() {
+    AssetLedger ledger = new AssetLedger();
+    ledger.setStatus("DISPOSED");
+    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
+    assertThrows(ServiceException.class, () -> service.createHandover(buildAssignBo(), "admin"));
+}
+
+@Test
+void shouldWriteChangeLogAfterTransfer() {
+    AssetLedger ledger = new AssetLedger();
+    ledger.setStatus("IN_USE");
+    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
+    when(assetHandoverMapper.insertAssetHandover(any())).thenReturn(1);
+    service.createHandover(buildTransferBo(), "admin");
+    verify(assetChangeLogMapper).insertAssetChangeLog(any());
+}
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverServiceImplTest`
+
+Expected: FAIL
+
+**Step 3: 实现统一交接模型**
+
+```java
+public Long createHandover(AssetHandoverBo bo, String operator) {
+    AssetLedger asset = assetLedgerMapper.selectById(bo.getAssetId());
+    validateBizRule(asset, bo.getBizType());
+    assetHandoverMapper.insertAssetHandover(convert(bo, operator));
+    assetLedgerMapper.updateUsageInfo(bo.getAssetId(), bo.getToDeptId(), bo.getToUserId(), nextStatus(bo.getBizType()));
+    assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofHandover(bo.getAssetId(), bo.getBizType(), operator));
+    return bo.getAssetId();
+}
+```
+
+**Step 4: 暴露交接接口**
+
+```java
+@RequestMapping("/asset/handover")
+public class AssetHandoverController extends BaseController {
+    @GetMapping("/list")
+    public TableDataInfo list(AssetHandoverBo bo) { ... }
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody AssetHandoverBo bo) { ... }
+}
+```
+
+**Step 5: 运行测试**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverServiceImplTest`
+
+Expected: PASS
+
+**Step 6: Commit**
+
+```bash
+git add RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandover.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverBo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverVo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverMapper.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverService.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImpl.java RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverMapper.xml RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetHandoverController.java RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImplTest.java
+git commit -m "feat: add asset handover backend"
+```
+
+### Task 6: 实现领用/调拨/退还前端页面
+
+**Files:**
+- Create: `art-design-pro/src/api/asset/handover.ts`
+- Create: `art-design-pro/src/views/asset/use/index.vue`
+- Create: `art-design-pro/src/views/asset/use/modules/handover-dialog.vue`
+- Modify: `art-design-pro/src/router/modules/asset.ts`
+- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Test: `art-design-pro/tests/api/asset-handover.test.ts`
+
+**Step 1: 先写失败测试**
+
+```ts
+describe('Asset Handover API', () => {
+  it('should expose handover methods', () => {
+    expect(typeof listAssetHandover).toBe('function')
+    expect(typeof addAssetHandover).toBe('function')
+  })
+})
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `pnpm vitest run tests/api/asset-handover.test.ts`
+
+Expected: FAIL
+
+**Step 3: 实现交接 API 与页面**
+
+```ts
+export function listAssetHandover(params?: any) {
+  return http.get({ url: '/asset/handover/list', params })
+}
+
+export function addAssetHandover(data: any) {
+  return http.post({ url: '/asset/handover', data })
+}
+```
+
+```vue
+<ArtSearchBar v-model="filters" :items="searchItems" @search="handleSearch" @reset="handleReset" />
+<ArtTable :data="data" :columns="columns" :pagination="pagination" />
+<HandoverDialog v-model="dialogVisible" :biz-type="bizType" @success="refreshData" />
+```
+
+**Step 4: 注册“资产使用”路由**
+
+```ts
+{ path: 'use', name: 'AssetUse', component: '/asset/use', meta: { title: 'menus.asset.use', keepAlive: true } }
+```
+
+**Step 5: 运行测试与构建**
+
+Run: `pnpm vitest run tests/api/asset-handover.test.ts`
+
+Expected: PASS
+
+Run: `pnpm build`
+
+Expected: PASS
+
+**Step 6: Commit**
+
+```bash
+git add art-design-pro/src/api/asset/handover.ts art-design-pro/src/views/asset/use art-design-pro/src/router/modules/asset.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-handover.test.ts
+git commit -m "feat: add asset handover frontend"
+```
+
+### Task 7: 实现盘点、处置、统计后端闭环
+
+**Files:**
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetInventoryTask.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetInventoryItem.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetDisposal.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetInventoryTaskBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetInventoryResultBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetDisposalBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetInventoryMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetDisposalMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetInventoryService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetDisposalService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetStatsService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetInventoryServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetDisposalServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetStatsServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetInventoryMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetDisposalMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetInventoryController.java`
+- Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetDisposalController.java`
+- Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetStatsController.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetInventoryServiceImplTest.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetDisposalServiceImplTest.java`
+
+**Step 1: 先写失败测试**
+
+```java
+@Test
+void shouldMoveAssetToPendingDisposalWhenInventoryResultDamaged() {
+    AssetLedger ledger = new AssetLedger();
+    ledger.setStatus("INVENTORYING");
+    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
+    inventoryService.submitResult(buildDamagedResult(), "admin");
+    verify(assetLedgerMapper).updateStatus(1L, "PENDING_DISPOSAL");
+}
+
+@Test
+void shouldRejectDisposalWhenAssetNotPendingDisposal() {
+    AssetLedger ledger = new AssetLedger();
+    ledger.setStatus("IN_USE");
+    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
+    assertThrows(ServiceException.class, () -> disposalService.confirmDisposal(buildBo(), "finance"));
+}
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetInventoryServiceImplTest,AssetDisposalServiceImplTest`
+
+Expected: FAIL
+
+**Step 3: 实现盘点结果回写、处置确认、统计汇总**
+
+```java
+public void submitResult(AssetInventoryResultBo bo, String operator) {
+    AssetLedger asset = assetLedgerMapper.selectById(bo.getAssetId());
+    if ("DAMAGED".equals(bo.getResultType()) || "MISSING".equals(bo.getResultType())) {
+        assetLedgerMapper.updateStatus(bo.getAssetId(), AssetStatus.PENDING_DISPOSAL.name());
+    } else {
+        assetLedgerMapper.updateStatus(bo.getAssetId(), bo.getConfirmedUse() ? AssetStatus.IN_USE.name() : AssetStatus.IDLE.name());
+    }
+    assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofInventory(bo.getAssetId(), operator));
+}
+```
+
+```java
+public void confirmDisposal(AssetDisposalBo bo, String operator) {
+    AssetLedger asset = assetLedgerMapper.selectById(bo.getAssetId());
+    if (!AssetStatus.PENDING_DISPOSAL.name().equals(asset.getStatus())) {
+        throw new ServiceException("只有待处置资产才能确认处置");
+    }
+    assetDisposalMapper.insertAssetDisposal(convert(bo, operator));
+    assetLedgerMapper.updateStatus(bo.getAssetId(), AssetStatus.DISPOSED.name());
+}
+```
+
+```java
+@RequestMapping("/asset/stats")
+public class AssetStatsController extends BaseController {
+    @GetMapping("/overview")
+    public AjaxResult overview() { ... }
+}
+```
+
+**Step 4: 运行测试与编译**
+
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetInventoryServiceImplTest,AssetDisposalServiceImplTest`
+
+Expected: PASS
+
+Run: `mvn -pl ruoyi-admin -am -DskipTests compile`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset
+git commit -m "feat: add asset inventory disposal and stats backend"
+```
+
+### Task 8: 实现盘点、处置页面与台账统计卡片
+
+**Files:**
+- Create: `art-design-pro/src/api/asset/inventory.ts`
+- Create: `art-design-pro/src/api/asset/disposal.ts`
+- Create: `art-design-pro/src/api/asset/stats.ts`
+- Create: `art-design-pro/src/views/asset/inventory/index.vue`
+- Create: `art-design-pro/src/views/asset/inventory/modules/inventory-result-dialog.vue`
+- Create: `art-design-pro/src/views/asset/disposal/index.vue`
+- Modify: `art-design-pro/src/views/asset/ledger/index.vue`
+- Modify: `art-design-pro/src/router/modules/asset.ts`
+- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Test: `art-design-pro/tests/api/asset-inventory.test.ts`
+- Test: `art-design-pro/tests/api/asset-disposal.test.ts`
+
+**Step 1: 先写失败测试**
+
+```ts
+describe('Asset Inventory API', () => {
+  it('should expose inventory methods', () => {
+    expect(typeof listInventoryTask).toBe('function')
+    expect(typeof submitInventoryResult).toBe('function')
+  })
+})
+
+describe('Asset Disposal API', () => {
+  it('should expose disposal methods', () => {
+    expect(typeof listAssetDisposal).toBe('function')
+    expect(typeof addAssetDisposal).toBe('function')
+  })
+})
+```
+
+**Step 2: 运行测试确认失败**
+
+Run: `pnpm vitest run tests/api/asset-inventory.test.ts tests/api/asset-disposal.test.ts`
+
+Expected: FAIL
+
+**Step 3: 实现盘点、处置、统计 API 与页面**
+
+```ts
+export function listInventoryTask(params?: any) {
+  return http.get({ url: '/asset/inventory/task/list', params })
+}
+
+export function addAssetDisposal(data: any) {
+  return http.post({ url: '/asset/disposal', data })
+}
+
+export function getAssetOverviewStats() {
+  return http.get({ url: '/asset/stats/overview' })
+}
+```
+
+```vue
+<div class="grid grid-cols-5 gap-4 mb-4">
+  <StatsCard title="资产总数" :value="overview.totalCount" />
+  <StatsCard title="在用" :value="overview.inUseCount" />
+  <StatsCard title="闲置" :value="overview.idleCount" />
+  <StatsCard title="待处置" :value="overview.pendingDisposalCount" />
+  <StatsCard title="待盘点" :value="overview.overdueInventoryCount" />
+</div>
+```
+
+**Step 4: 注册盘点、处置路由**
+
+```ts
+{ path: 'inventory', name: 'AssetInventory', component: '/asset/inventory', meta: { title: 'menus.asset.inventory', keepAlive: true } },
+{ path: 'disposal', name: 'AssetDisposal', component: '/asset/disposal', meta: { title: 'menus.asset.disposal', keepAlive: true } }
+```
+
+**Step 5: 运行测试与构建**
+
+Run: `pnpm vitest run tests/api/asset-inventory.test.ts tests/api/asset-disposal.test.ts`
+
+Expected: PASS
+
+Run: `pnpm build`
+
+Expected: PASS
+
+**Step 6: Commit**
+
+```bash
+git add art-design-pro/src/api/asset art-design-pro/src/views/asset art-design-pro/src/router/modules/asset.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-inventory.test.ts art-design-pro/tests/api/asset-disposal.test.ts
+git commit -m "feat: add asset inventory disposal and stats frontend"
+```
+
+### Task 9: 初始化菜单/字典/演示数据并完成验收
+
+**Files:**
+- Create: `RuoYi-Vue/sql/asset/01-asset-dict.sql`
+- Create: `RuoYi-Vue/sql/asset/02-asset-menu.sql`
+- Create: `RuoYi-Vue/sql/asset/03-asset-demo-data.sql`
+- Create: `docs/plans/2026-03-18-asset-management-system-phase1-uat-checklist.md`
+
+**Step 1: 初始化字典**
+
+```sql
+INSERT INTO sys_dict_type(dict_name, dict_type, status, create_by, create_time)
+VALUES
+('资产状态', 'asset_status', '0', 'admin', NOW()),
+('交接类型', 'asset_handover_type', '0', 'admin', NOW()),
+('盘点结果', 'asset_inventory_result', '0', 'admin', NOW()),
+('处置类型', 'asset_disposal_type', '0', 'admin', NOW());
+```
+
+**Step 2: 初始化菜单和按钮权限**
+
+```sql
+-- 菜单：资产管理
+-- 子菜单：资产台账、资产使用、资产盘点、资产处置
+-- 按钮：list/query/add/edit/export
+```
+
+**Step 3: 初始化演示数据与 UAT 清单**
+
+```md
+- 能新增固定资产并进入在册
+- 能完成领用、调拨、退还
+- 能发起盘点并登记结果
+- 异常资产可进入待处置
+- 处置确认后进入已处置
+- 台账页可看到统计卡片
+- 财务可导出台账
+```
+
+**Step 4: 运行最终验证**
+
+Run: `mvn -pl ruoyi-admin -am test`
+
+Expected: PASS，至少新增资产模块测试全部通过
+
+Run: `pnpm vitest run tests/api/asset-ledger.test.ts tests/api/asset-handover.test.ts tests/api/asset-inventory.test.ts tests/api/asset-disposal.test.ts`
+
+Expected: PASS
+
+Run: `pnpm build`
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add RuoYi-Vue/sql/asset docs/plans/2026-03-18-asset-management-system-phase1-uat-checklist.md
+git commit -m "chore: add asset seed data and uat checklist"
+```
+
+## 执行顺序
+
+严格按下面顺序执行，不要跨任务并行铺开：
+
+1. Task 1
+2. Task 2
+3. Task 3
+4. Task 4
+5. Task 5
+6. Task 6
+7. Task 7
+8. Task 8
+9. Task 9
+
+## 完成定义
+
+- 后端存在独立 `ruoyi-asset` 模块
+- 前端存在资产台账、资产使用、资产盘点、资产处置四个页面
+- 固定资产主流程能够从建账走到处置终态
+- 所有关键业务动作均留痕
+- 财务导出可用，管理统计可用
+
+## 刻意不做
+
+- 不动产主线
+- 审批流
+- 合同/租赁
+- 移动端
+- 附件档案
+- 外部系统接口
+
+这些内容一律放到下一轮规划，不在本计划执行期间插入。
