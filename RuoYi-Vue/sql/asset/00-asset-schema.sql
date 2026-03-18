@@ -6,6 +6,7 @@
 -- 3. 同时保留权属部门、使用部门、责任人，支撑责任分离。
 -- 4. 当前不建立数据库外键，沿用若依常见风格，由服务层保证数据一致性。
 -- 5. 通过 asset_type 预留未来不动产扩展位，但本期默认只落固定资产。
+-- 6. 对低返工、高收益的补强字段优先采用新增字段方式，不重命名既有字段。
 -- ----------------------------
 
 -- ----------------------------
@@ -38,14 +39,15 @@ create table ast_asset_category (
 drop table if exists ast_asset_ledger;
 create table ast_asset_ledger (
   asset_id               bigint(20)      not null auto_increment    comment '资产ID',
-  asset_code             varchar(64)     default null               comment '资产编码',
+  asset_code             varchar(64)     default null               comment '资产编码（草稿可为空，正式建账后必须唯一）',
   asset_name             varchar(120)    not null                   comment '资产名称',
   asset_type             varchar(32)     not null default 'FIXED'   comment '资产类型（FIXED固定资产 REAL_ESTATE不动产）',
   category_id            bigint(20)      default null               comment '资产分类ID',
   spec_model             varchar(255)    default ''                 comment '规格型号',
   serial_no              varchar(100)    default ''                 comment '序列号/出厂编号',
   asset_status           varchar(32)     not null default 'DRAFT'   comment '资产状态（DRAFT草稿 IN_LEDGER在册 IN_USE使用中 IDLE闲置中 INVENTORYING盘点中 PENDING_DISPOSAL待处置 DISPOSED已处置）',
-  source_type            varchar(32)     not null default 'MANUAL'  comment '来源类型（MANUAL手工新增 IMPORT存量补录）',
+  source_type            varchar(32)     not null default 'MANUAL'  comment '录入来源（MANUAL手工新增 IMPORT存量补录）',
+  acquire_type           varchar(32)     default null               comment '取得方式（PURCHASE购置 ALLOCATE_IN调拨转入 DONATION捐赠 SELF_BUILT自建 INVENTORY_PROFIT盘盈 OTHER其他）',
   owner_dept_id          bigint(20)      default null               comment '权属部门ID',
   use_dept_id            bigint(20)      default null               comment '使用部门ID',
   responsible_user_id    bigint(20)      default null               comment '责任人用户ID',
@@ -64,6 +66,7 @@ create table ast_asset_ledger (
   unique key uk_ast_asset_ledger_code (asset_code),
   key idx_ast_asset_ledger_status (asset_status),
   key idx_ast_asset_ledger_category_id (category_id),
+  key idx_ast_asset_ledger_owner_dept_id (owner_dept_id),
   key idx_ast_asset_ledger_use_dept_id (use_dept_id),
   key idx_ast_asset_ledger_responsible_user_id (responsible_user_id),
   key idx_ast_asset_ledger_last_inventory_date (last_inventory_date)
@@ -100,11 +103,14 @@ create table ast_asset_handover (
   handover_type         varchar(32)     not null                   comment '交接类型（ASSIGN领用 TRANSFER调拨 RETURN退还）',
   from_dept_id          bigint(20)      default null               comment '原部门ID',
   from_user_id          bigint(20)      default null               comment '原责任人用户ID',
+  from_location_name    varchar(200)    default ''                 comment '交接前位置',
   to_dept_id            bigint(20)      default null               comment '目标部门ID',
   to_user_id            bigint(20)      default null               comment '目标责任人用户ID',
   handover_status       varchar(32)     not null default 'CONFIRMED' comment '交接状态（PENDING待确认 CONFIRMED已确认 CANCELLED已取消）',
   handover_date         date            not null                   comment '交接日期',
   location_name         varchar(200)    default ''                 comment '交接后位置',
+  confirm_by            varchar(64)     default ''                 comment '确认人',
+  confirm_time          datetime                                   comment '确认时间',
   create_by             varchar(64)     default ''                 comment '创建者',
   create_time           datetime                                   comment '创建时间',
   update_by             varchar(64)     default ''                 comment '更新者',
@@ -151,6 +157,10 @@ create table ast_asset_inventory_item (
   actual_location_name      varchar(200)    default ''                 comment '盘点确认后位置',
   actual_use_dept_id        bigint(20)      default null               comment '盘点确认后使用部门ID',
   actual_responsible_user_id bigint(20)     default null               comment '盘点确认后责任人用户ID',
+  follow_up_action          varchar(32)     not null default 'NONE'    comment '后续动作（NONE无动作 UPDATE_LEDGER修正台账 CREATE_DISPOSAL发起处置）',
+  process_status            varchar(32)     not null default 'PENDING' comment '处理状态（PENDING待处理 PROCESSED已处理）',
+  process_time              datetime                                   comment '处理时间',
+  follow_up_biz_id          bigint(20)      default null               comment '后续业务单据ID',
   checked_by                varchar(64)     default ''                 comment '盘点人',
   checked_time              datetime                                   comment '盘点时间',
   result_desc               varchar(500)    default null               comment '结果说明',
@@ -173,7 +183,11 @@ create table ast_asset_disposal (
   disposal_reason        varchar(255)    not null                   comment '处置原因',
   disposal_date          date            not null                   comment '处置日期',
   disposal_amount        decimal(18,2)   default null               comment '处置金额/回收金额',
+  confirmed_by           varchar(64)     default ''                 comment '处置确认人',
+  confirmed_time         datetime                                   comment '处置确认时间',
   finance_confirm_flag   char(1)         default '0'                comment '财务确认标志（0未确认 1已确认）',
+  finance_confirm_by     varchar(64)     default ''                 comment '财务确认人',
+  finance_confirm_time   datetime                                   comment '财务确认时间',
   create_by              varchar(64)     default ''                 comment '创建者',
   create_time            datetime                                   comment '创建时间',
   update_by              varchar(64)     default ''                 comment '更新者',
