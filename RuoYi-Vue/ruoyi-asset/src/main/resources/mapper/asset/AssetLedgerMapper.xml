@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetLedgerMapper">
+
+    <resultMap id="AssetLedgerResult" type="com.ruoyi.asset.domain.AssetLedger">
+        <id property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="specModel" column="spec_model"/>
+        <result property="serialNo" column="serial_no"/>
+        <result property="assetStatus" column="asset_status"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="acquireType" column="acquire_type"/>
+        <result property="ownerDeptId" column="owner_dept_id"/>
+        <result property="useDeptId" column="use_dept_id"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="locationName" column="location_name"/>
+        <result property="originalValue" column="original_value"/>
+        <result property="acquisitionDate" column="acquisition_date"/>
+        <result property="enableDate" column="enable_date"/>
+        <result property="lastInventoryDate" column="last_inventory_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetLedgerVoResult" type="com.ruoyi.asset.domain.vo.AssetLedgerVo">
+        <id property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="specModel" column="spec_model"/>
+        <result property="serialNo" column="serial_no"/>
+        <result property="assetStatus" column="asset_status"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="acquireType" column="acquire_type"/>
+        <result property="ownerDeptId" column="owner_dept_id"/>
+        <result property="ownerDeptName" column="owner_dept_name"/>
+        <result property="useDeptId" column="use_dept_id"/>
+        <result property="useDeptName" column="use_dept_name"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
+        <result property="locationName" column="location_name"/>
+        <result property="originalValue" column="original_value"/>
+        <result property="acquisitionDate" column="acquisition_date"/>
+        <result property="enableDate" column="enable_date"/>
+        <result property="lastInventoryDate" column="last_inventory_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectAssetLedgerBaseColumns">
+        select asset_id, asset_code, asset_name, asset_type, category_id, spec_model, serial_no, asset_status,
+               source_type, acquire_type, owner_dept_id, use_dept_id, responsible_user_id, location_name,
+               original_value, acquisition_date, enable_date, last_inventory_date, create_by, create_time,
+               update_by, update_time, remark
+        from ast_asset_ledger
+    </sql>
+
+    <sql id="selectAssetLedgerVoColumns">
+        select a.asset_id, a.asset_code, a.asset_name, a.asset_type, a.category_id, c.category_name, a.spec_model,
+               a.serial_no, a.asset_status, a.source_type, a.acquire_type, a.owner_dept_id,
+               owner_dept.dept_name as owner_dept_name, a.use_dept_id, use_dept.dept_name as use_dept_name,
+               a.responsible_user_id, ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
+               a.location_name, a.original_value, a.acquisition_date, a.enable_date, a.last_inventory_date,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+        from ast_asset_ledger a
+        left join ast_asset_category c on a.category_id = c.category_id
+        left join sys_dept owner_dept on a.owner_dept_id = owner_dept.dept_id
+        left join sys_dept use_dept on a.use_dept_id = use_dept.dept_id
+        left join sys_user u on a.responsible_user_id = u.user_id
+    </sql>
+
+    <select id="selectAssetById" parameterType="Long" resultMap="AssetLedgerResult">
+        <include refid="selectAssetLedgerBaseColumns"/>
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </select>
+
+    <select id="selectByAssetCode" parameterType="String" resultMap="AssetLedgerResult">
+        <include refid="selectAssetLedgerBaseColumns"/>
+        where asset_code = #{assetCode}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectMaxAssetCodeByPrefix" parameterType="String" resultType="String">
+        select max(asset_code)
+        from ast_asset_ledger
+        where asset_code like concat(#{assetCodePrefix}, '%')
+          and del_flag = '0'
+    </select>
+
+    <select id="selectAssetLedgerList" parameterType="com.ruoyi.asset.domain.bo.AssetLedgerBo" resultMap="AssetLedgerVoResult">
+        <include refid="selectAssetLedgerVoColumns"/>
+        <where>
+            a.del_flag = '0'
+            <if test="assetCode != null and assetCode != ''">
+                and a.asset_code like concat('%', #{assetCode}, '%')
+            </if>
+            <if test="assetName != null and assetName != ''">
+                and a.asset_name like concat('%', #{assetName}, '%')
+            </if>
+            <if test="assetType != null and assetType != ''">
+                and a.asset_type = #{assetType}
+            </if>
+            <if test="categoryId != null">
+                and a.category_id = #{categoryId}
+            </if>
+            <if test="assetStatus != null and assetStatus != ''">
+                and a.asset_status = #{assetStatus}
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                and a.source_type = #{sourceType}
+            </if>
+            <if test="acquireType != null and acquireType != ''">
+                and a.acquire_type = #{acquireType}
+            </if>
+            <if test="ownerDeptId != null">
+                and a.owner_dept_id = #{ownerDeptId}
+            </if>
+            <if test="useDeptId != null">
+                and a.use_dept_id = #{useDeptId}
+            </if>
+            <if test="responsibleUserId != null">
+                and a.responsible_user_id = #{responsibleUserId}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(a.create_time, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(a.create_time, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectAssetLedgerById" parameterType="Long" resultMap="AssetLedgerVoResult">
+        <include refid="selectAssetLedgerVoColumns"/>
+        where a.asset_id = #{assetId}
+          and a.del_flag = '0'
+    </select>
+
+    <insert id="insertAsset" parameterType="com.ruoyi.asset.domain.AssetLedger" useGeneratedKeys="true" keyProperty="assetId">
+        insert into ast_asset_ledger (
+            <if test="assetCode != null and assetCode != ''">asset_code,</if>
+            <if test="assetName != null and assetName != ''">asset_name,</if>
+            <if test="assetType != null and assetType != ''">asset_type,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="specModel != null and specModel != ''">spec_model,</if>
+            <if test="serialNo != null and serialNo != ''">serial_no,</if>
+            <if test="assetStatus != null and assetStatus != ''">asset_status,</if>
+            <if test="sourceType != null and sourceType != ''">source_type,</if>
+            <if test="acquireType != null and acquireType != ''">acquire_type,</if>
+            <if test="ownerDeptId != null">owner_dept_id,</if>
+            <if test="useDeptId != null">use_dept_id,</if>
+            <if test="responsibleUserId != null">responsible_user_id,</if>
+            <if test="locationName != null and locationName != ''">location_name,</if>
+            <if test="originalValue != null">original_value,</if>
+            <if test="acquisitionDate != null">acquisition_date,</if>
+            <if test="enableDate != null">enable_date,</if>
+            <if test="lastInventoryDate != null">last_inventory_date,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="assetCode != null and assetCode != ''">#{assetCode},</if>
+            <if test="assetName != null and assetName != ''">#{assetName},</if>
+            <if test="assetType != null and assetType != ''">#{assetType},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="specModel != null and specModel != ''">#{specModel},</if>
+            <if test="serialNo != null and serialNo != ''">#{serialNo},</if>
+            <if test="assetStatus != null and assetStatus != ''">#{assetStatus},</if>
+            <if test="sourceType != null and sourceType != ''">#{sourceType},</if>
+            <if test="acquireType != null and acquireType != ''">#{acquireType},</if>
+            <if test="ownerDeptId != null">#{ownerDeptId},</if>
+            <if test="useDeptId != null">#{useDeptId},</if>
+            <if test="responsibleUserId != null">#{responsibleUserId},</if>
+            <if test="locationName != null and locationName != ''">#{locationName},</if>
+            <if test="originalValue != null">#{originalValue},</if>
+            <if test="acquisitionDate != null">#{acquisitionDate},</if>
+            <if test="enableDate != null">#{enableDate},</if>
+            <if test="lastInventoryDate != null">#{lastInventoryDate},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateAsset" parameterType="com.ruoyi.asset.domain.AssetLedger">
+        update ast_asset_ledger
+        <set>
+            <if test="assetCode != null and assetCode != ''">asset_code = #{assetCode},</if>
+            <if test="assetName != null and assetName != ''">asset_name = #{assetName},</if>
+            <if test="assetType != null and assetType != ''">asset_type = #{assetType},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="specModel != null">spec_model = #{specModel},</if>
+            <if test="serialNo != null">serial_no = #{serialNo},</if>
+            <if test="sourceType != null and sourceType != ''">source_type = #{sourceType},</if>
+            <if test="acquireType != null">acquire_type = #{acquireType},</if>
+            <if test="ownerDeptId != null">owner_dept_id = #{ownerDeptId},</if>
+            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            <if test="responsibleUserId != null">responsible_user_id = #{responsibleUserId},</if>
+            <if test="locationName != null">location_name = #{locationName},</if>
+            <if test="originalValue != null">original_value = #{originalValue},</if>
+            <if test="acquisitionDate != null">acquisition_date = #{acquisitionDate},</if>
+            <if test="enableDate != null">enable_date = #{enableDate},</if>
+            <if test="lastInventoryDate != null">last_inventory_date = #{lastInventoryDate},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateAssetUsageInfo" parameterType="com.ruoyi.asset.domain.AssetLedger">
+        update ast_asset_ledger
+        <set>
+            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            responsible_user_id = #{responsibleUserId},
+            <if test="locationName != null">location_name = #{locationName},</if>
+            <if test="assetStatus != null and assetStatus != ''">asset_status = #{assetStatus},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </update>
+</mapper>
