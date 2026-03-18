@@ -64,7 +64,7 @@ end$$
 delimiter ;
 
 -- ----------------------------
--- 1. 资产台账表补强
+-- 1. 资产台账表补齐
 -- ----------------------------
 call proc_ast_exec_if_missing_column(
     'ast_asset_ledger',
@@ -79,7 +79,7 @@ call proc_ast_exec_if_missing_index(
 );
 
 -- ----------------------------
--- 2. 资产交接表补强
+-- 2. 老版资产交接表补齐
 -- ----------------------------
 call proc_ast_exec_if_missing_column(
     'ast_asset_handover',
@@ -100,7 +100,7 @@ call proc_ast_exec_if_missing_column(
 );
 
 -- ----------------------------
--- 3. 资产盘点明细表补强
+-- 3. 资产盘点明细表补齐
 -- ----------------------------
 call proc_ast_exec_if_missing_column(
     'ast_asset_inventory_item',
@@ -127,7 +127,7 @@ call proc_ast_exec_if_missing_column(
 );
 
 -- ----------------------------
--- 4. 资产处置表补强
+-- 4. 资产处置表补齐
 -- ----------------------------
 call proc_ast_exec_if_missing_column(
     'ast_asset_disposal',

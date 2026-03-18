@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetHandoverOrderMapper">
+
+    <resultMap id="AssetHandoverOrderVoResult" type="com.ruoyi.asset.domain.vo.AssetHandoverOrderVo">
+        <id property="handoverOrderId" column="handover_order_id"/>
+        <result property="handoverNo" column="handover_no"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="handoverType" column="handover_type"/>
+        <result property="handoverStatus" column="handover_status"/>
+        <result property="handoverDate" column="handover_date"/>
+        <result property="assetCount" column="asset_count"/>
+        <result property="toDeptId" column="to_dept_id"/>
+        <result property="toDeptName" column="to_dept_name"/>
+        <result property="toUserId" column="to_user_id"/>
+        <result property="toUserName" column="to_user_name"/>
+        <result property="locationName" column="location_name"/>
+        <result property="confirmBy" column="confirm_by"/>
+        <result property="confirmTime" column="confirm_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectAssetHandoverOrderVoColumns">
+        select o.handover_order_id, o.handover_no, o.asset_type, o.handover_type, o.handover_status,
+               o.handover_date, o.asset_count, o.to_dept_id, target_dept.dept_name as to_dept_name,
+               o.to_user_id, ifnull(nullif(target_user.nick_name, ''), target_user.user_name) as to_user_name,
+               o.location_name, o.confirm_by, o.confirm_time, o.create_by, o.create_time,
+               o.update_by, o.update_time, o.remark
+        from ast_asset_handover_order o
+        left join sys_dept target_dept on o.to_dept_id = target_dept.dept_id
+        left join sys_user target_user on o.to_user_id = target_user.user_id
+    </sql>
+
+    <select id="selectAssetHandoverOrderList" parameterType="com.ruoyi.asset.domain.bo.AssetHandoverOrderBo" resultMap="AssetHandoverOrderVoResult">
+        <include refid="selectAssetHandoverOrderVoColumns"/>
+        <where>
+            1 = 1
+            <if test="handoverNo != null and handoverNo != ''">
+                and o.handover_no like concat('%', #{handoverNo}, '%')
+            </if>
+            <if test="handoverType != null and handoverType != ''">
+                and o.handover_type = #{handoverType}
+            </if>
+            <if test="handoverStatus != null and handoverStatus != ''">
+                and o.handover_status = #{handoverStatus}
+            </if>
+            <if test="assetType != null and assetType != ''">
+                and o.asset_type = #{assetType}
+            </if>
+            <if test="toDeptId != null">
+                and o.to_dept_id = #{toDeptId}
+            </if>
+            <if test="toUserId != null">
+                and o.to_user_id = #{toUserId}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(o.handover_date, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(o.handover_date, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
+            </if>
+        </where>
+        order by o.handover_date desc, o.handover_order_id desc
+    </select>
+
+    <select id="selectMaxHandoverNoByPrefix" parameterType="String" resultType="String">
+        select max(handover_no)
+        from ast_asset_handover_order
+        where handover_no like concat(#{handoverNoPrefix}, '%')
+    </select>
+
+    <insert id="insertAssetHandoverOrder" parameterType="com.ruoyi.asset.domain.AssetHandoverOrder" useGeneratedKeys="true" keyProperty="handoverOrderId">
+        insert into ast_asset_handover_order (
+            <if test="handoverNo != null and handoverNo != ''">handover_no,</if>
+            <if test="assetType != null and assetType != ''">asset_type,</if>
+            <if test="handoverType != null and handoverType != ''">handover_type,</if>
+            <if test="handoverStatus != null and handoverStatus != ''">handover_status,</if>
+            <if test="handoverDate != null">handover_date,</if>
+            <if test="assetCount != null">asset_count,</if>
+            <if test="toDeptId != null">to_dept_id,</if>
+            <if test="toUserId != null">to_user_id,</if>
+            <if test="locationName != null">location_name,</if>
+            <if test="confirmBy != null and confirmBy != ''">confirm_by,</if>
+            <if test="confirmTime != null">confirm_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="handoverNo != null and handoverNo != ''">#{handoverNo},</if>
+            <if test="assetType != null and assetType != ''">#{assetType},</if>
+            <if test="handoverType != null and handoverType != ''">#{handoverType},</if>
+            <if test="handoverStatus != null and handoverStatus != ''">#{handoverStatus},</if>
+            <if test="handoverDate != null">#{handoverDate},</if>
+            <if test="assetCount != null">#{assetCount},</if>
+            <if test="toDeptId != null">#{toDeptId},</if>
+            <if test="toUserId != null">#{toUserId},</if>
+            <if test="locationName != null">#{locationName},</if>
+            <if test="confirmBy != null and confirmBy != ''">#{confirmBy},</if>
+            <if test="confirmTime != null">#{confirmTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+</mapper>

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetLedger;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
 import com.ruoyi.asset.enums.AssetBizType;
@@ -25,10 +24,9 @@ import com.ruoyi.asset.mapper.AssetLedgerMapper;
 import com.ruoyi.common.exception.ServiceException;
 
 /**
- * 资产台账服务测试。
+ * 资产台账服务实现测试。
  *
- * <p>该测试用于固定资产一期台账建账的关键业务规则，
- * 确保后续控制器和前端接入时，资产编号后端生成、编辑冻结、状态留痕三项基础能力稳定可用。</p>
+ * <p>重点覆盖资产编号生成规则，以及台账编辑不得绕过交接单直接改使用关系的约束。</p>
  *
  * @author Codex
  */
@@ -45,7 +43,7 @@ class AssetLedgerServiceImplTest
     private AssetLedgerServiceImpl service;
 
     @Test
-    @DisplayName("新增台账时应该以后端规则生成资产编码")
+    @DisplayName("新增台账时应生成正式资产编号")
     void shouldGenerateOfficialAssetCodeOnCreate()
     {
         String expectedCode = buildAssetCode(2);
@@ -72,7 +70,7 @@ class AssetLedgerServiceImplTest
     }
 
     @Test
-    @DisplayName("新增台账时未填写资产编码也应该自动生成年度流水编码")
+    @DisplayName("新增台账时即使前端未传编号也应自动生成")
     void shouldGenerateAssetCodeWhenCreateWithoutInputCode()
     {
         String expectedCode = buildAssetCode(10);
@@ -94,7 +92,7 @@ class AssetLedgerServiceImplTest
     }
 
     @Test
-    @DisplayName("新增台账时如果后端生成的资产编码已存在应该被拒绝")
+    @DisplayName("新增台账时若生成编号已存在应直接拒绝")
     void shouldRejectDuplicateGeneratedAssetCode()
     {
         String duplicatedCode = buildAssetCode(2);
@@ -111,7 +109,7 @@ class AssetLedgerServiceImplTest
     }
 
     @Test
-    @DisplayName("修改台账时应该保留原资产编码与原状态并记录修改日志")
+    @DisplayName("修改台账时应继续沿用当前资产编码和状态")
     void shouldKeepCurrentAssetCodeAndStatusAfterUpdate()
     {
         AssetLedger current = buildLedger(3L, buildAssetCode(4));
@@ -135,7 +133,7 @@ class AssetLedgerServiceImplTest
     }
 
     @Test
-    @DisplayName("修改历史台账时如果原资产编码为空应该补齐后端生成编码")
+    @DisplayName("修改台账时如果当前资产编号为空应重新生成")
     void shouldGenerateAssetCodeWhenCurrentAssetCodeIsBlankOnUpdate()
     {
         AssetLedger current = buildLedger(8L, "");
@@ -153,6 +151,36 @@ class AssetLedgerServiceImplTest
                 && Long.valueOf(8L).equals(asset.getAssetId())));
     }
 
+    @Test
+    @DisplayName("修改台账时不允许直接改使用部门责任人和位置")
+    void shouldPreserveUsageFieldsWhenUpdatingLedger()
+    {
+        AssetLedger current = buildLedger(9L, buildAssetCode(15));
+        current.setAssetType("FIXED");
+        current.setAssetStatus(AssetStatus.IN_USE.getCode());
+        current.setUseDeptId(300L);
+        current.setResponsibleUserId(30L);
+        current.setLocationName("原始位置");
+        when(assetLedgerMapper.selectAssetById(9L)).thenReturn(current);
+        when(assetLedgerMapper.selectByAssetCode(buildAssetCode(15))).thenReturn(current);
+        when(assetLedgerMapper.updateAsset(any())).thenReturn(1);
+
+        AssetLedgerBo bo = buildBoWithId(9L, "CLIENT-INPUT");
+        bo.setUseDeptId(999L);
+        bo.setResponsibleUserId(88L);
+        bo.setLocationName("前端试图直接修改的位置");
+
+        int rows = service.updateAsset(bo, "admin");
+
+        assertEquals(1, rows);
+        verify(assetLedgerMapper).updateAsset(argThat(asset ->
+            Long.valueOf(9L).equals(asset.getAssetId())
+                && Long.valueOf(300L).equals(asset.getUseDeptId())
+                && Long.valueOf(30L).equals(asset.getResponsibleUserId())
+                && "原始位置".equals(asset.getLocationName())
+                && AssetStatus.IN_USE.getCode().equals(asset.getAssetStatus())));
+    }
+
     private AssetLedgerBo buildBo(String assetCode)
     {
         return buildBoWithId(null, assetCode);
@@ -163,7 +191,7 @@ class AssetLedgerServiceImplTest
         AssetLedgerBo bo = new AssetLedgerBo();
         bo.setAssetId(assetId);
         bo.setAssetCode(assetCode);
-        bo.setAssetName("办公笔记本");
+        bo.setAssetName("测试资产");
         bo.setAssetType("FIXED");
         bo.setCategoryId(1L);
         bo.setSourceType("MANUAL");
@@ -171,11 +199,11 @@ class AssetLedgerServiceImplTest
         bo.setOwnerDeptId(100L);
         bo.setUseDeptId(101L);
         bo.setResponsibleUserId(1L);
-        bo.setLocationName("研发部A区");
+        bo.setLocationName("行政楼-A座");
         bo.setOriginalValue(new BigDecimal("8999.00"));
         bo.setAcquisitionDate(new Date());
         bo.setEnableDate(new Date());
-        bo.setRemark("测试数据");
+        bo.setRemark("测试台账");
         return bo;
     }
 
@@ -184,7 +212,7 @@ class AssetLedgerServiceImplTest
         AssetLedger assetLedger = new AssetLedger();
         assetLedger.setAssetId(assetId);
         assetLedger.setAssetCode(assetCode);
-        assetLedger.setAssetName("办公笔记本");
+        assetLedger.setAssetName("测试资产");
         assetLedger.setAssetStatus(AssetStatus.IN_LEDGER.getCode());
         return assetLedger;
     }

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetHandoverItemMapper">
+
+    <resultMap id="AssetHandoverItemVoResult" type="com.ruoyi.asset.domain.vo.AssetHandoverItemVo">
+        <id property="handoverItemId" column="handover_item_id"/>
+        <result property="handoverOrderId" column="handover_order_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="fromDeptId" column="from_dept_id"/>
+        <result property="fromDeptName" column="from_dept_name"/>
+        <result property="fromUserId" column="from_user_id"/>
+        <result property="fromUserName" column="from_user_name"/>
+        <result property="fromLocationName" column="from_location_name"/>
+        <result property="toDeptId" column="to_dept_id"/>
+        <result property="toDeptName" column="to_dept_name"/>
+        <result property="toUserId" column="to_user_id"/>
+        <result property="toUserName" column="to_user_name"/>
+        <result property="toLocationName" column="to_location_name"/>
+        <result property="beforeStatus" column="before_status"/>
+        <result property="afterStatus" column="after_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectAssetHandoverItemsByOrderId" parameterType="Long" resultMap="AssetHandoverItemVoResult">
+        select i.handover_item_id, i.handover_order_id, i.asset_id, i.asset_code, i.asset_name,
+               i.from_dept_id, from_dept.dept_name as from_dept_name,
+               i.from_user_id, ifnull(nullif(from_user.nick_name, ''), from_user.user_name) as from_user_name,
+               i.from_location_name, i.to_dept_id, to_dept.dept_name as to_dept_name,
+               i.to_user_id, ifnull(nullif(to_user.nick_name, ''), to_user.user_name) as to_user_name,
+               i.to_location_name, i.before_status, i.after_status,
+               i.create_by, i.create_time, i.update_by, i.update_time, i.remark
+        from ast_asset_handover_item i
+        left join sys_dept from_dept on i.from_dept_id = from_dept.dept_id
+        left join sys_dept to_dept on i.to_dept_id = to_dept.dept_id
+        left join sys_user from_user on i.from_user_id = from_user.user_id
+        left join sys_user to_user on i.to_user_id = to_user.user_id
+        where i.handover_order_id = #{handoverOrderId}
+        order by i.handover_item_id asc
+    </select>
+
+    <insert id="batchInsertAssetHandoverItems" parameterType="java.util.List">
+        insert into ast_asset_handover_item (
+            handover_order_id, asset_id, asset_code, asset_name,
+            from_dept_id, from_user_id, from_location_name,
+            to_dept_id, to_user_id, to_location_name,
+            before_status, after_status, create_by, remark, create_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.handoverOrderId},
+                #{item.assetId},
+                #{item.assetCode},
+                #{item.assetName},
+                #{item.fromDeptId},
+                #{item.fromUserId},
+                #{item.fromLocationName},
+                #{item.toDeptId},
+                #{item.toUserId},
+                #{item.toLocationName},
+                #{item.beforeStatus},
+                #{item.afterStatus},
+                #{item.createBy},
+                #{item.remark},
+                sysdate()
+            )
+        </foreach>
+    </insert>
+</mapper>

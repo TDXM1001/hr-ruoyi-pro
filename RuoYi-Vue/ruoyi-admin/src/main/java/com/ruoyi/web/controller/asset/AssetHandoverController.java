@@ -5,12 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.ruoyi.asset.domain.bo.AssetHandoverBo;
-import com.ruoyi.asset.domain.vo.AssetHandoverVo;
+import com.ruoyi.asset.domain.bo.AssetHandoverCreateBo;
+import com.ruoyi.asset.domain.bo.AssetHandoverOrderBo;
+import com.ruoyi.asset.domain.vo.AssetHandoverItemVo;
+import com.ruoyi.asset.domain.vo.AssetHandoverOrderVo;
 import com.ruoyi.asset.service.IAssetHandoverService;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
@@ -21,10 +24,8 @@ import com.ruoyi.common.enums.BusinessType;
 /**
  * 资产交接控制器。
  *
- * <p>
- * 第一期开通领用、调拨、退还统一交接入口，
- * 统一由后端校验状态并回写台账，避免前端直改台账字段。
- * </p>
+ * <p>一期交接采用“主单 + 明细”模型。
+ * 台账只提供结果展示，使用关系变更必须通过交接主单落单后统一回写。</p>
  *
  * @author Codex
  */
@@ -36,31 +37,45 @@ public class AssetHandoverController extends BaseController
     private IAssetHandoverService assetHandoverService;
 
     /**
-     * 查询交接记录列表。
+     * 查询交接主单列表。
      *
-     * @param bo 查询条件
-     * @return 分页列表
+     * @param bo 查询参数
+     * @return 表格数据
      */
     @PreAuthorize("@ss.hasPermi('asset:handover:list')")
-    @GetMapping("/list")
-    public TableDataInfo list(AssetHandoverBo bo)
+    @GetMapping("/order/list")
+    public TableDataInfo list(AssetHandoverOrderBo bo)
     {
         startPage();
-        List<AssetHandoverVo> list = assetHandoverService.selectAssetHandoverList(bo);
+        List<AssetHandoverOrderVo> list = assetHandoverService.selectAssetHandoverOrderList(bo);
         return getDataTable(list);
     }
 
     /**
-     * 新增交接记录。
+     * 查询交接主单明细。
      *
-     * @param bo 交接入参
-     * @return 交接ID
+     * @param handoverOrderId 主单ID
+     * @return 明细列表
+     */
+    @PreAuthorize("@ss.hasPermi('asset:handover:list')")
+    @GetMapping("/order/{handoverOrderId}/items")
+    public AjaxResult items(@PathVariable Long handoverOrderId)
+    {
+        List<AssetHandoverItemVo> items = assetHandoverService.selectAssetHandoverItemsByOrderId(handoverOrderId);
+        return success(items);
+    }
+
+    /**
+     * 新增交接主单。
+     *
+     * @param bo 交接参数
+     * @return 交接主单ID
      */
     @Log(title = "资产交接", businessType = BusinessType.INSERT)
     @PreAuthorize("@ss.hasPermi('asset:handover:add')")
-    @PostMapping
-    public AjaxResult add(@Validated @RequestBody AssetHandoverBo bo)
+    @PostMapping("/order")
+    public AjaxResult add(@Validated @RequestBody AssetHandoverCreateBo bo)
     {
-        return success(assetHandoverService.createHandover(bo, getUsername()));
+        return success(assetHandoverService.createHandoverOrder(bo, getUsername()));
     }
 }

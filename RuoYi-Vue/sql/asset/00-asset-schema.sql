@@ -95,20 +95,19 @@ create table ast_asset_change_log (
 -- ----------------------------
 -- 4、资产交接记录表
 -- ----------------------------
-drop table if exists ast_asset_handover;
-create table ast_asset_handover (
-  handover_id           bigint(20)      not null auto_increment    comment '交接记录ID',
+drop table if exists ast_asset_handover_item;
+drop table if exists ast_asset_handover_order;
+create table ast_asset_handover_order (
+  handover_order_id     bigint(20)      not null auto_increment    comment '交接主单ID',
   handover_no           varchar(64)     not null                   comment '交接单号',
-  asset_id              bigint(20)      not null                   comment '资产ID',
+  asset_type            varchar(32)     not null default 'FIXED'   comment '资产类型（FIXED固定资产 REAL_ESTATE不动产）',
   handover_type         varchar(32)     not null                   comment '交接类型（ASSIGN领用 TRANSFER调拨 RETURN退还）',
-  from_dept_id          bigint(20)      default null               comment '原部门ID',
-  from_user_id          bigint(20)      default null               comment '原责任人用户ID',
-  from_location_name    varchar(200)    default ''                 comment '交接前位置',
-  to_dept_id            bigint(20)      default null               comment '目标部门ID',
-  to_user_id            bigint(20)      default null               comment '目标责任人用户ID',
   handover_status       varchar(32)     not null default 'CONFIRMED' comment '交接状态（PENDING待确认 CONFIRMED已确认 CANCELLED已取消）',
   handover_date         date            not null                   comment '交接日期',
-  location_name         varchar(200)    default ''                 comment '交接后位置',
+  asset_count           int(11)         not null default 0         comment '交接资产数量',
+  to_dept_id            bigint(20)      default null               comment '目标部门ID',
+  to_user_id            bigint(20)      default null               comment '目标责任人用户ID',
+  location_name         varchar(200)    default ''                 comment '目标位置',
   confirm_by            varchar(64)     default ''                 comment '确认人',
   confirm_time          datetime                                   comment '确认时间',
   create_by             varchar(64)     default ''                 comment '创建者',
@@ -116,11 +115,36 @@ create table ast_asset_handover (
   update_by             varchar(64)     default ''                 comment '更新者',
   update_time           datetime                                   comment '更新时间',
   remark                varchar(500)    default null               comment '备注',
-  primary key (handover_id),
-  unique key uk_ast_asset_handover_no (handover_no),
-  key idx_ast_asset_handover_asset_id (asset_id),
-  key idx_ast_asset_handover_type_date (handover_type, handover_date)
-) engine=innodb comment = '资产交接记录表';
+  primary key (handover_order_id),
+  unique key uk_ast_asset_handover_order_no (handover_no),
+  key idx_ast_asset_handover_order_type_date (handover_type, handover_date),
+  key idx_ast_asset_handover_order_target_dept (to_dept_id)
+) engine=innodb comment = '资产交接主单表';
+
+create table ast_asset_handover_item (
+  handover_item_id      bigint(20)      not null auto_increment    comment '交接明细ID',
+  handover_order_id     bigint(20)      not null                   comment '交接主单ID',
+  asset_id              bigint(20)      not null                   comment '资产ID',
+  asset_code            varchar(64)     not null                   comment '资产编码快照',
+  asset_name            varchar(120)    not null                   comment '资产名称快照',
+  from_dept_id          bigint(20)      default null               comment '交接前使用部门ID',
+  from_user_id          bigint(20)      default null               comment '交接前责任人用户ID',
+  from_location_name    varchar(200)    default ''                 comment '交接前位置',
+  to_dept_id            bigint(20)      default null               comment '交接后使用部门ID',
+  to_user_id            bigint(20)      default null               comment '交接后责任人用户ID',
+  to_location_name      varchar(200)    default ''                 comment '交接后位置',
+  before_status         varchar(32)     not null                   comment '交接前状态',
+  after_status          varchar(32)     not null                   comment '交接后状态',
+  create_by             varchar(64)     default ''                 comment '创建者',
+  create_time           datetime                                   comment '创建时间',
+  update_by             varchar(64)     default ''                 comment '更新者',
+  update_time           datetime                                   comment '更新时间',
+  remark                varchar(500)    default null               comment '备注',
+  primary key (handover_item_id),
+  unique key uk_ast_asset_handover_item_order_asset (handover_order_id, asset_id),
+  key idx_ast_asset_handover_item_order_id (handover_order_id),
+  key idx_ast_asset_handover_item_asset_id (asset_id)
+) engine=innodb comment = '资产交接明细表';
 
 -- ----------------------------
 -- 5、资产盘点任务表

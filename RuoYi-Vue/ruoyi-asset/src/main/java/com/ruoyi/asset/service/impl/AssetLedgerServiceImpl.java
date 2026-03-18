@@ -133,7 +133,12 @@ public class AssetLedgerServiceImpl implements IAssetLedgerService
 
         AssetLedger assetLedger = buildAssetLedgerEntity(bo);
         assetLedger.setAssetId(current.getAssetId());
+        assetLedger.setAssetType(StringUtils.defaultIfBlank(current.getAssetType(), assetLedger.getAssetType()));
         assetLedger.setAssetStatus(StringUtils.defaultIfBlank(current.getAssetStatus(), AssetStatus.IN_LEDGER.getCode()));
+        // 使用部门、责任人、位置和状态必须通过交接单闭环变更，台账编辑页只允许维护主数据。
+        assetLedger.setUseDeptId(current.getUseDeptId());
+        assetLedger.setResponsibleUserId(current.getResponsibleUserId());
+        assetLedger.setLocationName(current.getLocationName());
         assetLedger.setUpdateBy(operator);
 
         int rows = assetLedgerMapper.updateAsset(assetLedger);

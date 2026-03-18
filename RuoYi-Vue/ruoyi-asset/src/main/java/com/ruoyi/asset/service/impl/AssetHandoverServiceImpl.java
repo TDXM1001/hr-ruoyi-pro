@@ -1,36 +1,39 @@
 package com.ruoyi.asset.service.impl;
 
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.asset.domain.AssetChangeLog;
-import com.ruoyi.asset.domain.AssetHandover;
+import com.ruoyi.asset.domain.AssetHandoverItem;
+import com.ruoyi.asset.domain.AssetHandoverOrder;
 import com.ruoyi.asset.domain.AssetLedger;
-import com.ruoyi.asset.domain.bo.AssetHandoverBo;
-import com.ruoyi.asset.domain.vo.AssetHandoverVo;
+import com.ruoyi.asset.domain.bo.AssetHandoverCreateBo;
+import com.ruoyi.asset.domain.bo.AssetHandoverOrderBo;
+import com.ruoyi.asset.domain.vo.AssetHandoverItemVo;
+import com.ruoyi.asset.domain.vo.AssetHandoverOrderVo;
 import com.ruoyi.asset.enums.AssetBizType;
 import com.ruoyi.asset.enums.AssetStatus;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
-import com.ruoyi.asset.mapper.AssetHandoverMapper;
+import com.ruoyi.asset.mapper.AssetHandoverItemMapper;
+import com.ruoyi.asset.mapper.AssetHandoverOrderMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
 import com.ruoyi.asset.service.IAssetHandoverService;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.bean.BeanUtils;
 
 /**
  * 资产交接服务实现。
  *
- * <p>
- * 固定资产一期将领用、调拨、退还统一收敛到交接模型，确保：
- * 1. 不允许绕过业务单据直接修改台账使用关系。
- * 2. 每次交接都写入交接记录与变更日志，满足资产管理追责要求。
- * 3. 交接完成后立即回写台账“使用部门/责任人/位置/状态”当前态。
- * </p>
+ * <p>一期交接采用“主单 + 明细”模型。
+ * 该实现负责一次性校验整批资产后，再落主单、写明细、回写台账和记录变更日志，
+ * 以保证领用、调拨、退还流程的业务闭环与可追溯性。</p>
  *
  * @author Codex
  */
@@ -43,8 +46,13 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
 
     private static final String HANDOVER_CONFIRMED = "CONFIRMED";
 
+    private static final String FIXED_ASSET_TYPE = "FIXED";
+
     @Autowired
-    private AssetHandoverMapper assetHandoverMapper;
+    private AssetHandoverOrderMapper assetHandoverOrderMapper;
+
+    @Autowired
+    private AssetHandoverItemMapper assetHandoverItemMapper;
 
     @Autowired
     private AssetLedgerMapper assetLedgerMapper;
@@ -53,113 +61,215 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     private AssetChangeLogMapper assetChangeLogMapper;
 
     /**
-     * 查询交接记录列表。
+     * 查询交接主单列表。
      *
-     * @param bo 查询条件
-     * @return 交接列表
+     * @param bo 查询参数
+     * @return 主单列表
      */
     @Override
-    public List<AssetHandoverVo> selectAssetHandoverList(AssetHandoverBo bo)
+    public List<AssetHandoverOrderVo> selectAssetHandoverOrderList(AssetHandoverOrderBo bo)
     {
-        return assetHandoverMapper.selectAssetHandoverList(bo);
+        return assetHandoverOrderMapper.selectAssetHandoverOrderList(bo);
     }
 
     /**
-     * 新增交接记录并完成台账回写。
+     * 查询主单下的交接明细。
      *
-     * @param bo 交接参数
+     * @param handoverOrderId 主单ID
+     * @return 明细列表
+     */
+    @Override
+    public List<AssetHandoverItemVo> selectAssetHandoverItemsByOrderId(Long handoverOrderId)
+    {
+        if (handoverOrderId == null)
+        {
+            throw new ServiceException("交接主单ID不能为空");
+        }
+        return assetHandoverItemMapper.selectAssetHandoverItemsByOrderId(handoverOrderId);
+    }
+
+    /**
+     * 创建交接主单并统一回写台账使用信息。
+     *
+     * @param bo 建单参数
      * @param operator 操作人
-     * @return 交接ID
+     * @return 主单ID
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long createHandover(AssetHandoverBo bo, String operator)
+    public Long createHandoverOrder(AssetHandoverCreateBo bo, String operator)
     {
-        validateRequiredParams(bo);
-
-        AssetLedger currentAsset = assetLedgerMapper.selectAssetById(bo.getAssetId());
-        if (currentAsset == null)
-        {
-            throw new ServiceException("资产台账不存在，无法发起交接");
-        }
+        validateCreateParams(bo);
 
         AssetBizType bizType = parseHandoverBizType(bo.getHandoverType());
-        AssetStatus beforeStatus = parseAssetStatus(currentAsset.getAssetStatus());
-        validateBusinessRule(currentAsset, beforeStatus, bizType, bo);
+        List<AssetLedger> assets = loadAssets(bo.getAssetIds());
+        validateAssetTypeScope(assets);
+        validateBatchBusinessRule(assets, bizType, bo);
 
         Date now = DateUtils.getNowDate();
-        AssetHandover assetHandover = buildHandoverEntity(bo, currentAsset, bizType, operator, now);
-        int insertRows = assetHandoverMapper.insertAssetHandover(assetHandover);
-        if (insertRows <= 0)
+        String handoverNo = generateNextHandoverNo();
+        AssetHandoverOrder order = buildOrderEntity(bo, assets, handoverNo, operator, now);
+        int orderRows = assetHandoverOrderMapper.insertAssetHandoverOrder(order);
+        if (orderRows <= 0)
         {
-            throw new ServiceException("新增资产交接记录失败");
+            throw new ServiceException("新增资产交接主单失败");
         }
 
-        AssetLedger usageUpdate = buildUsageUpdateEntity(currentAsset, bo, bizType, operator);
-        int updateRows = assetLedgerMapper.updateAssetUsageInfo(usageUpdate);
-        if (updateRows <= 0)
+        List<AssetHandoverItem> items = buildItemEntities(order.getHandoverOrderId(), bo, assets, bizType, operator);
+        int itemRows = assetHandoverItemMapper.batchInsertAssetHandoverItems(items);
+        if (itemRows != items.size())
         {
-            throw new ServiceException("回写资产使用信息失败");
+            throw new ServiceException("新增资产交接明细失败");
         }
 
-        assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofHandover(
-            currentAsset.getAssetId(),
-            bizType.getCode(),
-            assetHandover.getHandoverId(),
-            beforeStatus.getCode(),
-            usageUpdate.getAssetStatus(),
-            operator,
-            buildChangeDesc(bizType, assetHandover.getHandoverNo())));
+        for (int i = 0; i < assets.size(); i++)
+        {
+            AssetLedger currentAsset = assets.get(i);
+            AssetHandoverItem item = items.get(i);
 
-        return assetHandover.getHandoverId();
+            AssetLedger usageUpdate = buildUsageUpdateEntity(item, operator);
+            int updateRows = assetLedgerMapper.updateAssetUsageInfo(usageUpdate);
+            if (updateRows <= 0)
+            {
+                throw new ServiceException("回写资产使用信息失败");
+            }
+
+            assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofHandover(
+                currentAsset.getAssetId(),
+                bizType.getCode(),
+                order.getHandoverOrderId(),
+                item.getBeforeStatus(),
+                item.getAfterStatus(),
+                operator,
+                buildChangeDesc(bizType, order.getHandoverNo(), currentAsset.getAssetCode())));
+        }
+
+        return order.getHandoverOrderId();
     }
 
     /**
-     * 校验交接必须参数。
+     * 校验建单参数。
      *
-     * @param bo 交接入参
+     * @param bo 建单参数
      */
-    private void validateRequiredParams(AssetHandoverBo bo)
+    private void validateCreateParams(AssetHandoverCreateBo bo)
     {
         if (bo == null)
         {
             throw new ServiceException("交接参数不能为空");
         }
-        if (bo.getAssetId() == null)
-        {
-            throw new ServiceException("资产ID不能为空");
-        }
         if (StringUtils.isBlank(bo.getHandoverType()))
         {
             throw new ServiceException("交接类型不能为空");
         }
+        if (bo.getHandoverDate() == null)
+        {
+            throw new ServiceException("交接日期不能为空");
+        }
+        if (bo.getAssetIds() == null || bo.getAssetIds().isEmpty())
+        {
+            throw new ServiceException("交接资产不能为空");
+        }
+
+        Set<Long> uniqueAssetIds = new LinkedHashSet<>();
+        for (Long assetId : bo.getAssetIds())
+        {
+            if (assetId == null)
+            {
+                throw new ServiceException("交接资产ID不能为空");
+            }
+            if (!uniqueAssetIds.add(assetId))
+            {
+                throw new ServiceException("同一交接单不允许重复选择同一资产");
+            }
+        }
     }
 
     /**
-     * 校验交接业务规则。
+     * 按前端选择顺序加载资产。
+     *
+     * @param assetIds 资产ID列表
+     * @return 资产列表
+     */
+    private List<AssetLedger> loadAssets(List<Long> assetIds)
+    {
+        List<AssetLedger> assets = new ArrayList<>(assetIds.size());
+        for (Long assetId : assetIds)
+        {
+            AssetLedger asset = assetLedgerMapper.selectAssetById(assetId);
+            if (asset == null)
+            {
+                throw new ServiceException("交接资产不存在，资产ID：" + assetId);
+            }
+            assets.add(asset);
+        }
+        return assets;
+    }
+
+    /**
+     * 校验一期交接资产边界。
+     *
+     * @param assets 资产列表
+     */
+    private void validateAssetTypeScope(List<AssetLedger> assets)
+    {
+        Set<String> assetTypes = new LinkedHashSet<>();
+        for (AssetLedger asset : assets)
+        {
+            assetTypes.add(resolveAssetType(asset));
+        }
+
+        if (assetTypes.size() > 1)
+        {
+            throw new ServiceException("同一交接单不允许混合不同资产类型");
+        }
+        if (!FIXED_ASSET_TYPE.equals(assetTypes.iterator().next()))
+        {
+            throw new ServiceException("一期交接单仅支持固定资产");
+        }
+    }
+
+    /**
+     * 批量校验交接业务规则。
+     *
+     * @param assets 资产列表
+     * @param bizType 交接业务类型
+     * @param bo 建单参数
+     */
+    private void validateBatchBusinessRule(List<AssetLedger> assets, AssetBizType bizType, AssetHandoverCreateBo bo)
+    {
+        for (AssetLedger asset : assets)
+        {
+            AssetStatus beforeStatus = parseAssetStatus(asset.getAssetStatus());
+            validateBusinessRule(asset, beforeStatus, bizType, bo);
+        }
+    }
+
+    /**
+     * 校验单资产业务规则。
      *
      * @param currentAsset 当前资产
      * @param beforeStatus 交接前状态
      * @param bizType 交接业务类型
-     * @param bo 交接参数
+     * @param bo 建单参数
      */
     private void validateBusinessRule(AssetLedger currentAsset, AssetStatus beforeStatus, AssetBizType bizType,
-        AssetHandoverBo bo)
+        AssetHandoverCreateBo bo)
     {
         if (AssetStatus.DISPOSED.equals(beforeStatus))
         {
-            throw new ServiceException("已处置资产不允许发起交接");
+            throw new ServiceException("已处置资产不允许继续交接");
         }
         if (AssetStatus.PENDING_DISPOSAL.equals(beforeStatus))
         {
-            throw new ServiceException("待处置资产不允许发起交接");
+            throw new ServiceException("待处置资产不允许继续交接");
         }
 
         if (AssetBizType.ASSIGN.equals(bizType))
         {
             if (!(AssetStatus.IN_LEDGER.equals(beforeStatus) || AssetStatus.IDLE.equals(beforeStatus)))
             {
-                throw new ServiceException("资产当前状态不允许领用，领用仅支持在册或闲置状态");
+                throw new ServiceException("当前资产状态不允许执行领用");
             }
             validateTargetAssignee(bo);
             return;
@@ -169,12 +279,12 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
         {
             if (!AssetStatus.IN_USE.equals(beforeStatus))
             {
-                throw new ServiceException("资产调拨仅支持使用中状态");
+                throw new ServiceException("当前资产不在使用中，不能执行调拨");
             }
             validateTargetAssignee(bo);
             if (isSameAssignment(currentAsset, bo))
             {
-                throw new ServiceException("调拨目标与当前使用关系一致，无需重复调拨");
+                throw new ServiceException("调拨目标不能与当前使用信息一致");
             }
             return;
         }
@@ -183,21 +293,21 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
         {
             if (!AssetStatus.IN_USE.equals(beforeStatus))
             {
-                throw new ServiceException("资产退还仅支持使用中状态");
+                throw new ServiceException("当前资产不在使用中，不能执行退还");
             }
             if (resolveTargetDeptId(currentAsset, bo, bizType) == null)
             {
-                throw new ServiceException("退还时无法确定目标部门，请指定目标部门或维护权属部门");
+                throw new ServiceException("退还场景必须能确定目标部门");
             }
         }
     }
 
     /**
-     * 校验领用/调拨的目标责任信息。
+     * 校验领用或调拨的目标信息。
      *
-     * @param bo 交接参数
+     * @param bo 建单参数
      */
-    private void validateTargetAssignee(AssetHandoverBo bo)
+    private void validateTargetAssignee(AssetHandoverCreateBo bo)
     {
         if (bo.getToDeptId() == null)
         {
@@ -210,13 +320,13 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     }
 
     /**
-     * 判断调拨目标是否与当前使用关系一致。
+     * 判断调拨目标是否与当前使用信息一致。
      *
      * @param currentAsset 当前资产
-     * @param bo 交接参数
-     * @return true 一致
+     * @param bo 建单参数
+     * @return true 表示一致
      */
-    private boolean isSameAssignment(AssetLedger currentAsset, AssetHandoverBo bo)
+    private boolean isSameAssignment(AssetLedger currentAsset, AssetHandoverCreateBo bo)
     {
         boolean sameDept = currentAsset.getUseDeptId() != null && currentAsset.getUseDeptId().equals(bo.getToDeptId());
         boolean sameUser = currentAsset.getResponsibleUserId() != null
@@ -227,54 +337,86 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     }
 
     /**
-     * 构建交接记录实体。
+     * 构建交接主单实体。
      *
-     * @param bo 交接参数
-     * @param currentAsset 当前资产
-     * @param bizType 业务类型
+     * @param bo 建单参数
+     * @param assets 资产列表
+     * @param handoverNo 交接单号
      * @param operator 操作人
      * @param now 当前时间
-     * @return 交接实体
+     * @return 主单实体
      */
-    private AssetHandover buildHandoverEntity(AssetHandoverBo bo, AssetLedger currentAsset, AssetBizType bizType,
+    private AssetHandoverOrder buildOrderEntity(AssetHandoverCreateBo bo, List<AssetLedger> assets, String handoverNo,
         String operator, Date now)
     {
-        AssetHandover assetHandover = new AssetHandover();
-        BeanUtils.copyBeanProp(assetHandover, bo);
-        assetHandover.setHandoverNo(generateNextHandoverNo());
-        assetHandover.setHandoverType(bizType.getCode());
-        assetHandover.setFromDeptId(currentAsset.getUseDeptId());
-        assetHandover.setFromUserId(currentAsset.getResponsibleUserId());
-        assetHandover.setFromLocationName(currentAsset.getLocationName());
-        assetHandover.setToDeptId(resolveTargetDeptId(currentAsset, bo, bizType));
-        assetHandover.setToUserId(resolveTargetUserId(bo, bizType));
-        assetHandover.setLocationName(resolveTargetLocation(currentAsset, bo));
-        assetHandover.setHandoverStatus(HANDOVER_CONFIRMED);
-        assetHandover.setHandoverDate(bo.getHandoverDate() == null ? now : bo.getHandoverDate());
-        assetHandover.setConfirmBy(operator);
-        assetHandover.setConfirmTime(now);
-        assetHandover.setCreateBy(operator);
-        return assetHandover;
+        AssetHandoverOrder order = new AssetHandoverOrder();
+        order.setHandoverNo(handoverNo);
+        order.setAssetType(resolveAssetType(assets.get(0)));
+        order.setHandoverType(StringUtils.upperCase(StringUtils.trim(bo.getHandoverType())));
+        order.setHandoverStatus(HANDOVER_CONFIRMED);
+        order.setHandoverDate(bo.getHandoverDate());
+        order.setAssetCount(assets.size());
+        order.setToDeptId(resolveTargetDeptId(assets.get(0), bo, parseHandoverBizType(bo.getHandoverType())));
+        order.setToUserId(resolveTargetUserId(bo));
+        order.setLocationName(resolveTargetLocation(assets.get(0), bo));
+        order.setConfirmBy(operator);
+        order.setConfirmTime(now);
+        order.setCreateBy(operator);
+        order.setRemark(bo.getRemark());
+        return order;
     }
 
     /**
-     * 构建台账回写实体。
+     * 构建交接明细实体列表。
      *
-     * @param currentAsset 当前资产
-     * @param bo 交接参数
-     * @param bizType 交接类型
+     * @param handoverOrderId 主单ID
+     * @param bo 建单参数
+     * @param assets 资产列表
+     * @param bizType 交接业务类型
+     * @param operator 操作人
+     * @return 明细列表
+     */
+    private List<AssetHandoverItem> buildItemEntities(Long handoverOrderId, AssetHandoverCreateBo bo,
+        List<AssetLedger> assets, AssetBizType bizType, String operator)
+    {
+        List<AssetHandoverItem> items = new ArrayList<>(assets.size());
+        for (AssetLedger currentAsset : assets)
+        {
+            AssetHandoverItem item = new AssetHandoverItem();
+            item.setHandoverOrderId(handoverOrderId);
+            item.setAssetId(currentAsset.getAssetId());
+            item.setAssetCode(StringUtils.trimToEmpty(currentAsset.getAssetCode()));
+            item.setAssetName(currentAsset.getAssetName());
+            item.setFromDeptId(currentAsset.getUseDeptId());
+            item.setFromUserId(currentAsset.getResponsibleUserId());
+            item.setFromLocationName(StringUtils.trimToEmpty(currentAsset.getLocationName()));
+            item.setToDeptId(resolveTargetDeptId(currentAsset, bo, bizType));
+            item.setToUserId(resolveTargetUserId(bo));
+            item.setToLocationName(resolveTargetLocation(currentAsset, bo));
+            item.setBeforeStatus(parseAssetStatus(currentAsset.getAssetStatus()).getCode());
+            item.setAfterStatus(resolveNextStatus(bizType).getCode());
+            item.setCreateBy(operator);
+            item.setRemark(bo.getRemark());
+            items.add(item);
+        }
+        return items;
+    }
+
+    /**
+     * 构建台账使用信息回写实体。
+     *
+     * @param item 交接明细
      * @param operator 操作人
      * @return 台账更新实体
      */
-    private AssetLedger buildUsageUpdateEntity(AssetLedger currentAsset, AssetHandoverBo bo, AssetBizType bizType,
-        String operator)
+    private AssetLedger buildUsageUpdateEntity(AssetHandoverItem item, String operator)
     {
         AssetLedger updateEntity = new AssetLedger();
-        updateEntity.setAssetId(currentAsset.getAssetId());
-        updateEntity.setUseDeptId(resolveTargetDeptId(currentAsset, bo, bizType));
-        updateEntity.setResponsibleUserId(resolveTargetUserId(bo, bizType));
-        updateEntity.setLocationName(resolveTargetLocation(currentAsset, bo));
-        updateEntity.setAssetStatus(resolveNextStatus(bizType).getCode());
+        updateEntity.setAssetId(item.getAssetId());
+        updateEntity.setUseDeptId(item.getToDeptId());
+        updateEntity.setResponsibleUserId(item.getToUserId());
+        updateEntity.setLocationName(item.getToLocationName());
+        updateEntity.setAssetStatus(item.getAfterStatus());
         updateEntity.setUpdateBy(operator);
         return updateEntity;
     }
@@ -341,11 +483,11 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
      * 解析目标部门。
      *
      * @param currentAsset 当前资产
-     * @param bo 交接参数
-     * @param bizType 业务类型
+     * @param bo 建单参数
+     * @param bizType 交接业务类型
      * @return 目标部门ID
      */
-    private Long resolveTargetDeptId(AssetLedger currentAsset, AssetHandoverBo bo, AssetBizType bizType)
+    private Long resolveTargetDeptId(AssetLedger currentAsset, AssetHandoverCreateBo bo, AssetBizType bizType)
     {
         if (AssetBizType.RETURN.equals(bizType))
         {
@@ -361,16 +503,11 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     /**
      * 解析目标责任人。
      *
-     * @param bo 交接参数
-     * @param bizType 业务类型
+     * @param bo 建单参数
      * @return 目标责任人ID
      */
-    private Long resolveTargetUserId(AssetHandoverBo bo, AssetBizType bizType)
+    private Long resolveTargetUserId(AssetHandoverCreateBo bo)
     {
-        if (AssetBizType.RETURN.equals(bizType))
-        {
-            return bo.getToUserId();
-        }
         return bo.getToUserId();
     }
 
@@ -378,16 +515,27 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
      * 解析目标位置。
      *
      * @param currentAsset 当前资产
-     * @param bo 交接参数
+     * @param bo 建单参数
      * @return 目标位置
      */
-    private String resolveTargetLocation(AssetLedger currentAsset, AssetHandoverBo bo)
+    private String resolveTargetLocation(AssetLedger currentAsset, AssetHandoverCreateBo bo)
     {
         if (StringUtils.isNotBlank(bo.getLocationName()))
         {
             return StringUtils.trim(bo.getLocationName());
         }
         return StringUtils.trimToEmpty(currentAsset.getLocationName());
+    }
+
+    /**
+     * 解析资产类型，空值按固定资产处理。
+     *
+     * @param asset 资产实体
+     * @return 标准化资产类型
+     */
+    private String resolveAssetType(AssetLedger asset)
+    {
+        return StringUtils.upperCase(StringUtils.defaultIfBlank(asset.getAssetType(), FIXED_ASSET_TYPE));
     }
 
     /**
@@ -399,7 +547,7 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     {
         String currentYear = String.valueOf(Year.now().getValue());
         String handoverNoPrefix = HANDOVER_NO_PREFIX + "-" + currentYear + "-";
-        String currentMaxNo = assetHandoverMapper.selectMaxHandoverNoByPrefix(handoverNoPrefix);
+        String currentMaxNo = assetHandoverOrderMapper.selectMaxHandoverNoByPrefix(handoverNoPrefix);
         int nextSerial = parseNextSerial(currentMaxNo, handoverNoPrefix);
         return handoverNoPrefix + String.format("%0" + HANDOVER_NO_SERIAL_LENGTH + "d", nextSerial);
     }
@@ -430,10 +578,11 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
      *
      * @param bizType 业务类型
      * @param handoverNo 交接单号
+     * @param assetCode 资产编码
      * @return 日志说明
      */
-    private String buildChangeDesc(AssetBizType bizType, String handoverNo)
+    private String buildChangeDesc(AssetBizType bizType, String handoverNo, String assetCode)
     {
-        return bizType.getDescription() + "（单号：" + handoverNo + "）";
+        return bizType.getDescription() + "（单号：" + handoverNo + "，资产编码：" + StringUtils.trimToEmpty(assetCode) + "）";
     }
 }

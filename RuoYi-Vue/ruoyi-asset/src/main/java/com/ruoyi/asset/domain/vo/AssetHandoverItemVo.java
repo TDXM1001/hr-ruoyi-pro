@@ -1,30 +1,22 @@
 package com.ruoyi.asset.domain.vo;
 
-import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 资产交接展示对象。
- *
- * <p>
- * 该对象用于交接记录列表与详情展示，补齐资产、部门、责任人名称，
- * 便于资产管理员按业务单据追溯责任变化轨迹。
- * </p>
+ * 资产交接明细视图对象。
  *
  * @author Codex
  */
-public class AssetHandoverVo extends BaseEntity
+public class AssetHandoverItemVo extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 交接ID */
-    private Long handoverId;
+    /** 交接明细ID */
+    private Long handoverItemId;
 
-    /** 交接单号 */
-    @Excel(name = "交接单号")
-    private String handoverNo;
+    /** 交接主单ID */
+    private Long handoverOrderId;
 
     /** 资产ID */
     private Long assetId;
@@ -37,15 +29,11 @@ public class AssetHandoverVo extends BaseEntity
     @Excel(name = "资产名称")
     private String assetName;
 
-    /** 交接类型 */
-    @Excel(name = "交接类型")
-    private String handoverType;
-
-    /** 原部门ID */
+    /** 原使用部门ID */
     private Long fromDeptId;
 
-    /** 原部门名称 */
-    @Excel(name = "原部门")
+    /** 原使用部门名称 */
+    @Excel(name = "原使用部门")
     private String fromDeptName;
 
     /** 原责任人ID */
@@ -59,11 +47,11 @@ public class AssetHandoverVo extends BaseEntity
     @Excel(name = "交接前位置")
     private String fromLocationName;
 
-    /** 目标部门ID */
+    /** 目标使用部门ID */
     private Long toDeptId;
 
-    /** 目标部门名称 */
-    @Excel(name = "目标部门")
+    /** 目标使用部门名称 */
+    @Excel(name = "目标使用部门")
     private String toDeptName;
 
     /** 目标责任人ID */
@@ -73,46 +61,36 @@ public class AssetHandoverVo extends BaseEntity
     @Excel(name = "目标责任人")
     private String toUserName;
 
-    /** 交接状态 */
-    @Excel(name = "交接状态")
-    private String handoverStatus;
-
-    /** 交接日期 */
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "交接日期", dateFormat = "yyyy-MM-dd")
-    private Date handoverDate;
-
     /** 交接后位置 */
     @Excel(name = "交接后位置")
-    private String locationName;
+    private String toLocationName;
 
-    /** 确认人 */
-    @Excel(name = "确认人")
-    private String confirmBy;
+    /** 交接前状态 */
+    @Excel(name = "交接前状态")
+    private String beforeStatus;
 
-    /** 确认时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "确认时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date confirmTime;
+    /** 交接后状态 */
+    @Excel(name = "交接后状态")
+    private String afterStatus;
 
-    public Long getHandoverId()
+    public Long getHandoverItemId()
     {
-        return handoverId;
+        return handoverItemId;
     }
 
-    public void setHandoverId(Long handoverId)
+    public void setHandoverItemId(Long handoverItemId)
     {
-        this.handoverId = handoverId;
+        this.handoverItemId = handoverItemId;
     }
 
-    public String getHandoverNo()
+    public Long getHandoverOrderId()
     {
-        return handoverNo;
+        return handoverOrderId;
     }
 
-    public void setHandoverNo(String handoverNo)
+    public void setHandoverOrderId(Long handoverOrderId)
     {
-        this.handoverNo = handoverNo;
+        this.handoverOrderId = handoverOrderId;
     }
 
     public Long getAssetId()
@@ -143,16 +121,6 @@ public class AssetHandoverVo extends BaseEntity
     public void setAssetName(String assetName)
     {
         this.assetName = assetName;
-    }
-
-    public String getHandoverType()
-    {
-        return handoverType;
-    }
-
-    public void setHandoverType(String handoverType)
-    {
-        this.handoverType = handoverType;
     }
 
     public Long getFromDeptId()
@@ -245,53 +213,33 @@ public class AssetHandoverVo extends BaseEntity
         this.toUserName = toUserName;
     }
 
-    public String getHandoverStatus()
+    public String getToLocationName()
     {
-        return handoverStatus;
+        return toLocationName;
     }
 
-    public void setHandoverStatus(String handoverStatus)
+    public void setToLocationName(String toLocationName)
     {
-        this.handoverStatus = handoverStatus;
+        this.toLocationName = toLocationName;
     }
 
-    public Date getHandoverDate()
+    public String getBeforeStatus()
     {
-        return handoverDate;
+        return beforeStatus;
     }
 
-    public void setHandoverDate(Date handoverDate)
+    public void setBeforeStatus(String beforeStatus)
     {
-        this.handoverDate = handoverDate;
+        this.beforeStatus = beforeStatus;
     }
 
-    public String getLocationName()
+    public String getAfterStatus()
     {
-        return locationName;
+        return afterStatus;
     }
 
-    public void setLocationName(String locationName)
+    public void setAfterStatus(String afterStatus)
     {
-        this.locationName = locationName;
-    }
-
-    public String getConfirmBy()
-    {
-        return confirmBy;
-    }
-
-    public void setConfirmBy(String confirmBy)
-    {
-        this.confirmBy = confirmBy;
-    }
-
-    public Date getConfirmTime()
-    {
-        return confirmTime;
-    }
-
-    public void setConfirmTime(Date confirmTime)
-    {
-        this.confirmTime = confirmTime;
+        this.afterStatus = afterStatus;
     }
 }

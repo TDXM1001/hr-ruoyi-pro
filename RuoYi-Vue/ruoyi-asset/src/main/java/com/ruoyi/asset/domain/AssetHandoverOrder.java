@@ -6,45 +6,28 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 资产交接记录对象。
+ * 资产交接主单对象。
  *
- * <p>
- * 固定资产一期统一使用该对象承载领用、调拨、退还三类动作，
- * 保证每次使用关系变更都先形成业务记录，再回写台账当前态。
- * </p>
+ * <p>主单负责表达一次批量领用、调拨、退还业务的统一信息，
+ * 明细资产的来源、去向与状态快照由 {@link AssetHandoverItem} 记录。</p>
  *
  * @author Codex
  */
-public class AssetHandover extends BaseEntity
+public class AssetHandoverOrder extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 交接记录ID */
-    private Long handoverId;
+    /** 交接主单ID */
+    private Long handoverOrderId;
 
     /** 交接单号 */
     private String handoverNo;
 
-    /** 资产ID */
-    private Long assetId;
+    /** 资产类型 */
+    private String assetType;
 
-    /** 交接类型（ASSIGN/TRANSFER/RETURN） */
+    /** 交接类型 */
     private String handoverType;
-
-    /** 原部门ID */
-    private Long fromDeptId;
-
-    /** 原责任人ID */
-    private Long fromUserId;
-
-    /** 交接前位置 */
-    private String fromLocationName;
-
-    /** 目标部门ID */
-    private Long toDeptId;
-
-    /** 目标责任人ID */
-    private Long toUserId;
 
     /** 交接状态 */
     private String handoverStatus;
@@ -52,7 +35,16 @@ public class AssetHandover extends BaseEntity
     /** 交接日期 */
     private Date handoverDate;
 
-    /** 交接后位置 */
+    /** 资产数量 */
+    private Integer assetCount;
+
+    /** 目标部门ID */
+    private Long toDeptId;
+
+    /** 目标责任人ID */
+    private Long toUserId;
+
+    /** 目标位置 */
     private String locationName;
 
     /** 确认人 */
@@ -61,14 +53,14 @@ public class AssetHandover extends BaseEntity
     /** 确认时间 */
     private Date confirmTime;
 
-    public Long getHandoverId()
+    public Long getHandoverOrderId()
     {
-        return handoverId;
+        return handoverOrderId;
     }
 
-    public void setHandoverId(Long handoverId)
+    public void setHandoverOrderId(Long handoverOrderId)
     {
-        this.handoverId = handoverId;
+        this.handoverOrderId = handoverOrderId;
     }
 
     public String getHandoverNo()
@@ -81,14 +73,14 @@ public class AssetHandover extends BaseEntity
         this.handoverNo = handoverNo;
     }
 
-    public Long getAssetId()
+    public String getAssetType()
     {
-        return assetId;
+        return assetType;
     }
 
-    public void setAssetId(Long assetId)
+    public void setAssetType(String assetType)
     {
-        this.assetId = assetId;
+        this.assetType = assetType;
     }
 
     public String getHandoverType()
@@ -99,56 +91,6 @@ public class AssetHandover extends BaseEntity
     public void setHandoverType(String handoverType)
     {
         this.handoverType = handoverType;
-    }
-
-    public Long getFromDeptId()
-    {
-        return fromDeptId;
-    }
-
-    public void setFromDeptId(Long fromDeptId)
-    {
-        this.fromDeptId = fromDeptId;
-    }
-
-    public Long getFromUserId()
-    {
-        return fromUserId;
-    }
-
-    public void setFromUserId(Long fromUserId)
-    {
-        this.fromUserId = fromUserId;
-    }
-
-    public String getFromLocationName()
-    {
-        return fromLocationName;
-    }
-
-    public void setFromLocationName(String fromLocationName)
-    {
-        this.fromLocationName = fromLocationName;
-    }
-
-    public Long getToDeptId()
-    {
-        return toDeptId;
-    }
-
-    public void setToDeptId(Long toDeptId)
-    {
-        this.toDeptId = toDeptId;
-    }
-
-    public Long getToUserId()
-    {
-        return toUserId;
-    }
-
-    public void setToUserId(Long toUserId)
-    {
-        this.toUserId = toUserId;
     }
 
     public String getHandoverStatus()
@@ -169,6 +111,36 @@ public class AssetHandover extends BaseEntity
     public void setHandoverDate(Date handoverDate)
     {
         this.handoverDate = handoverDate;
+    }
+
+    public Integer getAssetCount()
+    {
+        return assetCount;
+    }
+
+    public void setAssetCount(Integer assetCount)
+    {
+        this.assetCount = assetCount;
+    }
+
+    public Long getToDeptId()
+    {
+        return toDeptId;
+    }
+
+    public void setToDeptId(Long toDeptId)
+    {
+        this.toDeptId = toDeptId;
+    }
+
+    public Long getToUserId()
+    {
+        return toUserId;
+    }
+
+    public void setToUserId(Long toUserId)
+    {
+        this.toUserId = toUserId;
     }
 
     public String getLocationName()
@@ -205,17 +177,15 @@ public class AssetHandover extends BaseEntity
     public String toString()
     {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
-            .append("handoverId", getHandoverId())
+            .append("handoverOrderId", getHandoverOrderId())
             .append("handoverNo", getHandoverNo())
-            .append("assetId", getAssetId())
+            .append("assetType", getAssetType())
             .append("handoverType", getHandoverType())
-            .append("fromDeptId", getFromDeptId())
-            .append("fromUserId", getFromUserId())
-            .append("fromLocationName", getFromLocationName())
-            .append("toDeptId", getToDeptId())
-            .append("toUserId", getToUserId())
             .append("handoverStatus", getHandoverStatus())
             .append("handoverDate", getHandoverDate())
+            .append("assetCount", getAssetCount())
+            .append("toDeptId", getToDeptId())
+            .append("toUserId", getToUserId())
             .append("locationName", getLocationName())
             .append("confirmBy", getConfirmBy())
             .append("confirmTime", getConfirmTime())
