@@ -6,6 +6,7 @@
 -- 3. 全新环境请先执行 00-asset-schema.sql，再执行本脚本。
 -- 4. 已执行旧版 00 的环境请先执行 02-asset-upgrade-20260318.sql，再执行本脚本。
 -- 5. 如果旧环境已经执行过早期版本的 01，请继续执行 03-asset-menu-upgrade-20260318.sql 完成菜单升级。
+-- 6. 如果旧环境已经执行过 01 和 03，请补执行 05-asset-use-menu-upgrade-20260319.sql 接入资产使用页面菜单。
 -- ----------------------------
 
 -- ----------------------------
@@ -93,6 +94,34 @@ select
 from dual
 where not exists (
   select 1 from sys_menu where menu_id = 2105 or perms = 'asset:ledger:export'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2110, '资产使用', 2100, 5, 'use', 'asset/use/index', '', 'AssetUse',
+  1, 0, 'C', '0', '0', 'asset:handover:list', 'repeat-2-line',
+  'admin', sysdate(), '', null, '资产领用/调拨/退还页面'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2110 or route_name = 'AssetUse'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2111, '资产交接新增', 2110, 1, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:handover:add', '#',
+  'admin', sysdate(), '', null, '资产交接新增按钮'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2111 or perms = 'asset:handover:add'
 );
 
 -- ----------------------------

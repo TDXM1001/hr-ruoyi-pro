@@ -17,15 +17,17 @@
 - `04-asset-handover-order-upgrade-20260318.sql`
   - 用途：把资产交接从“单表单资产”升级为“主单 + 明细”模型。
   - 特点：会保留旧 `ast_asset_handover` 表，并把旧数据迁移到新主单/明细表。
+- `05-asset-use-menu-upgrade-20260319.sql`
+  - 用途：增量补齐“资产使用”动态路由菜单与交接新增按钮权限（Task 6 前端对接）。
 
 ## 2. 推荐执行口径
 
 - 全新环境：
   - 执行顺序：`00 -> 01`
 - 老库，之前只执行过旧版 `00`：
-  - 执行顺序：`02 -> 04 -> 01`
+  - 执行顺序：`02 -> 04 -> 01 -> 05`
 - 老库，之前执行过旧版 `00` 和旧版 `01`：
-  - 执行顺序：`02 -> 04 -> 01 -> 03`
+  - 执行顺序：`02 -> 04 -> 01 -> 03 -> 05`
 - 已有业务数据的库：
   - 不要重跑 `00`
 
@@ -37,12 +39,14 @@
 source RuoYi-Vue/sql/asset/02-asset-upgrade-20260318.sql;
 source RuoYi-Vue/sql/asset/04-asset-handover-order-upgrade-20260318.sql;
 source RuoYi-Vue/sql/asset/01-asset-seed.sql;
+source RuoYi-Vue/sql/asset/05-asset-use-menu-upgrade-20260319.sql;
 ```
 
 如果你之前连旧版菜单也跑过，并且菜单还是老的弹窗模式，再补执行：
 
 ```sql
 source RuoYi-Vue/sql/asset/03-asset-menu-upgrade-20260318.sql;
+source RuoYi-Vue/sql/asset/05-asset-use-menu-upgrade-20260319.sql;
 ```
 
 ## 4. `04` 脚本做了什么
@@ -98,7 +102,7 @@ limit 20;
 ```sql
 select menu_id, menu_name, parent_id, menu_type, visible, path, component, perms
 from sys_menu
-where menu_id between 2100 and 2105
+where menu_id between 2100 and 2111
 order by menu_id;
 ```
 
