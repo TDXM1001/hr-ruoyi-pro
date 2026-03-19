@@ -52,6 +52,19 @@ public class AssetHandoverController extends BaseController
     }
 
     /**
+     * 查询交接主单详情。
+     *
+     * @param handoverOrderId 主单ID
+     * @return 主单详情
+     */
+    @PreAuthorize("@ss.hasPermi('asset:handover:list')")
+    @GetMapping("/order/{handoverOrderId}")
+    public AjaxResult getInfo(@PathVariable Long handoverOrderId)
+    {
+        return success(assetHandoverService.selectAssetHandoverOrderById(handoverOrderId));
+    }
+
+    /**
      * 查询交接主单明细。
      *
      * @param handoverOrderId 主单ID

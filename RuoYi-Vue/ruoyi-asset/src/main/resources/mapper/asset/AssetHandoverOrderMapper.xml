@@ -69,6 +69,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by o.handover_date desc, o.handover_order_id desc
     </select>
 
+    <select id="selectAssetHandoverOrderById" parameterType="Long" resultMap="AssetHandoverOrderVoResult">
+        <include refid="selectAssetHandoverOrderVoColumns"/>
+        where o.handover_order_id = #{handoverOrderId}
+    </select>
+
     <select id="selectMaxHandoverNoByPrefix" parameterType="String" resultType="String">
         select max(handover_no)
         from ast_asset_handover_order

@@ -73,6 +73,22 @@ public class AssetHandoverServiceImpl implements IAssetHandoverService
     }
 
     /**
+     * 查询交接主单详情。
+     *
+     * @param handoverOrderId 主单ID
+     * @return 主单详情
+     */
+    @Override
+    public AssetHandoverOrderVo selectAssetHandoverOrderById(Long handoverOrderId)
+    {
+        if (handoverOrderId == null)
+        {
+            throw new ServiceException("交接主单ID不能为空");
+        }
+        return assetHandoverOrderMapper.selectAssetHandoverOrderById(handoverOrderId);
+    }
+
+    /**
      * 查询主单下的交接明细。
      *
      * @param handoverOrderId 主单ID

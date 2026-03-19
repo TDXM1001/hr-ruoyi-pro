@@ -1,113 +1,62 @@
 # 资产模块 SQL 执行说明
 
-## 1. 文件说明
-
-当前 `RuoYi-Vue/sql/asset` 目录下主要脚本如下：
+## 1. 脚本说明
 
 - `00-asset-schema.sql`
-  - 用途：全新环境首次建表。
-  - 特点：包含 `drop table if exists` 和 `create table`，不适合在已有业务数据的库里重复执行。
+  - 用途：全新环境建表（含 `drop/create`）。
 - `01-asset-seed.sql`
-  - 用途：补齐菜单、动态路由、字典、分类和联调样例数据。
+  - 用途：初始化菜单、动态路由、字典、分类与联调样例数据。
 - `02-asset-upgrade-20260318.sql`
-  - 用途：老库补齐一期基础字段和索引。
-  - 范围：资产台账 `acquire_type`、老版交接表补字段、盘点补字段、处置补字段。
+  - 用途：老库增量补齐一期基础字段与索引。
 - `03-asset-menu-upgrade-20260318.sql`
-  - 用途：把早期弹窗式资产台账菜单升级为页面版动态路由菜单。
+  - 用途：把早期资产台账菜单升级为页面版动态路由。
 - `04-asset-handover-order-upgrade-20260318.sql`
-  - 用途：把资产交接从“单表单资产”升级为“主单 + 明细”模型。
-  - 特点：会保留旧 `ast_asset_handover` 表，并把旧数据迁移到新主单/明细表。
+  - 用途：把交接从旧单表升级为“主单 + 明细”模型。
 - `05-asset-use-menu-upgrade-20260319.sql`
-  - 用途：增量补齐“资产使用”动态路由菜单与交接新增按钮权限（Task 6 前端对接）。
+  - 用途：增量补齐资产使用主菜单与交接新增按钮权限。
+- `06-asset-use-route-upgrade-20260319.sql`
+  - 用途：增量补齐资产使用“新增页/详情页”隐藏路由（不展示菜单，仅用于页面跳转）。
 
 ## 2. 推荐执行口径
 
-- 全新环境：
-  - 执行顺序：`00 -> 01`
-- 老库，之前只执行过旧版 `00`：
-  - 执行顺序：`02 -> 04 -> 01 -> 05`
-- 老库，之前执行过旧版 `00` 和旧版 `01`：
-  - 执行顺序：`02 -> 04 -> 01 -> 03 -> 05`
-- 已有业务数据的库：
-  - 不要重跑 `00`
+- 全新环境：`00 -> 01`
+- 老库（之前只跑过旧版 `00`）：`02 -> 04 -> 01 -> 05 -> 06`
+- 老库（之前跑过旧版 `00` 和旧版 `01`）：`02 -> 04 -> 01 -> 03 -> 05 -> 06`
+- 有业务数据的库：不要重跑 `00`
 
-## 3. 你当前场景怎么执行
+## 3. 你当前场景如何执行
 
-如果你之前已经执行过 `00-asset-schema.sql`，现在要接入新的交接主单/明细后端，执行顺序建议是：
+如果你之前已经执行过 `00` 到 `05`，本次只需要执行：
 
 ```sql
-source RuoYi-Vue/sql/asset/02-asset-upgrade-20260318.sql;
-source RuoYi-Vue/sql/asset/04-asset-handover-order-upgrade-20260318.sql;
+source RuoYi-Vue/sql/asset/06-asset-use-route-upgrade-20260319.sql;
+```
+
+如果你之前执行过 `00` 到 `04`，建议执行：
+
+```sql
 source RuoYi-Vue/sql/asset/01-asset-seed.sql;
 source RuoYi-Vue/sql/asset/05-asset-use-menu-upgrade-20260319.sql;
+source RuoYi-Vue/sql/asset/06-asset-use-route-upgrade-20260319.sql;
 ```
 
-如果你之前连旧版菜单也跑过，并且菜单还是老的弹窗模式，再补执行：
-
-```sql
-source RuoYi-Vue/sql/asset/03-asset-menu-upgrade-20260318.sql;
-source RuoYi-Vue/sql/asset/05-asset-use-menu-upgrade-20260319.sql;
-```
-
-## 4. `04` 脚本做了什么
-
-- 新增 `ast_asset_handover_order`
-- 新增 `ast_asset_handover_item`
-- 保留旧 `ast_asset_handover`
-- 若旧表有数据，则按“一条旧交接记录 = 一张主单 + 一条明细”迁移
-
-说明：
-
-- 旧表没有 `before_status / after_status` 快照字段，所以迁移时会按交接类型推导：
-  - `ASSIGN`：`IN_LEDGER -> IN_USE`
-  - `TRANSFER`：`IN_USE -> IN_USE`
-  - `RETURN`：`IN_USE -> IDLE`
-- 这是历史数据兼容方案，不影响新单据按新模型完整留痕。
-
-## 5. 执行后验证
-
-### 5.1 验证新表
-
-```sql
-show tables like 'ast_asset_handover%';
-
-show columns from ast_asset_handover_order;
-show columns from ast_asset_handover_item;
-```
-
-至少应看到：
-
-- `ast_asset_handover_order.handover_order_id`
-- `ast_asset_handover_order.asset_count`
-- `ast_asset_handover_item.handover_item_id`
-- `ast_asset_handover_item.before_status`
-- `ast_asset_handover_item.after_status`
-
-### 5.2 验证旧数据是否迁移
-
-```sql
-select handover_no, handover_type, asset_count
-from ast_asset_handover_order
-order by handover_order_id desc
-limit 20;
-
-select handover_order_id, asset_id, asset_code, before_status, after_status
-from ast_asset_handover_item
-order by handover_item_id desc
-limit 20;
-```
-
-### 5.3 验证台账与交接菜单
+## 4. 执行后验证
 
 ```sql
 select menu_id, menu_name, parent_id, menu_type, visible, path, component, perms
 from sys_menu
-where menu_id between 2100 and 2111
+where menu_id between 2100 and 2113
 order by menu_id;
 ```
 
-## 6. 注意事项
+你至少应看到：
 
-- `04` 是新增增量脚本，目的是避免你已经执行过的 `02` 被反复改写。
-- `00` 可以保持为最新全量建库脚本，供新环境一次性初始化使用。
-- 生产库执行前，建议先备份 `ast_asset_handover`、`ast_asset_handover_order`、`ast_asset_handover_item` 三张表相关数据。
+- `2110`：资产使用（可见菜单）
+- `2111`：资产交接新增（按钮权限）
+- `2112`：资产交接新增页（隐藏路由）
+- `2113`：资产交接详情页（隐藏路由）
+
+## 5. 注意事项
+
+- 生产库执行前，建议先备份 `ast_asset_handover_order`、`ast_asset_handover_item` 与 `sys_menu` 相关数据。
+- `06` 是纯增量脚本，可重复执行（`update + insert not exists`）。

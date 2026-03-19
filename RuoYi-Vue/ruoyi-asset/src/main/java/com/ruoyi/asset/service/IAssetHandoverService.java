@@ -22,6 +22,14 @@ public interface IAssetHandoverService
     List<AssetHandoverOrderVo> selectAssetHandoverOrderList(AssetHandoverOrderBo bo);
 
     /**
+     * 查询交接主单详情。
+     *
+     * @param handoverOrderId 主单ID
+     * @return 主单详情
+     */
+    AssetHandoverOrderVo selectAssetHandoverOrderById(Long handoverOrderId);
+
+    /**
      * 查询交接主单下的资产明细。
      *
      * @param handoverOrderId 主单ID

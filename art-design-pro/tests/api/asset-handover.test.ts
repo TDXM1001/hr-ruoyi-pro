@@ -17,6 +17,7 @@ import {
   listAssetHandover,
   addAssetHandover,
   listAssetHandoverOrder,
+  getAssetHandoverOrder,
   listAssetHandoverItems,
   addAssetHandoverOrder
 } from '../../src/api/asset/handover'
@@ -26,6 +27,7 @@ describe('Asset Handover API', () => {
     expect(typeof listAssetHandover).toBe('function')
     expect(typeof addAssetHandover).toBe('function')
     expect(typeof listAssetHandoverOrder).toBe('function')
+    expect(typeof getAssetHandoverOrder).toBe('function')
     expect(typeof listAssetHandoverItems).toBe('function')
     expect(typeof addAssetHandoverOrder).toBe('function')
   })
@@ -51,6 +53,18 @@ describe('Asset Handover API', () => {
 
     expect(requestMock).toHaveBeenCalledWith({
       url: '/asset/handover/order/1001/items',
+      method: 'get'
+    })
+  })
+
+  it('should request order detail by order id', async () => {
+    const requestMock = vi.mocked(http.request)
+    requestMock.mockResolvedValueOnce({})
+
+    await getAssetHandoverOrder(1001)
+
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/asset/handover/order/1001',
       method: 'get'
     })
   })

@@ -6,7 +6,8 @@
 -- 3. 全新环境请先执行 00-asset-schema.sql，再执行本脚本。
 -- 4. 已执行旧版 00 的环境请先执行 02-asset-upgrade-20260318.sql，再执行本脚本。
 -- 5. 如果旧环境已经执行过早期版本的 01，请继续执行 03-asset-menu-upgrade-20260318.sql 完成菜单升级。
--- 6. 如果旧环境已经执行过 01 和 03，请补执行 05-asset-use-menu-upgrade-20260319.sql 接入资产使用页面菜单。
+-- 6. 如果旧环境已经执行过 01 和 03，请补执行 05-asset-use-menu-upgrade-20260319.sql 接入资产使用菜单。
+-- 7. 如果旧环境已经执行过 05，请补执行 06-asset-use-route-upgrade-20260319.sql 接入资产使用新增/详情隐藏路由。
 -- ----------------------------
 
 -- ----------------------------
@@ -122,6 +123,34 @@ select
 from dual
 where not exists (
   select 1 from sys_menu where menu_id = 2111 or perms = 'asset:handover:add'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2112, '资产交接新增页', 2100, 6, 'use/create', 'asset/use/form/index', '', 'AssetUseCreate',
+  1, 0, 'C', '1', '0', 'asset:handover:add', '#',
+  'admin', sysdate(), '', null, '资产交接新增隐藏路由'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2112 or route_name = 'AssetUseCreate'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2113, '资产交接详情页', 2100, 7, 'use/detail/:handoverOrderId', 'asset/use/detail/index', '', 'AssetUseDetail',
+  1, 0, 'C', '1', '0', 'asset:handover:list', '#',
+  'admin', sysdate(), '', null, '资产交接详情隐藏路由'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2113 or route_name = 'AssetUseDetail'
 );
 
 -- ----------------------------

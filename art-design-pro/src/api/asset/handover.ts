@@ -48,6 +48,15 @@ export function listAssetHandoverItems(handoverOrderId: number | string) {
 }
 
 /**
+ * 查询交接主单详情。
+ * @param handoverOrderId 交接主单ID
+ * @returns 主单详情
+ */
+export function getAssetHandoverOrder(handoverOrderId: number | string) {
+  return http.request({ url: `/asset/handover/order/${handoverOrderId}`, method: 'get' })
+}
+
+/**
  * 新增资产交接主单。
  * @param data 建单参数
  * @returns 新增结果（交接主单ID）

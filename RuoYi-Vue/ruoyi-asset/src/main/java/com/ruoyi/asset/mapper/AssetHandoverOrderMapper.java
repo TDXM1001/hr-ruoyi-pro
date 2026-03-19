@@ -21,6 +21,14 @@ public interface AssetHandoverOrderMapper
     List<AssetHandoverOrderVo> selectAssetHandoverOrderList(AssetHandoverOrderBo bo);
 
     /**
+     * 查询交接主单详情。
+     *
+     * @param handoverOrderId 主单ID
+     * @return 主单详情
+     */
+    AssetHandoverOrderVo selectAssetHandoverOrderById(Long handoverOrderId);
+
+    /**
      * 查询指定前缀下的最大交接单号。
      *
      * @param handoverNoPrefix 单号前缀
