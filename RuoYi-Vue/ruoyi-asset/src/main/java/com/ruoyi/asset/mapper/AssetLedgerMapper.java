@@ -1,6 +1,7 @@
 package com.ruoyi.asset.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.asset.domain.AssetLedger;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
 import com.ruoyi.asset.domain.vo.AssetLedgerVo;
@@ -18,7 +19,7 @@ public interface AssetLedgerMapper
      * @param assetId 资产ID
      * @return 台账主档
      */
-    public AssetLedger selectAssetById(Long assetId);
+    AssetLedger selectAssetById(Long assetId);
 
     /**
      * 根据资产编码查询台账主档。
@@ -26,7 +27,7 @@ public interface AssetLedgerMapper
      * @param assetCode 资产编码
      * @return 台账主档
      */
-    public AssetLedger selectByAssetCode(String assetCode);
+    AssetLedger selectByAssetCode(String assetCode);
 
     /**
      * 按资产编码前缀查询当前最大编码。
@@ -34,7 +35,7 @@ public interface AssetLedgerMapper
      * @param assetCodePrefix 编码前缀
      * @return 当前最大编码
      */
-    public String selectMaxAssetCodeByPrefix(String assetCodePrefix);
+    String selectMaxAssetCodeByPrefix(String assetCodePrefix);
 
     /**
      * 查询台账列表。
@@ -42,7 +43,7 @@ public interface AssetLedgerMapper
      * @param bo 查询条件
      * @return 台账列表
      */
-    public List<AssetLedgerVo> selectAssetLedgerList(AssetLedgerBo bo);
+    List<AssetLedgerVo> selectAssetLedgerList(AssetLedgerBo bo);
 
     /**
      * 查询台账详情。
@@ -50,7 +51,7 @@ public interface AssetLedgerMapper
      * @param assetId 资产ID
      * @return 台账详情
      */
-    public AssetLedgerVo selectAssetLedgerById(Long assetId);
+    AssetLedgerVo selectAssetLedgerById(Long assetId);
 
     /**
      * 新增资产台账。
@@ -58,7 +59,7 @@ public interface AssetLedgerMapper
      * @param assetLedger 台账主档
      * @return 结果
      */
-    public int insertAsset(AssetLedger assetLedger);
+    int insertAsset(AssetLedger assetLedger);
 
     /**
      * 修改资产台账。
@@ -66,7 +67,7 @@ public interface AssetLedgerMapper
      * @param assetLedger 台账主档
      * @return 结果
      */
-    public int updateAsset(AssetLedger assetLedger);
+    int updateAsset(AssetLedger assetLedger);
 
     /**
      * 回写资产交接后的使用信息与状态。
@@ -74,5 +75,37 @@ public interface AssetLedgerMapper
      * @param assetLedger 台账主档
      * @return 结果
      */
-    public int updateAssetUsageInfo(AssetLedger assetLedger);
+    int updateAssetUsageInfo(AssetLedger assetLedger);
+
+    /**
+     * 仅更新资产状态。
+     *
+     * @param assetId 资产ID
+     * @param assetStatus 资产状态
+     * @return 结果
+     */
+    int updateStatus(@Param("assetId") Long assetId, @Param("assetStatus") String assetStatus);
+
+    /**
+     * 回写盘点后的台账信息。
+     *
+     * @param assetLedger 台账对象
+     * @return 结果
+     */
+    int updateInventoryResult(AssetLedger assetLedger);
+
+    /**
+     * 统计资产总量。
+     *
+     * @return 资产总量
+     */
+    Long countAssetTotal();
+
+    /**
+     * 按状态统计资产数量。
+     *
+     * @param assetStatus 资产状态
+     * @return 资产数量
+     */
+    Long countAssetByStatus(String assetStatus);
 }

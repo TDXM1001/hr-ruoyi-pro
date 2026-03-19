@@ -83,6 +83,64 @@ public class AssetChangeLog implements Serializable
         return changeLog;
     }
 
+    /**
+     * 构建发起盘点日志。
+     *
+     * @param assetId 资产ID
+     * @param taskId 任务ID
+     * @param beforeStatus 变更前状态
+     * @param afterStatus 变更后状态
+     * @param operator 操作人
+     * @return 变更日志
+     */
+    public static AssetChangeLog ofInventoryCreate(Long assetId, Long taskId, String beforeStatus, String afterStatus,
+        String operator)
+    {
+        AssetChangeLog changeLog = build(assetId, AssetBizType.INVENTORY_CREATE.getCode(), beforeStatus, afterStatus,
+            operator, "发起盘点任务");
+        changeLog.setBizId(taskId);
+        return changeLog;
+    }
+
+    /**
+     * 构建盘点结果日志。
+     *
+     * @param assetId 资产ID
+     * @param taskId 任务ID
+     * @param beforeStatus 变更前状态
+     * @param afterStatus 变更后状态
+     * @param operator 操作人
+     * @param changeDesc 变更说明
+     * @return 变更日志
+     */
+    public static AssetChangeLog ofInventoryResult(Long assetId, Long taskId, String beforeStatus, String afterStatus,
+        String operator, String changeDesc)
+    {
+        AssetChangeLog changeLog = build(assetId, AssetBizType.INVENTORY_RESULT.getCode(), beforeStatus, afterStatus,
+            operator, changeDesc);
+        changeLog.setBizId(taskId);
+        return changeLog;
+    }
+
+    /**
+     * 构建处置确认日志。
+     *
+     * @param assetId 资产ID
+     * @param disposalId 处置单ID
+     * @param beforeStatus 变更前状态
+     * @param afterStatus 变更后状态
+     * @param operator 操作人
+     * @return 变更日志
+     */
+    public static AssetChangeLog ofDisposalConfirm(Long assetId, Long disposalId, String beforeStatus,
+        String afterStatus, String operator)
+    {
+        AssetChangeLog changeLog = build(assetId, AssetBizType.DISPOSAL_CONFIRM.getCode(), beforeStatus, afterStatus,
+            operator, "确认资产处置");
+        changeLog.setBizId(disposalId);
+        return changeLog;
+    }
+
     private static AssetChangeLog build(Long assetId, String bizType, String beforeStatus,
         String afterStatus, String operator, String changeDesc)
     {

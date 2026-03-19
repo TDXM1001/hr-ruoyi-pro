@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetInventoryMapper">
+
+    <resultMap id="AssetInventoryTaskResult" type="com.ruoyi.asset.domain.AssetInventoryTask">
+        <id property="taskId" column="task_id"/>
+        <result property="taskNo" column="task_no"/>
+        <result property="taskName" column="task_name"/>
+        <result property="taskStatus" column="task_status"/>
+        <result property="scopeType" column="scope_type"/>
+        <result property="scopeValue" column="scope_value"/>
+        <result property="plannedDate" column="planned_date"/>
+        <result property="completedDate" column="completed_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetInventoryTaskVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryTaskVo">
+        <id property="taskId" column="task_id"/>
+        <result property="taskNo" column="task_no"/>
+        <result property="taskName" column="task_name"/>
+        <result property="taskStatus" column="task_status"/>
+        <result property="scopeType" column="scope_type"/>
+        <result property="scopeValue" column="scope_value"/>
+        <result property="plannedDate" column="planned_date"/>
+        <result property="completedDate" column="completed_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetInventoryItemResult" type="com.ruoyi.asset.domain.AssetInventoryItem">
+        <id property="itemId" column="item_id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="inventoryResult" column="inventory_result"/>
+        <result property="actualLocationName" column="actual_location_name"/>
+        <result property="actualUseDeptId" column="actual_use_dept_id"/>
+        <result property="actualResponsibleUserId" column="actual_responsible_user_id"/>
+        <result property="followUpAction" column="follow_up_action"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="processTime" column="process_time"/>
+        <result property="followUpBizId" column="follow_up_biz_id"/>
+        <result property="checkedBy" column="checked_by"/>
+        <result property="checkedTime" column="checked_time"/>
+        <result property="resultDesc" column="result_desc"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectTaskColumns">
+        select task_id, task_no, task_name, task_status, scope_type, scope_value, planned_date, completed_date,
+               create_by, create_time, update_by, update_time, remark
+        from ast_asset_inventory_task
+    </sql>
+
+    <select id="selectAssetInventoryTaskList" parameterType="com.ruoyi.asset.domain.bo.AssetInventoryTaskBo" resultMap="AssetInventoryTaskVoResult">
+        <include refid="selectTaskColumns"/>
+        <where>
+            1 = 1
+            <if test="taskNo != null and taskNo != ''">
+                and task_no like concat('%', #{taskNo}, '%')
+            </if>
+            <if test="taskName != null and taskName != ''">
+                and task_name like concat('%', #{taskName}, '%')
+            </if>
+            <if test="taskStatus != null and taskStatus != ''">
+                and task_status = #{taskStatus}
+            </if>
+            <if test="scopeType != null and scopeType != ''">
+                and scope_type = #{scopeType}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(planned_date, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(planned_date, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
+            </if>
+        </where>
+        order by planned_date desc, task_id desc
+    </select>
+
+    <select id="selectAssetInventoryTaskById" parameterType="Long" resultMap="AssetInventoryTaskResult">
+        <include refid="selectTaskColumns"/>
+        where task_id = #{taskId}
+    </select>
+
+    <select id="selectAssetInventoryItem" resultMap="AssetInventoryItemResult">
+        select item_id, task_id, asset_id, inventory_result, actual_location_name, actual_use_dept_id,
+               actual_responsible_user_id, follow_up_action, process_status, process_time, follow_up_biz_id,
+               checked_by, checked_time, result_desc, remark
+        from ast_asset_inventory_item
+        where task_id = #{taskId}
+          and asset_id = #{assetId}
+        limit 1
+    </select>
+
+    <select id="selectMaxTaskNoByPrefix" parameterType="String" resultType="String">
+        select max(task_no)
+        from ast_asset_inventory_task
+        where task_no like concat(#{taskNoPrefix}, '%')
+    </select>
+
+    <insert id="insertAssetInventoryTask" parameterType="com.ruoyi.asset.domain.AssetInventoryTask" useGeneratedKeys="true" keyProperty="taskId">
+        insert into ast_asset_inventory_task (
+            <if test="taskNo != null and taskNo != ''">task_no,</if>
+            <if test="taskName != null and taskName != ''">task_name,</if>
+            <if test="taskStatus != null and taskStatus != ''">task_status,</if>
+            <if test="scopeType != null and scopeType != ''">scope_type,</if>
+            <if test="scopeValue != null and scopeValue != ''">scope_value,</if>
+            <if test="plannedDate != null">planned_date,</if>
+            <if test="completedDate != null">completed_date,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="taskNo != null and taskNo != ''">#{taskNo},</if>
+            <if test="taskName != null and taskName != ''">#{taskName},</if>
+            <if test="taskStatus != null and taskStatus != ''">#{taskStatus},</if>
+            <if test="scopeType != null and scopeType != ''">#{scopeType},</if>
+            <if test="scopeValue != null and scopeValue != ''">#{scopeValue},</if>
+            <if test="plannedDate != null">#{plannedDate},</if>
+            <if test="completedDate != null">#{completedDate},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+
+    <insert id="insertAssetInventoryItem" parameterType="com.ruoyi.asset.domain.AssetInventoryItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into ast_asset_inventory_item (
+            <if test="taskId != null">task_id,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="inventoryResult != null and inventoryResult != ''">inventory_result,</if>
+            <if test="actualLocationName != null and actualLocationName != ''">actual_location_name,</if>
+            <if test="actualUseDeptId != null">actual_use_dept_id,</if>
+            <if test="actualResponsibleUserId != null">actual_responsible_user_id,</if>
+            <if test="followUpAction != null and followUpAction != ''">follow_up_action,</if>
+            <if test="processStatus != null and processStatus != ''">process_status,</if>
+            <if test="processTime != null">process_time,</if>
+            <if test="followUpBizId != null">follow_up_biz_id,</if>
+            <if test="checkedBy != null and checkedBy != ''">checked_by,</if>
+            <if test="checkedTime != null">checked_time,</if>
+            <if test="resultDesc != null and resultDesc != ''">result_desc,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="taskId != null">#{taskId},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="inventoryResult != null and inventoryResult != ''">#{inventoryResult},</if>
+            <if test="actualLocationName != null and actualLocationName != ''">#{actualLocationName},</if>
+            <if test="actualUseDeptId != null">#{actualUseDeptId},</if>
+            <if test="actualResponsibleUserId != null">#{actualResponsibleUserId},</if>
+            <if test="followUpAction != null and followUpAction != ''">#{followUpAction},</if>
+            <if test="processStatus != null and processStatus != ''">#{processStatus},</if>
+            <if test="processTime != null">#{processTime},</if>
+            <if test="followUpBizId != null">#{followUpBizId},</if>
+            <if test="checkedBy != null and checkedBy != ''">#{checkedBy},</if>
+            <if test="checkedTime != null">#{checkedTime},</if>
+            <if test="resultDesc != null and resultDesc != ''">#{resultDesc},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+
+    <select id="countInventoryItemByTaskId" parameterType="Long" resultType="Long">
+        select count(1)
+        from ast_asset_inventory_item
+        where task_id = #{taskId}
+    </select>
+
+    <update id="updateTaskStatus">
+        update ast_asset_inventory_task
+        set task_status = #{taskStatus},
+            completed_date = #{completedDate},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where task_id = #{taskId}
+    </update>
+
+    <select id="countOverdueInventoryTask" resultType="Long">
+        select count(1)
+        from ast_asset_inventory_task
+        where planned_date &lt; curdate()
+          and task_status in ('DRAFT', 'IN_PROGRESS')
+    </select>
+</mapper>

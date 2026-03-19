@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetDisposalMapper">
+
+    <resultMap id="AssetDisposalVoResult" type="com.ruoyi.asset.domain.vo.AssetDisposalVo">
+        <id property="disposalId" column="disposal_id"/>
+        <result property="disposalNo" column="disposal_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="disposalType" column="disposal_type"/>
+        <result property="disposalStatus" column="disposal_status"/>
+        <result property="disposalReason" column="disposal_reason"/>
+        <result property="disposalDate" column="disposal_date"/>
+        <result property="disposalAmount" column="disposal_amount"/>
+        <result property="confirmedBy" column="confirmed_by"/>
+        <result property="confirmedTime" column="confirmed_time"/>
+        <result property="financeConfirmFlag" column="finance_confirm_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectDisposalVoColumns">
+        select d.disposal_id, d.disposal_no, d.asset_id, l.asset_code, l.asset_name, d.disposal_type,
+               d.disposal_status, d.disposal_reason, d.disposal_date, d.disposal_amount,
+               d.confirmed_by, d.confirmed_time, d.finance_confirm_flag, d.create_by, d.create_time,
+               d.update_by, d.update_time, d.remark
+        from ast_asset_disposal d
+        left join ast_asset_ledger l on d.asset_id = l.asset_id
+    </sql>
+
+    <select id="selectAssetDisposalList" parameterType="com.ruoyi.asset.domain.bo.AssetDisposalBo" resultMap="AssetDisposalVoResult">
+        <include refid="selectDisposalVoColumns"/>
+        <where>
+            1 = 1
+            <if test="disposalNo != null and disposalNo != ''">
+                and d.disposal_no like concat('%', #{disposalNo}, '%')
+            </if>
+            <if test="assetId != null">
+                and d.asset_id = #{assetId}
+            </if>
+            <if test="disposalType != null and disposalType != ''">
+                and d.disposal_type = #{disposalType}
+            </if>
+            <if test="disposalStatus != null and disposalStatus != ''">
+                and d.disposal_status = #{disposalStatus}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and date_format(d.disposal_date, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and date_format(d.disposal_date, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
+            </if>
+        </where>
+        order by d.disposal_date desc, d.disposal_id desc
+    </select>
+
+    <select id="selectAssetDisposalById" parameterType="Long" resultMap="AssetDisposalVoResult">
+        <include refid="selectDisposalVoColumns"/>
+        where d.disposal_id = #{disposalId}
+    </select>
+
+    <select id="selectMaxDisposalNoByPrefix" parameterType="String" resultType="String">
+        select max(disposal_no)
+        from ast_asset_disposal
+        where disposal_no like concat(#{disposalNoPrefix}, '%')
+    </select>
+
+    <insert id="insertAssetDisposal" parameterType="com.ruoyi.asset.domain.AssetDisposal" useGeneratedKeys="true" keyProperty="disposalId">
+        insert into ast_asset_disposal (
+            <if test="disposalNo != null and disposalNo != ''">disposal_no,</if>
+            <if test="assetId != null">asset_id,</if>
+            <if test="disposalType != null and disposalType != ''">disposal_type,</if>
+            <if test="disposalStatus != null and disposalStatus != ''">disposal_status,</if>
+            <if test="disposalReason != null and disposalReason != ''">disposal_reason,</if>
+            <if test="disposalDate != null">disposal_date,</if>
+            <if test="disposalAmount != null">disposal_amount,</if>
+            <if test="confirmedBy != null and confirmedBy != ''">confirmed_by,</if>
+            <if test="confirmedTime != null">confirmed_time,</if>
+            <if test="financeConfirmFlag != null and financeConfirmFlag != ''">finance_confirm_flag,</if>
+            <if test="financeConfirmBy != null and financeConfirmBy != ''">finance_confirm_by,</if>
+            <if test="financeConfirmTime != null">finance_confirm_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="disposalNo != null and disposalNo != ''">#{disposalNo},</if>
+            <if test="assetId != null">#{assetId},</if>
+            <if test="disposalType != null and disposalType != ''">#{disposalType},</if>
+            <if test="disposalStatus != null and disposalStatus != ''">#{disposalStatus},</if>
+            <if test="disposalReason != null and disposalReason != ''">#{disposalReason},</if>
+            <if test="disposalDate != null">#{disposalDate},</if>
+            <if test="disposalAmount != null">#{disposalAmount},</if>
+            <if test="confirmedBy != null and confirmedBy != ''">#{confirmedBy},</if>
+            <if test="confirmedTime != null">#{confirmedTime},</if>
+            <if test="financeConfirmFlag != null and financeConfirmFlag != ''">#{financeConfirmFlag},</if>
+            <if test="financeConfirmBy != null and financeConfirmBy != ''">#{financeConfirmBy},</if>
+            <if test="financeConfirmTime != null">#{financeConfirmTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+</mapper>

@@ -237,4 +237,40 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where asset_id = #{assetId}
           and del_flag = '0'
     </update>
+
+    <update id="updateStatus">
+        update ast_asset_ledger
+        set asset_status = #{assetStatus},
+            update_time = sysdate()
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateInventoryResult" parameterType="com.ruoyi.asset.domain.AssetLedger">
+        update ast_asset_ledger
+        <set>
+            <if test="assetStatus != null and assetStatus != ''">asset_status = #{assetStatus},</if>
+            <if test="lastInventoryDate != null">last_inventory_date = #{lastInventoryDate},</if>
+            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            <if test="responsibleUserId != null">responsible_user_id = #{responsibleUserId},</if>
+            <if test="locationName != null">location_name = #{locationName},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </update>
+
+    <select id="countAssetTotal" resultType="Long">
+        select count(1)
+        from ast_asset_ledger
+        where del_flag = '0'
+    </select>
+
+    <select id="countAssetByStatus" parameterType="String" resultType="Long">
+        select count(1)
+        from ast_asset_ledger
+        where del_flag = '0'
+          and asset_status = #{assetStatus}
+    </select>
 </mapper>
