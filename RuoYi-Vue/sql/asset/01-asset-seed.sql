@@ -8,6 +8,7 @@
 -- 5. 如果旧环境已经执行过早期版本的 01，请继续执行 03-asset-menu-upgrade-20260318.sql 完成菜单升级。
 -- 6. 如果旧环境已经执行过 01 和 03，请补执行 05-asset-use-menu-upgrade-20260319.sql 接入资产使用菜单。
 -- 7. 如果旧环境已经执行过 05，请补执行 06-asset-use-route-upgrade-20260319.sql 接入资产使用新增/详情隐藏路由。
+-- 8. 如果旧环境已经执行过 06，请补执行 07-asset-inventory-disposal-menu-upgrade-20260319.sql 接入盘点/处置菜单与统计权限。
 -- ----------------------------
 
 -- ----------------------------
@@ -151,6 +152,118 @@ select
 from dual
 where not exists (
   select 1 from sys_menu where menu_id = 2113 or route_name = 'AssetUseDetail'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2120, '资产盘点', 2100, 8, 'inventory', 'asset/inventory/index', '', 'AssetInventory',
+  1, 0, 'C', '0', '0', 'asset:inventory:list', 'survey-line',
+  'admin', sysdate(), '', null, '固定资产盘点任务页面'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2120 or route_name = 'AssetInventory'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2121, '盘点任务新增', 2120, 1, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:inventory:add', '#',
+  'admin', sysdate(), '', null, '盘点任务创建按钮权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2121 or perms = 'asset:inventory:add'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2122, '盘点结果登记', 2120, 2, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:inventory:edit', '#',
+  'admin', sysdate(), '', null, '盘点结果登记按钮权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2122 or perms = 'asset:inventory:edit'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2123, '盘点任务查询', 2120, 3, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:inventory:query', '#',
+  'admin', sysdate(), '', null, '盘点任务详情查询权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2123 or perms = 'asset:inventory:query'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2124, '资产处置', 2100, 9, 'disposal', 'asset/disposal/index', '', 'AssetDisposal',
+  1, 0, 'C', '0', '0', 'asset:disposal:list', 'delete-bin-6-line',
+  'admin', sysdate(), '', null, '固定资产处置确认页面'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2124 or route_name = 'AssetDisposal'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2125, '资产处置确认', 2124, 1, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:disposal:add', '#',
+  'admin', sysdate(), '', null, '资产处置确认按钮权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2125 or perms = 'asset:disposal:add'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2126, '资产处置查询', 2124, 2, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:disposal:query', '#',
+  'admin', sysdate(), '', null, '资产处置详情查询权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2126 or perms = 'asset:disposal:query'
+);
+
+insert into sys_menu (
+  menu_id, menu_name, parent_id, order_num, path, component, query, route_name,
+  is_frame, is_cache, menu_type, visible, status, perms, icon,
+  create_by, create_time, update_by, update_time, remark
+)
+select
+  2127, '台账统计总览', 2101, 6, '', '', '', '',
+  1, 0, 'F', '0', '0', 'asset:stats:overview', '#',
+  'admin', sysdate(), '', null, '资产台账统计卡片查询权限'
+from dual
+where not exists (
+  select 1 from sys_menu where menu_id = 2127 or perms = 'asset:stats:overview'
 );
 
 -- ----------------------------

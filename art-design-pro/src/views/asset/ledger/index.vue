@@ -7,6 +7,14 @@
       show-icon
     />
 
+    <div class="overview-grid">
+      <ElCard v-for="item in overviewCards" :key="item.key" class="overview-card" shadow="never">
+        <div class="overview-label">{{ item.label }}</div>
+        <div class="overview-value">{{ formatCount(item.value) }}</div>
+        <div class="overview-desc">{{ item.desc }}</div>
+      </ElCard>
+    </div>
+
     <ArtSearchBar
       :key="searchBarKey"
       v-model="searchForm"
@@ -21,7 +29,7 @@
         :showZebra="false"
         :loading="loading"
         v-model:columns="columnChecks"
-        @refresh="refreshData"
+        @refresh="handleTableRefresh"
       >
         <template #left>
           <ElSpace wrap>
@@ -71,6 +79,7 @@
     getAssetDeptTree,
     listAssetResponsibleUsers
   } from '@/api/asset/ledger'
+  import { getAssetOverviewStats } from '@/api/asset/stats'
   import { useTable } from '@/hooks/core/useTable'
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
@@ -88,6 +97,14 @@
   const userStore = useUserStore()
 
   const exportLoading = ref(false)
+  const overview = reactive({
+    totalCount: 0,
+    inUseCount: 0,
+    idleCount: 0,
+    inventoryingCount: 0,
+    pendingDisposalCount: 0,
+    overdueInventoryCount: 0
+  })
   const categoryOptions = ref<AssetTreeOption[]>([])
   const deptOptions = ref<AssetTreeOption[]>([])
   const responsibleUserOptions = ref<AssetUserOption[]>([])
@@ -125,6 +142,45 @@
       ast_asset_acquire_type.value.length
     )
   })
+
+  const overviewCards = computed(() => [
+    {
+      key: 'totalCount',
+      label: '资产总量',
+      value: overview.totalCount,
+      desc: '固定资产当前总宗数'
+    },
+    {
+      key: 'inUseCount',
+      label: '使用中',
+      value: overview.inUseCount,
+      desc: '当前正常在用资产'
+    },
+    {
+      key: 'idleCount',
+      label: '闲置中',
+      value: overview.idleCount,
+      desc: '当前未分配使用资产'
+    },
+    {
+      key: 'inventoryingCount',
+      label: '盘点中',
+      value: overview.inventoryingCount,
+      desc: '已纳入盘点流程资产'
+    },
+    {
+      key: 'pendingDisposalCount',
+      label: '待处置',
+      value: overview.pendingDisposalCount,
+      desc: '待确认处置资产数量'
+    },
+    {
+      key: 'overdueInventoryCount',
+      label: '逾期待盘点',
+      value: overview.overdueInventoryCount,
+      desc: '未按期完成盘点任务'
+    }
+  ])
 
   const formItems = computed(() => [
     {
@@ -382,6 +438,18 @@
     })
   }
 
+  const formatCount = (value?: number | string) => {
+    if (value === null || value === undefined || value === '') {
+      return '0'
+    }
+    return Number(value).toLocaleString('zh-CN')
+  }
+
+  const loadOverview = async () => {
+    const response = await getAssetOverviewStats()
+    Object.assign(overview, response || {})
+  }
+
   const loadCategoryTree = async () => {
     const response = await getAssetCategoryTree()
     categoryOptions.value = toArrayData<AssetTreeOption>(response)
@@ -462,13 +530,50 @@
     }
   }
 
+  // 中文注释：台账刷新时同步拉取统计卡片，避免表格与概览口径不一致。
+  const handleTableRefresh = async () => {
+    await Promise.all([refreshData(), loadOverview()])
+  }
+
   onMounted(async () => {
-    await Promise.all([loadCategoryTree(), loadDeptTree(), handleResponsibleUserSearch()])
+    await Promise.all([loadCategoryTree(), loadDeptTree(), handleResponsibleUserSearch(), loadOverview()])
   })
 </script>
 
 <style scoped lang="scss">
   .asset-ledger-page {
     background-color: transparent;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .overview-card {
+    border-radius: 12px;
+    border: 1px solid #e8edf7;
+    background: linear-gradient(180deg, rgb(247 250 255 / 92%) 0%, #fff 72%);
+  }
+
+  .overview-label {
+    font-size: 13px;
+    color: #6b7892;
+    line-height: 1.4;
+  }
+
+  .overview-value {
+    margin-top: 6px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1d2f4f;
+    line-height: 1.2;
+  }
+
+  .overview-desc {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #8a97ad;
   }
 </style>
