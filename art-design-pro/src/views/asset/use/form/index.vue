@@ -1,164 +1,201 @@
 <template>
-  <div class="asset-use-form-page art-full-height flex flex-col gap-3 overflow-hidden p-3">
-    <ElCard class="head-card" shadow="never">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="flex flex-col gap-2">
-          <ElButton link type="primary" @click="goBack">返回资产使用</ElButton>
+  <div class="asset-use-form-page art-full-height p-3">
+    <ElCard class="main-card art-full-height" shadow="never">
+      <div class="workflow-shell">
+        <header class="page-hero">
+          <div class="hero-top">
+            <ElButton link type="primary" @click="goBack">返回资产使用</ElButton>
+            <div class="hero-tags">
+              <ElTag type="success" effect="light">动作：{{ handoverTypeLabel }}</ElTag>
+              <ElTag type="warning" effect="light">可选状态：{{ allowedStatusLabelText }}</ElTag>
+            </div>
+          </div>
+
           <div class="page-title">发起资产交接单</div>
           <div class="page-desc">
-            一张交接单支持同类固定资产批量办理，提交后将自动写入交接记录并回写台账使用信息。
+            交接单用于承接领用、调拨、退还流程。页面只负责录入交接信息与勾选资产，提交后统一回写台账并保留交接痕迹。
           </div>
+
+          <ElAlert
+            title="当前页面仅支持固定资产批量交接；同一交接单内资产类型必须一致，且不允许跳过交接单直接修改台账使用信息。"
+            type="info"
+            :closable="false"
+            show-icon
+            class="rule-alert"
+          />
+        </header>
+
+        <div class="workflow-scroll-area">
+          <section class="workflow-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-index">01</span>
+                <span>交接信息</span>
+              </div>
+              <ElTag type="info" effect="light">必填完成：{{ requiredFieldProgress }}</ElTag>
+            </div>
+
+            <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="110px">
+              <ElRow :gutter="16">
+                <ElCol :xs="24" :lg="24">
+                  <ElFormItem label="交接动作" prop="handoverType">
+                    <ElRadioGroup v-model="handoverType" @change="handleHandoverTypeChange">
+                      <ElRadioButton label="ASSIGN">领用</ElRadioButton>
+                      <ElRadioButton label="TRANSFER">调拨</ElRadioButton>
+                      <ElRadioButton label="RETURN">退还</ElRadioButton>
+                    </ElRadioGroup>
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+
+              <ElRow :gutter="16">
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="交接日期" prop="handoverDate">
+                    <ElDatePicker
+                      v-model="formData.handoverDate"
+                      type="date"
+                      value-format="YYYY-MM-DD"
+                      class="w-full"
+                      placeholder="请选择交接日期"
+                    />
+                  </ElFormItem>
+                </ElCol>
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="目标部门" prop="toDeptId">
+                    <ElTreeSelect
+                      v-model="formData.toDeptId"
+                      :data="deptOptions"
+                      :props="treeSelectProps"
+                      value-key="id"
+                      check-strictly
+                      filterable
+                      clearable
+                      class="w-full"
+                      :placeholder="deptPlaceholder"
+                      :render-after-expand="false"
+                    />
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+
+              <ElRow :gutter="16">
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="目标责任人" prop="toUserId">
+                    <ElSelect
+                      v-model="formData.toUserId"
+                      clearable
+                      filterable
+                      remote
+                      reserve-keyword
+                      class="w-full"
+                      placeholder="请输入责任人姓名搜索"
+                      :remote-method="handleResponsibleUserSearch"
+                      :loading="responsibleUserLoading"
+                    >
+                      <ElOption
+                        v-for="item in responsibleUserOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                      />
+                    </ElSelect>
+                  </ElFormItem>
+                </ElCol>
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="目标位置" prop="locationName">
+                    <ElInput
+                      v-model="formData.locationName"
+                      maxlength="200"
+                      clearable
+                      placeholder="请输入交接后使用位置，不填则沿用原位置"
+                    />
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+
+              <ElRow :gutter="16">
+                <ElCol :xs="24">
+                  <ElFormItem label="备注" prop="remark">
+                    <ElInput
+                      v-model="formData.remark"
+                      type="textarea"
+                      :rows="3"
+                      maxlength="500"
+                      show-word-limit
+                      placeholder="请输入交接说明（可选）"
+                    />
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+            </ElForm>
+          </section>
+
+          <section class="workflow-section asset-section">
+            <div class="section-header">
+              <div class="section-title">
+                <span class="section-index">02</span>
+                <span>选择交接资产</span>
+              </div>
+              <div class="section-actions">
+                <ElTag type="info" effect="light">{{ selectedAssetSummary }}</ElTag>
+                <ElButton plain :disabled="!selectedAssetRows.length" @click="clearSelection">
+                  清空勾选
+                </ElButton>
+              </div>
+            </div>
+
+            <ArtSearchBar
+              :key="assetSearchBarKey"
+              v-model="assetSearchForm"
+              :items="assetSearchItems"
+              :showExpand="true"
+              @search="handleAssetSearch"
+              @reset="handleAssetReset"
+            />
+
+            <ArtTable
+              ref="assetTableRef"
+              rowKey="assetId"
+              :loading="assetLoading"
+              :data="assetData"
+              :columns="assetColumns"
+              :pagination="assetPagination"
+              :height="assetTableHeight"
+              @selection-change="handleSelectionChange"
+              @pagination:size-change="handleAssetSizeChange"
+              @pagination:current-change="handleAssetCurrentChange"
+            />
+          </section>
         </div>
-        <ElSpace wrap>
-          <ElTag type="success" effect="light">动作：{{ handoverTypeLabel }}</ElTag>
-          <ElTag type="warning" effect="light">可选状态：{{ allowedStatusLabelText }}</ElTag>
-        </ElSpace>
+
+        <footer class="workflow-footer">
+          <div class="footer-hint">
+            当前交接将以“{{
+              handoverTypeLabel
+            }}”方式提交。系统会校验资产状态、目标责任信息，并在提交成功后自动回写台账。
+          </div>
+          <div class="footer-actions">
+            <ElButton @click="goBack">取消</ElButton>
+            <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">
+              提交交接单
+            </ElButton>
+          </div>
+        </footer>
       </div>
     </ElCard>
-
-    <ElCard class="form-card" shadow="never">
-      <template #header>
-        <div class="card-title">交接信息</div>
-      </template>
-
-      <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="110px">
-        <ElRow :gutter="16">
-          <ElCol :span="8">
-            <ElFormItem label="交接动作" prop="handoverType">
-              <ElRadioGroup v-model="handoverType" @change="handleHandoverTypeChange">
-                <ElRadioButton label="ASSIGN">领用</ElRadioButton>
-                <ElRadioButton label="TRANSFER">调拨</ElRadioButton>
-                <ElRadioButton label="RETURN">退还</ElRadioButton>
-              </ElRadioGroup>
-            </ElFormItem>
-          </ElCol>
-          <ElCol :span="8">
-            <ElFormItem label="交接日期" prop="handoverDate">
-              <ElDatePicker
-                v-model="formData.handoverDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                class="w-full"
-                placeholder="请选择交接日期"
-              />
-            </ElFormItem>
-          </ElCol>
-          <ElCol :span="8">
-            <ElFormItem label="目标部门" prop="toDeptId">
-              <ElTreeSelect
-                v-model="formData.toDeptId"
-                :data="deptOptions"
-                :props="treeSelectProps"
-                value-key="id"
-                check-strictly
-                filterable
-                clearable
-                class="w-full"
-                :placeholder="deptPlaceholder"
-                :render-after-expand="false"
-              />
-            </ElFormItem>
-          </ElCol>
-        </ElRow>
-
-        <ElRow :gutter="16">
-          <ElCol :span="8">
-            <ElFormItem label="目标责任人" prop="toUserId">
-              <ElSelect
-                v-model="formData.toUserId"
-                clearable
-                filterable
-                remote
-                reserve-keyword
-                class="w-full"
-                placeholder="请输入责任人姓名搜索"
-                :remote-method="handleResponsibleUserSearch"
-                :loading="responsibleUserLoading"
-              >
-                <ElOption
-                  v-for="item in responsibleUserOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </ElSelect>
-            </ElFormItem>
-          </ElCol>
-          <ElCol :span="8">
-            <ElFormItem label="目标位置" prop="locationName">
-              <ElInput
-                v-model="formData.locationName"
-                maxlength="200"
-                clearable
-                placeholder="请输入交接后使用位置，不填则沿用原位置"
-              />
-            </ElFormItem>
-          </ElCol>
-          <ElCol :span="8">
-            <ElFormItem label="备注" prop="remark">
-              <ElInput
-                v-model="formData.remark"
-                maxlength="500"
-                clearable
-                placeholder="请输入交接说明（可选）"
-              />
-            </ElFormItem>
-          </ElCol>
-        </ElRow>
-      </ElForm>
-    </ElCard>
-
-    <ElCard class="asset-card flex-1 min-h-0 overflow-hidden" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <div class="card-title">选择交接资产</div>
-          <ElSpace wrap>
-            <ElTag type="info" effect="light">已选 {{ selectedAssetRows.length }} 宗</ElTag>
-            <ElButton plain :disabled="!selectedAssetRows.length" @click="clearSelection"
-              >清空勾选</ElButton
-            >
-          </ElSpace>
-        </div>
-      </template>
-
-      <ArtSearchBar
-        :key="assetSearchBarKey"
-        v-model="assetSearchForm"
-        :items="assetSearchItems"
-        :showExpand="true"
-        @search="handleAssetSearch"
-        @reset="handleAssetReset"
-      />
-
-      <ArtTable
-        ref="assetTableRef"
-        rowKey="assetId"
-        :loading="assetLoading"
-        :data="assetData"
-        :columns="assetColumns"
-        :pagination="assetPagination"
-        @selection-change="handleSelectionChange"
-        @pagination:size-change="handleAssetSizeChange"
-        @pagination:current-change="handleAssetCurrentChange"
-      />
-    </ElCard>
-
-    <div class="page-footer">
-      <ElButton @click="goBack">取消</ElButton>
-      <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">提交交接单</ElButton>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElMessage } from 'element-plus'
+  import { useWindowSize } from '@vueuse/core'
   import type { AssetTreeOption, AssetUserOption } from '@/api/asset/ledger'
   import { listAssetLedger, getAssetDeptTree, listAssetResponsibleUsers } from '@/api/asset/ledger'
   import { addAssetHandoverOrder } from '@/api/asset/handover'
-  import { useDict } from '@/utils/dict'
-  import { useTable } from '@/hooks/core/useTable'
   import DictTag from '@/components/DictTag/index.vue'
+  import { useTable } from '@/hooks/core/useTable'
+  import { useDict } from '@/utils/dict'
 
   defineOptions({ name: 'AssetUseCreate' })
 
@@ -183,6 +220,9 @@
   const { ast_asset_status } = useDict('ast_asset_status')
   const router = useRouter()
   const route = useRoute()
+  route.meta.activePath = '/asset/use'
+
+  const { height: windowHeight } = useWindowSize()
 
   const formRef = ref<FormInstance>()
   const assetTableRef = ref<any>()
@@ -247,8 +287,36 @@
     return allowedStatuses.value.map((status) => getStatusDictLabel(status)).join(' / ')
   })
 
+  const selectedAssetSummary = computed(() => {
+    return `已选 ${selectedAssetRows.value.length} 宗`
+  })
+
   const deptPlaceholder = computed(() => {
     return handoverType.value === 'RETURN' ? '可选：不填则默认退还到权属部门' : '请选择目标部门'
+  })
+
+  const hasValue = (value: unknown) => {
+    if (value === undefined || value === null) {
+      return false
+    }
+    if (typeof value === 'string') {
+      return value.trim().length > 0
+    }
+    return true
+  }
+
+  // 中文注释：卡片内表格使用独立高度兜底，避免页面高度变化时出现表格区域被裁切。
+  const assetTableHeight = computed(() => {
+    return Math.min(520, Math.max(300, windowHeight.value - 540))
+  })
+
+  const requiredFieldProgress = computed(() => {
+    const requiredKeys =
+      handoverType.value === 'RETURN' ? ['handoverDate'] : ['handoverDate', 'toDeptId', 'toUserId']
+    const completedCount = requiredKeys.filter((key) =>
+      hasValue(formData[key as keyof typeof formData])
+    ).length
+    return `${completedCount}/${requiredKeys.length}`
   })
 
   // 中文注释：交接动作不同，目标字段的必填策略需要与后端规则保持一致。
@@ -547,8 +615,10 @@
 <style scoped lang="scss">
   .asset-use-form-page {
     --asset-accent: #2f66ff;
+    --asset-accent-soft: rgb(47 102 255 / 10%);
     --asset-border: #e6ebf5;
     --asset-panel-bg: #fff;
+    --asset-panel-subtle: #f7faff;
     --asset-text-main: #18233a;
     --asset-text-secondary: #5d6b86;
 
@@ -558,58 +628,243 @@
       var(--art-main-bg-color);
   }
 
-  .head-card,
-  .form-card,
-  .asset-card {
+  .main-card {
     border: 1px solid var(--asset-border);
-    border-radius: 12px;
+    border-radius: 18px;
     background: var(--asset-panel-bg);
+    box-shadow: 0 18px 40px rgb(26 39 68 / 6%);
+
+    :deep(.el-card__body) {
+      height: 100%;
+      padding: 0;
+    }
   }
 
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--asset-text-main);
-    line-height: 1.4;
-  }
-
-  .page-desc {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--asset-text-secondary);
-    line-height: 1.6;
-    max-width: 860px;
-  }
-
-  .card-header {
+  .workflow-shell {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .page-hero {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--asset-border);
+    background:
+      linear-gradient(135deg, rgb(47 102 255 / 6%) 0%, transparent 32%),
+      linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
   }
 
-  .card-title {
+  .hero-tags {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--asset-text-main);
+    flex-wrap: wrap;
+  }
 
-    &::before {
-      content: '';
-      width: 4px;
-      height: 14px;
+  .page-title {
+    margin-top: 8px;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--asset-text-main);
+  }
+
+  .page-desc {
+    margin-top: 8px;
+    max-width: 920px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--asset-text-secondary);
+  }
+
+  .rule-alert {
+    margin-top: 16px;
+  }
+
+  .workflow-scroll-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    scroll-behavior: smooth;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
       border-radius: 999px;
-      background: var(--asset-accent);
+      background: rgb(124 143 181 / 35%);
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
     }
   }
 
-  .page-footer {
+  .workflow-section {
+    margin-bottom: 18px;
+    padding: 20px 20px 14px;
+    border: 1px solid var(--asset-border);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgb(247 250 255 / 90%) 0%, #fff 40%), var(--asset-panel-bg);
+  }
+
+  .workflow-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-header {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
     gap: 10px;
-    padding: 2px 0 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--asset-text-main);
+  }
+
+  .section-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: var(--asset-accent-soft);
+    color: var(--asset-accent);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .section-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .asset-section {
+    padding-bottom: 18px;
+  }
+
+  .workflow-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    flex-shrink: 0;
+    padding: 16px 24px 18px;
+    border-top: 1px solid var(--asset-border);
+    background: linear-gradient(180deg, rgb(255 255 255 / 96%) 0%, #f8fbff 100%);
+  }
+
+  .footer-hint {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--asset-text-secondary);
+  }
+
+  .footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    :deep(.el-button) {
+      min-width: 108px;
+    }
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+  }
+
+  :deep(.el-form-item__label) {
+    color: #34486a;
+    font-weight: 500;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper),
+  :deep(.el-date-editor.el-input__wrapper),
+  :deep(.el-textarea__inner) {
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #d9e2f2 inset;
+    background-color: #fff;
+  }
+
+  :deep(.el-input__wrapper.is-focus),
+  :deep(.el-select__wrapper.is-focused),
+  :deep(.el-date-editor.el-input__wrapper.is-focus),
+  :deep(.el-textarea__inner:focus) {
+    box-shadow:
+      0 0 0 1px var(--asset-accent) inset,
+      0 0 0 3px rgb(47 102 255 / 12%);
+  }
+
+  :deep(.el-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (max-width: 992px) {
+    .page-hero,
+    .workflow-scroll-area,
+    .workflow-footer {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+
+    .workflow-section {
+      padding: 16px 16px 10px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .asset-use-form-page {
+      padding: 8px;
+    }
+
+    .page-title {
+      font-size: 24px;
+    }
+
+    .page-desc,
+    .footer-hint {
+      font-size: 13px;
+    }
+
+    .workflow-scroll-area {
+      padding-top: 16px;
+      padding-bottom: 16px;
+    }
+
+    .workflow-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .footer-actions {
+      justify-content: flex-end;
+    }
   }
 </style>
