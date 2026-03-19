@@ -1,30 +1,47 @@
 <template>
-  <ElDialog
+  <ElDrawer
     :model-value="modelValue"
-    title="登记盘点结果"
-    width="720px"
+    :title="drawerTitle"
+    size="460px"
     destroy-on-close
     @close="handleClose"
   >
-    <ElAlert
-      :closable="false"
-      type="info"
-      show-icon
-      class="mb-4"
-      :title="`任务：${taskTitle}；资产：${assetTitle}`"
-    />
+    <template #header>
+      <div class="drawer-title">
+        <span>{{ drawerTitle }}</span>
+        <ElTag v-if="mode === 'batch'" type="info" effect="light">批量 {{ batchCount }} 宗</ElTag>
+      </div>
+    </template>
 
-    <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="120px">
-      <ElFormItem label="盘点结果" prop="inventoryResult">
+    <ElAlert v-if="mode === 'batch'" type="info" :closable="false" show-icon class="mb-3">
+      <template #title>
+        批量登记仅支持“正常盘点”场景，异常（盘亏/缺失/毁损）请在列表中逐条登记，确保后续动作准确。
+      </template>
+    </ElAlert>
+
+    <ElDescriptions :column="1" border class="mb-3">
+      <ElDescriptionsItem label="任务">{{ taskTitle || '-' }}</ElDescriptionsItem>
+      <ElDescriptionsItem :label="mode === 'single' ? '资产' : '资产范围'">
+        {{ mode === 'single' ? assetTitle || '-' : `共 ${batchCount} 宗资产` }}
+      </ElDescriptionsItem>
+    </ElDescriptions>
+
+    <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="110px">
+      <ElFormItem v-if="mode === 'single'" label="盘点结果" prop="inventoryResult">
         <ElRadioGroup v-model="formData.inventoryResult">
           <ElRadioButton
             v-for="item in inventoryResultOptions"
             :key="item.value"
             :label="item.value"
+            :value="item.value"
           >
             {{ item.label }}
           </ElRadioButton>
         </ElRadioGroup>
+      </ElFormItem>
+
+      <ElFormItem v-else label="盘点结果">
+        <ElTag type="success" effect="light">正常（批量固定）</ElTag>
       </ElFormItem>
 
       <ElFormItem v-if="isAbnormalResult" label="后续动作" prop="followUpAction">
@@ -33,57 +50,53 @@
             v-for="item in followUpActionOptions"
             :key="item.value"
             :label="item.value"
+            :value="item.value"
           >
             {{ item.label }}
           </ElRadioButton>
         </ElRadioGroup>
       </ElFormItem>
 
-      <ElFormItem v-if="!isAbnormalResult" label="确认在用" prop="confirmedUse">
+      <ElFormItem v-else label="在用确认">
         <ElSwitch
           v-model="formData.confirmedUse"
           inline-prompt
-          active-text="是"
-          inactive-text="否"
+          active-text="在用"
+          inactive-text="闲置"
         />
       </ElFormItem>
 
-      <ElRow :gutter="16">
-        <ElCol :xs="24" :md="12">
-          <ElFormItem label="盘点时间" prop="checkedTime">
-            <ElDatePicker
-              v-model="formData.checkedTime"
-              type="datetime"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              class="w-full"
-              placeholder="请选择盘点时间"
-            />
-          </ElFormItem>
-        </ElCol>
-        <ElCol :xs="24" :md="12">
-          <ElFormItem label="盘点位置" prop="actualLocationName">
-            <ElInput
-              v-model="formData.actualLocationName"
-              maxlength="200"
-              clearable
-              placeholder="可选：记录实际位置"
-            />
-          </ElFormItem>
-        </ElCol>
-      </ElRow>
+      <ElFormItem label="盘点时间" prop="checkedTime">
+        <ElDatePicker
+          v-model="formData.checkedTime"
+          type="datetime"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          class="w-full"
+          placeholder="请选择盘点时间"
+        />
+      </ElFormItem>
 
-      <ElFormItem label="结果说明" prop="resultDesc">
+      <ElFormItem label="实际位置">
+        <ElInput
+          v-model="formData.actualLocationName"
+          maxlength="255"
+          clearable
+          placeholder="请输入实际位置（可选）"
+        />
+      </ElFormItem>
+
+      <ElFormItem label="结果说明">
         <ElInput
           v-model="formData.resultDesc"
           type="textarea"
-          :rows="3"
+          :rows="2"
           maxlength="500"
           show-word-limit
-          placeholder="请输入盘点结果说明（可选）"
+          placeholder="请输入结果说明（可选）"
         />
       </ElFormItem>
 
-      <ElFormItem label="备注" prop="remark">
+      <ElFormItem label="备注">
         <ElInput
           v-model="formData.remark"
           type="textarea"
@@ -96,44 +109,45 @@
     </ElForm>
 
     <template #footer>
-      <ElButton @click="handleClose">取消</ElButton>
-      <ElButton type="primary" :loading="loading" @click="handleSubmit">提交结果</ElButton>
+      <div class="drawer-footer">
+        <ElButton @click="handleClose">取消</ElButton>
+        <ElButton type="primary" :loading="loading" @click="handleSubmit">
+          {{ mode === 'single' ? '提交结果' : '批量提交' }}
+        </ElButton>
+      </div>
     </template>
-  </ElDialog>
+  </ElDrawer>
 </template>
 
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import type { AssetInventoryResultPayload } from '@/api/asset/inventory'
 
-  defineOptions({ name: 'InventoryResultDialog' })
+  defineOptions({ name: 'InventoryResultDrawer' })
 
-  interface InventoryDialogTask {
-    taskNo?: string
-    taskName?: string
-  }
+  type DrawerMode = 'single' | 'batch'
 
-  interface InventoryDialogAsset {
-    assetCode?: string
-    assetName?: string
-    assetId?: number
-  }
+  type DrawerSubmitPayload = Omit<AssetInventoryResultPayload, 'taskId' | 'assetId'>
 
   const props = withDefaults(
     defineProps<{
       modelValue: boolean
+      mode: DrawerMode
       loading?: boolean
-      task?: InventoryDialogTask
-      asset?: InventoryDialogAsset
+      taskTitle?: string
+      assetTitle?: string
+      batchCount?: number
     }>(),
     {
-      loading: false
+      loading: false,
+      mode: 'single',
+      batchCount: 0
     }
   )
 
   const emit = defineEmits<{
     (event: 'update:modelValue', value: boolean): void
-    (event: 'submit', payload: Omit<AssetInventoryResultPayload, 'taskId' | 'assetId'>): void
+    (event: 'submit', payload: DrawerSubmitPayload): void
   }>()
 
   const formRef = ref<FormInstance>()
@@ -150,7 +164,6 @@
     { label: '发起处置', value: 'CREATE_DISPOSAL' }
   ]
 
-  // 中文注释：盘亏/缺失/毁损统一视为异常结果，必须触发后续动作选择。
   const abnormalResultSet = new Set(['LOSS', 'MISSING', 'DAMAGED'])
 
   const buildNowDateTime = () => {
@@ -161,7 +174,6 @@
     )}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
   }
 
-  // 中文注释：每次打开弹窗重置默认值，避免沿用上一次资产的登记内容。
   const createDefaultFormData = () => ({
     inventoryResult: 'NORMAL',
     followUpAction: 'NONE',
@@ -174,24 +186,15 @@
 
   const formData = reactive(createDefaultFormData())
 
-  // 中文注释：异常与否用于联动“后续动作”“是否继续使用”等字段可见性与提交值。
-  const isAbnormalResult = computed(() => abnormalResultSet.has(formData.inventoryResult))
-
-  const taskTitle = computed(() => {
-    if (!props.task) {
-      return '未选择任务'
+  const isAbnormalResult = computed(() => {
+    if (props.mode === 'batch') {
+      return false
     }
-    return [props.task.taskNo, props.task.taskName].filter(Boolean).join(' / ') || '未命名任务'
+    return abnormalResultSet.has(formData.inventoryResult)
   })
 
-  const assetTitle = computed(() => {
-    if (!props.asset) {
-      return '未选择资产'
-    }
-    return (
-      [props.asset.assetCode, props.asset.assetName].filter(Boolean).join(' / ') ||
-      `ID:${props.asset.assetId}`
-    )
+  const drawerTitle = computed(() => {
+    return props.mode === 'single' ? '登记盘点结果' : '批量登记正常盘点结果'
   })
 
   const formRules: FormRules = {
@@ -213,12 +216,17 @@
 
   const resetFormData = () => {
     Object.assign(formData, createDefaultFormData())
+    // 中文注释：批量模式仅允许登记正常结果，前端直接固化字段，避免误传异常结果。
+    if (props.mode === 'batch') {
+      formData.inventoryResult = 'NORMAL'
+      formData.followUpAction = 'NONE'
+    }
     formRef.value?.clearValidate()
   }
 
   watch(
-    () => props.modelValue,
-    (visible) => {
+    () => [props.modelValue, props.mode],
+    ([visible]) => {
       if (visible) {
         resetFormData()
       }
@@ -228,7 +236,11 @@
   watch(
     () => formData.inventoryResult,
     (value) => {
-      // 中文注释：异常结果默认引导到“台账修正”，正常结果统一回落到 NONE，避免提交脏数据。
+      if (props.mode === 'batch') {
+        formData.inventoryResult = 'NORMAL'
+        formData.followUpAction = 'NONE'
+        return
+      }
       if (abnormalResultSet.has(value)) {
         if (!formData.followUpAction || formData.followUpAction === 'NONE') {
           formData.followUpAction = 'UPDATE_LEDGER'
@@ -243,7 +255,6 @@
     emit('update:modelValue', false)
   }
 
-  // 中文注释：提交时由父页面补充 taskId/assetId，子组件仅提交盘点结果业务字段。
   const handleSubmit = async () => {
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {
@@ -251,7 +262,7 @@
     }
 
     emit('submit', {
-      inventoryResult: formData.inventoryResult,
+      inventoryResult: props.mode === 'batch' ? 'NORMAL' : formData.inventoryResult,
       followUpAction: isAbnormalResult.value ? formData.followUpAction : 'NONE',
       confirmedUse: isAbnormalResult.value ? undefined : formData.confirmedUse,
       checkedTime: formData.checkedTime,
@@ -263,6 +274,18 @@
 </script>
 
 <style scoped lang="scss">
+  .drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .drawer-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
   :deep(.el-radio-group) {
     display: flex;
     flex-wrap: wrap;

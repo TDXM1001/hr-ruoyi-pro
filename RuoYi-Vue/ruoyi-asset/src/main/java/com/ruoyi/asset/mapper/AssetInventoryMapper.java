@@ -5,7 +5,9 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetInventoryTask;
+import com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryTaskBo;
+import com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo;
 import com.ruoyi.asset.domain.vo.AssetInventoryTaskVo;
 
 /**
@@ -22,6 +24,14 @@ public interface AssetInventoryMapper
      * @return 盘点任务列表
      */
     List<AssetInventoryTaskVo> selectAssetInventoryTaskList(AssetInventoryTaskBo bo);
+
+    /**
+     * 查询盘点任务资产明细列表。
+     *
+     * @param bo 查询参数
+     * @return 任务资产明细列表
+     */
+    List<AssetInventoryTaskAssetVo> selectTaskAssetList(AssetInventoryTaskAssetBo bo);
 
     /**
      * 查询盘点任务详情。

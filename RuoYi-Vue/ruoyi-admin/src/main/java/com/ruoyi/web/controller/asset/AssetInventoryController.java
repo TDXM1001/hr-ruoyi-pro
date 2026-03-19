@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.AssetInventoryTask;
+import com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryResultBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryTaskBo;
+import com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo;
 import com.ruoyi.asset.domain.vo.AssetInventoryTaskVo;
 import com.ruoyi.asset.service.IAssetInventoryService;
 import com.ruoyi.common.annotation.Log;
@@ -60,6 +62,23 @@ public class AssetInventoryController extends BaseController
     {
         AssetInventoryTask task = assetInventoryService.selectAssetInventoryTaskById(taskId);
         return success(task);
+    }
+
+    /**
+     * 查询盘点任务资产明细。
+     *
+     * @param taskId 任务ID
+     * @param bo 查询参数
+     * @return 任务资产分页
+     */
+    @PreAuthorize("@ss.hasPermi('asset:inventory:list')")
+    @GetMapping("/task/{taskId}/assets")
+    public TableDataInfo listTaskAssets(@PathVariable Long taskId, AssetInventoryTaskAssetBo bo)
+    {
+        bo.setTaskId(taskId);
+        startPage();
+        List<AssetInventoryTaskAssetVo> list = assetInventoryService.selectTaskAssetList(bo);
+        return getDataTable(list);
     }
 
     /**

@@ -14,8 +14,10 @@ import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetInventoryTask;
 import com.ruoyi.asset.domain.AssetLedger;
+import com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryResultBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryTaskBo;
+import com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo;
 import com.ruoyi.asset.domain.vo.AssetInventoryTaskVo;
 import com.ruoyi.asset.enums.AssetStatus;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
@@ -51,6 +53,14 @@ public class AssetInventoryServiceImpl implements IAssetInventoryService
 
     private static final String FOLLOW_UP_CREATE_DISPOSAL = "CREATE_DISPOSAL";
 
+    private static final String RESULT_TYPE_ALL = "ALL";
+
+    private static final String RESULT_TYPE_PENDING = "PENDING";
+
+    private static final String RESULT_TYPE_REGISTERED = "REGISTERED";
+
+    private static final String RESULT_TYPE_ABNORMAL = "ABNORMAL";
+
     private static final String PROCESS_STATUS_PENDING = "PENDING";
 
     private static final String PROCESS_STATUS_PROCESSED = "PROCESSED";
@@ -79,6 +89,28 @@ public class AssetInventoryServiceImpl implements IAssetInventoryService
     public List<AssetInventoryTaskVo> selectAssetInventoryTaskList(AssetInventoryTaskBo bo)
     {
         return assetInventoryMapper.selectAssetInventoryTaskList(bo);
+    }
+
+    /**
+     * 查询盘点任务资产明细。
+     *
+     * @param bo 查询参数
+     * @return 任务资产明细列表
+     */
+    @Override
+    public List<AssetInventoryTaskAssetVo> selectTaskAssetList(AssetInventoryTaskAssetBo bo)
+    {
+        if (bo == null || bo.getTaskId() == null)
+        {
+            throw new ServiceException("盘点任务ID不能为空");
+        }
+        AssetInventoryTask task = assetInventoryMapper.selectAssetInventoryTaskById(bo.getTaskId());
+        if (task == null)
+        {
+            throw new ServiceException("盘点任务不存在");
+        }
+        bo.setResultType(normalizeResultType(bo.getResultType()));
+        return assetInventoryMapper.selectTaskAssetList(bo);
     }
 
     /**
@@ -340,6 +372,25 @@ public class AssetInventoryServiceImpl implements IAssetInventoryService
             throw new ServiceException("盘点后续动作不合法");
         }
         return normalizedAction;
+    }
+
+    /**
+     * 规范化任务资产结果筛选类型。
+     *
+     * @param resultType 原始筛选类型
+     * @return 规范化筛选类型
+     */
+    private String normalizeResultType(String resultType)
+    {
+        String normalizedType = StringUtils.upperCase(StringUtils.defaultIfBlank(StringUtils.trim(resultType), RESULT_TYPE_ALL));
+        if (!RESULT_TYPE_ALL.equals(normalizedType)
+            && !RESULT_TYPE_PENDING.equals(normalizedType)
+            && !RESULT_TYPE_REGISTERED.equals(normalizedType)
+            && !RESULT_TYPE_ABNORMAL.equals(normalizedType))
+        {
+            throw new ServiceException("盘点结果筛选类型不合法");
+        }
+        return normalizedType;
     }
 
     /**

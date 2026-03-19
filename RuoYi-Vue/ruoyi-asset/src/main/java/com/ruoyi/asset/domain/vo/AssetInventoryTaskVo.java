@@ -46,6 +46,15 @@ public class AssetInventoryTaskVo extends BaseEntity
     @Excel(name = "完成日期", dateFormat = "yyyy-MM-dd")
     private Date completedDate;
 
+    /** 任务范围资产总数 */
+    private Long scopeAssetCount;
+
+    /** 已登记资产数 */
+    private Long submittedCount;
+
+    /** 异常资产数 */
+    private Long abnormalCount;
+
     public Long getTaskId()
     {
         return taskId;
@@ -124,5 +133,35 @@ public class AssetInventoryTaskVo extends BaseEntity
     public void setCompletedDate(Date completedDate)
     {
         this.completedDate = completedDate;
+    }
+
+    public Long getScopeAssetCount()
+    {
+        return scopeAssetCount;
+    }
+
+    public void setScopeAssetCount(Long scopeAssetCount)
+    {
+        this.scopeAssetCount = scopeAssetCount;
+    }
+
+    public Long getSubmittedCount()
+    {
+        return submittedCount;
+    }
+
+    public void setSubmittedCount(Long submittedCount)
+    {
+        this.submittedCount = submittedCount;
+    }
+
+    public Long getAbnormalCount()
+    {
+        return abnormalCount;
+    }
+
+    public void setAbnormalCount(Long abnormalCount)
+    {
+        this.abnormalCount = abnormalCount;
     }
 }

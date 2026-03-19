@@ -29,11 +29,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="scopeValue" column="scope_value"/>
         <result property="plannedDate" column="planned_date"/>
         <result property="completedDate" column="completed_date"/>
+        <result property="scopeAssetCount" column="scope_asset_count"/>
+        <result property="submittedCount" column="submitted_count"/>
+        <result property="abnormalCount" column="abnormal_count"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetInventoryTaskAssetVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo">
+        <result property="taskId" column="task_id"/>
+        <id property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="assetStatus" column="asset_status"/>
+        <result property="ownerDeptName" column="owner_dept_name"/>
+        <result property="useDeptName" column="use_dept_name"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
+        <result property="locationName" column="location_name"/>
+        <result property="resultRegistered" column="result_registered"/>
+        <result property="inventoryResult" column="inventory_result"/>
+        <result property="followUpAction" column="follow_up_action"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="checkedBy" column="checked_by"/>
+        <result property="checkedTime" column="checked_time"/>
     </resultMap>
 
     <resultMap id="AssetInventoryItemResult" type="com.ruoyi.asset.domain.AssetInventoryItem">
@@ -55,40 +76,102 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectTaskColumns">
-        select task_id, task_no, task_name, task_status, scope_type, scope_value, planned_date, completed_date,
-               create_by, create_time, update_by, update_time, remark
-        from ast_asset_inventory_task
+        select t.task_id, t.task_no, t.task_name, t.task_status, t.scope_type, t.scope_value, t.planned_date, t.completed_date,
+               ifnull(task_stats.submitted_count, 0) as submitted_count,
+               ifnull(task_stats.abnormal_count, 0) as abnormal_count,
+               case
+                 when t.scope_value is null or t.scope_value = '' then 0
+                 else length(t.scope_value) - length(replace(t.scope_value, ',', '')) + 1
+               end as scope_asset_count,
+               t.create_by, t.create_time, t.update_by, t.update_time, t.remark
+        from ast_asset_inventory_task t
+        left join (
+            select task_id,
+                   count(1) as submitted_count,
+                   sum(case when inventory_result in ('LOSS', 'MISSING', 'DAMAGED') then 1 else 0 end) as abnormal_count
+            from ast_asset_inventory_item
+            group by task_id
+        ) task_stats on task_stats.task_id = t.task_id
     </sql>
 
     <select id="selectAssetInventoryTaskList" parameterType="com.ruoyi.asset.domain.bo.AssetInventoryTaskBo" resultMap="AssetInventoryTaskVoResult">
         <include refid="selectTaskColumns"/>
         <where>
             1 = 1
+            <if test="taskId != null">
+                and t.task_id = #{taskId}
+            </if>
             <if test="taskNo != null and taskNo != ''">
-                and task_no like concat('%', #{taskNo}, '%')
+                and t.task_no like concat('%', #{taskNo}, '%')
             </if>
             <if test="taskName != null and taskName != ''">
-                and task_name like concat('%', #{taskName}, '%')
+                and t.task_name like concat('%', #{taskName}, '%')
             </if>
             <if test="taskStatus != null and taskStatus != ''">
-                and task_status = #{taskStatus}
+                and t.task_status = #{taskStatus}
             </if>
             <if test="scopeType != null and scopeType != ''">
-                and scope_type = #{scopeType}
+                and t.scope_type = #{scopeType}
             </if>
             <if test="params.beginTime != null and params.beginTime != ''">
-                and date_format(planned_date, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
+                and date_format(t.planned_date, '%Y%m%d') &gt;= date_format(#{params.beginTime}, '%Y%m%d')
             </if>
             <if test="params.endTime != null and params.endTime != ''">
-                and date_format(planned_date, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
+                and date_format(t.planned_date, '%Y%m%d') &lt;= date_format(#{params.endTime}, '%Y%m%d')
             </if>
         </where>
-        order by planned_date desc, task_id desc
+        order by t.planned_date desc, t.task_id desc
     </select>
 
     <select id="selectAssetInventoryTaskById" parameterType="Long" resultMap="AssetInventoryTaskResult">
         <include refid="selectTaskColumns"/>
-        where task_id = #{taskId}
+        where t.task_id = #{taskId}
+    </select>
+
+    <select id="selectTaskAssetList" parameterType="com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo" resultMap="AssetInventoryTaskAssetVoResult">
+        select t.task_id,
+               a.asset_id,
+               a.asset_code,
+               a.asset_name,
+               a.asset_status,
+               owner_dept.dept_name as owner_dept_name,
+               use_dept.dept_name as use_dept_name,
+               ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
+               a.location_name,
+               case when i.item_id is null then 0 else 1 end as result_registered,
+               i.inventory_result,
+               i.follow_up_action,
+               i.process_status,
+               i.checked_by,
+               i.checked_time
+        from ast_asset_inventory_task t
+        join ast_asset_ledger a on find_in_set(a.asset_id, t.scope_value) and a.del_flag = '0'
+        left join ast_asset_inventory_item i on i.task_id = t.task_id and i.asset_id = a.asset_id
+        left join sys_dept owner_dept on a.owner_dept_id = owner_dept.dept_id
+        left join sys_dept use_dept on a.use_dept_id = use_dept.dept_id
+        left join sys_user u on a.responsible_user_id = u.user_id
+        <where>
+            t.task_id = #{taskId}
+            <if test="assetCode != null and assetCode != ''">
+                and a.asset_code like concat('%', #{assetCode}, '%')
+            </if>
+            <if test="assetName != null and assetName != ''">
+                and a.asset_name like concat('%', #{assetName}, '%')
+            </if>
+            <if test="assetStatus != null and assetStatus != ''">
+                and a.asset_status = #{assetStatus}
+            </if>
+            <if test="resultType != null and resultType == 'PENDING'">
+                and i.item_id is null
+            </if>
+            <if test="resultType != null and resultType == 'REGISTERED'">
+                and i.item_id is not null
+            </if>
+            <if test="resultType != null and resultType == 'ABNORMAL'">
+                and i.inventory_result in ('LOSS', 'MISSING', 'DAMAGED')
+            </if>
+        </where>
+        order by case when i.item_id is null then 0 else 1 end asc, a.asset_id asc
     </select>
 
     <select id="selectAssetInventoryItem" resultMap="AssetInventoryItemResult">

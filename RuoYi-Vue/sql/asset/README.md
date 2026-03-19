@@ -18,29 +18,30 @@
   - 用途：增量补齐“资产交接新增页/详情页”隐藏路由。
 - `07-asset-inventory-disposal-menu-upgrade-20260319.sql`
   - 用途：增量补齐“资产盘点/资产处置”菜单、按钮权限与台账统计权限。
+- `08-asset-inventory-route-upgrade-20260319.sql`
+  - 用途：增量补齐“盘点任务发起页/执行页”隐藏动态路由。
 
 ## 2. 推荐执行口径
 
 - 全新环境：`00 -> 01`
-- 老库且已跑过早期 `00`：`02 -> 04 -> 01 -> 03 -> 05 -> 06 -> 07`
-- 老库且已跑过 `00~06`：只需执行 `07`
+- 老库且已跑过早期 `00`：`02 -> 04 -> 01 -> 03 -> 05 -> 06 -> 07 -> 08`
+- 老库且已跑过 `00~06`：执行 `07 -> 08`
+- 老库且已跑过 `00~07`：只需执行 `08`
 - 已有业务数据的库：不要重跑 `00`
 
 ## 3. 你当前场景如何执行
 
-如果你之前 **0-6 都已经执行过**，本次只需执行：
+如果你之前 **0-7 都已经执行过**，本次只需执行：
 
 ```sql
-source RuoYi-Vue/sql/asset/07-asset-inventory-disposal-menu-upgrade-20260319.sql;
+source RuoYi-Vue/sql/asset/08-asset-inventory-route-upgrade-20260319.sql;
 ```
 
-如果你之前只执行到 `04`，建议执行：
+如果你之前只执行到 `06`，建议执行：
 
 ```sql
-source RuoYi-Vue/sql/asset/01-asset-seed.sql;
-source RuoYi-Vue/sql/asset/05-asset-use-menu-upgrade-20260319.sql;
-source RuoYi-Vue/sql/asset/06-asset-use-route-upgrade-20260319.sql;
 source RuoYi-Vue/sql/asset/07-asset-inventory-disposal-menu-upgrade-20260319.sql;
+source RuoYi-Vue/sql/asset/08-asset-inventory-route-upgrade-20260319.sql;
 ```
 
 ## 4. 执行后校验
@@ -48,7 +49,7 @@ source RuoYi-Vue/sql/asset/07-asset-inventory-disposal-menu-upgrade-20260319.sql
 ```sql
 select menu_id, menu_name, parent_id, menu_type, visible, path, component, perms
 from sys_menu
-where menu_id between 2100 and 2127
+where menu_id between 2100 and 2129
 order by menu_id;
 ```
 
@@ -58,10 +59,12 @@ order by menu_id;
 - `2112`：资产交接新增页（隐藏路由）
 - `2113`：资产交接详情页（隐藏路由）
 - `2120`：资产盘点（可见菜单）
+- `2128`：盘点任务发起页（隐藏路由）
+- `2129`：盘点任务执行页（隐藏路由）
 - `2124`：资产处置（可见菜单）
 - `2127`：台账统计总览（按钮权限）
 
 ## 5. 注意事项
 
 - 生产库执行前建议先备份 `sys_menu` 与资产模块核心业务表。
-- `05/06/07` 都是纯增量脚本，支持重复执行（`update + insert not exists`）。
+- `05/06/07/08` 都是纯增量脚本，支持重复执行（`update + insert not exists`）。

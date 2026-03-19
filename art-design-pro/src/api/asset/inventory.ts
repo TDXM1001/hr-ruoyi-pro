@@ -4,6 +4,7 @@ import http from '@/utils/http'
  * 盘点任务查询参数
  */
 export interface AssetInventoryTaskQuery {
+  taskId?: number
   taskNo?: string
   taskName?: string
   taskStatus?: string
@@ -42,6 +43,18 @@ export interface AssetInventoryResultPayload {
 }
 
 /**
+ * 盘点任务资产明细查询参数
+ */
+export interface AssetInventoryTaskAssetQuery {
+  assetCode?: string
+  assetName?: string
+  assetStatus?: string
+  resultType?: 'ALL' | 'PENDING' | 'REGISTERED' | 'ABNORMAL' | string
+  pageNum?: number
+  pageSize?: number
+}
+
+/**
  * 查询盘点任务列表
  * @param params 查询参数
  * @returns 盘点任务分页列表
@@ -57,6 +70,19 @@ export function listInventoryTask(params?: AssetInventoryTaskQuery) {
  */
 export function getInventoryTask(taskId: number | string) {
   return http.request({ url: `/asset/inventory/task/${taskId}`, method: 'get' })
+}
+
+/**
+ * 查询盘点任务资产明细列表
+ * @param taskId 任务ID
+ * @param params 查询参数
+ * @returns 任务资产分页列表
+ */
+export function listInventoryTaskAssets(
+  taskId: number | string,
+  params?: AssetInventoryTaskAssetQuery
+) {
+  return http.request({ url: `/asset/inventory/task/${taskId}/assets`, method: 'get', params })
 }
 
 /**

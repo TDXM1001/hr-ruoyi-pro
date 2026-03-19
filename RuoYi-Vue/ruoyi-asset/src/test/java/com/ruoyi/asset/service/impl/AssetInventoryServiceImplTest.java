@@ -1,11 +1,14 @@
 package com.ruoyi.asset.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.Date;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetInventoryTask;
 import com.ruoyi.asset.domain.AssetLedger;
+import com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryResultBo;
+import com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo;
 import com.ruoyi.asset.enums.AssetStatus;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
 import com.ruoyi.asset.mapper.AssetInventoryMapper;
@@ -86,6 +91,40 @@ class AssetInventoryServiceImplTest
         verify(assetLedgerMapper, never()).updateStatus(any(Long.class), any(String.class));
         verify(assetChangeLogMapper, never()).insertAssetChangeLog(any());
         org.junit.jupiter.api.Assertions.assertEquals("盘点异常结果必须指定后续动作", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("查询任务资产明细时应规范化筛选类型并调用Mapper")
+    void shouldNormalizeResultTypeWhenListTaskAssets()
+    {
+        AssetInventoryTaskAssetBo bo = new AssetInventoryTaskAssetBo();
+        bo.setTaskId(10L);
+        bo.setResultType("pending");
+        when(assetInventoryMapper.selectAssetInventoryTaskById(10L)).thenReturn(buildTask(10L));
+
+        List<AssetInventoryTaskAssetVo> expected = List.of(new AssetInventoryTaskAssetVo());
+        when(assetInventoryMapper.selectTaskAssetList(any(AssetInventoryTaskAssetBo.class))).thenReturn(expected);
+
+        List<AssetInventoryTaskAssetVo> actual = inventoryService.selectTaskAssetList(bo);
+
+        assertSame(expected, actual);
+        verify(assetInventoryMapper).selectTaskAssetList(
+            argThat(param -> "PENDING".equals(param.getResultType()) && Long.valueOf(10L).equals(param.getTaskId())));
+    }
+
+    @Test
+    @DisplayName("查询任务资产明细时遇到非法筛选类型应拒绝")
+    void shouldRejectIllegalResultTypeWhenListTaskAssets()
+    {
+        AssetInventoryTaskAssetBo bo = new AssetInventoryTaskAssetBo();
+        bo.setTaskId(10L);
+        bo.setResultType("INVALID");
+        when(assetInventoryMapper.selectAssetInventoryTaskById(10L)).thenReturn(buildTask(10L));
+
+        ServiceException exception = assertThrows(ServiceException.class, () -> inventoryService.selectTaskAssetList(bo));
+
+        org.junit.jupiter.api.Assertions.assertEquals("盘点结果筛选类型不合法", exception.getMessage());
+        verify(assetInventoryMapper, never()).selectTaskAssetList(any(AssetInventoryTaskAssetBo.class));
     }
 
     private AssetInventoryResultBo buildDamagedResult()
