@@ -97,6 +97,7 @@
   const userStore = useUserStore()
 
   const exportLoading = ref(false)
+  // 中文注释：台账概览卡片数据，来源于后端聚合统计接口，作为管理层看板口径。
   const overview = reactive({
     totalCount: 0,
     inUseCount: 0,
@@ -132,6 +133,7 @@
     disabled: 'disabled'
   }
 
+  // 中文注释：依赖项变化后重建搜索栏，确保远程字典/树数据更新能即时反映到筛选控件。
   const searchBarKey = computed(() => {
     return (
       categoryOptions.value.length +
@@ -304,6 +306,7 @@
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
   }
 
+  // 中文注释：详情与编辑按钮分别受查询/编辑权限控制，避免越权访问路由页面。
   const canQuery = computed(() => hasPermission('asset:ledger:query'))
   const canEdit = computed(() => hasPermission('asset:ledger:edit'))
 
@@ -421,7 +424,7 @@
     }
   })
 
-  const toArrayData = <T>(response: any): T[] => {
+  const toArrayData = <T,>(response: any): T[] => {
     if (Array.isArray(response)) {
       return response
     }
@@ -470,6 +473,7 @@
     }
   }
 
+  // 中文注释：统一构造查询参数，保持列表查询、导出、刷新三者口径一致。
   const buildQueryParams = () => {
     const [beginTime, endTime] = Array.isArray(searchForm.daterange)
       ? searchForm.daterange
@@ -491,6 +495,7 @@
     }
   }
 
+  // 中文注释：useTable 内部使用 searchParams 触发查询，先同步再拉取数据。
   const syncSearchParams = () => {
     Object.assign(searchParams, buildQueryParams())
   }
@@ -517,6 +522,7 @@
     router.push(`/asset/ledger/detail/${row.assetId}`)
   }
 
+  // 中文注释：导出沿用当前筛选条件，避免“页面看到什么、导出却不是同一口径”。
   const handleExport = async () => {
     exportLoading.value = true
     try {
@@ -536,7 +542,12 @@
   }
 
   onMounted(async () => {
-    await Promise.all([loadCategoryTree(), loadDeptTree(), handleResponsibleUserSearch(), loadOverview()])
+    await Promise.all([
+      loadCategoryTree(),
+      loadDeptTree(),
+      handleResponsibleUserSearch(),
+      loadOverview()
+    ])
   })
 </script>
 

@@ -150,6 +150,7 @@
     { label: '发起处置', value: 'CREATE_DISPOSAL' }
   ]
 
+  // 中文注释：盘亏/缺失/毁损统一视为异常结果，必须触发后续动作选择。
   const abnormalResultSet = new Set(['LOSS', 'MISSING', 'DAMAGED'])
 
   const buildNowDateTime = () => {
@@ -160,6 +161,7 @@
     )}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
   }
 
+  // 中文注释：每次打开弹窗重置默认值，避免沿用上一次资产的登记内容。
   const createDefaultFormData = () => ({
     inventoryResult: 'NORMAL',
     followUpAction: 'NONE',
@@ -172,6 +174,7 @@
 
   const formData = reactive(createDefaultFormData())
 
+  // 中文注释：异常与否用于联动“后续动作”“是否继续使用”等字段可见性与提交值。
   const isAbnormalResult = computed(() => abnormalResultSet.has(formData.inventoryResult))
 
   const taskTitle = computed(() => {
@@ -185,7 +188,10 @@
     if (!props.asset) {
       return '未选择资产'
     }
-    return [props.asset.assetCode, props.asset.assetName].filter(Boolean).join(' / ') || `ID:${props.asset.assetId}`
+    return (
+      [props.asset.assetCode, props.asset.assetName].filter(Boolean).join(' / ') ||
+      `ID:${props.asset.assetId}`
+    )
   })
 
   const formRules: FormRules = {
@@ -237,6 +243,7 @@
     emit('update:modelValue', false)
   }
 
+  // 中文注释：提交时由父页面补充 taskId/assetId，子组件仅提交盘点结果业务字段。
   const handleSubmit = async () => {
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {

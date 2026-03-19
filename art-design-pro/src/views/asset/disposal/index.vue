@@ -69,19 +69,34 @@
       @closed="handleConfirmDialogClosed"
     >
       <ElDescriptions v-if="currentAsset" :column="2" border class="mb-4">
-        <ElDescriptionsItem label="资产编码">{{ currentAsset.assetCode || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="资产名称">{{ currentAsset.assetName || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="资产编码">{{
+          currentAsset.assetCode || '-'
+        }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="资产名称">{{
+          currentAsset.assetName || '-'
+        }}</ElDescriptionsItem>
         <ElDescriptionsItem label="当前状态">
           <DictTag :options="ast_asset_status" :value="currentAsset.assetStatus" />
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="资产位置">{{ currentAsset.locationName || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="资产位置">{{
+          currentAsset.locationName || '-'
+        }}</ElDescriptionsItem>
       </ElDescriptions>
 
-      <ElForm ref="confirmFormRef" :model="confirmFormData" :rules="confirmFormRules" label-width="110px">
+      <ElForm
+        ref="confirmFormRef"
+        :model="confirmFormData"
+        :rules="confirmFormRules"
+        label-width="110px"
+      >
         <ElRow :gutter="16">
           <ElCol :xs="24" :md="12">
             <ElFormItem label="处置类型" prop="disposalType">
-              <ElSelect v-model="confirmFormData.disposalType" class="w-full" placeholder="请选择处置类型">
+              <ElSelect
+                v-model="confirmFormData.disposalType"
+                class="w-full"
+                placeholder="请选择处置类型"
+              >
                 <ElOption
                   v-for="item in disposalTypeOptions"
                   :key="item.value"
@@ -206,8 +221,10 @@
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
   }
 
+  // 中文注释：处置确认会改变台账最终状态，仅对具备新增处置权限的用户开放。
   const canConfirmDisposal = computed(() => hasPermission('asset:disposal:add'))
 
+  // 中文注释：默认先展示“待处置资产池”，符合先处理再回看记录的操作习惯。
   const activeTab = ref<'pool' | 'record'>('pool')
 
   const disposalTypeOptions = [
@@ -267,7 +284,8 @@
           prop: 'assetStatus',
           label: '资产状态',
           width: 110,
-          formatter: (row: AssetPoolRow) => h(DictTag, { options: ast_asset_status.value, value: row.assetStatus })
+          formatter: (row: AssetPoolRow) =>
+            h(DictTag, { options: ast_asset_status.value, value: row.assetStatus })
         },
         { prop: 'ownerDeptName', label: '权属部门', minWidth: 120 },
         { prop: 'useDeptName', label: '使用部门', minWidth: 120 },
@@ -444,6 +462,7 @@
     })
   }
 
+  // 中文注释：资产池固定查询“待处置”状态，确保页面口径与后端闭环规则一致。
   const buildPoolQueryParams = () => {
     return {
       assetType: 'FIXED',
@@ -486,6 +505,7 @@
     resetRecordSearchParams()
   }
 
+  // 中文注释：确认处置前锁定当前资产上下文，提交时据此生成处置单。
   const openConfirmDialog = (row: AssetPoolRow) => {
     currentAsset.value = row
     confirmDialogVisible.value = true
@@ -508,6 +528,7 @@
     currentAsset.value = undefined
   }
 
+  // 中文注释：提交成功后同时刷新资产池与处置记录，并切换到记录页便于用户立即核对结果。
   const handleConfirmSubmit = async () => {
     const valid = await confirmFormRef.value?.validate().catch(() => false)
     if (!valid) {
@@ -538,6 +559,7 @@
     }
   }
 
+  // 中文注释：一键刷新保持上下两块数据同源，避免“池子和记录不同步”。
   const handleRefreshAll = async () => {
     await Promise.all([refreshPoolData(), refreshRecordData()])
   }

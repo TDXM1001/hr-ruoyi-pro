@@ -10,7 +10,12 @@
         </div>
         <ElSpace wrap>
           <ElTag type="success" effect="light">资产类型：固定资产（一期）</ElTag>
-          <ElButton v-auth="'asset:inventory:add'" type="primary" @click="openCreateDialog" v-ripple>
+          <ElButton
+            v-auth="'asset:inventory:add'"
+            type="primary"
+            @click="openCreateDialog"
+            v-ripple
+          >
             发起盘点任务
           </ElButton>
         </ElSpace>
@@ -89,7 +94,12 @@
       destroy-on-close
       @closed="handleCreateDialogClosed"
     >
-      <ElForm ref="createFormRef" :model="createFormData" :rules="createFormRules" label-width="110px">
+      <ElForm
+        ref="createFormRef"
+        :model="createFormData"
+        :rules="createFormRules"
+        label-width="110px"
+      >
         <ElRow :gutter="16">
           <ElCol :xs="24" :md="12">
             <ElFormItem label="任务名称" prop="taskName">
@@ -238,7 +248,9 @@
   }
 
   const getTaskStatusLabel = (status?: string) => {
-    const match = taskStatusOptions.find((item) => item.value === String(status || '').toUpperCase())
+    const match = taskStatusOptions.find(
+      (item) => item.value === String(status || '').toUpperCase()
+    )
     return match?.label || status || '-'
   }
 
@@ -246,6 +258,7 @@
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
   }
 
+  // 中文注释：盘点结果登记属于写操作，单独受 asset:inventory:edit 权限约束。
   const canEditInventoryResult = computed(() => hasPermission('asset:inventory:edit'))
 
   const taskInitialSearchState = {
@@ -317,10 +330,8 @@
           label: '任务状态',
           width: 110,
           formatter: (row: InventoryTaskRow) =>
-            h(
-              ElTag,
-              { type: getTaskStatusTagType(row.taskStatus), effect: 'light' },
-              () => getTaskStatusLabel(row.taskStatus)
+            h(ElTag, { type: getTaskStatusTagType(row.taskStatus), effect: 'light' }, () =>
+              getTaskStatusLabel(row.taskStatus)
             )
         },
         {
@@ -328,7 +339,9 @@
           label: '盘点范围',
           width: 110,
           formatter: (row: InventoryTaskRow) =>
-            String(row.scopeType || '').toUpperCase() === 'ASSET' ? '资产范围' : row.scopeType || '-'
+            String(row.scopeType || '').toUpperCase() === 'ASSET'
+              ? '资产范围'
+              : row.scopeType || '-'
         },
         { prop: 'plannedDate', label: '计划盘点日', width: 120 },
         { prop: 'completedDate', label: '完成日期', width: 120 },
@@ -363,6 +376,7 @@
   const resultSubmitting = ref(false)
   const resultDialogAsset = ref<InventoryTaskAssetRow>()
 
+  // 中文注释：仅允许选择“在册/在用/闲置/盘点中”资产进入任务，避免将已处置资产加入盘点范围。
   const taskSelectableStatuses = new Set(['IN_LEDGER', 'IN_USE', 'IDLE', 'INVENTORYING'])
 
   const createDialogVisible = ref(false)
@@ -463,7 +477,8 @@
       prop: 'assetStatus',
       label: '资产状态',
       width: 120,
-      formatter: (row: InventoryTaskAssetRow) => h(DictTag, { options: ast_asset_status.value, value: row.assetStatus })
+      formatter: (row: InventoryTaskAssetRow) =>
+        h(DictTag, { options: ast_asset_status.value, value: row.assetStatus })
     },
     { prop: 'ownerDeptName', label: '权属部门', minWidth: 120 },
     { prop: 'useDeptName', label: '使用部门', minWidth: 120 },
@@ -518,6 +533,7 @@
     return undefined
   }
 
+  // 中文注释：后端 scopeValue 以逗号字符串存储资产ID，这里统一去重并过滤非法值。
   const parseScopeAssetIds = (scopeValue?: string) => {
     if (!scopeValue) {
       return []
@@ -542,6 +558,7 @@
     return submittedResultMap.value[taskId]?.includes(assetId) || false
   }
 
+  // 中文注释：按任务范围逐条拉取台账详情，保证“任务资产列表”展示的是最新台账快照。
   const loadTaskAssets = async (task: InventoryTaskRow) => {
     const assetIds = parseScopeAssetIds(task.scopeValue)
     if (!assetIds.length) {
@@ -551,7 +568,9 @@
 
     taskAssetLoading.value = true
     try {
-      const responseList = await Promise.allSettled(assetIds.map((assetId) => getAssetLedger(assetId)))
+      const responseList = await Promise.allSettled(
+        assetIds.map((assetId) => getAssetLedger(assetId))
+      )
       taskAssets.value = responseList.map((result, index) => {
         const assetId = assetIds[index]
         if (result.status === 'fulfilled') {
@@ -602,6 +621,7 @@
     await loadTaskAssets(row)
   }
 
+  // 中文注释：刷新后优先保持当前选中任务；若当前任务不存在则回落到第一条，避免右侧资产区空白。
   const handleTaskRefresh = async () => {
     await refreshTaskData()
     const taskList = taskData.value as InventoryTaskRow[]
@@ -645,6 +665,7 @@
     selectedCreateAssets.value = selection
   }
 
+  // 中文注释：先打开弹窗再触发表格查询，确保表格实例与分页对象已挂载。
   const openCreateDialog = async () => {
     createDialogVisible.value = true
     await nextTick()
@@ -667,6 +688,7 @@
     resetCreateForm()
   }
 
+  // 中文注释：创建盘点任务必须同时提交任务主信息与资产ID集合，形成“任务-资产”闭环。
   const handleCreateTaskSubmit = async () => {
     const valid = await createFormRef.value?.validate().catch(() => false)
     if (!valid) {
@@ -703,6 +725,7 @@
     resultDialogVisible.value = true
   }
 
+  // 中文注释：提交时统一补齐 taskId/assetId，前端弹窗只负责收集盘点结果字段。
   const handleInventoryResultSubmit = async (
     payload: Omit<AssetInventoryResultPayload, 'taskId' | 'assetId'>
   ) => {
@@ -726,6 +749,7 @@
       await loadTaskAssets(currentTask.value as InventoryTaskRow)
     } catch (error: any) {
       const message = String(error?.message || '')
+      // 中文注释：后端幂等提示“已提交盘点结果”时，同步前端已登记标记，避免重复操作。
       if (message.includes('已提交盘点结果')) {
         markAssetResultSubmitted(taskId, assetId)
       }
@@ -735,6 +759,7 @@
     }
   }
 
+  // 中文注释：任务列表变化时自动修正当前任务上下文，避免分页/筛选后出现“选中任务失效”。
   watch(
     taskData,
     async (list) => {
