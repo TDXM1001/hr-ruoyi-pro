@@ -1,5 +1,7 @@
 <template>
-  <div class="asset-inventory-create art-full-height flex flex-col gap-3 overflow-y-auto p-3">
+  <div
+    class="asset-inventory-create art-full-height flex flex-col gap-3 overflow-y-auto overflow-x-hidden p-3"
+  >
     <ElCard class="head-card" shadow="never">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -13,123 +15,127 @@
       </div>
     </ElCard>
 
-    <ElCard class="main-card flex-1 min-h-0" shadow="never">
-      <ElSteps :active="activeStep" finish-status="success" class="mb-4">
-        <ElStep title="任务信息" description="填写任务名称与计划盘点日期" />
-        <ElStep title="选择资产" description="选择本次盘点范围资产" />
-        <ElStep title="确认提交" description="确认摘要并提交任务" />
-      </ElSteps>
+    <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
+      <div class="create-shell">
+        <div class="create-scroll-area">
+          <ElSteps :active="activeStep" finish-status="success" class="mb-4">
+            <ElStep title="任务信息" description="填写任务名称与计划盘点日期" />
+            <ElStep title="选择资产" description="选择本次盘点范围资产" />
+            <ElStep title="确认提交" description="确认摘要并提交任务" />
+          </ElSteps>
 
-      <div v-show="activeStep === 0">
-        <ElForm
-          ref="taskFormRef"
-          :model="taskFormData"
-          :rules="taskFormRules"
-          label-width="110px"
-          class="max-w-[920px]"
-        >
-          <ElRow :gutter="16">
-            <ElCol :xs="24" :md="12">
-              <ElFormItem label="任务名称" prop="taskName">
+          <div v-show="activeStep === 0">
+            <ElForm
+              ref="taskFormRef"
+              :model="taskFormData"
+              :rules="taskFormRules"
+              label-width="110px"
+              class="max-w-[920px]"
+            >
+              <ElRow :gutter="16">
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="任务名称" prop="taskName">
+                    <ElInput
+                      v-model="taskFormData.taskName"
+                      maxlength="120"
+                      clearable
+                      placeholder="请输入盘点任务名称"
+                    />
+                  </ElFormItem>
+                </ElCol>
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="计划盘点日" prop="plannedDate">
+                    <ElDatePicker
+                      v-model="taskFormData.plannedDate"
+                      type="date"
+                      value-format="YYYY-MM-DD"
+                      class="w-full"
+                      placeholder="请选择计划盘点日期"
+                    />
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
+              <ElFormItem label="备注" prop="remark">
                 <ElInput
-                  v-model="taskFormData.taskName"
-                  maxlength="120"
-                  clearable
-                  placeholder="请输入盘点任务名称"
+                  v-model="taskFormData.remark"
+                  type="textarea"
+                  :rows="3"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请输入任务说明（可选）"
                 />
               </ElFormItem>
-            </ElCol>
-            <ElCol :xs="24" :md="12">
-              <ElFormItem label="计划盘点日" prop="plannedDate">
-                <ElDatePicker
-                  v-model="taskFormData.plannedDate"
-                  type="date"
-                  value-format="YYYY-MM-DD"
-                  class="w-full"
-                  placeholder="请选择计划盘点日期"
-                />
-              </ElFormItem>
-            </ElCol>
-          </ElRow>
-          <ElFormItem label="备注" prop="remark">
-            <ElInput
-              v-model="taskFormData.remark"
-              type="textarea"
-              :rows="3"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入任务说明（可选）"
+            </ElForm>
+          </div>
+
+          <div v-show="activeStep === 1" class="step-panel">
+            <ElAlert
+              title="仅允许选择在册 / 使用中 / 闲置 / 盘点中的固定资产，待处置与已处置资产不允许加入盘点任务。"
+              type="info"
+              :closable="false"
+              show-icon
             />
-          </ElFormItem>
-        </ElForm>
-      </div>
 
-      <div v-show="activeStep === 1" class="flex flex-col gap-3">
-        <ElAlert
-          title="仅允许选择在册 / 使用中 / 闲置 / 盘点中的固定资产，待处置与已处置资产不允许加入盘点任务。"
-          type="info"
-          :closable="false"
-          show-icon
-        />
+            <ArtSearchBar
+              v-model="assetSearchForm"
+              :items="assetSearchItems"
+              :showExpand="true"
+              @search="handleAssetSearch"
+              @reset="handleAssetReset"
+            />
 
-        <ArtSearchBar
-          v-model="assetSearchForm"
-          :items="assetSearchItems"
-          :showExpand="true"
-          @search="handleAssetSearch"
-          @reset="handleAssetReset"
-        />
+            <div class="flex items-center justify-between gap-3">
+              <ElTag type="primary" effect="light">已选 {{ selectedAssetRows.length }} 宗</ElTag>
+              <ElButton text type="primary" @click="clearSelection">清空勾选</ElButton>
+            </div>
 
-        <div class="flex items-center justify-between gap-3">
-          <ElTag type="primary" effect="light">已选 {{ selectedAssetRows.length }} 宗</ElTag>
-          <ElButton text type="primary" @click="clearSelection">清空勾选</ElButton>
+            <ArtTable
+              ref="assetTableRef"
+              rowKey="assetId"
+              :loading="assetLoading"
+              :data="assetData"
+              :columns="assetColumns"
+              :pagination="assetPagination"
+              :height="assetTableHeight"
+              @selection-change="handleSelectionChange"
+              @pagination:size-change="handleAssetSizeChange"
+              @pagination:current-change="handleAssetCurrentChange"
+            />
+          </div>
+
+          <div v-show="activeStep === 2" class="confirm-wrapper">
+            <ElDescriptions :column="2" border>
+              <ElDescriptionsItem label="任务名称">{{
+                taskFormData.taskName || '-'
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="计划盘点日">{{
+                taskFormData.plannedDate || '-'
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="盘点资产数"
+                >{{ selectedAssetRows.length }} 宗</ElDescriptionsItem
+              >
+              <ElDescriptionsItem label="备注">{{ taskFormData.remark || '-' }}</ElDescriptionsItem>
+            </ElDescriptions>
+
+            <ElDivider class="!my-4" content-position="left">已选资产预览</ElDivider>
+
+            <ArtTable
+              rowKey="assetId"
+              :data="selectedAssetRows"
+              :columns="selectedPreviewColumns"
+              :height="selectedPreviewTableHeight"
+            />
+          </div>
         </div>
 
-        <ArtTable
-          ref="assetTableRef"
-          rowKey="assetId"
-          :loading="assetLoading"
-          :data="assetData"
-          :columns="assetColumns"
-          :pagination="assetPagination"
-          :height="460"
-          @selection-change="handleSelectionChange"
-          @pagination:size-change="handleAssetSizeChange"
-          @pagination:current-change="handleAssetCurrentChange"
-        />
-      </div>
-
-      <div v-show="activeStep === 2" class="confirm-wrapper">
-        <ElDescriptions :column="2" border>
-          <ElDescriptionsItem label="任务名称">{{
-            taskFormData.taskName || '-'
-          }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="计划盘点日">{{
-            taskFormData.plannedDate || '-'
-          }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="盘点资产数"
-            >{{ selectedAssetRows.length }} 宗</ElDescriptionsItem
-          >
-          <ElDescriptionsItem label="备注">{{ taskFormData.remark || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-
-        <ElDivider class="!my-4" content-position="left">已选资产预览</ElDivider>
-
-        <ArtTable
-          rowKey="assetId"
-          :data="selectedAssetRows"
-          :columns="selectedPreviewColumns"
-          :height="420"
-        />
-      </div>
-
-      <div class="footer-actions">
-        <ElButton @click="goBack">取消</ElButton>
-        <ElButton v-if="activeStep > 0" @click="activeStep -= 1">上一步</ElButton>
-        <ElButton v-if="activeStep < 2" type="primary" @click="handleNextStep">下一步</ElButton>
-        <ElButton v-else type="primary" :loading="submitting" @click="handleSubmitTask">
-          提交任务
-        </ElButton>
+        <div class="footer-actions">
+          <ElButton @click="goBack">取消</ElButton>
+          <ElButton v-if="activeStep > 0" @click="activeStep -= 1">上一步</ElButton>
+          <ElButton v-if="activeStep < 2" type="primary" @click="handleNextStep">下一步</ElButton>
+          <ElButton v-else type="primary" :loading="submitting" @click="handleSubmitTask">
+            提交任务
+          </ElButton>
+        </div>
       </div>
     </ElCard>
   </div>
@@ -138,6 +144,7 @@
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElMessage } from 'element-plus'
+  import { useWindowSize } from '@vueuse/core'
   import { useRouter } from 'vue-router'
   import { addInventoryTask } from '@/api/asset/inventory'
   import { listAssetLedger } from '@/api/asset/ledger'
@@ -157,6 +164,7 @@
   }
 
   const router = useRouter()
+  const { height: windowHeight } = useWindowSize()
   const { ast_asset_status } = useDict('ast_asset_status')
 
   const activeStep = ref(0)
@@ -217,8 +225,8 @@
     getData: getAssetData,
     searchParams: assetSearchParams,
     resetSearchParams: resetAssetSearchParams,
-    handleSizeChange: handleAssetSizeChange,
-    handleCurrentChange: handleAssetCurrentChange
+    handleSizeChange: handleAssetSizeChangeRaw,
+    handleCurrentChange: handleAssetCurrentChangeRaw
   } = useTable({
     core: {
       apiFn: listAssetLedger,
@@ -251,6 +259,7 @@
   })
 
   const selectedAssetMap = ref<Record<number, AssetRow>>({})
+  const isSyncingSelection = ref(false)
 
   const selectedPreviewColumns = [
     { prop: 'assetCode', label: '资产编码', minWidth: 140 },
@@ -268,6 +277,16 @@
 
   const selectedAssetRows = computed(() => Object.values(selectedAssetMap.value))
 
+  // 中文注释：步骤二资产表格按视口动态高度展示，避免表格区域在中小屏下被底部操作条挤压。
+  const assetTableHeight = computed(() => {
+    return Math.min(560, Math.max(320, windowHeight.value - 500))
+  })
+
+  // 中文注释：步骤三预览表格略低于步骤二，保证确认摘要与底部按钮可同时可见。
+  const selectedPreviewTableHeight = computed(() => {
+    return Math.min(500, Math.max(280, windowHeight.value - 560))
+  })
+
   const buildAssetQueryParams = () => {
     return {
       assetType: 'FIXED',
@@ -278,10 +297,12 @@
   }
 
   const syncPageSelection = () => {
+    isSyncingSelection.value = true
     nextTick(() => {
       const pageRows = (assetData.value || []) as AssetRow[]
       const tableRef = assetTableRef.value?.elTableRef
       if (!tableRef) {
+        isSyncingSelection.value = false
         return
       }
       tableRef.clearSelection?.()
@@ -290,11 +311,18 @@
           tableRef.toggleRowSelection?.(row, true)
         }
       })
+      nextTick(() => {
+        isSyncingSelection.value = false
+      })
     })
   }
 
   // 中文注释：按“当前页覆盖更新 + 跨页保留”策略维护勾选资产，避免翻页后丢失选择。
   const handleSelectionChange = (selection: AssetRow[]) => {
+    // 中文注释：翻页回显过程中会触发 selection-change，需忽略以避免把缓存误清空。
+    if (isSyncingSelection.value) {
+      return
+    }
     const nextMap = { ...selectedAssetMap.value }
     const pageRows = (assetData.value || []) as AssetRow[]
     pageRows.forEach((row) => {
@@ -308,7 +336,27 @@
 
   const clearSelection = () => {
     selectedAssetMap.value = {}
-    assetTableRef.value?.elTableRef?.clearSelection?.()
+    const tableRef = assetTableRef.value?.elTableRef
+    if (!tableRef) {
+      return
+    }
+    isSyncingSelection.value = true
+    tableRef.clearSelection?.()
+    nextTick(() => {
+      isSyncingSelection.value = false
+    })
+  }
+
+  const handleAssetSizeChange = (size: number) => {
+    // 中文注释：分页变化后需按 rowKey 回显当前页选中，确保“跨页可选 + 当前页可见”一致。
+    handleAssetSizeChangeRaw(size)
+    syncPageSelection()
+  }
+
+  const handleAssetCurrentChange = (pageNum: number) => {
+    // 中文注释：翻页后恢复当前页勾选态，避免用户误以为历史选择丢失。
+    handleAssetCurrentChangeRaw(pageNum)
+    syncPageSelection()
   }
 
   const handleAssetSearch = () => {
@@ -350,6 +398,14 @@
       })
       ElMessage.success('盘点任务创建成功')
       router.replace(`/asset/inventory/task/${taskId}`)
+    } catch (error: any) {
+      const message = String(error?.message || '')
+      // 中文注释：优先提示“可执行动作”，避免直接暴露后端技术细节给业务用户。
+      if (message.includes('Unknown column') && message.includes('create_time')) {
+        ElMessage.error('数据库结构与当前版本不一致，请先同步资产模块 SQL 增量脚本。')
+        return
+      }
+      ElMessage.error(message || '盘点任务创建失败，请稍后重试')
     } finally {
       submitting.value = false
     }
@@ -385,6 +441,8 @@
       radial-gradient(circle at 0% 0%, rgb(47 102 255 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(32 201 151 / 8%), transparent 36%),
       var(--art-main-bg-color);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .head-card,
@@ -392,6 +450,20 @@
     border: 1px solid var(--asset-border);
     border-radius: 12px;
     background: var(--asset-panel-bg);
+  }
+
+  .main-card {
+    min-height: 620px;
+  }
+
+  .main-card {
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0;
+      overflow: hidden;
+    }
   }
 
   .page-title {
@@ -415,12 +487,33 @@
     flex-direction: column;
   }
 
+  .create-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .create-scroll-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 24px 16px;
+  }
+
+  .step-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .footer-actions {
-    margin-top: 16px;
-    padding-top: 16px;
+    flex-shrink: 0;
+    padding: 16px 24px 18px;
     border-top: 1px solid #ebeff7;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    background: linear-gradient(180deg, rgb(255 255 255 / 96%) 0%, #f8fbff 100%);
   }
 </style>

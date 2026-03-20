@@ -1,51 +1,42 @@
 <template>
-  <div class="asset-inventory-center art-full-height flex flex-col gap-3 overflow-y-auto p-3">
-    <ElCard class="head-card" shadow="never">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="page-title">资产盘点</div>
-          <div class="page-desc">
-            任务中心仅承载“任务管理与执行入口”，发起任务与结果登记分别进入独立页面，避免单页过重。
-          </div>
-        </div>
-        <ElSpace wrap>
-          <ElTag type="success" effect="light">资产类型：固定资产（一期）</ElTag>
-          <ElButton
-            v-auth="'asset:inventory:add'"
-            type="primary"
-            icon="ri:add-line"
-            @click="handleGoCreate"
-            v-ripple
-          >
-            发起盘点任务
-          </ElButton>
-        </ElSpace>
-      </div>
-    </ElCard>
+  <div
+    class="asset-inventory-center art-full-height flex flex-col gap-2 overflow-y-auto overflow-x-hidden p-3"
+  >
+    <ArtSearchBar
+      v-model="searchForm"
+      :items="searchItems"
+      :showExpand="false"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
-    <ElCard class="task-card flex-1 min-h-0" shadow="never">
+    <ElCard class="art-table-card flex-1 overflow-hidden task-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <div class="card-title">盘点任务列表</div>
-          <ElButton
-            type="primary"
-            plain
-            icon="ri:refresh-line"
-            :loading="loading"
-            @click="handleRefresh"
-          >
-            刷新任务
-          </ElButton>
+          <div class="card-title">资产盘点任务</div>
+          <ElSpace wrap class="toolbar-actions">
+            <ElTag type="success" effect="light">资产类型：固定资产（一期）</ElTag>
+            <ElButton
+              type="primary"
+              plain
+              icon="ri:refresh-line"
+              :loading="loading"
+              @click="handleRefresh"
+            >
+              刷新任务
+            </ElButton>
+            <ElButton
+              v-auth="'asset:inventory:add'"
+              type="primary"
+              icon="ri:add-line"
+              @click="handleGoCreate"
+              v-ripple
+            >
+              发起盘点任务
+            </ElButton>
+          </ElSpace>
         </div>
       </template>
-
-      <ArtSearchBar
-        v-model="searchForm"
-        :items="searchItems"
-        :showExpand="true"
-        @search="handleSearch"
-        @reset="handleReset"
-      />
 
       <ArtTable
         rowKey="taskId"
@@ -53,7 +44,6 @@
         :data="data"
         :columns="columns"
         :pagination="pagination"
-        :height="560"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
       />
@@ -268,7 +258,7 @@
           formatter: (row: InventoryTaskRow) =>
             isOverdueTask(row)
               ? h(ElTag, { type: 'danger', effect: 'light' }, () => '已逾期')
-              : h('span', '-', null)
+              : h('span', null, '-')
         },
         { prop: 'createBy', label: '创建人', width: 100 },
         {
@@ -345,35 +335,21 @@
       radial-gradient(circle at 0% 0%, rgb(47 102 255 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(32 201 151 / 8%), transparent 36%),
       var(--art-main-bg-color);
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
-  .head-card,
   .task-card {
-    border: 1px solid var(--asset-border);
-    border-radius: 12px;
     background: var(--asset-panel-bg);
-  }
-
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--asset-text-main);
-    line-height: 1.4;
-  }
-
-  .page-desc {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--asset-text-secondary);
-    line-height: 1.6;
-    max-width: 900px;
+    min-height: 520px;
   }
 
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 12px 16px;
     flex-wrap: wrap;
   }
 
@@ -394,6 +370,10 @@
     }
   }
 
+  .toolbar-actions {
+    align-items: center;
+  }
+
   :deep(.progress-cell) {
     width: 100%;
   }
@@ -403,5 +383,62 @@
     color: #5d6b86;
     font-size: 12px;
     line-height: 1.4;
+  }
+
+  .task-card {
+    margin-top: 0;
+
+    :deep(.el-card) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      // 中文注释：底部预留安全区，避免分页器被工作台底部区域遮挡。
+      padding: 0 16px 56px;
+    }
+
+    :deep(.art-table) {
+      flex: 1;
+      min-height: 0;
+    }
+
+    // 中文注释：覆盖表格组件默认固定高度，避免分页区域被底部裁切。
+    :deep(.art-table .el-table) {
+      margin-top: 0;
+    }
+
+    :deep(.el-card__header) {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eaf0fb;
+      background: linear-gradient(180deg, rgb(247 250 255 / 90%) 0%, #fff 100%);
+    }
+  }
+
+  :deep(.art-search-bar) {
+    padding: 10px 16px 0;
+  }
+
+  :deep(.art-search-bar .el-form-item) {
+    margin-bottom: 10px;
+  }
+
+  :deep(.art-search-bar .action-column .action-buttons-wrapper) {
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .task-card {
+      :deep(.el-card__body) {
+        padding: 0 12px 40px;
+      }
+    }
   }
 </style>

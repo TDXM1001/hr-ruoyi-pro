@@ -1,68 +1,59 @@
 <template>
-  <div class="asset-use-page art-full-height flex flex-col gap-3 overflow-hidden p-3">
-    <ElCard class="head-card" shadow="never">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="page-title">资产使用</div>
-          <div class="page-desc">
-            资产使用页仅负责交接单管理，不直接改台账字段。领用、调拨、退还均通过“发起交接单”页面完成并留痕。
-          </div>
-        </div>
-        <ElSpace wrap>
-          <ElButton
-            v-auth="'asset:handover:add'"
-            type="primary"
-            @click="navigateCreate('ASSIGN')"
-            v-ripple
-          >
-            发起领用
-          </ElButton>
-          <ElButton
-            v-auth="'asset:handover:add'"
-            type="warning"
-            plain
-            @click="navigateCreate('TRANSFER')"
-            v-ripple
-          >
-            发起调拨
-          </ElButton>
-          <ElButton
-            v-auth="'asset:handover:add'"
-            type="danger"
-            plain
-            @click="navigateCreate('RETURN')"
-            v-ripple
-          >
-            发起退还
-          </ElButton>
-        </ElSpace>
-      </div>
-    </ElCard>
+  <div
+    class="asset-use-page art-full-height flex flex-col gap-2 overflow-y-auto overflow-x-hidden p-3"
+  >
+    <ArtSearchBar
+      :key="orderSearchBarKey"
+      v-model="orderSearchForm"
+      :items="orderSearchItems"
+      :showExpand="true"
+      @search="handleOrderSearch"
+      @reset="handleOrderReset"
+    />
 
-    <ElCard class="order-card flex-1 min-h-0 overflow-hidden" shadow="never">
+    <ElCard class="art-table-card flex-1 overflow-hidden order-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <div class="card-title">交接单记录</div>
-          <ElButton
-            type="primary"
-            plain
-            icon="ri:refresh-line"
-            :loading="orderLoading"
-            @click="refreshOrderData"
-          >
-            刷新记录
-          </ElButton>
+          <div class="card-title">资产使用交接单</div>
+          <ElSpace wrap class="toolbar-actions">
+            <ElButton
+              v-auth="'asset:handover:add'"
+              type="primary"
+              @click="navigateCreate('ASSIGN')"
+              v-ripple
+            >
+              发起领用
+            </ElButton>
+            <ElButton
+              v-auth="'asset:handover:add'"
+              type="warning"
+              plain
+              @click="navigateCreate('TRANSFER')"
+              v-ripple
+            >
+              发起调拨
+            </ElButton>
+            <ElButton
+              v-auth="'asset:handover:add'"
+              type="danger"
+              plain
+              @click="navigateCreate('RETURN')"
+              v-ripple
+            >
+              发起退还
+            </ElButton>
+            <ElButton
+              type="primary"
+              plain
+              icon="ri:refresh-line"
+              :loading="orderLoading"
+              @click="refreshOrderData"
+            >
+              刷新记录
+            </ElButton>
+          </ElSpace>
         </div>
       </template>
-
-      <ArtSearchBar
-        :key="orderSearchBarKey"
-        v-model="orderSearchForm"
-        :items="orderSearchItems"
-        :showExpand="true"
-        @search="handleOrderSearch"
-        @reset="handleOrderReset"
-      />
 
       <ArtTable
         rowKey="handoverOrderId"
@@ -378,28 +369,14 @@
       radial-gradient(circle at 0% 0%, rgb(47 102 255 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(32 201 151 / 8%), transparent 36%),
       var(--art-main-bg-color);
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
-  .head-card,
   .order-card {
-    border: 1px solid var(--asset-border);
-    border-radius: 12px;
     background: var(--asset-panel-bg);
-  }
-
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--asset-text-main);
-    line-height: 1.4;
-  }
-
-  .page-desc {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--asset-text-secondary);
-    line-height: 1.6;
-    max-width: 860px;
+    min-height: 520px;
   }
 
   :deep(.el-card__header) {
@@ -412,7 +389,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 12px 16px;
     flex-wrap: wrap;
   }
 
@@ -433,6 +410,10 @@
     }
   }
 
+  .toolbar-actions {
+    align-items: center;
+  }
+
   .handover-type-tag {
     display: inline-flex;
     align-items: center;
@@ -443,5 +424,62 @@
     font-size: 12px;
     font-weight: 600;
     line-height: 18px;
+  }
+
+  .order-card {
+    margin-top: 0;
+
+    :deep(.el-card) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      // 中文注释：统一工作台表格底部安全区，避免分页在不同窗口高度下贴边。
+      padding: 0 16px 56px;
+    }
+
+    :deep(.art-table) {
+      flex: 1;
+      min-height: 0;
+    }
+
+    // 中文注释：覆盖表格组件默认固定高度，避免分页区域被底部裁切。
+    :deep(.art-table .el-table) {
+      margin-top: 0;
+    }
+
+    :deep(.el-card__header) {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eaf0fb;
+      background: linear-gradient(180deg, rgb(247 250 255 / 90%) 0%, #fff 100%);
+    }
+  }
+
+  :deep(.art-search-bar) {
+    padding: 10px 16px 0;
+  }
+
+  :deep(.art-search-bar .el-form-item) {
+    margin-bottom: 10px;
+  }
+
+  :deep(.art-search-bar .action-column .action-buttons-wrapper) {
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .order-card {
+      :deep(.el-card__body) {
+        padding: 0 12px 40px;
+      }
+    }
   }
 </style>

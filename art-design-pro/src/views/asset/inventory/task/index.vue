@@ -1,37 +1,54 @@
 <template>
-  <div class="asset-inventory-task art-full-height flex flex-col gap-3 overflow-y-auto p-3">
-    <ElCard class="head-card" shadow="never">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <ElLink type="primary" :underline="false" @click="goBack">返回资产盘点</ElLink>
-          <div class="page-title">盘点执行</div>
-          <div class="page-desc"
-            >按任务逐条登记盘点结果，异常资产必须指定后续动作，系统自动回写台账状态。</div
-          >
+  <div
+    class="asset-inventory-task art-full-height flex flex-col gap-2 overflow-y-auto overflow-x-hidden p-3"
+  >
+    <div class="page-bar">
+      <ElLink class="back-link" type="primary" :underline="false" @click="goBack"
+        >返回资产盘点</ElLink
+      >
+      <div class="page-bar-top">
+        <div class="page-main">
+          <div class="title-row">
+            <div class="page-title">盘点执行</div>
+            <ElTag type="info" effect="light">任务：{{ taskMeta.taskNo || '-' }}</ElTag>
+            <ElTag :type="isOverdueTask ? 'danger' : 'success'" effect="light">
+              {{ isOverdueTask ? '任务逾期' : '任务正常' }}
+            </ElTag>
+          </div>
+          <div class="page-desc">{{ pageDescription }}</div>
+          <div class="task-summary-line">
+            <span class="summary-chip">计划盘点日：{{ taskMeta.plannedDate || '-' }}</span>
+            <span class="summary-chip">盘点范围：{{ scopeAssetCount }} 宗</span>
+            <span class="summary-chip summary-chip--focus">待登记：{{ pendingCount }} 宗</span>
+            <span class="summary-chip">异常：{{ abnormalCount }} 宗</span>
+          </div>
         </div>
-        <ElSpace wrap>
-          <ElTag type="info" effect="light">任务：{{ taskMeta.taskNo || '-' }}</ElTag>
-          <ElTag :type="isOverdueTask ? 'danger' : 'success'" effect="light">
-            {{ isOverdueTask ? '任务逾期' : '任务正常' }}
-          </ElTag>
-        </ElSpace>
       </div>
-      <div class="mt-3 progress-wrapper">
-        <div class="progress-meta">
-          <span>登记进度：{{ submittedCount }} / {{ scopeAssetCount }}</span>
-          <span>异常：{{ abnormalCount }}</span>
+      <div class="task-progress-line">
+        <div class="progress-head">
+          <span>进度：{{ submittedCount }} / {{ scopeAssetCount }}</span>
+          <span>{{ progressPercent }}%</span>
         </div>
-        <ElProgress :percentage="progressPercent" :stroke-width="10" />
+        <ElProgress :percentage="progressPercent" :stroke-width="8" :show-text="false" />
       </div>
-    </ElCard>
+    </div>
 
-    <ElCard class="main-card flex-1 min-h-0" shadow="never">
+    <ArtSearchBar
+      v-model="searchForm"
+      :items="searchItems"
+      :showExpand="false"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
+
+    <ElCard class="art-table-card flex-1 overflow-hidden main-card" shadow="never">
       <template #header>
         <div class="card-header">
           <div class="card-title">任务资产清单</div>
-          <ElSpace wrap>
+          <ElSpace wrap class="toolbar-actions">
             <ElTag type="info" effect="light">当前页 {{ data.length }} 宗</ElTag>
-            <ElTag type="primary" effect="light">批量已选 {{ selectedAssetRows.length }} 宗</ElTag>
+            <ElTag type="primary" effect="light">已选 {{ selectedAssetRows.length }} 宗</ElTag>
+            <ElTag type="warning" effect="light">待登记 {{ pendingCount }} 宗</ElTag>
             <ElButton type="warning" :disabled="!canEditInventoryResult" @click="openBatchDrawer">
               批量登记正常
             </ElButton>
@@ -48,14 +65,6 @@
         </div>
       </template>
 
-      <ArtSearchBar
-        v-model="searchForm"
-        :items="searchItems"
-        :showExpand="true"
-        @search="handleSearch"
-        @reset="handleReset"
-      />
-
       <ArtTable
         ref="tableRef"
         rowKey="assetId"
@@ -63,7 +72,6 @@
         :data="data"
         :columns="columns"
         :pagination="pagination"
-        :height="560"
         @selection-change="handleSelectionChange"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
@@ -87,7 +95,7 @@
     AssetInventoryResultPayload,
     AssetInventoryTaskAssetQuery
   } from '@/api/asset/inventory'
-  import { ElButton, ElMessage, ElTag } from 'element-plus'
+  import { ElButton, ElMessage, ElProgress, ElTag } from 'element-plus'
   import { useRoute, useRouter } from 'vue-router'
   import {
     getInventoryTask,
@@ -182,12 +190,20 @@
 
   const submittedCount = computed(() => Number(taskMeta.submittedCount || 0))
   const abnormalCount = computed(() => Number(taskMeta.abnormalCount || 0))
+  const pendingCount = computed(() => Math.max(scopeAssetCount.value - submittedCount.value, 0))
 
   const progressPercent = computed(() => {
     if (!scopeAssetCount.value) {
       return 0
     }
     return Math.min(100, Math.round((submittedCount.value / scopeAssetCount.value) * 100))
+  })
+
+  const pageDescription = computed(() => {
+    return (
+      taskMeta.taskName ||
+      '按任务逐条登记盘点结果，异常资产必须指定后续动作，系统自动回写台账状态。'
+    )
   })
 
   const isOverdueTask = computed(() => {
@@ -264,8 +280,8 @@
     getData,
     searchParams,
     resetSearchParams,
-    handleSizeChange,
-    handleCurrentChange,
+    handleSizeChange: handleSizeChangeRaw,
+    handleCurrentChange: handleCurrentChangeRaw,
     refreshData
   } = useTable({
     core: {
@@ -355,6 +371,7 @@
   const tableRef = ref<any>()
   const selectedAssetMap = ref<Record<number, TaskAssetRow>>({})
   const selectedAssetRows = computed(() => Object.values(selectedAssetMap.value))
+  const isSyncingSelection = ref(false)
 
   const drawerVisible = ref(false)
   const drawerMode = ref<DrawerMode>('single')
@@ -404,10 +421,12 @@
   }
 
   const syncPageSelection = () => {
+    isSyncingSelection.value = true
     nextTick(() => {
       const pageRows = (data.value || []) as TaskAssetRow[]
       const elTableRef = tableRef.value?.elTableRef
       if (!elTableRef) {
+        isSyncingSelection.value = false
         return
       }
       elTableRef.clearSelection?.()
@@ -416,11 +435,18 @@
           elTableRef.toggleRowSelection?.(row, true)
         }
       })
+      nextTick(() => {
+        isSyncingSelection.value = false
+      })
     })
   }
 
   // 中文注释：保持跨页勾选，且自动剔除“已登记”资产，防止批量提交重复。
   const handleSelectionChange = (selection: TaskAssetRow[]) => {
+    // 中文注释：忽略翻页回显过程触发的 selection-change，避免误删跨页缓存。
+    if (isSyncingSelection.value) {
+      return
+    }
     const nextMap = { ...selectedAssetMap.value }
     const pageRows = (data.value || []) as TaskAssetRow[]
     pageRows.forEach((row) => {
@@ -436,7 +462,27 @@
 
   const clearSelection = () => {
     selectedAssetMap.value = {}
-    tableRef.value?.elTableRef?.clearSelection?.()
+    const elTableRef = tableRef.value?.elTableRef
+    if (!elTableRef) {
+      return
+    }
+    isSyncingSelection.value = true
+    elTableRef.clearSelection?.()
+    nextTick(() => {
+      isSyncingSelection.value = false
+    })
+  }
+
+  const handleSizeChange = (size: number) => {
+    // 中文注释：翻页/改每页条数后强制恢复当前页勾选态，维持跨页选择可见性。
+    handleSizeChangeRaw(size)
+    syncPageSelection()
+  }
+
+  const handleCurrentChange = (pageNum: number) => {
+    // 中文注释：切页后立即回显已选资产，避免“只剩当前页可选”的错觉。
+    handleCurrentChangeRaw(pageNum)
+    syncPageSelection()
   }
 
   const handleSearch = () => {
@@ -474,6 +520,15 @@
     syncPageSelection()
   }
 
+  const mapSubmitErrorMessage = (rawMessage: string) => {
+    const message = String(rawMessage || '')
+    // 中文注释：将后端技术异常翻译成可执行指引，避免用户只能看到 SQL 报错。
+    if (message.includes('Unknown column') && message.includes('create_time')) {
+      return '数据库结构与当前版本不一致，请先同步资产模块 SQL 增量脚本后重试。'
+    }
+    return message || '提交失败，请稍后重试'
+  }
+
   const submitForAsset = async (
     assetId: number,
     payload: Omit<AssetInventoryResultPayload, 'taskId' | 'assetId'>
@@ -490,7 +545,7 @@
       if (message.includes('已提交盘点结果')) {
         return { success: true as const, duplicated: true as const }
       }
-      return { success: false as const, message: message || '提交失败' }
+      return { success: false as const, message: mapSubmitErrorMessage(message) }
     }
   }
 
@@ -599,50 +654,111 @@
       radial-gradient(circle at 0% 0%, rgb(47 102 255 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(32 201 151 / 8%), transparent 36%),
       var(--art-main-bg-color);
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
-  .head-card,
+  .page-bar,
   .main-card {
-    border: 1px solid var(--asset-border);
-    border-radius: 12px;
     background: var(--asset-panel-bg);
   }
 
+  .page-bar {
+    padding: 0 4px;
+  }
+
+  .back-link {
+    width: fit-content;
+    margin-bottom: 4px;
+  }
+
+  .page-bar-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .page-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
   .page-title {
-    margin-top: 6px;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--asset-text-main);
-    line-height: 1.4;
+    line-height: 1.2;
   }
 
   .page-desc {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--asset-text-secondary);
-    line-height: 1.6;
-    max-width: 900px;
-  }
-
-  .progress-wrapper {
-    border-top: 1px dashed #e7edf8;
-    padding-top: 12px;
-  }
-
-  .progress-meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
+    display: -webkit-box;
+    margin-top: 4px;
+    overflow: hidden;
     font-size: 13px;
-    color: #5d6b86;
+    color: var(--asset-text-secondary);
+    line-height: 1.4;
+    max-width: 760px;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .task-summary-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 6px;
+  }
+
+  .summary-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--asset-text-secondary);
+    background: #f7f9fd;
+    border: 1px solid #e6ebf5;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .summary-chip--focus {
+    color: var(--asset-accent);
+    background: rgb(47 102 255 / 8%);
+    border-color: rgb(47 102 255 / 18%);
+  }
+
+  .task-progress-line {
+    margin-top: 6px;
+    padding: 8px 10px 0;
+    border-top: 1px solid #eef2fb;
+  }
+
+  .progress-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--asset-text-secondary);
   }
 
   .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
   }
 
@@ -660,6 +776,87 @@
       height: 14px;
       border-radius: 999px;
       background: var(--asset-accent);
+    }
+  }
+
+  .toolbar-actions {
+    align-items: center;
+  }
+
+  .main-card {
+    margin-top: 0;
+    min-height: 560px;
+
+    :deep(.el-card) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      // 中文注释：底部预留安全区，防止分页/批量操作区在低分辨率下被遮挡。
+      padding: 0 16px 56px;
+    }
+
+    :deep(.art-table) {
+      flex: 1;
+      min-height: 0;
+    }
+
+    // 中文注释：覆盖表格组件默认固定高度，避免分页区域被底部裁切。
+    :deep(.art-table .el-table) {
+      margin-top: 0;
+    }
+
+    :deep(.el-card__header) {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eaf0fb;
+      background: linear-gradient(180deg, rgb(247 250 255 / 90%) 0%, #fff 100%);
+    }
+  }
+
+  :deep(.art-search-bar) {
+    padding: 10px 16px 0;
+  }
+
+  :deep(.art-search-bar .el-form-item) {
+    margin-bottom: 10px;
+  }
+
+  :deep(.art-search-bar .action-column .action-buttons-wrapper) {
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 1200px) {
+    .progress-head {
+      gap: 8px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .asset-inventory-task {
+      gap: 12px;
+      overflow: auto;
+    }
+
+    .page-title {
+      font-size: 20px;
+    }
+
+    .task-progress-line {
+      padding: 8px 0 0;
+    }
+
+    .main-card {
+      :deep(.el-card__body) {
+        padding: 0 12px 40px;
+      }
     }
   }
 </style>

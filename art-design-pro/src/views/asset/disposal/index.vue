@@ -1,62 +1,74 @@
 <template>
-  <div class="asset-disposal-page art-full-height flex flex-col gap-3 overflow-y-auto p-3">
-    <ElCard class="head-card" shadow="never">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="page-title">资产处置</div>
-          <div class="page-desc">
-            仅允许对“待处置”资产发起处置确认，提交后系统自动回写台账终态并记录处置流水。
-          </div>
-        </div>
-        <ElSpace wrap>
-          <ElTag type="warning" effect="light">处置入口：待处置资产池</ElTag>
-          <ElButton type="primary" plain icon="ri:refresh-line" @click="handleRefreshAll">
-            刷新数据
-          </ElButton>
-        </ElSpace>
-      </div>
-    </ElCard>
-
-    <ElCard class="main-card" shadow="never">
+  <div
+    class="asset-disposal-page art-full-height flex flex-col gap-2 overflow-y-auto overflow-x-hidden p-3"
+  >
+    <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
       <ElTabs v-model="activeTab">
         <ElTabPane label="待处置资产池" name="pool">
-          <ArtSearchBar
-            v-model="poolSearchForm"
-            :items="poolSearchItems"
-            :showExpand="true"
-            @search="handlePoolSearch"
-            @reset="handlePoolReset"
-          />
+          <div class="tab-pane-body">
+            <ArtSearchBar
+              v-model="poolSearchForm"
+              :items="poolSearchItems"
+              :showExpand="false"
+              @search="handlePoolSearch"
+              @reset="handlePoolReset"
+            />
 
-          <ArtTable
-            rowKey="assetId"
-            :loading="poolLoading"
-            :data="poolData"
-            :columns="poolColumns"
-            :pagination="poolPagination"
-            @pagination:size-change="handlePoolSizeChange"
-            @pagination:current-change="handlePoolCurrentChange"
-          />
+            <ElCard class="art-table-card flex-1 overflow-hidden inner-table-card" shadow="never">
+              <template #header>
+                <div class="card-header">
+                  <div class="card-title">待处置资产池</div>
+                  <ElSpace wrap class="toolbar-actions">
+                    <ElTag type="warning" effect="light">处置入口：待处置资产池</ElTag>
+                    <ElButton type="primary" plain icon="ri:refresh-line" @click="refreshPoolData">
+                      刷新资产池
+                    </ElButton>
+                  </ElSpace>
+                </div>
+              </template>
+              <ArtTable
+                rowKey="assetId"
+                :loading="poolLoading"
+                :data="poolData"
+                :columns="poolColumns"
+                :pagination="poolPagination"
+                @pagination:size-change="handlePoolSizeChange"
+                @pagination:current-change="handlePoolCurrentChange"
+              />
+            </ElCard>
+          </div>
         </ElTabPane>
 
         <ElTabPane label="处置记录" name="record">
-          <ArtSearchBar
-            v-model="recordSearchForm"
-            :items="recordSearchItems"
-            :showExpand="true"
-            @search="handleRecordSearch"
-            @reset="handleRecordReset"
-          />
+          <div class="tab-pane-body">
+            <ArtSearchBar
+              v-model="recordSearchForm"
+              :items="recordSearchItems"
+              :showExpand="false"
+              @search="handleRecordSearch"
+              @reset="handleRecordReset"
+            />
 
-          <ArtTable
-            rowKey="disposalId"
-            :loading="recordLoading"
-            :data="recordData"
-            :columns="recordColumns"
-            :pagination="recordPagination"
-            @pagination:size-change="handleRecordSizeChange"
-            @pagination:current-change="handleRecordCurrentChange"
-          />
+            <ElCard class="art-table-card flex-1 overflow-hidden inner-table-card" shadow="never">
+              <template #header>
+                <div class="card-header">
+                  <div class="card-title">处置记录</div>
+                  <ElButton type="primary" plain icon="ri:refresh-line" @click="refreshRecordData">
+                    刷新记录
+                  </ElButton>
+                </div>
+              </template>
+              <ArtTable
+                rowKey="disposalId"
+                :loading="recordLoading"
+                :data="recordData"
+                :columns="recordColumns"
+                :pagination="recordPagination"
+                @pagination:size-change="handleRecordSizeChange"
+                @pagination:current-change="handleRecordCurrentChange"
+              />
+            </ElCard>
+          </div>
         </ElTabPane>
       </ElTabs>
     </ElCard>
@@ -216,7 +228,6 @@
 
   const { ast_asset_status } = useDict('ast_asset_status')
   const userStore = useUserStore()
-
   const hasPermission = (permission: string) => {
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
   }
@@ -558,11 +569,6 @@
       confirmSubmitting.value = false
     }
   }
-
-  // 中文注释：一键刷新保持上下两块数据同源，避免“池子和记录不同步”。
-  const handleRefreshAll = async () => {
-    await Promise.all([refreshPoolData(), refreshRecordData()])
-  }
 </script>
 
 <style scoped lang="scss">
@@ -577,31 +583,149 @@
       radial-gradient(circle at 0% 0%, rgb(47 102 255 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(32 201 151 / 8%), transparent 36%),
       var(--art-main-bg-color);
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
-  .head-card,
   .main-card {
-    border: 1px solid var(--asset-border);
-    border-radius: 12px;
     background: var(--asset-panel-bg);
+    min-height: 560px;
   }
 
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--asset-text-main);
-    line-height: 1.4;
-  }
+  .main-card {
+    :deep(.el-card) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
 
-  .page-desc {
-    margin-top: 6px;
-    font-size: 14px;
-    color: var(--asset-text-secondary);
-    line-height: 1.6;
-    max-width: 900px;
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      padding: 12px;
+      overflow: hidden;
+    }
   }
 
   :deep(.el-tabs__header) {
     margin-bottom: 12px;
+  }
+
+  :deep(.el-tabs) {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :deep(.el-tab-pane) {
+    height: 100%;
+  }
+
+  .tab-pane-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .inner-table-card {
+    margin-top: 0;
+    min-height: 440px;
+
+    :deep(.el-card) {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    :deep(.el-card__body) {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      // 中文注释：底部留白保障分页与横向滚动条同时可见。
+      padding: 0 16px 56px;
+    }
+
+    :deep(.art-table) {
+      flex: 1;
+      min-height: 0;
+    }
+
+    // 中文注释：覆盖表格组件默认固定高度，避免分页区域被底部裁切。
+    :deep(.art-table .el-table) {
+      margin-top: 0;
+    }
+
+    :deep(.el-card__header) {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eaf0fb;
+      background: linear-gradient(180deg, rgb(247 250 255 / 90%) 0%, #fff 100%);
+    }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--asset-text-main);
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--asset-accent);
+    }
+  }
+
+  .toolbar-actions {
+    align-items: center;
+  }
+
+  :deep(.art-search-bar) {
+    padding: 10px 16px 0;
+  }
+
+  :deep(.art-search-bar .el-form-item) {
+    margin-bottom: 10px;
+  }
+
+  :deep(.art-search-bar .action-column .action-buttons-wrapper) {
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .inner-table-card {
+      :deep(.el-card__body) {
+        padding: 0 12px 40px;
+      }
+    }
   }
 </style>
