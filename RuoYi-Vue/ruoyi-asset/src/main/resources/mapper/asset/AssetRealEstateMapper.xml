@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRealEstateMapper">
+
+    <resultMap id="AssetRealEstateProfileResult" type="com.ruoyi.asset.domain.AssetRealEstateProfile">
+        <id property="profileId" column="profile_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="ownershipCertNo" column="ownership_cert_no"/>
+        <result property="landUseType" column="land_use_type"/>
+        <result property="buildingArea" column="building_area"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectList" parameterType="com.ruoyi.asset.domain.AssetRealEstateProfile"
+        resultMap="AssetRealEstateProfileResult">
+        select profile_id, asset_id, ownership_cert_no, land_use_type, building_area, create_by, create_time,
+               update_by, update_time, remark
+        from ast_asset_real_estate_profile
+        <where>
+            del_flag = '0'
+            <if test="assetId != null">
+                and asset_id = #{assetId}
+            </if>
+            <if test="ownershipCertNo != null and ownershipCertNo != ''">
+                and ownership_cert_no like concat('%', #{ownershipCertNo}, '%')
+            </if>
+            <if test="landUseType != null and landUseType != ''">
+                and land_use_type = #{landUseType}
+            </if>
+        </where>
+        order by profile_id desc
+    </select>
+
+    <select id="selectByAssetId" parameterType="Long" resultMap="AssetRealEstateProfileResult">
+        select profile_id, asset_id, ownership_cert_no, land_use_type, building_area, create_by, create_time,
+               update_by, update_time, remark
+        from ast_asset_real_estate_profile
+        where asset_id = #{assetId}
+          and del_flag = '0'
+        limit 1
+    </select>
+</mapper>
