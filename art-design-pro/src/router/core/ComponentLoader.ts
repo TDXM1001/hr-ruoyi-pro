@@ -1,12 +1,8 @@
 /**
  * 组件加载器
  *
- * 负责动态加载 Vue 组件
- *
- * @module router/core/ComponentLoader
- * @author Art Design Pro Team
+ * 负责动态加载 Vue 页面组件。
  */
-
 import { h } from 'vue'
 
 export class ComponentLoader {
@@ -25,16 +21,20 @@ export class ComponentLoader {
       return this.createEmptyComponent()
     }
 
-    // 构建可能的路径
-    const fullPath = `../../views${componentPath}.vue`
-    const fullPathWithIndex = `../../views${componentPath}/index.vue`
+    // 中文注释：统一 component 路径格式，兼容无前导 / 和带 .vue 后缀两种写法。
+    const normalizedPath = componentPath.startsWith('/') ? componentPath : `/${componentPath}`
+    const sanitizedPath = normalizedPath.endsWith('.vue')
+      ? normalizedPath.slice(0, -'.vue'.length)
+      : normalizedPath
 
-    // 先尝试直接路径，再尝试添加/index的路径
+    // 先尝试“完整文件路径”，再尝试“目录 index 文件”
+    const fullPath = `../../views${sanitizedPath}.vue`
+    const fullPathWithIndex = `../../views${sanitizedPath}/index.vue`
     const module = this.modules[fullPath] || this.modules[fullPathWithIndex]
 
     if (!module) {
       console.error(
-        `[ComponentLoader] 未找到组件: ${componentPath}，尝试过的路径: ${fullPath} 和 ${fullPathWithIndex}`
+        `[ComponentLoader] 未找到组件: ${componentPath}，尝试过路径: ${fullPath} 和 ${fullPathWithIndex}`
       )
       return this.createErrorComponent(componentPath)
     }
