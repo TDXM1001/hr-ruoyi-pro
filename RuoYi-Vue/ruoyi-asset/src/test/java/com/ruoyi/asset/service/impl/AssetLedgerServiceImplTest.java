@@ -8,7 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.Year;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +18,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.asset.domain.AssetLedger;
+import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
+import com.ruoyi.asset.domain.vo.AssetDisposalVo;
+import com.ruoyi.asset.domain.vo.AssetHandoverItemVo;
+import com.ruoyi.asset.domain.vo.AssetInventoryRecordVo;
+import com.ruoyi.asset.domain.vo.AssetLedgerLifecycleVo;
+import com.ruoyi.asset.domain.vo.AssetLedgerVo;
 import com.ruoyi.asset.enums.AssetBizType;
 import com.ruoyi.asset.enums.AssetStatus;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
+import com.ruoyi.asset.mapper.AssetDisposalMapper;
+import com.ruoyi.asset.mapper.AssetHandoverItemMapper;
+import com.ruoyi.asset.mapper.AssetInventoryMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
 import com.ruoyi.common.exception.ServiceException;
 
@@ -38,6 +49,15 @@ class AssetLedgerServiceImplTest
 
     @Mock
     private AssetChangeLogMapper assetChangeLogMapper;
+
+    @Mock
+    private AssetHandoverItemMapper assetHandoverItemMapper;
+
+    @Mock
+    private AssetInventoryMapper assetInventoryMapper;
+
+    @Mock
+    private AssetDisposalMapper assetDisposalMapper;
 
     @InjectMocks
     private AssetLedgerServiceImpl service;
@@ -181,6 +201,49 @@ class AssetLedgerServiceImplTest
                 && AssetStatus.IN_USE.getCode().equals(asset.getAssetStatus())));
     }
 
+    @Test
+    @DisplayName("查询资产生命周期详情时应聚合业务留痕记录")
+    void shouldAssembleLifecycleDetail()
+    {
+        AssetLedgerVo ledger = buildLedgerVo(8L);
+        AssetHandoverItemVo handover = buildHandoverItemVo(8L);
+        AssetInventoryRecordVo inventory = buildInventoryRecordVo(8L);
+        AssetDisposalVo disposal = buildDisposalVo(8L);
+        AssetChangeLog changeLog = buildChangeLog(8L);
+
+        when(assetLedgerMapper.selectAssetLedgerById(8L)).thenReturn(ledger);
+        when(assetHandoverItemMapper.selectAssetHandoverItemsByAssetId(8L)).thenReturn(List.of(handover));
+        when(assetInventoryMapper.selectAssetInventoryRecordsByAssetId(8L)).thenReturn(List.of(inventory));
+        when(assetDisposalMapper.selectAssetDisposalsByAssetId(8L)).thenReturn(List.of(disposal));
+        when(assetChangeLogMapper.selectAssetChangeLogListByAssetId(8L)).thenReturn(List.of(changeLog));
+
+        AssetLedgerLifecycleVo detail = service.selectAssetLifecycleById(8L);
+
+        assertEquals("FA-" + Year.now().getValue() + "-0008", detail.getLedger().getAssetCode());
+        assertEquals(1, detail.getHandoverRecords().size());
+        assertEquals(1, detail.getInventoryRecords().size());
+        assertEquals(1, detail.getDisposalRecords().size());
+        assertEquals(1, detail.getChangeLogs().size());
+    }
+
+    @Test
+    @DisplayName("查询资产生命周期详情时应返回空列表而不是空值")
+    void shouldReturnEmptyListsForLifecycleDetail()
+    {
+        when(assetLedgerMapper.selectAssetLedgerById(18L)).thenReturn(buildLedgerVo(18L));
+        when(assetHandoverItemMapper.selectAssetHandoverItemsByAssetId(18L)).thenReturn(Collections.emptyList());
+        when(assetInventoryMapper.selectAssetInventoryRecordsByAssetId(18L)).thenReturn(Collections.emptyList());
+        when(assetDisposalMapper.selectAssetDisposalsByAssetId(18L)).thenReturn(Collections.emptyList());
+        when(assetChangeLogMapper.selectAssetChangeLogListByAssetId(18L)).thenReturn(Collections.emptyList());
+
+        AssetLedgerLifecycleVo detail = service.selectAssetLifecycleById(18L);
+
+        assertEquals(0, detail.getHandoverRecords().size());
+        assertEquals(0, detail.getInventoryRecords().size());
+        assertEquals(0, detail.getDisposalRecords().size());
+        assertEquals(0, detail.getChangeLogs().size());
+    }
+
     private AssetLedgerBo buildBo(String assetCode)
     {
         return buildBoWithId(null, assetCode);
@@ -215,6 +278,58 @@ class AssetLedgerServiceImplTest
         assetLedger.setAssetName("测试资产");
         assetLedger.setAssetStatus(AssetStatus.IN_LEDGER.getCode());
         return assetLedger;
+    }
+
+    private AssetLedgerVo buildLedgerVo(Long assetId)
+    {
+        AssetLedgerVo ledgerVo = new AssetLedgerVo();
+        ledgerVo.setAssetId(assetId);
+        ledgerVo.setAssetCode("FA-" + Year.now().getValue() + "-" + String.format("%04d", assetId));
+        ledgerVo.setAssetName("生命周期测试资产");
+        ledgerVo.setAssetStatus(AssetStatus.IN_USE.getCode());
+        return ledgerVo;
+    }
+
+    private AssetHandoverItemVo buildHandoverItemVo(Long assetId)
+    {
+        AssetHandoverItemVo itemVo = new AssetHandoverItemVo();
+        itemVo.setAssetId(assetId);
+        itemVo.setAssetCode("FA-" + Year.now().getValue() + "-" + String.format("%04d", assetId));
+        itemVo.setAssetName("生命周期测试资产");
+        itemVo.setBeforeStatus(AssetStatus.IN_LEDGER.getCode());
+        itemVo.setAfterStatus(AssetStatus.IN_USE.getCode());
+        return itemVo;
+    }
+
+    private AssetInventoryRecordVo buildInventoryRecordVo(Long assetId)
+    {
+        AssetInventoryRecordVo recordVo = new AssetInventoryRecordVo();
+        recordVo.setAssetId(assetId);
+        recordVo.setAssetCode("FA-" + Year.now().getValue() + "-" + String.format("%04d", assetId));
+        recordVo.setInventoryResult("NORMAL");
+        recordVo.setFollowUpAction("NONE");
+        return recordVo;
+    }
+
+    private AssetDisposalVo buildDisposalVo(Long assetId)
+    {
+        AssetDisposalVo disposalVo = new AssetDisposalVo();
+        disposalVo.setAssetId(assetId);
+        disposalVo.setAssetCode("FA-" + Year.now().getValue() + "-" + String.format("%04d", assetId));
+        disposalVo.setDisposalNo("DP-" + Year.now().getValue() + "-0001");
+        return disposalVo;
+    }
+
+    private AssetChangeLog buildChangeLog(Long assetId)
+    {
+        AssetChangeLog changeLog = new AssetChangeLog();
+        changeLog.setAssetId(assetId);
+        changeLog.setBizType(AssetBizType.LEDGER_CREATE.getCode());
+        changeLog.setAfterStatus(AssetStatus.IN_LEDGER.getCode());
+        changeLog.setOperateBy("admin");
+        changeLog.setOperateTime(new Date());
+        changeLog.setChangeDesc("新增资产台账");
+        return changeLog;
     }
 
     private String buildAssetCodePrefix()
