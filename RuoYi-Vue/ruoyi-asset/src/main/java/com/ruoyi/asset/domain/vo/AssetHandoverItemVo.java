@@ -18,6 +18,15 @@ public class AssetHandoverItemVo extends BaseEntity
     /** 交接主单ID */
     private Long handoverOrderId;
 
+    /** 交接单号 */
+    private String handoverNo;
+
+    /** 交接类型 */
+    private String handoverType;
+
+    /** 交接日期 */
+    private String handoverDate;
+
     /** 资产ID */
     private Long assetId;
 
@@ -91,6 +100,36 @@ public class AssetHandoverItemVo extends BaseEntity
     public void setHandoverOrderId(Long handoverOrderId)
     {
         this.handoverOrderId = handoverOrderId;
+    }
+
+    public String getHandoverNo()
+    {
+        return handoverNo;
+    }
+
+    public void setHandoverNo(String handoverNo)
+    {
+        this.handoverNo = handoverNo;
+    }
+
+    public String getHandoverType()
+    {
+        return handoverType;
+    }
+
+    public void setHandoverType(String handoverType)
+    {
+        this.handoverType = handoverType;
+    }
+
+    public String getHandoverDate()
+    {
+        return handoverDate;
+    }
+
+    public void setHandoverDate(String handoverDate)
+    {
+        this.handoverDate = handoverDate;
     }
 
     public Long getAssetId()

@@ -29,6 +29,14 @@ public interface AssetDisposalMapper
     AssetDisposalVo selectAssetDisposalById(Long disposalId);
 
     /**
+     * 按资产查询处置记录。
+     *
+     * @param assetId 资产ID
+     * @return 处置记录列表
+     */
+    List<AssetDisposalVo> selectAssetDisposalsByAssetId(Long assetId);
+
+    /**
      * 查询指定前缀下最大处置单号。
      *
      * @param disposalNoPrefix 单号前缀

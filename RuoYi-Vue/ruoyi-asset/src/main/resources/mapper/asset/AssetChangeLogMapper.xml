@@ -4,6 +4,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.asset.mapper.AssetChangeLogMapper">
 
+    <resultMap id="AssetChangeLogResult" type="com.ruoyi.asset.domain.AssetChangeLog">
+        <id property="logId" column="log_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="bizType" column="biz_type"/>
+        <result property="bizId" column="biz_id"/>
+        <result property="beforeStatus" column="before_status"/>
+        <result property="afterStatus" column="after_status"/>
+        <result property="operateBy" column="operate_by"/>
+        <result property="operateTime" column="operate_time"/>
+        <result property="changeDesc" column="change_desc"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
     <insert id="insertAssetChangeLog" parameterType="com.ruoyi.asset.domain.AssetChangeLog" useGeneratedKeys="true" keyProperty="logId">
         insert into ast_asset_change_log (
             <if test="assetId != null">asset_id,</if>
@@ -32,4 +45,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             null
         )
     </insert>
+
+    <select id="selectAssetChangeLogListByAssetId" parameterType="Long" resultMap="AssetChangeLogResult">
+        select log_id, asset_id, biz_type, biz_id, before_status, after_status, operate_by, operate_time, change_desc, remark
+        from ast_asset_change_log
+        where asset_id = #{assetId}
+        order by operate_time desc, log_id desc
+    </select>
 </mapper>

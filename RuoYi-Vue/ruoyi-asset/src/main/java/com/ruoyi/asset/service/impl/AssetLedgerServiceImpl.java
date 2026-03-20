@@ -1,6 +1,7 @@
 package com.ruoyi.asset.service.impl;
 
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,9 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetLedger;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
+import com.ruoyi.asset.domain.vo.AssetLedgerLifecycleVo;
 import com.ruoyi.asset.domain.vo.AssetLedgerVo;
 import com.ruoyi.asset.enums.AssetStatus;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
+import com.ruoyi.asset.mapper.AssetDisposalMapper;
+import com.ruoyi.asset.mapper.AssetHandoverItemMapper;
+import com.ruoyi.asset.mapper.AssetInventoryMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
 import com.ruoyi.asset.service.IAssetLedgerService;
 import com.ruoyi.common.exception.ServiceException;
@@ -38,6 +43,15 @@ public class AssetLedgerServiceImpl implements IAssetLedgerService
     @Autowired
     private AssetChangeLogMapper assetChangeLogMapper;
 
+    @Autowired
+    private AssetHandoverItemMapper assetHandoverItemMapper;
+
+    @Autowired
+    private AssetInventoryMapper assetInventoryMapper;
+
+    @Autowired
+    private AssetDisposalMapper assetDisposalMapper;
+
     /**
      * 查询资产台账列表。
      *
@@ -60,6 +74,35 @@ public class AssetLedgerServiceImpl implements IAssetLedgerService
     public AssetLedgerVo selectAssetLedgerById(Long assetId)
     {
         return assetLedgerMapper.selectAssetLedgerById(assetId);
+    }
+
+    /**
+     * 查询资产生命周期聚合详情。
+     *
+     * @param assetId 资产ID
+     * @return 生命周期聚合详情
+     */
+    @Override
+    public AssetLedgerLifecycleVo selectAssetLifecycleById(Long assetId)
+    {
+        if (assetId == null)
+        {
+            throw new ServiceException("资产ID不能为空");
+        }
+
+        AssetLedgerVo ledger = assetLedgerMapper.selectAssetLedgerById(assetId);
+        if (ledger == null)
+        {
+            throw new ServiceException("资产台账不存在");
+        }
+
+        AssetLedgerLifecycleVo lifecycle = new AssetLedgerLifecycleVo();
+        lifecycle.setLedger(ledger);
+        lifecycle.setHandoverRecords(defaultList(assetHandoverItemMapper.selectAssetHandoverItemsByAssetId(assetId)));
+        lifecycle.setInventoryRecords(defaultList(assetInventoryMapper.selectAssetInventoryRecordsByAssetId(assetId)));
+        lifecycle.setDisposalRecords(defaultList(assetDisposalMapper.selectAssetDisposalsByAssetId(assetId)));
+        lifecycle.setChangeLogs(defaultList(assetChangeLogMapper.selectAssetChangeLogListByAssetId(assetId)));
+        return lifecycle;
     }
 
     /**
@@ -280,5 +323,10 @@ public class AssetLedgerServiceImpl implements IAssetLedgerService
             return 1;
         }
         return Integer.parseInt(serialPart) + 1;
+    }
+
+    private <T> List<T> defaultList(List<T> records)
+    {
+        return records == null ? new ArrayList<T>() : records;
     }
 }

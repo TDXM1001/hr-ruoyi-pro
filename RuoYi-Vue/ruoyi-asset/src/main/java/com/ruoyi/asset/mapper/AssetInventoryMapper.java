@@ -7,6 +7,7 @@ import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetInventoryTask;
 import com.ruoyi.asset.domain.bo.AssetInventoryTaskAssetBo;
 import com.ruoyi.asset.domain.bo.AssetInventoryTaskBo;
+import com.ruoyi.asset.domain.vo.AssetInventoryRecordVo;
 import com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo;
 import com.ruoyi.asset.domain.vo.AssetInventoryTaskVo;
 
@@ -49,6 +50,14 @@ public interface AssetInventoryMapper
      * @return 盘点明细
      */
     AssetInventoryItem selectAssetInventoryItem(@Param("taskId") Long taskId, @Param("assetId") Long assetId);
+
+    /**
+     * 按资产查询盘点历史记录。
+     *
+     * @param assetId 资产ID
+     * @return 盘点历史记录
+     */
+    List<AssetInventoryRecordVo> selectAssetInventoryRecordsByAssetId(Long assetId);
 
     /**
      * 查询指定前缀下最大盘点任务号。

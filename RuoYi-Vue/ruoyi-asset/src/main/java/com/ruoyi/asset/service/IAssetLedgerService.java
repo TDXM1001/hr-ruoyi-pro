@@ -2,6 +2,7 @@ package com.ruoyi.asset.service;
 
 import java.util.List;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
+import com.ruoyi.asset.domain.vo.AssetLedgerLifecycleVo;
 import com.ruoyi.asset.domain.vo.AssetLedgerVo;
 
 /**
@@ -26,6 +27,14 @@ public interface IAssetLedgerService
      * @return 台账详情
      */
     public AssetLedgerVo selectAssetLedgerById(Long assetId);
+
+    /**
+     * 查询资产生命周期聚合详情。
+     *
+     * @param assetId 资产ID
+     * @return 生命周期聚合详情
+     */
+    public AssetLedgerLifecycleVo selectAssetLifecycleById(Long assetId);
 
     /**
      * 获取下一条建议资产编号。

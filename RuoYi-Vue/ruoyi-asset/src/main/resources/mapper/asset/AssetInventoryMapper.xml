@@ -75,6 +75,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark" column="remark"/>
     </resultMap>
 
+    <resultMap id="AssetInventoryRecordVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryRecordVo">
+        <id property="taskId" column="task_id"/>
+        <result property="taskNo" column="task_no"/>
+        <result property="taskName" column="task_name"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="inventoryResult" column="inventory_result"/>
+        <result property="followUpAction" column="follow_up_action"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="checkedBy" column="checked_by"/>
+        <result property="checkedTime" column="checked_time"/>
+        <result property="resultDesc" column="result_desc"/>
+    </resultMap>
+
     <sql id="selectTaskColumns">
         select t.task_id, t.task_no, t.task_name, t.task_status, t.scope_type, t.scope_value, t.planned_date, t.completed_date,
                ifnull(task_stats.submitted_count, 0) as submitted_count,
@@ -182,6 +196,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where task_id = #{taskId}
           and asset_id = #{assetId}
         limit 1
+    </select>
+
+    <select id="selectAssetInventoryRecordsByAssetId" parameterType="Long" resultMap="AssetInventoryRecordVoResult">
+        select i.task_id,
+               t.task_no,
+               t.task_name,
+               i.asset_id,
+               a.asset_code,
+               i.inventory_result,
+               i.follow_up_action,
+               i.process_status,
+               i.checked_by,
+               i.checked_time,
+               i.result_desc
+        from ast_asset_inventory_item i
+        left join ast_asset_inventory_task t on i.task_id = t.task_id
+        left join ast_asset_ledger a on i.asset_id = a.asset_id
+        where i.asset_id = #{assetId}
+        order by i.checked_time desc, i.item_id desc
     </select>
 
     <select id="selectMaxTaskNoByPrefix" parameterType="String" resultType="String">

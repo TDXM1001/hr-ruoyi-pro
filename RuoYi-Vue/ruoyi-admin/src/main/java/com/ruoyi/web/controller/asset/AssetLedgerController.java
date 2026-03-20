@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.vo.AssetTreeNodeVo;
 import com.ruoyi.asset.domain.vo.AssetUserOptionVo;
 import com.ruoyi.asset.domain.bo.AssetLedgerBo;
+import com.ruoyi.asset.domain.vo.AssetLedgerLifecycleVo;
 import com.ruoyi.asset.domain.vo.AssetLedgerVo;
 import com.ruoyi.asset.mapper.AssetLookupMapper;
 import com.ruoyi.asset.service.IAssetLedgerService;
@@ -91,6 +92,20 @@ public class AssetLedgerController extends BaseController
     public AjaxResult getInfo(@PathVariable Long assetId)
     {
         return success(assetLedgerService.selectAssetLedgerById(assetId));
+    }
+
+    /**
+     * 查询资产生命周期聚合详情。
+     *
+     * @param assetId 资产ID
+     * @return 生命周期聚合详情
+     */
+    @PreAuthorize("@ss.hasPermi('asset:ledger:query')")
+    @GetMapping("/{assetId}/lifecycle")
+    public AjaxResult getLifecycle(@PathVariable Long assetId)
+    {
+        AssetLedgerLifecycleVo detail = assetLedgerService.selectAssetLifecycleById(assetId);
+        return success(detail);
     }
 
     /**

@@ -20,6 +20,14 @@ public interface AssetHandoverItemMapper
     List<AssetHandoverItemVo> selectAssetHandoverItemsByOrderId(Long handoverOrderId);
 
     /**
+     * 按资产查询交接明细。
+     *
+     * @param assetId 资产ID
+     * @return 明细列表
+     */
+    List<AssetHandoverItemVo> selectAssetHandoverItemsByAssetId(Long assetId);
+
+    /**
      * 批量新增交接明细。
      *
      * @param items 明细列表

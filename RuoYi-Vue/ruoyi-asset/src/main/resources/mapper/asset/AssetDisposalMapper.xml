@@ -65,6 +65,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where d.disposal_id = #{disposalId}
     </select>
 
+    <select id="selectAssetDisposalsByAssetId" parameterType="Long" resultMap="AssetDisposalVoResult">
+        <include refid="selectDisposalVoColumns"/>
+        where d.asset_id = #{assetId}
+        order by d.disposal_date desc, d.disposal_id desc
+    </select>
+
     <select id="selectMaxDisposalNoByPrefix" parameterType="String" resultType="String">
         select max(disposal_no)
         from ast_asset_disposal
