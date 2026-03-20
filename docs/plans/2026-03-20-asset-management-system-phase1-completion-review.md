@@ -140,3 +140,19 @@ pnpm vitest run tests/api/asset-ledger.test.ts tests/api/asset-handover.test.ts 
 - `RuoYi-Vue/sql/asset/README.md`
 - `docs/plans/2026-03-19-asset-frontend-ux-guidelines.md`
 - `docs/plans/2026-03-20-asset-frontend-workbench-layout-addendum.md`
+
+## 8. 2026-03-20 收口整改补充记录
+
+为进一步支撑“试运行问题收口 + 二期扩展位预留”，本轮新增以下落地项：
+
+1. 新增统一收口设计与计划文档
+   - `docs/plans/2026-03-20-asset-phase1-closure-remediation-design.md`
+   - `docs/plans/2026-03-20-asset-phase1-closure-remediation-plan.md`
+2. 新增资产生命周期聚合接口
+   - `GET /asset/ledger/{assetId}/lifecycle`
+   - 一次返回台账当前态、交接记录、盘点记录、处置记录、变更轨迹
+3. 完成资产详情页生命周期区块升级
+   - 增加“生命周期轨迹 / 交接记录 / 盘点记录 / 处置记录”四个区块
+   - 形成资产管理员单资产核查闭环视图
+
+上述补充不改变一期业务边界，不提前上线不动产、审批流或外部系统集成能力。
