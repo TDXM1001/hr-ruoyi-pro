@@ -16,6 +16,7 @@ import http from '@/utils/http'
 import {
   listAssetLedger,
   getAssetLedger,
+  getAssetLedgerLifecycle,
   addAssetLedger,
   updateAssetLedger,
   exportAssetLedger,
@@ -29,6 +30,7 @@ describe('Asset Ledger API', () => {
   it('should expose ledger page methods', () => {
     expect(typeof listAssetLedger).toBe('function')
     expect(typeof getAssetLedger).toBe('function')
+    expect(typeof getAssetLedgerLifecycle).toBe('function')
     expect(typeof addAssetLedger).toBe('function')
     expect(typeof updateAssetLedger).toBe('function')
     expect(typeof exportAssetLedger).toBe('function')
@@ -71,6 +73,18 @@ describe('Asset Ledger API', () => {
     expect(result).toBe('FA-2026-0004')
     expect(requestMock).toHaveBeenCalledWith({
       url: '/asset/ledger/nextCode',
+      method: 'get'
+    })
+  })
+
+  it('should request asset lifecycle detail from backend', async () => {
+    const requestMock = vi.mocked(http.request)
+    requestMock.mockResolvedValueOnce({ data: { ledger: {}, changeLogs: [] } })
+
+    await getAssetLedgerLifecycle(8)
+
+    expect(requestMock).toHaveBeenCalledWith({
+      url: '/asset/ledger/8/lifecycle',
       method: 'get'
     })
   })
