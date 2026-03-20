@@ -19,6 +19,82 @@ export interface AssetUserOption {
 }
 
 /**
+ * 资产生命周期轨迹记录。
+ */
+export interface AssetChangeLogRecord {
+  logId?: number
+  assetId?: number
+  bizType?: string
+  bizId?: number
+  beforeStatus?: string
+  afterStatus?: string
+  operateBy?: string
+  operateTime?: string
+  changeDesc?: string
+}
+
+/**
+ * 资产交接记录。
+ */
+export interface AssetHandoverRecord {
+  handoverItemId?: number
+  handoverOrderId?: number
+  handoverNo?: string
+  handoverType?: string
+  handoverDate?: string
+  beforeStatus?: string
+  afterStatus?: string
+  fromDeptName?: string
+  fromUserName?: string
+  fromLocationName?: string
+  toDeptName?: string
+  toUserName?: string
+  toLocationName?: string
+}
+
+/**
+ * 资产盘点记录。
+ */
+export interface AssetInventoryRecord {
+  taskId?: number
+  taskNo?: string
+  taskName?: string
+  assetCode?: string
+  inventoryResult?: string
+  followUpAction?: string
+  processStatus?: string
+  checkedBy?: string
+  checkedTime?: string
+  resultDesc?: string
+}
+
+/**
+ * 资产处置记录。
+ */
+export interface AssetDisposalRecord {
+  disposalId?: number
+  disposalNo?: string
+  disposalType?: string
+  disposalStatus?: string
+  disposalDate?: string
+  disposalAmount?: number
+  confirmedBy?: string
+  confirmedTime?: string
+  disposalReason?: string
+}
+
+/**
+ * 资产生命周期详情。
+ */
+export interface AssetLedgerLifecycleDetail {
+  ledger?: Record<string, any>
+  handoverRecords?: AssetHandoverRecord[]
+  inventoryRecords?: AssetInventoryRecord[]
+  disposalRecords?: AssetDisposalRecord[]
+  changeLogs?: AssetChangeLogRecord[]
+}
+
+/**
  * 查询资产台账列表。
  * @param query 查询条件
  * @returns 台账分页数据
@@ -34,6 +110,18 @@ export function listAssetLedger(query?: any) {
  */
 export function getAssetLedger(assetId: number | string) {
   return http.request({ url: '/asset/ledger/' + assetId, method: 'get' })
+}
+
+/**
+ * 查询资产生命周期聚合详情。
+ * @param assetId 资产ID
+ * @returns 生命周期详情
+ */
+export function getAssetLedgerLifecycle(assetId: number | string) {
+  return http.request<AssetLedgerLifecycleDetail>({
+    url: `/asset/ledger/${assetId}/lifecycle`,
+    method: 'get'
+  })
 }
 
 /**

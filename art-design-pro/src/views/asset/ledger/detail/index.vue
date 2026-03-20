@@ -110,13 +110,114 @@
           }}</ElDescriptionsItem>
         </ElDescriptions>
       </ElCard>
+
+      <ElCard class="section-card" shadow="never">
+        <template #header>
+          <div class="card-title">生命周期轨迹</div>
+        </template>
+        <div class="record-wrapper">
+          <ElTimeline v-if="lifecycleData.changeLogs.length">
+            <ElTimelineItem
+              v-for="record in lifecycleData.changeLogs"
+              :key="record.logId"
+              :timestamp="record.operateTime || '-'"
+              placement="top"
+            >
+              <div class="timeline-title">{{ getBizTypeLabel(record.bizType) }}</div>
+              <div class="timeline-desc">{{ record.changeDesc || '无变更说明' }}</div>
+              <div class="timeline-meta">
+                操作人：{{ record.operateBy || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
+                {{ record.afterStatus || '-' }}
+              </div>
+            </ElTimelineItem>
+          </ElTimeline>
+          <ElEmpty v-else description="暂无生命周期轨迹" :image-size="68" />
+        </div>
+      </ElCard>
+
+      <ElCard class="section-card" shadow="never">
+        <template #header>
+          <div class="card-title">交接记录</div>
+        </template>
+        <div class="record-wrapper">
+          <div v-if="lifecycleData.handoverRecords.length" class="record-list">
+            <div
+              v-for="record in lifecycleData.handoverRecords"
+              :key="`${record.handoverOrderId}-${record.handoverItemId}`"
+              class="record-item"
+            >
+              <div class="record-item__title">
+                {{ record.handoverNo || '-' }} · {{ getHandoverTypeLabel(record.handoverType) }}
+              </div>
+              <div class="record-item__desc">
+                日期：{{ record.handoverDate || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
+                {{ record.afterStatus || '-' }}
+              </div>
+              <div class="record-item__desc">
+                去向：{{ record.toDeptName || '-' }} / {{ record.toUserName || '-' }} /
+                {{ record.toLocationName || '-' }}
+              </div>
+            </div>
+          </div>
+          <ElEmpty v-else description="暂无交接记录" :image-size="68" />
+        </div>
+      </ElCard>
+
+      <ElCard class="section-card" shadow="never">
+        <template #header>
+          <div class="card-title">盘点记录</div>
+        </template>
+        <div class="record-wrapper">
+          <div v-if="lifecycleData.inventoryRecords.length" class="record-list">
+            <div
+              v-for="record in lifecycleData.inventoryRecords"
+              :key="`${record.taskId}-${record.checkedTime || ''}`"
+              class="record-item"
+            >
+              <div class="record-item__title">{{ record.taskNo || '-' }} · {{ record.taskName || '-' }}</div>
+              <div class="record-item__desc">
+                结果：{{ getInventoryResultLabel(record.inventoryResult) }}，后续动作：
+                {{ getFollowUpActionLabel(record.followUpAction) }}
+              </div>
+              <div class="record-item__desc">
+                盘点人：{{ record.checkedBy || '-' }}，盘点时间：{{ record.checkedTime || '-' }}
+              </div>
+            </div>
+          </div>
+          <ElEmpty v-else description="暂无盘点记录" :image-size="68" />
+        </div>
+      </ElCard>
+
+      <ElCard class="section-card" shadow="never">
+        <template #header>
+          <div class="card-title">处置记录</div>
+        </template>
+        <div class="record-wrapper">
+          <div v-if="lifecycleData.disposalRecords.length" class="record-list">
+            <div
+              v-for="record in lifecycleData.disposalRecords"
+              :key="record.disposalId"
+              class="record-item"
+            >
+              <div class="record-item__title">{{ record.disposalNo || '-' }} · {{ record.disposalType || '-' }}</div>
+              <div class="record-item__desc">
+                状态：{{ record.disposalStatus || '-' }}，处置日期：{{ record.disposalDate || '-' }}
+              </div>
+              <div class="record-item__desc">
+                确认人：{{ record.confirmedBy || '-' }}，确认时间：{{ record.confirmedTime || '-' }}
+              </div>
+            </div>
+          </div>
+          <ElEmpty v-else description="暂无处置记录" :image-size="68" />
+        </div>
+      </ElCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
   import { ElMessage } from 'element-plus'
-  import { getAssetLedger } from '@/api/asset/ledger'
+  import { getAssetLedger, getAssetLedgerLifecycle } from '@/api/asset/ledger'
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
   import DictTag from '@/components/DictTag/index.vue'
@@ -136,6 +237,12 @@
 
   const loading = ref(false)
   const detailData = reactive<Record<string, any>>({})
+  const lifecycleData = reactive({
+    handoverRecords: [] as Record<string, any>[],
+    inventoryRecords: [] as Record<string, any>[],
+    disposalRecords: [] as Record<string, any>[],
+    changeLogs: [] as Record<string, any>[]
+  })
 
   const assetId = computed(() => {
     const value = route.params.assetId
@@ -153,6 +260,10 @@
       return response.data
     }
     return response
+  }
+
+  const toArrayData = <T,>(value: any): T[] => {
+    return Array.isArray(value) ? value : []
   }
 
   const formatMoney = (value?: number | string) => {
@@ -176,6 +287,50 @@
     router.push(`/asset/ledger/edit/${assetId.value}`)
   }
 
+  const getBizTypeLabel = (bizType?: string) => {
+    const mapper: Record<string, string> = {
+      LEDGER_CREATE: '台账建账',
+      LEDGER_UPDATE: '台账更新',
+      ASSIGN: '资产领用',
+      TRANSFER: '资产调拨',
+      RETURN: '资产退还',
+      INVENTORY_CREATE: '发起盘点',
+      INVENTORY_RESULT: '盘点登记',
+      DISPOSAL_CONFIRM: '处置确认'
+    }
+    return mapper[bizType || ''] || bizType || '未识别动作'
+  }
+
+  const getHandoverTypeLabel = (handoverType?: string) => {
+    const mapper: Record<string, string> = {
+      ASSIGN: '领用',
+      TRANSFER: '调拨',
+      RETURN: '退还'
+    }
+    return mapper[handoverType || ''] || handoverType || '未知类型'
+  }
+
+  const getInventoryResultLabel = (result?: string) => {
+    const mapper: Record<string, string> = {
+      NORMAL: '正常',
+      LOSS: '盘亏',
+      MISSING: '缺失',
+      DAMAGED: '毁损',
+      LOCATION_DIFF: '位置差异',
+      RESPONSIBLE_DIFF: '责任人差异'
+    }
+    return mapper[result || ''] || result || '-'
+  }
+
+  const getFollowUpActionLabel = (action?: string) => {
+    const mapper: Record<string, string> = {
+      NONE: '无',
+      UPDATE_LEDGER: '修正台账',
+      CREATE_DISPOSAL: '发起处置'
+    }
+    return mapper[action || ''] || action || '-'
+  }
+
   const loadDetail = async () => {
     if (!assetId.value) {
       ElMessage.error('缺少资产ID，无法加载详情')
@@ -185,8 +340,21 @@
 
     loading.value = true
     try {
-      const response = await getAssetLedger(assetId.value)
-      Object.assign(detailData, toObjectData<any>(response))
+      // 兼容旧接口字段与新生命周期聚合接口，避免一次切换引发详情页空白。
+      const [detailResponse, lifecycleResponse] = await Promise.all([
+        getAssetLedger(assetId.value),
+        getAssetLedgerLifecycle(assetId.value)
+      ])
+
+      Object.assign(detailData, toObjectData<any>(detailResponse))
+      const lifecycle = toObjectData<any>(lifecycleResponse) || {}
+      if (lifecycle.ledger && typeof lifecycle.ledger === 'object') {
+        Object.assign(detailData, lifecycle.ledger)
+      }
+      lifecycleData.handoverRecords = toArrayData(lifecycle.handoverRecords)
+      lifecycleData.inventoryRecords = toArrayData(lifecycle.inventoryRecords)
+      lifecycleData.disposalRecords = toArrayData(lifecycle.disposalRecords)
+      lifecycleData.changeLogs = toArrayData(lifecycle.changeLogs)
     } finally {
       loading.value = false
     }
@@ -361,6 +529,56 @@
       :deep(.el-descriptions__table) {
         min-width: 640px;
       }
+    }
+
+    .record-wrapper {
+      padding: 14px 16px;
+    }
+
+    .record-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .record-item {
+      border: 1px solid #e9edf7;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fbfcff;
+    }
+
+    .record-item__title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d2f4f;
+      margin-bottom: 4px;
+    }
+
+    .record-item__desc {
+      font-size: 12px;
+      color: #5f7392;
+      line-height: 1.6;
+    }
+
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1d2f4f;
+    }
+
+    .timeline-desc {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #4f6487;
+      line-height: 1.5;
+    }
+
+    .timeline-meta {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #7a8faa;
+      line-height: 1.5;
     }
   }
 
