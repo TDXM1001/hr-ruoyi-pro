@@ -231,7 +231,8 @@
 
   const deptOptions = ref<AssetTreeOption[]>([])
   const responsibleUserOptions = ref<AssetUserOption[]>([])
-  const selectedAssetRows = ref<AssetRow[]>([])
+  const selectedAssetMap = ref<Record<number, AssetRow>>({})
+  const isSyncingSelection = ref(false)
   const handoverType = ref<HandoverType>('ASSIGN')
 
   const treeSelectProps = {
@@ -286,6 +287,8 @@
   const allowedStatusLabelText = computed(() => {
     return allowedStatuses.value.map((status) => getStatusDictLabel(status)).join(' / ')
   })
+
+  const selectedAssetRows = computed(() => Object.values(selectedAssetMap.value))
 
   const selectedAssetSummary = computed(() => {
     return `已选 ${selectedAssetRows.value.length} 宗`
@@ -432,8 +435,8 @@
     getData: getAssetData,
     searchParams: assetSearchParams,
     resetSearchParams: resetAssetSearchParams,
-    handleSizeChange: handleAssetSizeChange,
-    handleCurrentChange: handleAssetCurrentChange
+    handleSizeChange: handleAssetSizeChangeRaw,
+    handleCurrentChange: handleAssetCurrentChangeRaw
   } = useTable({
     core: {
       apiFn: listAssetLedger,
@@ -505,9 +508,50 @@
     getAssetData()
   }
 
+  const syncPageSelection = () => {
+    isSyncingSelection.value = true
+    nextTick(() => {
+      const pageRows = (assetData.value || []) as AssetRow[]
+      const tableRef = assetTableRef.value?.elTableRef
+      if (!tableRef) {
+        isSyncingSelection.value = false
+        return
+      }
+      tableRef.clearSelection?.()
+      pageRows.forEach((row) => {
+        if (selectedAssetMap.value[row.assetId] && isAssetSelectable(row)) {
+          tableRef.toggleRowSelection?.(row, true)
+        }
+      })
+      nextTick(() => {
+        isSyncingSelection.value = false
+      })
+    })
+  }
+
+  const handleAssetSizeChange = (size: number) => {
+    // 中文注释：分页参数变化后回显当前页选中态，保证跨页勾选资产持续可见。
+    handleAssetSizeChangeRaw(size)
+    syncPageSelection()
+  }
+
+  const handleAssetCurrentChange = (pageNum: number) => {
+    // 中文注释：切页后恢复该页勾选状态，避免用户误判历史勾选被清空。
+    handleAssetCurrentChangeRaw(pageNum)
+    syncPageSelection()
+  }
+
   const clearSelection = () => {
-    selectedAssetRows.value = []
-    assetTableRef.value?.elTableRef?.clearSelection?.()
+    selectedAssetMap.value = {}
+    const tableRef = assetTableRef.value?.elTableRef
+    if (!tableRef) {
+      return
+    }
+    isSyncingSelection.value = true
+    tableRef.clearSelection?.()
+    nextTick(() => {
+      isSyncingSelection.value = false
+    })
   }
 
   const handleAssetReset = () => {
@@ -523,7 +567,21 @@
   }
 
   const handleSelectionChange = (selection: AssetRow[]) => {
-    selectedAssetRows.value = selection
+    // 中文注释：过滤翻页回显触发的事件，仅在用户真实勾选时更新跨页缓存。
+    if (isSyncingSelection.value) {
+      return
+    }
+    const nextMap = { ...selectedAssetMap.value }
+    const pageRows = (assetData.value || []) as AssetRow[]
+    pageRows.forEach((row) => {
+      delete nextMap[row.assetId]
+    })
+    selection.forEach((row) => {
+      if (isAssetSelectable(row)) {
+        nextMap[row.assetId] = row
+      }
+    })
+    selectedAssetMap.value = nextMap
   }
 
   const showWarning = (message: string) => {
@@ -603,6 +661,14 @@
     (type) => {
       handoverType.value = normalizeHandoverType(String(type || 'ASSIGN'))
       clearSelection()
+    },
+    { immediate: true }
+  )
+
+  watch(
+    assetData,
+    () => {
+      syncPageSelection()
     },
     { immediate: true }
   )
