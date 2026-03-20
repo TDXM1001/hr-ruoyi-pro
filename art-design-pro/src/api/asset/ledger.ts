@@ -73,10 +73,12 @@ export function exportAssetLedger(data?: any) {
  * @returns 资产编号
  */
 export function getNextAssetCode() {
-  return http.request({
-    url: '/asset/ledger/nextCode',
-    method: 'get'
-  }).then((response) => normalizeAssetCodeResponse(response))
+  return http
+    .request({
+      url: '/asset/ledger/nextCode',
+      method: 'get'
+    })
+    .then((response) => normalizeAssetCodeResponse(response))
 }
 
 /**
