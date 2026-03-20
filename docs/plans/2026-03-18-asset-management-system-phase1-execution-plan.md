@@ -4,7 +4,7 @@
 
 **Goal:** 在当前仓库中交付固定资产第一期最小闭环，支持资产管理员完成建账、领用/调拨/退还、盘点、处置、导出与基础统计。
 
-**Architecture:** 本期只做固定资产，不同时推进不动产。后端新增独立 `ruoyi-asset` 模块承载资产域，前端在 `art-design-pro` 中新增资产模块页面；业务设计上采用“统一台账 + 交接记录 + 盘点任务 + 处置单”的轻量模型，优先跑通闭环，再做横向扩展。
+**Architecture:** 本期只做固定资产，不同时推进不动产。后端新增独立 `ruoyi-asset` 模块承载资产域，前端在 `art-design-pro` 中新增资产模块页面；业务设计上采用“统一台账 + 交接主单/明细 + 盘点任务 + 处置单”的轻量模型，优先跑通闭环，再做横向扩展。
 
 **Tech Stack:** Spring Boot 3、MyBatis XML、MySQL、RuoYi 权限/字典/Excel 导出、Vue 3、TypeScript、Element Plus、Vitest
 
@@ -30,6 +30,7 @@
 - 固定资产分类
 - 固定资产台账
 - 领用、调拨、退还
+- 批量交接（单据可选多资产，但资产类型必须一致且为固定资产）
 - 盘点任务与结果回写
 - 处置登记与确认
 - 基础统计卡片
@@ -38,6 +39,7 @@
 ### 4. 第一期开通范围外
 
 - 不动产主线
+- 同一交接单混合固定资产与不动产
 - 合同/租赁
 - 审批流
 - 移动端盘点
@@ -48,6 +50,8 @@
 
 - 资产管理员能独立完成一条资产从建账到处置的完整闭环。
 - 领用、调拨、退还不能直接改字段，必须形成交接记录。
+- 支持“单据多资产”的批量领用/调拨/退还，且明细逐条留痕。
+- 同一交接单内不允许混合固定资产与不动产。
 - 盘点结果必须产生后续动作，不能只停留在备注。
 - 处置完成后资产不能恢复为正常在用。
 - 财务能导出台账口径，管理层能看到基础统计。
@@ -59,7 +63,7 @@
 - `ast_asset_category`：资产分类树
 - `ast_asset_ledger`：资产台账主档
 - `ast_asset_change_log`：所有关键动作留痕
-- `ast_asset_handover`：统一承载领用/调拨/退还
+- `ast_asset_handover_order` / `ast_asset_handover_item`：统一承载领用/调拨/退还（主单+明细）
 - `ast_asset_inventory_task` / `ast_asset_inventory_item`：盘点任务
 - `ast_asset_disposal`：处置单
 
@@ -77,6 +81,8 @@
 
 - 同一资产编码不可重复。
 - 未正式建账的资产不能进入交接流程。
+- 交接支持一单多资产，但同一单据内资产类型必须一致且当前仅允许 `FIXED`。
+- 领用/调拨/退还必须经过交接单据，不允许直接修改台账使用部门、责任人、位置与状态。
 - `DISPOSED` 状态不可回退到 `IN_USE`。
 - 盘点异常必须进入修正或待处置。
 - 处置确认后只允许查询和导出，不允许再次领用。
@@ -271,6 +277,7 @@ Expected: FAIL
 
 ```java
 public Long createAsset(AssetLedgerBo bo, String operator) {
+    bo.setAssetCode(generateNextAssetCode());
     if (assetLedgerMapper.selectByAssetCode(bo.getAssetCode()) != null) {
         throw new ServiceException("资产编码已存在");
     }
@@ -321,10 +328,10 @@ git commit -m "feat: add asset ledger backend"
 **Files:**
 - Create: `art-design-pro/src/api/asset/ledger.ts`
 - Create: `art-design-pro/src/views/asset/ledger/index.vue`
-- Create: `art-design-pro/src/views/asset/ledger/modules/ledger-edit-dialog.vue`
-- Create: `art-design-pro/src/router/modules/asset.ts`
-- Modify: `art-design-pro/src/router/modules/index.ts`
-- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Create: `art-design-pro/src/views/asset/ledger/form/index.vue`
+- Create: `art-design-pro/src/views/asset/ledger/detail/index.vue`
+- Modify: `RuoYi-Vue/sql/asset/01-asset-seed.sql`
+- Create: `RuoYi-Vue/sql/asset/03-asset-menu-upgrade-20260318.sql`
 - Test: `art-design-pro/tests/api/asset-ledger.test.ts`
 
 **Step 1: 先写失败测试**
@@ -345,7 +352,7 @@ Run: `pnpm vitest run tests/api/asset-ledger.test.ts`
 
 Expected: FAIL
 
-**Step 3: 实现 API、页面、路由、文案**
+**Step 3: 实现 API、页面、动态路由 SQL**
 
 ```ts
 export function listAssetLedger(params?: any) {
@@ -356,19 +363,16 @@ export function listAssetLedger(params?: any) {
 ```vue
 <ArtSearchBar v-model="filters" :items="formItems" @search="handleSearch" @reset="handleReset" />
 <ArtTable :data="data" :columns="columns" :pagination="pagination" />
-<LedgerEditDialog v-model="dialogVisible" :data="currentData" @success="refreshData" />
+<ElButton type="primary" @click="router.push('/asset/ledger/create')">新增资产</ElButton>
+<div class="form-scroll-area">...</div>
+<ElInput v-model="formData.assetCode" readonly />
 ```
 
-```ts
-export const assetRoutes: AppRouteRecord = {
-  path: '/asset',
-  name: 'Asset',
-  component: '/index/index',
-  meta: { title: 'menus.asset.title', icon: 'ri:archive-2-line', roles: ['R_SUPER', 'R_ADMIN'] },
-  children: [
-    { path: 'ledger', name: 'AssetLedger', component: '/asset/ledger', meta: { title: 'menus.asset.ledger', keepAlive: true } }
-  ]
-}
+```sql
+-- 资产台账详情 / 新增 / 编辑使用后端动态路由，菜单隐藏但允许访问
+update sys_menu
+set visible = '1'
+where menu_id in (2102, 2103, 2104);
 ```
 
 **Step 4: 运行测试与构建**
@@ -384,61 +388,70 @@ Expected: PASS
 **Step 5: Commit**
 
 ```bash
-git add art-design-pro/src/api/asset/ledger.ts art-design-pro/src/views/asset/ledger art-design-pro/src/router/modules/asset.ts art-design-pro/src/router/modules/index.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-ledger.test.ts
+git add art-design-pro/src/api/asset/ledger.ts art-design-pro/src/views/asset/ledger RuoYi-Vue/sql/asset/01-asset-seed.sql RuoYi-Vue/sql/asset/03-asset-menu-upgrade-20260318.sql art-design-pro/tests/api/asset-ledger.test.ts
 git commit -m "feat: add asset ledger frontend"
 ```
 
 ### Task 5: 实现领用/调拨/退还后端闭环
 
 **Files:**
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandover.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverBo.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverVo.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverMapper.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverService.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImpl.java`
-- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandoverOrder.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandoverItem.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverCreateBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverItemBo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverOrderVo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverItemVo.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverOrderMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverItemMapper.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverOrderService.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverOrderServiceImpl.java`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverOrderMapper.xml`
+- Create: `RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverItemMapper.xml`
 - Create: `RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetHandoverController.java`
-- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImplTest.java`
+- Test: `RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverOrderServiceImplTest.java`
 
-**Step 1: 先写失败测试，固定交接规则**
+**Step 1: 先写失败测试，固定批量交接规则**
 
 ```java
 @Test
-void shouldRejectAssignWhenAssetDisposed() {
-    AssetLedger ledger = new AssetLedger();
-    ledger.setStatus("DISPOSED");
-    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
-    assertThrows(ServiceException.class, () -> service.createHandover(buildAssignBo(), "admin"));
+void shouldRejectBatchOrderWhenContainsDisposedAsset() {
+    when(assetLedgerMapper.selectById(1L)).thenReturn(buildLedger("IN_USE", "FIXED"));
+    when(assetLedgerMapper.selectById(2L)).thenReturn(buildLedger("DISPOSED", "FIXED"));
+    assertThrows(ServiceException.class, () -> service.createOrder(buildBatchTransferBo(), "admin"));
 }
 
 @Test
-void shouldWriteChangeLogAfterTransfer() {
-    AssetLedger ledger = new AssetLedger();
-    ledger.setStatus("IN_USE");
-    when(assetLedgerMapper.selectById(1L)).thenReturn(ledger);
-    when(assetHandoverMapper.insertAssetHandover(any())).thenReturn(1);
-    service.createHandover(buildTransferBo(), "admin");
-    verify(assetChangeLogMapper).insertAssetChangeLog(any());
+void shouldWriteChangeLogForEveryItemAfterBatchTransfer() {
+    when(assetLedgerMapper.selectById(1L)).thenReturn(buildLedger("IN_USE", "FIXED"));
+    when(assetLedgerMapper.selectById(2L)).thenReturn(buildLedger("IN_USE", "FIXED"));
+    when(assetHandoverOrderMapper.insertOrder(any())).thenReturn(1);
+    when(assetHandoverItemMapper.batchInsert(any())).thenReturn(2);
+    service.createOrder(buildBatchTransferBo(), "admin");
+    verify(assetChangeLogMapper, times(2)).insertAssetChangeLog(any());
 }
 ```
 
 **Step 2: 运行测试确认失败**
 
-Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverServiceImplTest`
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverOrderServiceImplTest`
 
 Expected: FAIL
 
-**Step 3: 实现统一交接模型**
+**Step 3: 实现统一批量交接模型**
 
 ```java
-public Long createHandover(AssetHandoverBo bo, String operator) {
-    AssetLedger asset = assetLedgerMapper.selectById(bo.getAssetId());
-    validateBizRule(asset, bo.getBizType());
-    assetHandoverMapper.insertAssetHandover(convert(bo, operator));
-    assetLedgerMapper.updateUsageInfo(bo.getAssetId(), bo.getToDeptId(), bo.getToUserId(), nextStatus(bo.getBizType()));
-    assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofHandover(bo.getAssetId(), bo.getBizType(), operator));
-    return bo.getAssetId();
+public Long createOrder(AssetHandoverCreateBo bo, String operator) {
+    validateOrderTypeAndAssetType(bo); // 单据级限制：仅固定资产，且同单据同类型
+    AssetHandoverOrder order = buildOrder(bo, operator);
+    assetHandoverOrderMapper.insertOrder(order);
+    for (AssetHandoverItemBo itemBo : bo.getItems()) {
+        AssetLedger asset = assetLedgerMapper.selectById(itemBo.getAssetId());
+        validateBizRule(asset, bo.getHandoverType());
+        assetHandoverItemMapper.insertItem(buildItem(order.getOrderId(), itemBo, asset, operator));
+        assetLedgerMapper.updateAssetUsageInfo(buildUsageUpdate(asset, bo, itemBo, operator));
+        assetChangeLogMapper.insertAssetChangeLog(AssetChangeLog.ofHandover(asset.getAssetId(), bo.getHandoverType(), order.getOrderId(), ...));
+    }
+    return order.getOrderId();
 }
 ```
 
@@ -447,23 +460,25 @@ public Long createHandover(AssetHandoverBo bo, String operator) {
 ```java
 @RequestMapping("/asset/handover")
 public class AssetHandoverController extends BaseController {
-    @GetMapping("/list")
-    public TableDataInfo list(AssetHandoverBo bo) { ... }
+    @GetMapping("/order/list")
+    public TableDataInfo orderList(AssetHandoverOrderBo bo) { ... }
+    @GetMapping("/order/{orderId}/items")
+    public AjaxResult orderItems(@PathVariable Long orderId) { ... }
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody AssetHandoverBo bo) { ... }
+    public AjaxResult add(@Validated @RequestBody AssetHandoverCreateBo bo) { ... }
 }
 ```
 
 **Step 5: 运行测试**
 
-Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverServiceImplTest`
+Run: `mvn -pl ruoyi-asset -am test -Dtest=AssetHandoverOrderServiceImplTest`
 
 Expected: PASS
 
 **Step 6: Commit**
 
 ```bash
-git add RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandover.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverBo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverVo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverMapper.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverService.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImpl.java RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverMapper.xml RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetHandoverController.java RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverServiceImplTest.java
+git add RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandoverOrder.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetHandoverItem.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverCreateBo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetHandoverItemBo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverOrderVo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/vo/AssetHandoverItemVo.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverOrderMapper.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetHandoverItemMapper.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/IAssetHandoverOrderService.java RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetHandoverOrderServiceImpl.java RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverOrderMapper.xml RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetHandoverItemMapper.xml RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetHandoverController.java RuoYi-Vue/ruoyi-asset/src/test/java/com/ruoyi/asset/service/impl/AssetHandoverOrderServiceImplTest.java
 git commit -m "feat: add asset handover backend"
 ```
 
@@ -473,8 +488,7 @@ git commit -m "feat: add asset handover backend"
 - Create: `art-design-pro/src/api/asset/handover.ts`
 - Create: `art-design-pro/src/views/asset/use/index.vue`
 - Create: `art-design-pro/src/views/asset/use/modules/handover-dialog.vue`
-- Modify: `art-design-pro/src/router/modules/asset.ts`
-- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Modify: `RuoYi-Vue/sql/asset/01-asset-seed.sql`
 - Test: `art-design-pro/tests/api/asset-handover.test.ts`
 
 **Step 1: 先写失败测试**
@@ -509,7 +523,12 @@ export function addAssetHandover(data: any) {
 ```vue
 <ArtSearchBar v-model="filters" :items="searchItems" @search="handleSearch" @reset="handleReset" />
 <ArtTable :data="data" :columns="columns" :pagination="pagination" />
-<HandoverDialog v-model="dialogVisible" :biz-type="bizType" @success="refreshData" />
+<HandoverDialog
+  v-model="dialogVisible"
+  :biz-type="bizType"
+  :selected-asset-ids="selectedAssetIds"
+  @success="refreshData"
+/>
 ```
 
 **Step 4: 注册“资产使用”路由**
@@ -531,7 +550,7 @@ Expected: PASS
 **Step 6: Commit**
 
 ```bash
-git add art-design-pro/src/api/asset/handover.ts art-design-pro/src/views/asset/use art-design-pro/src/router/modules/asset.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-handover.test.ts
+git add art-design-pro/src/api/asset/handover.ts art-design-pro/src/views/asset/use RuoYi-Vue/sql/asset/01-asset-seed.sql art-design-pro/tests/api/asset-handover.test.ts
 git commit -m "feat: add asset handover frontend"
 ```
 
@@ -647,8 +666,7 @@ git commit -m "feat: add asset inventory disposal and stats backend"
 - Create: `art-design-pro/src/views/asset/inventory/modules/inventory-result-dialog.vue`
 - Create: `art-design-pro/src/views/asset/disposal/index.vue`
 - Modify: `art-design-pro/src/views/asset/ledger/index.vue`
-- Modify: `art-design-pro/src/router/modules/asset.ts`
-- Modify: `art-design-pro/src/locales/langs/zh.json`
+- Modify: `RuoYi-Vue/sql/asset/01-asset-seed.sql`
 - Test: `art-design-pro/tests/api/asset-inventory.test.ts`
 - Test: `art-design-pro/tests/api/asset-disposal.test.ts`
 
@@ -722,7 +740,7 @@ Expected: PASS
 **Step 6: Commit**
 
 ```bash
-git add art-design-pro/src/api/asset art-design-pro/src/views/asset art-design-pro/src/router/modules/asset.ts art-design-pro/src/locales/langs/zh.json art-design-pro/tests/api/asset-inventory.test.ts art-design-pro/tests/api/asset-disposal.test.ts
+git add art-design-pro/src/api/asset art-design-pro/src/views/asset RuoYi-Vue/sql/asset/01-asset-seed.sql art-design-pro/tests/api/asset-inventory.test.ts art-design-pro/tests/api/asset-disposal.test.ts
 git commit -m "feat: add asset inventory disposal and stats frontend"
 ```
 
@@ -807,6 +825,22 @@ git commit -m "chore: add asset seed data and uat checklist"
 - 固定资产主流程能够从建账走到处置终态
 - 所有关键业务动作均留痕
 - 财务导出可用，管理统计可用
+
+## 前端页面体验设计补充
+
+Task 4、Task 6、Task 8 以及后续所有资产模块前端页面实现，除满足业务闭环外，还应满足统一前端体验基线，避免页面首屏被说明区、统计卡和多层容器挤压，导致主操作区可视空间不足。
+
+统一参考文档：
+
+- `docs/plans/2026-03-19-asset-frontend-ux-guidelines.md`
+
+执行要求：
+
+- 列表页优先采用“工作台型列表页”骨架
+- 盘点执行页优先采用“强操作任务页”骨架
+- 新增/编辑/发起页优先采用“流程表单页”骨架
+- 详情页优先采用“详情查阅页”骨架
+- 筛选栏不得再与 `ArtTable` 放入同一个参与高度自适应计算的容器中
 
 ## 刻意不做
 

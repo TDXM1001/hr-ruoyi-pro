@@ -40,8 +40,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <resultMap id="AssetInventoryTaskAssetVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo">
-        <result property="taskId" column="task_id"/>
         <id property="assetId" column="asset_id"/>
+        <result property="taskId" column="task_id"/>
         <result property="assetCode" column="asset_code"/>
         <result property="assetName" column="asset_name"/>
         <result property="assetStatus" column="asset_status"/>
@@ -217,7 +217,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
 
     <insert id="insertAssetInventoryItem" parameterType="com.ruoyi.asset.domain.AssetInventoryItem" useGeneratedKeys="true" keyProperty="itemId">
-        insert into ast_asset_inventory_item (
+        <!-- 中文注释：通过 trim 去除尾逗号，兼容 ast_asset_inventory_item 不含 create_time 的历史库结构。 -->
+        insert into ast_asset_inventory_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="taskId != null">task_id,</if>
             <if test="assetId != null">asset_id,</if>
             <if test="inventoryResult != null and inventoryResult != ''">inventory_result,</if>
@@ -232,8 +234,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="checkedTime != null">checked_time,</if>
             <if test="resultDesc != null and resultDesc != ''">result_desc,</if>
             <if test="remark != null and remark != ''">remark,</if>
-            create_time
-        ) values (
+            <!-- 中文注释：兼容历史库结构（ast_asset_inventory_item 无 create_time 字段），此处不再强制写入 create_time。 -->
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="taskId != null">#{taskId},</if>
             <if test="assetId != null">#{assetId},</if>
             <if test="inventoryResult != null and inventoryResult != ''">#{inventoryResult},</if>
@@ -248,8 +251,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="checkedTime != null">#{checkedTime},</if>
             <if test="resultDesc != null and resultDesc != ''">#{resultDesc},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
-            sysdate()
-        )
+            <!-- 中文注释：insert 列表需要等长，这里使用 item_id 占位并让 MySQL 按自增策略生成主键。 -->
+        </trim>
     </insert>
 
     <select id="countInventoryItemByTaskId" parameterType="Long" resultType="Long">
