@@ -92,6 +92,8 @@ export interface AssetRectificationRecord {
   responsibleUserName?: string
   deadlineDate?: string
   completedTime?: string
+  completionDesc?: string
+  acceptanceRemark?: string
   createTime?: string
   remark?: string
 }

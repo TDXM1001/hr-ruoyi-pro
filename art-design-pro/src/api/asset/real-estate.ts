@@ -80,6 +80,11 @@ export interface AssetRealEstateRectificationPayload {
   remark?: string
 }
 
+export interface AssetRealEstateRectificationCompletePayload {
+  completionDesc: string
+  acceptanceRemark?: string
+}
+
 export function getRealEstateList(params?: AssetRealEstateQuery) {
   return http.request({
     url: '/asset/real-estate/list',
@@ -181,6 +186,18 @@ export function updateRealEstateRectification(
   return http.request({
     url: `/asset/real-estate/${assetId}/rectifications`,
     method: 'put',
+    data
+  })
+}
+
+export function completeRealEstateRectification(
+  assetId: number | string,
+  rectificationId: number | string,
+  data: AssetRealEstateRectificationCompletePayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/complete`,
+    method: 'post',
     data
   })
 }

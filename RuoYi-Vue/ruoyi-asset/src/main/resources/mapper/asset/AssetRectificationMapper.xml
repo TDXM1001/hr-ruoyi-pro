@@ -17,6 +17,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="responsibleUserId" column="responsible_user_id"/>
         <result property="deadlineDate" column="deadline_date"/>
         <result property="completedTime" column="completed_time"/>
+        <result property="completionDesc" column="completion_desc"/>
+        <result property="acceptanceRemark" column="acceptance_remark"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -43,6 +45,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="responsibleUserName" column="responsible_user_name"/>
         <result property="deadlineDate" column="deadline_date"/>
         <result property="completedTime" column="completed_time"/>
+        <result property="completionDesc" column="completion_desc"/>
+        <result property="acceptanceRemark" column="acceptance_remark"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -69,6 +73,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
                r.deadline_date,
                r.completed_time,
+               r.completion_desc,
+               r.acceptance_remark,
                r.create_by,
                r.create_time,
                r.update_by,
@@ -96,7 +102,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectByInventoryItemId" parameterType="Long" resultMap="AssetRectificationOrderResult">
         select rectification_id, rectification_no, asset_id, task_id, inventory_item_id,
                rectification_status, issue_type, issue_desc, responsible_dept_id, responsible_user_id,
-               deadline_date, completed_time, create_by, create_time, update_by, update_time, remark
+               deadline_date, completed_time, completion_desc, acceptance_remark,
+               create_by, create_time, update_by, update_time, remark
         from ast_asset_rectification_order
         where inventory_item_id = #{inventoryItemId}
         limit 1
@@ -113,11 +120,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into ast_asset_rectification_order (
             rectification_no, asset_id, task_id, inventory_item_id, rectification_status,
             issue_type, issue_desc, responsible_dept_id, responsible_user_id, deadline_date,
-            completed_time, create_by, create_time, remark
+            completed_time, completion_desc, acceptance_remark, create_by, create_time, remark
         ) values (
             #{rectificationNo}, #{assetId}, #{taskId}, #{inventoryItemId}, #{rectificationStatus},
             #{issueType}, #{issueDesc}, #{responsibleDeptId}, #{responsibleUserId}, #{deadlineDate},
-            #{completedTime}, #{createBy}, sysdate(), #{remark}
+            #{completedTime}, #{completionDesc}, #{acceptanceRemark}, #{createBy}, sysdate(), #{remark}
         )
     </insert>
 
@@ -130,6 +137,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             responsible_user_id = #{responsibleUserId},
             deadline_date = #{deadlineDate},
             completed_time = #{completedTime},
+            completion_desc = #{completionDesc},
+            acceptance_remark = #{acceptanceRemark},
             update_by = #{updateBy},
             update_time = sysdate(),
             remark = #{remark}

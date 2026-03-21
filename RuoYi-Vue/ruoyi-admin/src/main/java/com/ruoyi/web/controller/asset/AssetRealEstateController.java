@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
+import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetTreeNodeVo;
 import com.ruoyi.asset.domain.vo.AssetUserOptionVo;
 import com.ruoyi.asset.mapper.AssetLookupMapper;
@@ -228,6 +229,15 @@ public class AssetRealEstateController extends BaseController
     {
         bo.setAssetId(assetId);
         return toAjax(assetRectificationService.updateAssetRectification(bo, getUsername()));
+    }
+
+    @Log(title = "不动产整改完成", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/rectifications/{rectificationId}/complete")
+    public AjaxResult completeRectification(@PathVariable Long assetId, @PathVariable Long rectificationId,
+        @Validated @RequestBody AssetRectificationCompleteBo bo)
+    {
+        return toAjax(assetRectificationService.completeAssetRectification(assetId, rectificationId, bo, getUsername()));
     }
 
     /**

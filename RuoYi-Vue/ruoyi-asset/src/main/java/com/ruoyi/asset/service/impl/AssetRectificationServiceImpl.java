@@ -11,6 +11,7 @@ import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetLedger;
 import com.ruoyi.asset.domain.AssetRectificationOrder;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
+import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
 import com.ruoyi.asset.mapper.AssetInventoryMapper;
@@ -23,6 +24,10 @@ import com.ruoyi.common.utils.StringUtils;
 
 /**
  * 资产整改服务实现。
+ *
+ * <p>当前阶段将整改登记与整改完成拆成两个明确动作：
+ * 普通编辑只维护责任、期限、问题描述等基础信息；
+ * “完成整改”通过独立命令单独收口，避免状态流转和基础维护混在同一个表单里。</p>
  *
  * @author Codex
  */
@@ -84,14 +89,14 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
     {
         validateBo(bo);
         AssetInventoryItem inventoryItem = requireInventoryItem(bo.getInventoryItemId());
-        validateAssetOwnership(bo, inventoryItem);
+        validateAssetOwnership(bo.getAssetId(), bo.getTaskId(), inventoryItem);
         if (assetRectificationMapper.selectByInventoryItemId(bo.getInventoryItemId()) != null)
         {
             throw new ServiceException("当前巡检结果已发起整改单");
         }
         requireAsset(bo.getAssetId());
 
-        AssetRectificationOrder order = buildOrderEntity(bo, operator, null);
+        AssetRectificationOrder order = buildOrderEntity(bo, null);
         order.setRectificationNo(generateNextRectificationNo());
         order.setRectificationStatus(resolveRectificationStatus(bo.getRectificationStatus()));
         order.setCreateBy(operator);
@@ -125,9 +130,9 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         }
 
         AssetInventoryItem inventoryItem = requireInventoryItem(bo.getInventoryItemId());
-        validateAssetOwnership(bo, inventoryItem);
+        validateAssetOwnership(bo.getAssetId(), bo.getTaskId(), inventoryItem);
 
-        AssetRectificationOrder order = buildOrderEntity(bo, operator, current);
+        AssetRectificationOrder order = buildOrderEntity(bo, current);
         order.setRectificationId(bo.getRectificationId());
         order.setRectificationNo(current.getRectificationNo());
         order.setUpdateBy(operator);
@@ -141,6 +146,35 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         syncInventoryFollowUp(order.getInventoryItemId(), order.getRectificationStatus(), order.getRectificationId());
         assetChangeLogMapper.insertAssetChangeLog(buildChangeLog(bo.getAssetId(), operator,
             "更新整改单：" + current.getRectificationNo() + "，状态：" + order.getRectificationStatus()));
+        return rows;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int completeAssetRectification(Long assetId, Long rectificationId, AssetRectificationCompleteBo bo,
+        String operator)
+    {
+        validateCompleteBo(assetId, rectificationId, bo);
+        AssetRectificationVo current = selectAssetRectificationById(rectificationId);
+        if (!assetId.equals(current.getAssetId()))
+        {
+            throw new ServiceException("整改单与资产不匹配");
+        }
+        if (RECTIFICATION_STATUS_COMPLETED.equals(StringUtils.upperCase(current.getRectificationStatus())))
+        {
+            throw new ServiceException("整改单已完成，请勿重复提交");
+        }
+
+        AssetRectificationOrder order = buildCompletedOrder(current, bo, operator);
+        int rows = assetRectificationMapper.updateAssetRectification(order);
+        if (rows <= 0)
+        {
+            throw new ServiceException("完成整改失败");
+        }
+
+        syncInventoryFollowUp(order.getInventoryItemId(), order.getRectificationStatus(), order.getRectificationId());
+        assetChangeLogMapper.insertAssetChangeLog(buildChangeLog(assetId, operator,
+            "完成整改单：" + current.getRectificationNo() + "，完成说明：" + order.getCompletionDesc()));
         return rows;
     }
 
@@ -184,6 +218,26 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         }
     }
 
+    private void validateCompleteBo(Long assetId, Long rectificationId, AssetRectificationCompleteBo bo)
+    {
+        if (assetId == null)
+        {
+            throw new ServiceException("资产ID不能为空");
+        }
+        if (rectificationId == null)
+        {
+            throw new ServiceException("整改单ID不能为空");
+        }
+        if (bo == null)
+        {
+            throw new ServiceException("整改完成参数不能为空");
+        }
+        if (StringUtils.isBlank(bo.getCompletionDesc()))
+        {
+            throw new ServiceException("完成说明不能为空");
+        }
+    }
+
     private AssetInventoryItem requireInventoryItem(Long inventoryItemId)
     {
         AssetInventoryItem item = assetInventoryMapper.selectAssetInventoryItemById(inventoryItemId);
@@ -194,13 +248,13 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         return item;
     }
 
-    private void validateAssetOwnership(AssetRectificationBo bo, AssetInventoryItem inventoryItem)
+    private void validateAssetOwnership(Long assetId, Long taskId, AssetInventoryItem inventoryItem)
     {
-        if (!bo.getAssetId().equals(inventoryItem.getAssetId()))
+        if (!assetId.equals(inventoryItem.getAssetId()))
         {
             throw new ServiceException("整改资产与巡检结果不匹配");
         }
-        if (!bo.getTaskId().equals(inventoryItem.getTaskId()))
+        if (!taskId.equals(inventoryItem.getTaskId()))
         {
             throw new ServiceException("整改任务与巡检结果不匹配");
         }
@@ -215,7 +269,7 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         }
     }
 
-    private AssetRectificationOrder buildOrderEntity(AssetRectificationBo bo, String operator, AssetRectificationVo current)
+    private AssetRectificationOrder buildOrderEntity(AssetRectificationBo bo, AssetRectificationVo current)
     {
         String status = resolveRectificationStatus(bo.getRectificationStatus());
         Date now = DateUtils.getNowDate();
@@ -233,7 +287,32 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         order.setCompletedTime(RECTIFICATION_STATUS_COMPLETED.equals(status)
             ? now
             : current == null ? null : current.getCompletedTime());
+        order.setCompletionDesc(current == null ? null : current.getCompletionDesc());
+        order.setAcceptanceRemark(current == null ? null : current.getAcceptanceRemark());
         order.setRemark(bo.getRemark());
+        return order;
+    }
+
+    private AssetRectificationOrder buildCompletedOrder(AssetRectificationVo current, AssetRectificationCompleteBo bo,
+        String operator)
+    {
+        AssetRectificationOrder order = new AssetRectificationOrder();
+        order.setRectificationId(current.getRectificationId());
+        order.setRectificationNo(current.getRectificationNo());
+        order.setAssetId(current.getAssetId());
+        order.setTaskId(current.getTaskId());
+        order.setInventoryItemId(current.getInventoryItemId());
+        order.setRectificationStatus(RECTIFICATION_STATUS_COMPLETED);
+        order.setIssueType(current.getIssueType());
+        order.setIssueDesc(current.getIssueDesc());
+        order.setResponsibleDeptId(current.getResponsibleDeptId());
+        order.setResponsibleUserId(current.getResponsibleUserId());
+        order.setDeadlineDate(current.getDeadlineDate());
+        order.setCompletedTime(DateUtils.getNowDate());
+        order.setCompletionDesc(StringUtils.trim(bo.getCompletionDesc()));
+        order.setAcceptanceRemark(normalizeOptionalText(bo.getAcceptanceRemark()));
+        order.setRemark(current.getRemark());
+        order.setUpdateBy(operator);
         return order;
     }
 
@@ -253,7 +332,8 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
             ? PROCESS_STATUS_PROCESSED
             : PROCESS_STATUS_PENDING;
         Date processTime = RECTIFICATION_STATUS_COMPLETED.equals(rectificationStatus) ? DateUtils.getNowDate() : null;
-        int rows = assetInventoryMapper.updateInventoryItemFollowUp(inventoryItemId, processStatus, processTime, rectificationId);
+        int rows = assetInventoryMapper.updateInventoryItemFollowUp(inventoryItemId, processStatus, processTime,
+            rectificationId);
         if (rows <= 0)
         {
             throw new ServiceException("回写巡检结果整改状态失败");
@@ -269,6 +349,12 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         changeLog.setOperateTime(DateUtils.getNowDate());
         changeLog.setChangeDesc(changeDesc);
         return changeLog;
+    }
+
+    private String normalizeOptionalText(String source)
+    {
+        String value = StringUtils.trim(source);
+        return StringUtils.isBlank(value) ? null : value;
     }
 
     private String generateNextRectificationNo()

@@ -38,6 +38,15 @@
               >
                 查看整改单
               </ElButton>
+              <ElButton
+                v-if="record.rectificationId && String(record.rectificationStatus || '').toUpperCase() === 'PENDING'"
+                :data-testid="`rectification-complete-link-${record.rectificationId}`"
+                link
+                type="warning"
+                @click="$emit('complete-rectification', record.rectificationId)"
+              >
+                完成整改
+              </ElButton>
             </div>
           </div>
         </div>
@@ -73,6 +82,7 @@
 
   defineEmits<{
     'edit-rectification': [rectificationId?: number]
+    'complete-rectification': [rectificationId?: number]
   }>()
 
   defineProps<{

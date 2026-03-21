@@ -34,6 +34,8 @@ describe('Asset Real Estate SQL Contract', () => {
     expect(sql).toContain("'real-estate/detail/:assetId/rectification/create'")
     expect(sql).toContain("'AssetRealEstateRectificationEdit'")
     expect(sql).toContain("'real-estate/detail/:assetId/rectification/edit/:rectificationId'")
+    expect(sql).toContain("'AssetRealEstateRectificationComplete'")
+    expect(sql).toContain("'real-estate/detail/:assetId/rectification/complete/:rectificationId'")
     expect(sql).toContain("'asset:realEstate:list'")
     expect(sql).toContain("'asset:realEstate:query'")
     expect(sql).toContain("'asset:realEstate:add'")

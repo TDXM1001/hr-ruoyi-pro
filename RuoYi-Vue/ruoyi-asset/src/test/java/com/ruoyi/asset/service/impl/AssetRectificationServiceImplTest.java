@@ -3,6 +3,7 @@ package com.ruoyi.asset.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,7 @@ import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetLedger;
 import com.ruoyi.asset.domain.AssetRectificationOrder;
+import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
@@ -99,6 +101,30 @@ class AssetRectificationServiceImplTest
         verify(assetChangeLogMapper).insertAssetChangeLog(any(AssetChangeLog.class));
     }
 
+    @Test
+    @DisplayName("独立完成整改时应写入完成说明并禁止重复完成")
+    void shouldCompleteRectificationWithCompletionDesc()
+    {
+        AssetRectificationVo current = new AssetRectificationVo();
+        current.setRectificationId(9001L);
+        current.setRectificationNo(buildRectificationNo(1));
+        current.setAssetId(20001L);
+        current.setTaskId(6L);
+        current.setInventoryItemId(66L);
+        current.setRectificationStatus("PENDING");
+
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+        when(assetRectificationMapper.updateAssetRectification(any())).thenReturn(1);
+        when(assetInventoryMapper.updateInventoryItemFollowUp(eq(66L), eq("PROCESSED"), nullable(Date.class), eq(9001L))).thenReturn(1);
+
+        int rows = service.completeAssetRectification(20001L, 9001L, buildCompleteBo(), "asset-admin");
+
+        assertEquals(1, rows);
+        verify(assetRectificationMapper).updateAssetRectification(any(AssetRectificationOrder.class));
+        verify(assetInventoryMapper).updateInventoryItemFollowUp(eq(66L), eq("PROCESSED"), nullable(Date.class), eq(9001L));
+        verify(assetChangeLogMapper).insertAssetChangeLog(any(AssetChangeLog.class));
+    }
+
     private AssetRectificationBo buildBo(Long rectificationId, String rectificationStatus)
     {
         AssetRectificationBo bo = new AssetRectificationBo();
@@ -113,6 +139,14 @@ class AssetRectificationServiceImplTest
         bo.setResponsibleUserId(1L);
         bo.setDeadlineDate(new Date());
         bo.setRemark("整改测试");
+        return bo;
+    }
+
+    private AssetRectificationCompleteBo buildCompleteBo()
+    {
+        AssetRectificationCompleteBo bo = new AssetRectificationCompleteBo();
+        bo.setCompletionDesc("已完成现场整改并复核通过");
+        bo.setAcceptanceRemark("资产管理员验收通过");
         return bo;
     }
 

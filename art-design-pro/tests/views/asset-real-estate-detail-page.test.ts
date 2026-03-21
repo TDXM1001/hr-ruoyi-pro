@@ -240,10 +240,15 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     expect(wrapper.text()).toContain('整改单列表')
     expect(wrapper.text()).toContain('RC-2026-0001')
+    expect(wrapper.text()).toContain('完成整改')
 
     const vm = wrapper.vm as any
     vm.goToEditRectification(9001)
     expect(mockPush).toHaveBeenLastCalledWith('/asset/real-estate/detail/20001/rectification/edit/9001')
+    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
+
+    await wrapper.get('[data-testid="rectification-complete-link-9001"]').trigger('click')
+    expect(mockPush).toHaveBeenLastCalledWith('/asset/real-estate/detail/20001/rectification/complete/9001')
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
 
     vm.handleTabChange('disposal')

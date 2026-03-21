@@ -69,6 +69,7 @@
         :rectification-logs="rectificationLogs"
         :get-biz-type-label="getBizTypeLabel"
         @edit-rectification="goToEditRectification"
+        @complete-rectification="goToCompleteRectification"
       />
 
       <DisposalPanel
@@ -284,6 +285,14 @@
     }
     persistRealEstateDetailTab(assetId.value, 'rectification')
     router.push(`/asset/real-estate/detail/${assetId.value}/rectification/edit/${rectificationId}`)
+  }
+
+  const goToCompleteRectification = (rectificationId?: number) => {
+    if (!assetId.value || !rectificationId) {
+      return
+    }
+    persistRealEstateDetailTab(assetId.value, 'rectification')
+    router.push(`/asset/real-estate/detail/${assetId.value}/rectification/complete/${rectificationId}`)
   }
 
   const goToDisposalModule = () => {

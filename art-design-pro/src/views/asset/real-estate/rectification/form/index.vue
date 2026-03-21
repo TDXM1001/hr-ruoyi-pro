@@ -100,13 +100,6 @@
             />
           </ElFormItem>
 
-          <ElFormItem label="整改状态" prop="rectificationStatus">
-            <ElRadioGroup v-model="formData.rectificationStatus">
-              <ElRadioButton label="PENDING" value="PENDING">待整改</ElRadioButton>
-              <ElRadioButton label="COMPLETED" value="COMPLETED">已完成</ElRadioButton>
-            </ElRadioGroup>
-          </ElFormItem>
-
           <ElFormItem label="备注">
             <ElInput
               v-model="formData.remark"
@@ -205,7 +198,6 @@
     responsibleDeptId: [{ required: true, message: '请选择责任部门', trigger: 'change' }],
     responsibleUserId: [{ required: true, message: '请选择责任人', trigger: 'change' }],
     deadlineDate: [{ required: true, message: '请选择整改期限', trigger: 'change' }],
-    rectificationStatus: [{ required: true, message: '请选择整改状态', trigger: 'change' }]
   }
 
   const getInventoryResultLabel = (result?: string) => {

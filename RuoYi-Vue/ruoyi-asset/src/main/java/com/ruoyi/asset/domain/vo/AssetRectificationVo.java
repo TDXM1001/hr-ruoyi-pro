@@ -51,6 +51,10 @@ public class AssetRectificationVo extends BaseEntity
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date completedTime;
 
+    private String completionDesc;
+
+    private String acceptanceRemark;
+
     public Long getRectificationId()
     {
         return rectificationId;
@@ -229,5 +233,25 @@ public class AssetRectificationVo extends BaseEntity
     public void setCompletedTime(Date completedTime)
     {
         this.completedTime = completedTime;
+    }
+
+    public String getCompletionDesc()
+    {
+        return completionDesc;
+    }
+
+    public void setCompletionDesc(String completionDesc)
+    {
+        this.completionDesc = completionDesc;
+    }
+
+    public String getAcceptanceRemark()
+    {
+        return acceptanceRemark;
+    }
+
+    public void setAcceptanceRemark(String acceptanceRemark)
+    {
+        this.acceptanceRemark = acceptanceRemark;
     }
 }

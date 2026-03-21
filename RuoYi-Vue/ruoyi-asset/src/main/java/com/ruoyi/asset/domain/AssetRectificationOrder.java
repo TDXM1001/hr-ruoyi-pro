@@ -53,6 +53,10 @@ public class AssetRectificationOrder extends BaseEntity
     /** 完成时间 */
     private Date completedTime;
 
+    private String completionDesc;
+
+    private String acceptanceRemark;
+
     public Long getRectificationId()
     {
         return rectificationId;
@@ -173,6 +177,26 @@ public class AssetRectificationOrder extends BaseEntity
         this.completedTime = completedTime;
     }
 
+    public String getCompletionDesc()
+    {
+        return completionDesc;
+    }
+
+    public void setCompletionDesc(String completionDesc)
+    {
+        this.completionDesc = completionDesc;
+    }
+
+    public String getAcceptanceRemark()
+    {
+        return acceptanceRemark;
+    }
+
+    public void setAcceptanceRemark(String acceptanceRemark)
+    {
+        this.acceptanceRemark = acceptanceRemark;
+    }
+
     @Override
     public String toString()
     {
@@ -189,6 +213,8 @@ public class AssetRectificationOrder extends BaseEntity
             .append("responsibleUserId", getResponsibleUserId())
             .append("deadlineDate", getDeadlineDate())
             .append("completedTime", getCompletedTime())
+            .append("completionDesc", getCompletionDesc())
+            .append("acceptanceRemark", getAcceptanceRemark())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

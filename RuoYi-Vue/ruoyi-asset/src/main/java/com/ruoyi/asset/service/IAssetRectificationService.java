@@ -2,6 +2,7 @@ package com.ruoyi.asset.service;
 
 import java.util.List;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
+import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 
 /**
@@ -44,4 +45,7 @@ public interface IAssetRectificationService
      * @return 更新结果
      */
     int updateAssetRectification(AssetRectificationBo bo, String operator);
+
+    int completeAssetRectification(Long assetId, Long rectificationId, AssetRectificationCompleteBo bo,
+        String operator);
 }
