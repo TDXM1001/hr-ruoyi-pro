@@ -20,6 +20,7 @@ import com.ruoyi.asset.mapper.AssetDisposalMapper;
 import com.ruoyi.asset.mapper.AssetHandoverItemMapper;
 import com.ruoyi.asset.mapper.AssetInventoryMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
+import com.ruoyi.asset.mapper.AssetRectificationMapper;
 import com.ruoyi.asset.mapper.AssetRealEstateMapper;
 import com.ruoyi.asset.service.IAssetRealEstateService;
 import com.ruoyi.common.exception.ServiceException;
@@ -61,6 +62,9 @@ public class AssetRealEstateServiceImpl implements IAssetRealEstateService
 
     @Autowired
     private AssetDisposalMapper assetDisposalMapper;
+
+    @Autowired
+    private AssetRectificationMapper assetRectificationMapper;
 
     /**
      * 查询不动产档案列表。
@@ -132,6 +136,7 @@ public class AssetRealEstateServiceImpl implements IAssetRealEstateService
         lifecycle.setLedger(ledger);
         lifecycle.setHandoverRecords(defaultList(assetHandoverItemMapper.selectAssetHandoverItemsByAssetId(assetId)));
         lifecycle.setInventoryRecords(defaultList(assetInventoryMapper.selectAssetInventoryRecordsByAssetId(assetId)));
+        lifecycle.setRectificationOrders(defaultList(assetRectificationMapper.selectAssetRectificationListByAssetId(assetId)));
         lifecycle.setDisposalRecords(defaultList(assetDisposalMapper.selectAssetDisposalsByAssetId(assetId)));
         lifecycle.setChangeLogs(defaultList(assetChangeLogMapper.selectAssetChangeLogListByAssetId(assetId)));
         return lifecycle;

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  */
 public class AssetInventoryRecordVo
 {
+    private Long itemId;
+
     private Long taskId;
 
     private String taskNo;
@@ -26,12 +28,24 @@ public class AssetInventoryRecordVo
 
     private String processStatus;
 
+    private Long followUpBizId;
+
     private String checkedBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date checkedTime;
 
     private String resultDesc;
+
+    public Long getItemId()
+    {
+        return itemId;
+    }
+
+    public void setItemId(Long itemId)
+    {
+        this.itemId = itemId;
+    }
 
     public Long getTaskId()
     {
@@ -111,6 +125,16 @@ public class AssetInventoryRecordVo
     public void setProcessStatus(String processStatus)
     {
         this.processStatus = processStatus;
+    }
+
+    public Long getFollowUpBizId()
+    {
+        return followUpBizId;
+    }
+
+    public void setFollowUpBizId(Long followUpBizId)
+    {
+        this.followUpBizId = followUpBizId;
     }
 
     public String getCheckedBy()

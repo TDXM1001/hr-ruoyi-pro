@@ -3,6 +3,7 @@ package com.ruoyi.asset.domain.vo;
 import java.util.ArrayList;
 import java.util.List;
 import com.ruoyi.asset.domain.AssetChangeLog;
+import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 
 /**
  * 资产生命周期详情视图对象。
@@ -18,6 +19,8 @@ public class AssetLedgerLifecycleVo
     private List<AssetInventoryRecordVo> inventoryRecords = new ArrayList<AssetInventoryRecordVo>();
 
     private List<AssetDisposalVo> disposalRecords = new ArrayList<AssetDisposalVo>();
+
+    private List<AssetRectificationVo> rectificationOrders = new ArrayList<AssetRectificationVo>();
 
     private List<AssetChangeLog> changeLogs = new ArrayList<AssetChangeLog>();
 
@@ -59,6 +62,16 @@ public class AssetLedgerLifecycleVo
     public void setDisposalRecords(List<AssetDisposalVo> disposalRecords)
     {
         this.disposalRecords = disposalRecords;
+    }
+
+    public List<AssetRectificationVo> getRectificationOrders()
+    {
+        return rectificationOrders;
+    }
+
+    public void setRectificationOrders(List<AssetRectificationVo> rectificationOrders)
+    {
+        this.rectificationOrders = rectificationOrders;
     }
 
     public List<AssetChangeLog> getChangeLogs()

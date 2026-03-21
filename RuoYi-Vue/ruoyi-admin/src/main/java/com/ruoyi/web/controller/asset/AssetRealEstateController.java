@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
+import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.vo.AssetTreeNodeVo;
 import com.ruoyi.asset.domain.vo.AssetUserOptionVo;
 import com.ruoyi.asset.mapper.AssetLookupMapper;
+import com.ruoyi.asset.service.IAssetRectificationService;
 import com.ruoyi.asset.service.IAssetRealEstateService;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
@@ -45,6 +47,9 @@ public class AssetRealEstateController extends BaseController
 
     @Autowired
     private AssetLookupMapper assetLookupMapper;
+
+    @Autowired
+    private IAssetRectificationService assetRectificationService;
 
     /**
      * 查询不动产档案列表。
@@ -164,6 +169,65 @@ public class AssetRealEstateController extends BaseController
     public AjaxResult edit(@Validated @RequestBody AssetRealEstateBo bo)
     {
         return toAjax(assetRealEstateService.updateAsset(bo, getUsername()));
+    }
+
+    /**
+     * 查询整改列表。
+     *
+     * @param assetId 资产ID
+     * @return 整改列表
+     */
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:query')")
+    @GetMapping("/{assetId}/rectifications")
+    public AjaxResult listRectifications(@PathVariable Long assetId)
+    {
+        return success(assetRectificationService.selectAssetRectificationListByAssetId(assetId));
+    }
+
+    /**
+     * 查询整改详情。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @return 整改详情
+     */
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:query')")
+    @GetMapping("/{assetId}/rectifications/{rectificationId}")
+    public AjaxResult getRectificationInfo(@PathVariable Long assetId, @PathVariable Long rectificationId)
+    {
+        return success(assetRectificationService.selectAssetRectificationById(rectificationId));
+    }
+
+    /**
+     * 发起整改登记。
+     *
+     * @param assetId 资产ID
+     * @param bo 整改入参
+     * @return 整改单ID
+     */
+    @Log(title = "不动产整改登记", businessType = BusinessType.INSERT)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/rectifications")
+    public AjaxResult addRectification(@PathVariable Long assetId, @Validated @RequestBody AssetRectificationBo bo)
+    {
+        bo.setAssetId(assetId);
+        return success(assetRectificationService.createAssetRectification(bo, getUsername()));
+    }
+
+    /**
+     * 更新整改登记。
+     *
+     * @param assetId 资产ID
+     * @param bo 整改入参
+     * @return 更新结果
+     */
+    @Log(title = "不动产整改登记", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PutMapping("/{assetId}/rectifications")
+    public AjaxResult editRectification(@PathVariable Long assetId, @Validated @RequestBody AssetRectificationBo bo)
+    {
+        bo.setAssetId(assetId);
+        return toAjax(assetRectificationService.updateAssetRectification(bo, getUsername()));
     }
 
     /**

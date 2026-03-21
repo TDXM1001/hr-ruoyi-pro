@@ -78,13 +78,27 @@ vi.mock("@/api/asset/real-estate", () => {
         ],
         inventoryRecords: [
           {
+            taskId: 5,
+            taskNo: "INV-2026-0007",
+            taskName: "一季度不动产巡检",
+            inventoryResult: "DAMAGED",
+            followUpAction: "UPDATE_LEDGER",
+            followUpBizId: 9001,
+            processStatus: "PENDING",
+            checkedBy: "资产管理员",
+            checkedTime: "2026-02-20 09:30:00",
+            resultDesc: "消防门闭合器损坏"
+          },
+          {
             taskId: 6,
             taskNo: "INV-2026-0008",
             taskName: "????????",
             inventoryResult: "LOCATION_DIFF",
             followUpAction: "UPDATE_LEDGER",
+            processStatus: "PENDING",
             checkedBy: "?????",
-            checkedTime: "2026-03-01 09:30:00"
+            checkedTime: "2026-03-01 09:30:00",
+            resultDesc: "房间实际使用人与台账不一致"
           }
         ],
         disposalRecords: [
@@ -148,6 +162,7 @@ describe("AssetRealEstateDetailPage ?????", () => {
     expect(wrapper.text()).toContain("????")
     expect(wrapper.text()).toContain("????")
     expect(wrapper.text()).toContain("????")
+    expect(wrapper.text()).toContain("整改")
   })
 
   it("???????????????????", async () => {
@@ -184,7 +199,45 @@ describe("AssetRealEstateDetailPage ?????", () => {
     expect(wrapper.text()).toContain("????")
     expect(wrapper.text()).toContain("????????")
     expect(wrapper.text()).toContain("????")
-    expect(wrapper.text()).toContain("???????????")
+    expect(wrapper.text()).toContain("发起整改")
+
+    const taskDetailButton = wrapper.get('[data-testid="inspection-task-link-6"]')
+    await taskDetailButton.trigger("click")
+
+    expect(mockPush).toHaveBeenCalledWith("/asset/real-estate/detail/20001/inspection-task/6")
+
+    const rectificationCreateButton = wrapper.get('[data-testid="rectification-create-link-6"]')
+    await rectificationCreateButton.trigger("click")
+
+    expect(mockPush).toHaveBeenCalledWith({
+      path: "/asset/real-estate/detail/20001/rectification/create",
+      query: {
+        taskId: "6"
+      }
+    })
+
+    const rectificationEditButton = wrapper.get('[data-testid="rectification-edit-link-9001"]')
+    await rectificationEditButton.trigger("click")
+
+    expect(mockPush).toHaveBeenCalledWith("/asset/real-estate/detail/20001/rectification/edit/9001")
+  })
+
+  it("???????????????????????", async () => {
+    routeState.path = "/asset/real-estate/detail/20001/rectification"
+    routeState.fullPath = routeState.path
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain("整改")
+    expect(wrapper.text()).toContain("INV-2026-0007")
+    expect(wrapper.text()).toContain("消防门闭合器损坏")
   })
 
   it("?????????????????????", async () => {
@@ -214,5 +267,27 @@ describe("AssetRealEstateDetailPage ?????", () => {
         assetCode: "RE-2026-0001"
       }
     })
+  })
+
+  it("首屏参数延迟注入时也应补拉详情数据", async () => {
+    routeState.params = {}
+    routeState.path = "/asset/real-estate/detail/20001/inspection"
+    routeState.fullPath = routeState.path
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+    expect(wrapper.text()).toContain("暂无巡检记录")
+
+    routeState.params = { assetId: "20001" }
+    await flushPromises()
+
+    expect(wrapper.text()).toContain("INV-2026-0007")
+    expect(wrapper.text()).toContain("发起整改")
   })
 })

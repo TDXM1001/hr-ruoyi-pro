@@ -1,5 +1,10 @@
 import http from '@/utils/http'
-import type { AssetLedgerLifecycleDetail, AssetTreeOption, AssetUserOption } from '@/api/asset/ledger'
+import type {
+  AssetLedgerLifecycleDetail,
+  AssetRectificationRecord,
+  AssetTreeOption,
+  AssetUserOption
+} from '@/api/asset/ledger'
 
 export type { AssetTreeOption, AssetUserOption } from '@/api/asset/ledger'
 
@@ -55,6 +60,23 @@ export interface AssetRealEstateDetail {
   ownershipCertNo?: string
   landUseType?: string
   buildingArea?: number
+  remark?: string
+}
+
+/**
+ * 不动产整改单入参。
+ */
+export interface AssetRealEstateRectificationPayload {
+  rectificationId?: number
+  assetId?: number
+  taskId?: number
+  inventoryItemId?: number
+  rectificationStatus?: 'PENDING' | 'COMPLETED' | string
+  issueType?: string
+  issueDesc?: string
+  responsibleDeptId?: number
+  responsibleUserId?: number
+  deadlineDate?: string
   remark?: string
 }
 
@@ -125,6 +147,42 @@ export function getNextRealEstateCode() {
       method: 'get'
     })
     .then((response) => normalizeAssetCodeResponse(response))
+}
+
+export function listRealEstateRectifications(assetId: number | string) {
+  return http.request<AssetRectificationRecord[]>({
+    url: `/asset/real-estate/${assetId}/rectifications`,
+    method: 'get'
+  })
+}
+
+export function getRealEstateRectification(assetId: number | string, rectificationId: number | string) {
+  return http.request<AssetRectificationRecord>({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}`,
+    method: 'get'
+  })
+}
+
+export function addRealEstateRectification(
+  assetId: number | string,
+  data: AssetRealEstateRectificationPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications`,
+    method: 'post',
+    data
+  })
+}
+
+export function updateRealEstateRectification(
+  assetId: number | string,
+  data: AssetRealEstateRectificationPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications`,
+    method: 'put',
+    data
+  })
 }
 
 function normalizeAssetCodeResponse(response: any) {

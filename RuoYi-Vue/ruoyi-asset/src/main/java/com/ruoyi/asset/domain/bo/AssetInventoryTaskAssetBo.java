@@ -17,6 +17,9 @@ public class AssetInventoryTaskAssetBo extends BaseEntity
     /** 资产编码 */
     private String assetCode;
 
+    /** 资产ID */
+    private Long assetId;
+
     /** 资产名称 */
     private String assetName;
 
@@ -49,6 +52,16 @@ public class AssetInventoryTaskAssetBo extends BaseEntity
         this.assetCode = assetCode;
     }
 
+    public Long getAssetId()
+    {
+        return assetId;
+    }
+
+    public void setAssetId(Long assetId)
+    {
+        this.assetId = assetId;
+    }
+
     public String getAssetName()
     {
         return assetName;
@@ -79,4 +92,3 @@ public class AssetInventoryTaskAssetBo extends BaseEntity
         this.resultType = resultType;
     }
 }
-

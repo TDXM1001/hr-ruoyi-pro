@@ -46,6 +46,7 @@ export interface AssetInventoryResultPayload {
  * 盘点任务资产明细查询参数
  */
 export interface AssetInventoryTaskAssetQuery {
+  assetId?: number
   assetCode?: string
   assetName?: string
   assetStatus?: string

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRectificationMapper">
+
+    <resultMap id="AssetRectificationOrderResult" type="com.ruoyi.asset.domain.AssetRectificationOrder">
+        <id property="rectificationId" column="rectification_id"/>
+        <result property="rectificationNo" column="rectification_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="inventoryItemId" column="inventory_item_id"/>
+        <result property="rectificationStatus" column="rectification_status"/>
+        <result property="issueType" column="issue_type"/>
+        <result property="issueDesc" column="issue_desc"/>
+        <result property="responsibleDeptId" column="responsible_dept_id"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="deadlineDate" column="deadline_date"/>
+        <result property="completedTime" column="completed_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetRectificationVoResult" type="com.ruoyi.asset.domain.vo.AssetRectificationVo">
+        <id property="rectificationId" column="rectification_id"/>
+        <result property="rectificationNo" column="rectification_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="taskId" column="task_id"/>
+        <result property="taskNo" column="task_no"/>
+        <result property="taskName" column="task_name"/>
+        <result property="inventoryItemId" column="inventory_item_id"/>
+        <result property="rectificationStatus" column="rectification_status"/>
+        <result property="issueType" column="issue_type"/>
+        <result property="issueDesc" column="issue_desc"/>
+        <result property="responsibleDeptId" column="responsible_dept_id"/>
+        <result property="responsibleDeptName" column="responsible_dept_name"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
+        <result property="deadlineDate" column="deadline_date"/>
+        <result property="completedTime" column="completed_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectRectificationVoColumns">
+        select r.rectification_id,
+               r.rectification_no,
+               r.asset_id,
+               a.asset_code,
+               a.asset_name,
+               r.task_id,
+               t.task_no,
+               t.task_name,
+               r.inventory_item_id,
+               r.rectification_status,
+               r.issue_type,
+               r.issue_desc,
+               r.responsible_dept_id,
+               dept.dept_name as responsible_dept_name,
+               r.responsible_user_id,
+               ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
+               r.deadline_date,
+               r.completed_time,
+               r.create_by,
+               r.create_time,
+               r.update_by,
+               r.update_time,
+               r.remark
+        from ast_asset_rectification_order r
+        left join ast_asset_ledger a on r.asset_id = a.asset_id
+        left join ast_asset_inventory_task t on r.task_id = t.task_id
+        left join sys_dept dept on r.responsible_dept_id = dept.dept_id
+        left join sys_user u on r.responsible_user_id = u.user_id
+    </sql>
+
+    <select id="selectAssetRectificationListByAssetId" parameterType="Long" resultMap="AssetRectificationVoResult">
+        <include refid="selectRectificationVoColumns"/>
+        where r.asset_id = #{assetId}
+        order by r.create_time desc, r.rectification_id desc
+    </select>
+
+    <select id="selectAssetRectificationById" parameterType="Long" resultMap="AssetRectificationVoResult">
+        <include refid="selectRectificationVoColumns"/>
+        where r.rectification_id = #{rectificationId}
+        limit 1
+    </select>
+
+    <select id="selectByInventoryItemId" parameterType="Long" resultMap="AssetRectificationOrderResult">
+        select rectification_id, rectification_no, asset_id, task_id, inventory_item_id,
+               rectification_status, issue_type, issue_desc, responsible_dept_id, responsible_user_id,
+               deadline_date, completed_time, create_by, create_time, update_by, update_time, remark
+        from ast_asset_rectification_order
+        where inventory_item_id = #{inventoryItemId}
+        limit 1
+    </select>
+
+    <select id="selectMaxRectificationNoByPrefix" parameterType="String" resultType="String">
+        select max(rectification_no)
+        from ast_asset_rectification_order
+        where rectification_no like concat(#{rectificationNoPrefix}, '%')
+    </select>
+
+    <insert id="insertAssetRectification" parameterType="com.ruoyi.asset.domain.AssetRectificationOrder"
+        useGeneratedKeys="true" keyProperty="rectificationId">
+        insert into ast_asset_rectification_order (
+            rectification_no, asset_id, task_id, inventory_item_id, rectification_status,
+            issue_type, issue_desc, responsible_dept_id, responsible_user_id, deadline_date,
+            completed_time, create_by, create_time, remark
+        ) values (
+            #{rectificationNo}, #{assetId}, #{taskId}, #{inventoryItemId}, #{rectificationStatus},
+            #{issueType}, #{issueDesc}, #{responsibleDeptId}, #{responsibleUserId}, #{deadlineDate},
+            #{completedTime}, #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateAssetRectification" parameterType="com.ruoyi.asset.domain.AssetRectificationOrder">
+        update ast_asset_rectification_order
+        set rectification_status = #{rectificationStatus},
+            issue_type = #{issueType},
+            issue_desc = #{issueDesc},
+            responsible_dept_id = #{responsibleDeptId},
+            responsible_user_id = #{responsibleUserId},
+            deadline_date = #{deadlineDate},
+            completed_time = #{completedTime},
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            remark = #{remark}
+        where rectification_id = #{rectificationId}
+    </update>
+</mapper>

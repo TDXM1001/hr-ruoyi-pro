@@ -52,12 +52,32 @@ public interface AssetInventoryMapper
     AssetInventoryItem selectAssetInventoryItem(@Param("taskId") Long taskId, @Param("assetId") Long assetId);
 
     /**
+     * 按明细ID查询盘点结果。
+     *
+     * @param itemId 明细ID
+     * @return 盘点明细
+     */
+    AssetInventoryItem selectAssetInventoryItemById(Long itemId);
+
+    /**
      * 按资产查询盘点历史记录。
      *
      * @param assetId 资产ID
      * @return 盘点历史记录
      */
     List<AssetInventoryRecordVo> selectAssetInventoryRecordsByAssetId(Long assetId);
+
+    /**
+     * 回写巡检结果的整改跟进状态。
+     *
+     * @param itemId 明细ID
+     * @param processStatus 处理状态
+     * @param processTime 处理时间
+     * @param followUpBizId 关联业务ID
+     * @return 结果
+     */
+    int updateInventoryItemFollowUp(@Param("itemId") Long itemId, @Param("processStatus") String processStatus,
+        @Param("processTime") Date processTime, @Param("followUpBizId") Long followUpBizId);
 
     /**
      * 查询指定前缀下最大盘点任务号。

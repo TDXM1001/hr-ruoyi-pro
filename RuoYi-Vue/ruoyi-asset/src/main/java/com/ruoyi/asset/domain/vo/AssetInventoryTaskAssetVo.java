@@ -10,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  */
 public class AssetInventoryTaskAssetVo
 {
+    /** 明细ID */
+    private Long itemId;
+
     /** 任务ID */
     private Long taskId;
 
@@ -49,12 +52,25 @@ public class AssetInventoryTaskAssetVo
     /** 处理状态 */
     private String processStatus;
 
+    /** 关联后续业务ID */
+    private Long followUpBizId;
+
     /** 盘点人 */
     private String checkedBy;
 
     /** 盘点时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date checkedTime;
+
+    public Long getItemId()
+    {
+        return itemId;
+    }
+
+    public void setItemId(Long itemId)
+    {
+        this.itemId = itemId;
+    }
 
     public Long getTaskId()
     {
@@ -186,6 +202,16 @@ public class AssetInventoryTaskAssetVo
         this.processStatus = processStatus;
     }
 
+    public Long getFollowUpBizId()
+    {
+        return followUpBizId;
+    }
+
+    public void setFollowUpBizId(Long followUpBizId)
+    {
+        this.followUpBizId = followUpBizId;
+    }
+
     public String getCheckedBy()
     {
         return checkedBy;
@@ -206,4 +232,3 @@ public class AssetInventoryTaskAssetVo
         this.checkedTime = checkedTime;
     }
 }
-

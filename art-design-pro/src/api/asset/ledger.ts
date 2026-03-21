@@ -56,6 +56,7 @@ export interface AssetHandoverRecord {
  * 资产盘点记录。
  */
 export interface AssetInventoryRecord {
+  itemId?: number
   taskId?: number
   taskNo?: string
   taskName?: string
@@ -63,9 +64,36 @@ export interface AssetInventoryRecord {
   inventoryResult?: string
   followUpAction?: string
   processStatus?: string
+  followUpBizId?: number
   checkedBy?: string
   checkedTime?: string
   resultDesc?: string
+}
+
+/**
+ * 资产整改记录。
+ */
+export interface AssetRectificationRecord {
+  rectificationId?: number
+  rectificationNo?: string
+  assetId?: number
+  assetCode?: string
+  assetName?: string
+  taskId?: number
+  taskNo?: string
+  taskName?: string
+  inventoryItemId?: number
+  rectificationStatus?: string
+  issueType?: string
+  issueDesc?: string
+  responsibleDeptId?: number
+  responsibleDeptName?: string
+  responsibleUserId?: number
+  responsibleUserName?: string
+  deadlineDate?: string
+  completedTime?: string
+  createTime?: string
+  remark?: string
 }
 
 /**
@@ -90,6 +118,7 @@ export interface AssetLedgerLifecycleDetail {
   ledger?: Record<string, any>
   handoverRecords?: AssetHandoverRecord[]
   inventoryRecords?: AssetInventoryRecord[]
+  rectificationOrders?: AssetRectificationRecord[]
   disposalRecords?: AssetDisposalRecord[]
   changeLogs?: AssetChangeLogRecord[]
 }

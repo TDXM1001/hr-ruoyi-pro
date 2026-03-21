@@ -40,6 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <resultMap id="AssetInventoryTaskAssetVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryTaskAssetVo">
+        <id property="itemId" column="item_id"/>
         <id property="assetId" column="asset_id"/>
         <result property="taskId" column="task_id"/>
         <result property="assetCode" column="asset_code"/>
@@ -53,6 +54,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="inventoryResult" column="inventory_result"/>
         <result property="followUpAction" column="follow_up_action"/>
         <result property="processStatus" column="process_status"/>
+        <result property="followUpBizId" column="follow_up_biz_id"/>
         <result property="checkedBy" column="checked_by"/>
         <result property="checkedTime" column="checked_time"/>
     </resultMap>
@@ -76,6 +78,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <resultMap id="AssetInventoryRecordVoResult" type="com.ruoyi.asset.domain.vo.AssetInventoryRecordVo">
+        <id property="itemId" column="item_id"/>
         <id property="taskId" column="task_id"/>
         <result property="taskNo" column="task_no"/>
         <result property="taskName" column="task_name"/>
@@ -84,6 +87,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="inventoryResult" column="inventory_result"/>
         <result property="followUpAction" column="follow_up_action"/>
         <result property="processStatus" column="process_status"/>
+        <result property="followUpBizId" column="follow_up_biz_id"/>
         <result property="checkedBy" column="checked_by"/>
         <result property="checkedTime" column="checked_time"/>
         <result property="resultDesc" column="result_desc"/>
@@ -152,10 +156,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                use_dept.dept_name as use_dept_name,
                ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
                a.location_name,
+               i.item_id,
                case when i.item_id is null then 0 else 1 end as result_registered,
                i.inventory_result,
                i.follow_up_action,
                i.process_status,
+               i.follow_up_biz_id,
                i.checked_by,
                i.checked_time
         from ast_asset_inventory_task t
@@ -166,6 +172,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join sys_user u on a.responsible_user_id = u.user_id
         <where>
             t.task_id = #{taskId}
+            <if test="assetId != null">
+                and a.asset_id = #{assetId}
+            </if>
             <if test="assetCode != null and assetCode != ''">
                 and a.asset_code like concat('%', #{assetCode}, '%')
             </if>
@@ -198,8 +207,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 1
     </select>
 
+    <select id="selectAssetInventoryItemById" parameterType="Long" resultMap="AssetInventoryItemResult">
+        select item_id, task_id, asset_id, inventory_result, actual_location_name, actual_use_dept_id,
+               actual_responsible_user_id, follow_up_action, process_status, process_time, follow_up_biz_id,
+               checked_by, checked_time, result_desc, remark
+        from ast_asset_inventory_item
+        where item_id = #{itemId}
+        limit 1
+    </select>
+
     <select id="selectAssetInventoryRecordsByAssetId" parameterType="Long" resultMap="AssetInventoryRecordVoResult">
-        select i.task_id,
+        select i.item_id,
+               i.task_id,
                t.task_no,
                t.task_name,
                i.asset_id,
@@ -207,6 +226,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                i.inventory_result,
                i.follow_up_action,
                i.process_status,
+               i.follow_up_biz_id,
                i.checked_by,
                i.checked_time,
                i.result_desc
@@ -301,6 +321,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_by = #{updateBy},
             update_time = sysdate()
         where task_id = #{taskId}
+    </update>
+
+    <update id="updateInventoryItemFollowUp">
+        update ast_asset_inventory_item
+        set process_status = #{processStatus},
+            process_time = #{processTime},
+            follow_up_biz_id = #{followUpBizId}
+        where item_id = #{itemId}
     </update>
 
     <select id="countOverdueInventoryTask" resultType="Long">
