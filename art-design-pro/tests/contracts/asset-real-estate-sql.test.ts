@@ -21,8 +21,18 @@ describe('Asset Real Estate SQL Contract', () => {
     expect(sql).toContain("'AssetRealEstate'")
     expect(sql).toContain("'real-estate'")
     expect(sql).toContain("'asset/real-estate/index'")
+    expect(sql).toContain("'AssetRealEstateDetail'")
+    expect(sql).toContain("'real-estate/detail/:assetId'")
+    expect(sql).toContain("'asset/real-estate/detail/index'")
+    expect(sql).toContain("'AssetRealEstateCreate'")
+    expect(sql).toContain("'real-estate/create'")
+    expect(sql).toContain("'asset/real-estate/form/index'")
+    expect(sql).toContain("'AssetRealEstateEdit'")
+    expect(sql).toContain("'real-estate/edit/:assetId'")
     expect(sql).toContain("'asset:realEstate:list'")
     expect(sql).toContain("'asset:realEstate:query'")
+    expect(sql).toContain("'asset:realEstate:add'")
+    expect(sql).toContain("'asset:realEstate:edit'")
   })
 
   it('should provide real estate sample ledger and profile data for smoke testing', () => {

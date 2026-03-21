@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -17,24 +17,100 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark" column="remark"/>
     </resultMap>
 
-    <select id="selectList" parameterType="com.ruoyi.asset.domain.AssetRealEstateProfile"
-        resultMap="AssetRealEstateProfileResult">
-        select profile_id, asset_id, ownership_cert_no, land_use_type, building_area, create_by, create_time,
-               update_by, update_time, remark
-        from ast_asset_real_estate_profile
+    <resultMap id="AssetRealEstateVoResult" type="com.ruoyi.asset.domain.vo.AssetRealEstateVo">
+        <id property="assetId" column="asset_id"/>
+        <result property="assetCode" column="asset_code"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="specModel" column="spec_model"/>
+        <result property="serialNo" column="serial_no"/>
+        <result property="assetStatus" column="asset_status"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="acquireType" column="acquire_type"/>
+        <result property="ownerDeptId" column="owner_dept_id"/>
+        <result property="ownerDeptName" column="owner_dept_name"/>
+        <result property="useDeptId" column="use_dept_id"/>
+        <result property="useDeptName" column="use_dept_name"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
+        <result property="locationName" column="location_name"/>
+        <result property="originalValue" column="original_value"/>
+        <result property="acquisitionDate" column="acquisition_date"/>
+        <result property="enableDate" column="enable_date"/>
+        <result property="lastInventoryDate" column="last_inventory_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="profileId" column="profile_id"/>
+        <result property="ownershipCertNo" column="ownership_cert_no"/>
+        <result property="landUseType" column="land_use_type"/>
+        <result property="buildingArea" column="building_area"/>
+    </resultMap>
+
+    <sql id="selectAssetRealEstateVoColumns">
+        select a.asset_id, a.asset_code, a.asset_name, a.asset_type, a.category_id, c.category_name, a.spec_model,
+               a.serial_no, a.asset_status, a.source_type, a.acquire_type, a.owner_dept_id,
+               owner_dept.dept_name as owner_dept_name, a.use_dept_id, use_dept.dept_name as use_dept_name,
+               a.responsible_user_id, ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
+               a.location_name, a.original_value, a.acquisition_date, a.enable_date, a.last_inventory_date,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
+               p.profile_id, p.ownership_cert_no, p.land_use_type, p.building_area
+        from ast_asset_ledger a
+        left join ast_asset_real_estate_profile p on a.asset_id = p.asset_id and p.del_flag = '0'
+        left join ast_asset_category c on a.category_id = c.category_id
+        left join sys_dept owner_dept on a.owner_dept_id = owner_dept.dept_id
+        left join sys_dept use_dept on a.use_dept_id = use_dept.dept_id
+        left join sys_user u on a.responsible_user_id = u.user_id
+    </sql>
+
+    <select id="selectList" parameterType="com.ruoyi.asset.domain.bo.AssetRealEstateBo" resultMap="AssetRealEstateVoResult">
+        <include refid="selectAssetRealEstateVoColumns"/>
         <where>
-            del_flag = '0'
+            a.del_flag = '0'
+            and a.asset_type = 'REAL_ESTATE'
             <if test="assetId != null">
-                and asset_id = #{assetId}
+                and a.asset_id = #{assetId}
+            </if>
+            <if test="assetCode != null and assetCode != ''">
+                and a.asset_code like concat('%', #{assetCode}, '%')
+            </if>
+            <if test="assetName != null and assetName != ''">
+                and a.asset_name like concat('%', #{assetName}, '%')
+            </if>
+            <if test="categoryId != null">
+                and a.category_id = #{categoryId}
+            </if>
+            <if test="assetStatus != null and assetStatus != ''">
+                and a.asset_status = #{assetStatus}
+            </if>
+            <if test="ownerDeptId != null">
+                and a.owner_dept_id = #{ownerDeptId}
+            </if>
+            <if test="useDeptId != null">
+                and a.use_dept_id = #{useDeptId}
+            </if>
+            <if test="responsibleUserId != null">
+                and a.responsible_user_id = #{responsibleUserId}
             </if>
             <if test="ownershipCertNo != null and ownershipCertNo != ''">
-                and ownership_cert_no like concat('%', #{ownershipCertNo}, '%')
+                and p.ownership_cert_no like concat('%', #{ownershipCertNo}, '%')
             </if>
             <if test="landUseType != null and landUseType != ''">
-                and land_use_type = #{landUseType}
+                and p.land_use_type like concat('%', #{landUseType}, '%')
             </if>
         </where>
-        order by profile_id desc
+        order by a.asset_id desc
+    </select>
+
+    <select id="selectDetailByAssetId" parameterType="Long" resultMap="AssetRealEstateVoResult">
+        <include refid="selectAssetRealEstateVoColumns"/>
+        where a.asset_id = #{assetId}
+          and a.asset_type = 'REAL_ESTATE'
+          and a.del_flag = '0'
     </select>
 
     <select id="selectByAssetId" parameterType="Long" resultMap="AssetRealEstateProfileResult">
@@ -45,4 +121,40 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and del_flag = '0'
         limit 1
     </select>
+
+    <insert id="insertProfile" parameterType="com.ruoyi.asset.domain.AssetRealEstateProfile" useGeneratedKeys="true" keyProperty="profileId">
+        insert into ast_asset_real_estate_profile (
+            asset_id,
+            <if test="ownershipCertNo != null and ownershipCertNo != ''">ownership_cert_no,</if>
+            <if test="landUseType != null and landUseType != ''">land_use_type,</if>
+            <if test="buildingArea != null">building_area,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time,
+            del_flag
+        ) values (
+            #{assetId},
+            <if test="ownershipCertNo != null and ownershipCertNo != ''">#{ownershipCertNo},</if>
+            <if test="landUseType != null and landUseType != ''">#{landUseType},</if>
+            <if test="buildingArea != null">#{buildingArea},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate(),
+            '0'
+        )
+    </insert>
+
+    <update id="updateProfile" parameterType="com.ruoyi.asset.domain.AssetRealEstateProfile">
+        update ast_asset_real_estate_profile
+        <set>
+            <if test="ownershipCertNo != null">ownership_cert_no = #{ownershipCertNo},</if>
+            <if test="landUseType != null">land_use_type = #{landUseType},</if>
+            <if test="buildingArea != null">building_area = #{buildingArea},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where asset_id = #{assetId}
+          and del_flag = '0'
+    </update>
 </mapper>
