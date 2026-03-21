@@ -1,7 +1,7 @@
 ﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import ElementPlus, { ElTreeSelect } from 'element-plus'
+import ElementPlus, { ElDatePicker, ElSelect, ElTreeSelect } from 'element-plus'
 import AssetRealEstateRectificationFormPage from '@/views/asset/real-estate/rectification/form/index.vue'
 import * as realEstateApi from '@/api/asset/real-estate'
 
@@ -177,5 +177,13 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
     expect(wrapper.text()).toContain('已完成现场复核并修正责任人信息。')
     expect(wrapper.text()).toContain('验收备注')
     expect(wrapper.text()).toContain('资产管理员复核通过。')
+    expect(wrapper.text()).not.toContain('保存整改单')
+
+    expect(wrapper.find('input[placeholder="请输入问题类型"]').attributes('readonly')).toBeDefined()
+    expect(wrapper.find('textarea[placeholder="请输入整改问题描述"]').attributes('readonly')).toBeDefined()
+    expect(wrapper.find('textarea[placeholder="请输入备注"]').attributes('readonly')).toBeDefined()
+    expect(wrapper.findComponent(ElTreeSelect).props('disabled')).toBe(true)
+    expect(wrapper.findComponent(ElSelect).props('disabled')).toBe(true)
+    expect(wrapper.findComponent(ElDatePicker).props('disabled')).toBe(true)
   })
 })

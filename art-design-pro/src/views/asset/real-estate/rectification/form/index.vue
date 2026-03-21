@@ -52,13 +52,26 @@
 
     <ElCard class="section-card" shadow="never" v-loading="loading">
       <template #header>
-        <div class="card-title">整改登记</div>
+        <div class="card-title">{{ isCompletedRectification ? '整改信息' : '整改登记' }}</div>
       </template>
 
       <div class="section-body">
+        <ElAlert
+          v-if="isCompletedRectification"
+          class="mb-4"
+          type="success"
+          :closable="false"
+          title="该整改单已完成，当前页面仅供查看。"
+        />
+
         <ElForm ref="formRef" :model="formData" :rules="rules" label-width="110px">
           <ElFormItem label="问题类型" prop="issueType">
-            <ElInput v-model="formData.issueType" maxlength="64" placeholder="请输入问题类型" />
+            <ElInput
+              v-model="formData.issueType"
+              maxlength="64"
+              placeholder="请输入问题类型"
+              :readonly="isCompletedRectification"
+            />
           </ElFormItem>
 
           <ElFormItem label="问题描述" prop="issueDesc">
@@ -69,6 +82,7 @@
               maxlength="500"
               show-word-limit
               placeholder="请输入整改问题描述"
+              :readonly="isCompletedRectification"
             />
           </ElFormItem>
 
@@ -86,6 +100,7 @@
               class="w-full"
               placeholder="请选择责任部门"
               :render-after-expand="false"
+              :disabled="isCompletedRectification"
             />
           </ElFormItem>
 
@@ -98,6 +113,7 @@
               :remote-method="loadResponsibleUsers"
               :loading="userOptionsLoading"
               placeholder="请输入责任人关键字"
+              :disabled="isCompletedRectification"
             >
               <ElOption
                 v-for="item in responsibleUserOptions"
@@ -115,6 +131,7 @@
               value-format="YYYY-MM-DD"
               class="w-full"
               placeholder="请选择整改期限"
+              :disabled="isCompletedRectification"
             />
           </ElFormItem>
 
@@ -126,13 +143,21 @@
               maxlength="500"
               show-word-limit
               placeholder="请输入备注"
+              :readonly="isCompletedRectification"
             />
           </ElFormItem>
         </ElForm>
 
         <div class="action-bar">
-          <ElButton @click="goBack">取消</ElButton>
-          <ElButton type="primary" :loading="submitting" @click="handleSubmit">保存整改单</ElButton>
+          <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
+          <ElButton
+            v-if="!isCompletedRectification"
+            type="primary"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
+            保存整改单
+          </ElButton>
         </div>
       </div>
     </ElCard>
@@ -213,10 +238,16 @@
     return value ? Number(value) : undefined
   })
   const isEditMode = computed(() => !!rectificationId.value)
-  const pageTitle = computed(() => (isEditMode.value ? '编辑整改单' : '新增整改单'))
-  const showCompletionSection = computed(() => {
+  const isCompletedRectification = computed(() => {
     return isEditMode.value && String(formData.rectificationStatus || '').toUpperCase() === 'COMPLETED'
   })
+  const pageTitle = computed(() => {
+    if (!isEditMode.value) {
+      return '新增整改单'
+    }
+    return isCompletedRectification.value ? '查看整改单' : '编辑整改单'
+  })
+  const showCompletionSection = computed(() => isCompletedRectification.value)
   const completionStatusLabel = computed(() => {
     const mapper: Record<string, string> = {
       PENDING: '待整改',
@@ -400,6 +431,11 @@
   }
 
   const handleSubmit = async () => {
+    if (isCompletedRectification.value) {
+      ElMessage.warning('已完成整改单不允许再次编辑，请通过新流程发起后续处理')
+      return
+    }
+
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {
       return
