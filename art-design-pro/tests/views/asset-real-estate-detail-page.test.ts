@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import AssetRealEstateDetailPage from '@/views/asset/real-estate/detail/index.vue'
+import * as realEstateApi from '@/api/asset/real-estate'
 
 const mockPush = vi.fn()
 const routeState = reactive({
@@ -264,5 +265,51 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
       }
     })
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('disposal')
+  })
+
+  it('已完成整改单在整改页签直接展示完成说明与验收备注', async () => {
+    window.sessionStorage.setItem('asset-real-estate-detail-tab:20001', 'rectification')
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [
+          {
+            rectificationId: 9001,
+            rectificationNo: 'RC-2026-0001',
+            assetId: 20001,
+            taskId: 7,
+            taskNo: 'INV-2026-0009',
+            taskName: '消防设施专项巡检',
+            issueType: '损坏',
+            issueDesc: '消防闭门器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            deadlineDate: '2026-03-20',
+            completedTime: '2026-03-21 14:49:04',
+            completionDesc: '已完成现场修复并复核，闭门器恢复正常使用。',
+            acceptanceRemark: '资产管理员现场验收通过，允许关闭本次整改。'
+          }
+        ],
+        disposalRecords: [],
+        changeLogs: []
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('整改状态：已完成')
+    expect(wrapper.text()).toContain('完成时间：2026-03-21 14:49:04')
+    expect(wrapper.text()).toContain('完成说明：已完成现场修复并复核，闭门器恢复正常使用。')
+    expect(wrapper.text()).toContain('验收备注：资产管理员现场验收通过，允许关闭本次整改。')
+    expect(wrapper.text()).not.toContain('完成整改')
   })
 })

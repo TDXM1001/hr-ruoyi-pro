@@ -29,6 +29,24 @@
             <div class="record-item__desc">
               责任人：{{ record.responsibleDeptName || '-' }} / {{ record.responsibleUserName || '-' }}，期限：{{ record.deadlineDate || '-' }}
             </div>
+            <div
+              v-if="String(record.rectificationStatus || '').toUpperCase() === 'COMPLETED' && record.completedTime"
+              class="record-item__desc"
+            >
+              完成时间：{{ record.completedTime }}
+            </div>
+            <div
+              v-if="String(record.rectificationStatus || '').toUpperCase() === 'COMPLETED' && record.completionDesc"
+              class="record-item__desc"
+            >
+              完成说明：{{ record.completionDesc }}
+            </div>
+            <div
+              v-if="String(record.rectificationStatus || '').toUpperCase() === 'COMPLETED' && record.acceptanceRemark"
+              class="record-item__desc"
+            >
+              验收备注：{{ record.acceptanceRemark }}
+            </div>
             <div class="record-item__actions">
               <ElButton
                 v-if="record.rectificationId"
