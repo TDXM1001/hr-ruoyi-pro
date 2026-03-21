@@ -91,6 +91,10 @@ describe('AssetRealEstateInspectionTaskPage 点测', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="inspection-task-reading-page"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="inspection-task-reading-layout"]').exists()).toBe(true)
+    expect(wrapper.classes()).not.toContain('art-full-height')
+    expect(wrapper.classes()).not.toContain('overflow-auto')
     expect(wrapper.text()).toContain('巡检任务明细')
     expect(wrapper.text()).toContain('第一季度不动产巡检')
 

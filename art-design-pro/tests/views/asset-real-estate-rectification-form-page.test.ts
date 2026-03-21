@@ -80,6 +80,12 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="rectification-processing-page"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-processing-layout"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-processing-main"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-processing-side"]').exists()).toBe(true)
+    expect(wrapper.classes()).not.toContain('art-full-height')
+    expect(wrapper.classes()).not.toContain('overflow-auto')
     expect(wrapper.text()).toContain('新增整改单')
     expect(wrapper.text()).toContain('INV-2026-0008')
     expect(wrapper.text()).toContain('房间实际使用人与台账不一致')
@@ -170,6 +176,7 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="rectification-processing-side"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('整改完成信息')
     expect(wrapper.text()).toContain('完成时间')
     expect(wrapper.text()).toContain('2026-03-21 14:49:04')

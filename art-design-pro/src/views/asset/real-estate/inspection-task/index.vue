@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="asset-real-estate-inspection-task art-full-height flex flex-col gap-3 overflow-auto p-3">
+  <div class="asset-real-estate-inspection-task p-3" data-testid="inspection-task-reading-page">
     <ElCard class="hero-card" shadow="never">
       <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div class="flex flex-col gap-2">
           <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">返回巡检页签</ElButton>
           <div>
             <div class="page-title">巡检任务明细</div>
-            <div class="page-desc">面向资产管理者查看当前不动产在指定巡检任务下的登记事实与异常处理入口。</div>
+            <div class="page-desc">面向资产管理者查看当前不动产在指定巡检任务下的登记事实、异常判断和整改入口。</div>
           </div>
         </div>
         <div class="header-tags flex flex-wrap gap-2">
@@ -16,67 +16,120 @@
       </div>
     </ElCard>
 
-    <ElCard class="section-card" shadow="never">
-      <template #header>
-        <div class="card-title">任务摘要</div>
-      </template>
-      <ElDescriptions :column="3" border>
-        <ElDescriptionsItem label="任务名称">{{ taskMeta.taskName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="计划巡检日期">{{ taskMeta.plannedDate || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="任务状态">{{ taskMeta.taskStatus || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="最近巡检日期">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
-      </ElDescriptions>
-    </ElCard>
+    <div class="inspection-task-layout" data-testid="inspection-task-reading-layout">
+      <div class="inspection-task-main">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">任务摘要</div>
+          </template>
 
-    <ElCard class="section-card" shadow="never" v-loading="loading">
-      <template #header>
-        <div class="card-title">当前资产巡检结果</div>
-      </template>
-      <div class="section-body">
-        <template v-if="taskAssetRecord">
-          <ElDescriptions :column="2" border>
-            <ElDescriptionsItem label="巡检结果">{{ getInventoryResultLabel(taskAssetRecord.inventoryResult) }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="后续动作">{{ getFollowUpActionLabel(taskAssetRecord.followUpAction) }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="处理状态">{{ getProcessStatusLabel(taskAssetRecord.processStatus) }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="登记时间">{{ taskAssetRecord.checkedTime || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="登记人">{{ taskAssetRecord.checkedBy || '-' }}</ElDescriptionsItem>
-            <ElDescriptionsItem label="位置">{{ taskAssetRecord.locationName || '-' }}</ElDescriptionsItem>
+          <ElDescriptions class="detail-descriptions" :column="3" border>
+            <ElDescriptionsItem label="任务名称">{{ taskMeta.taskName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="计划巡检日期">{{ taskMeta.plannedDate || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="任务状态">{{ taskMeta.taskStatus || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最近巡检日期">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
           </ElDescriptions>
+        </ElCard>
 
-          <ElAlert
-            v-if="taskAssetRecord.resultDesc"
-            class="mt-3"
-            type="warning"
-            show-icon
-            :closable="false"
-            :title="`异常说明：${taskAssetRecord.resultDesc}`"
-          />
+        <ElCard class="section-card" shadow="never" v-loading="loading">
+          <template #header>
+            <div class="card-title">当前资产巡检结果</div>
+          </template>
 
-          <div class="action-bar">
-            <ElButton
-              v-if="canEdit && shouldShowCreateRectification"
-              data-testid="inspection-task-create-rectification"
-              type="warning"
-              @click="goToCreateRectification"
-            >
-              发起整改
-            </ElButton>
-            <ElButton
-              v-if="taskAssetRecord.followUpBizId"
-              data-testid="inspection-task-edit-rectification"
-              type="primary"
-              plain
-              @click="goToEditRectification(taskAssetRecord.followUpBizId)"
-            >
-              查看整改单
-            </ElButton>
+          <div class="section-body">
+            <template v-if="taskAssetRecord">
+              <div class="inspection-result-grid">
+                <div class="result-chip">
+                  <div class="result-chip__label">巡检结果</div>
+                  <div class="result-chip__value">
+                    {{ getInventoryResultLabel(taskAssetRecord.inventoryResult) }}
+                  </div>
+                </div>
+                <div class="result-chip">
+                  <div class="result-chip__label">后续动作</div>
+                  <div class="result-chip__value">
+                    {{ getFollowUpActionLabel(taskAssetRecord.followUpAction) }}
+                  </div>
+                </div>
+                <div class="result-chip">
+                  <div class="result-chip__label">处理状态</div>
+                  <div class="result-chip__value">
+                    {{ getProcessStatusLabel(taskAssetRecord.processStatus) }}
+                  </div>
+                </div>
+              </div>
+
+              <ElDescriptions class="detail-descriptions" :column="2" border>
+                <ElDescriptionsItem label="登记时间">{{ taskAssetRecord.checkedTime || '-' }}</ElDescriptionsItem>
+                <ElDescriptionsItem label="登记人">{{ taskAssetRecord.checkedBy || '-' }}</ElDescriptionsItem>
+                <ElDescriptionsItem label="位置">{{ taskAssetRecord.locationName || '-' }}</ElDescriptionsItem>
+                <ElDescriptionsItem label="整改联动">
+                  {{
+                    taskAssetRecord.followUpBizId
+                      ? '已挂接整改单'
+                      : shouldShowCreateRectification
+                        ? '待发起整改'
+                        : '无需整改'
+                  }}
+                </ElDescriptionsItem>
+              </ElDescriptions>
+
+              <div v-if="taskAssetRecord.resultDesc" class="inspection-note">
+                <div class="inspection-note__label">异常说明</div>
+                <div class="inspection-note__value">{{ taskAssetRecord.resultDesc }}</div>
+              </div>
+
+              <div class="action-bar">
+                <ElButton
+                  v-if="canEdit && shouldShowCreateRectification"
+                  data-testid="inspection-task-create-rectification"
+                  type="warning"
+                  @click="goToCreateRectification"
+                >
+                  发起整改
+                </ElButton>
+                <ElButton
+                  v-if="taskAssetRecord.followUpBizId"
+                  data-testid="inspection-task-edit-rectification"
+                  type="primary"
+                  plain
+                  @click="goToEditRectification(taskAssetRecord.followUpBizId)"
+                >
+                  查看整改单
+                </ElButton>
+              </div>
+            </template>
+
+            <ElEmpty v-else description="当前资产在该巡检任务下暂无登记结果" :image-size="72" />
           </div>
-        </template>
-        <ElEmpty v-else description="当前资产在该巡检任务下暂无登记结果" :image-size="72" />
+        </ElCard>
       </div>
-    </ElCard>
+
+      <div class="inspection-task-side">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">处理建议</div>
+          </template>
+
+          <div class="guide-panel">
+            <div class="guide-panel__headline">
+              {{
+                shouldShowCreateRectification
+                  ? '这条巡检记录建议立即发起整改'
+                  : taskAssetRecord?.followUpBizId
+                    ? '当前记录已进入整改闭环'
+                    : '当前记录以事实查看为主'
+              }}
+            </div>
+            <div class="guide-panel__line">先确认巡检结果与异常说明，再决定是否发起整改。</div>
+            <div class="guide-panel__line">若已挂接整改单，后续维护动作转到整改单页处理。</div>
+            <div class="guide-panel__line">返回详情壳后会自动落在巡检页签，方便继续浏览其他记录。</div>
+          </div>
+        </ElCard>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -118,7 +171,10 @@
   const taskId = computed(() => Number(route.params.taskId))
 
   const canEdit = computed(() => {
-    return userStore.permissions.includes('*:*:*') || userStore.permissions.includes('asset:realEstate:edit')
+    return (
+      userStore.permissions.includes('*:*:*') ||
+      userStore.permissions.includes('asset:realEstate:edit')
+    )
   })
 
   const shouldShowCreateRectification = computed(() => {
@@ -249,6 +305,9 @@
     --asset-text-main: #18233a;
     --asset-text-secondary: #5d6b86;
 
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     background:
       radial-gradient(circle at 0% 0%, rgb(15 118 110 / 8%), transparent 35%),
       radial-gradient(circle at 100% 0%, rgb(14 165 233 / 8%), transparent 38%),
@@ -260,6 +319,19 @@
     border: 1px solid var(--asset-border);
     border-radius: 12px;
     background: var(--asset-panel-bg);
+  }
+
+  .inspection-task-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+    gap: 12px;
+  }
+
+  .inspection-task-main,
+  .inspection-task-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .page-title {
@@ -296,10 +368,114 @@
     padding: 16px;
   }
 
+  .inspection-result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .result-chip {
+    padding: 14px 16px;
+    border: 1px solid #e6edf7;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fcfeff 0%, #f7fbfd 100%);
+  }
+
+  .result-chip__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7c96;
+  }
+
+  .result-chip__value {
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #18233a;
+    word-break: break-word;
+  }
+
+  .inspection-note {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(255 247 237 / 92%), #fff 100%);
+    border: 1px solid #fed7aa;
+  }
+
+  .inspection-note__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9a5b1f;
+  }
+
+  .inspection-note__value {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #7c4a1c;
+    word-break: break-word;
+  }
+
+  .detail-descriptions :deep(.el-descriptions__body) {
+    overflow-x: auto;
+  }
+
+  .detail-descriptions :deep(.el-descriptions__table) {
+    min-width: 720px;
+  }
+
+  .guide-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .guide-panel__headline {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #18233a;
+  }
+
+  .guide-panel__line {
+    position: relative;
+    padding-left: 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #51627f;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--asset-accent);
+    }
+  }
+
   .action-bar {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 16px;
+  }
+
+  @media (width <= 1080px) {
+    .inspection-task-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (width <= 900px) {
+    .inspection-result-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

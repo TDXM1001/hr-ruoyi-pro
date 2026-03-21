@@ -62,7 +62,7 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
     routeState.meta = {}
   })
 
-  it('展示整改完成上下文与完成表单', async () => {
+  it('展示整改完成上下文与处理型页面布局', async () => {
     const wrapper = mount(AssetRealEstateRectificationCompletePage, {
       global: {
         plugins: [ElementPlus]
@@ -71,6 +71,14 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="rectification-complete-processing-page"]').exists()).toBe(
+      true
+    )
+    expect(wrapper.get('[data-testid="rectification-complete-layout"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-complete-main"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-complete-side"]').exists()).toBe(true)
+    expect(wrapper.classes()).not.toContain('art-full-height')
+    expect(wrapper.classes()).not.toContain('overflow-auto')
     expect(wrapper.text()).toContain('整改完成页')
     expect(wrapper.text()).toContain('RC-2026-0001')
     expect(wrapper.text()).toContain('房间实际使用人与台账不一致')
@@ -104,10 +112,12 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
       })
     )
     expect(mockPush).toHaveBeenCalledWith('/asset/real-estate/detail/20001')
-    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
+    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe(
+      'rectification'
+    )
   })
 
-  it('已完成整改单进入完成页时只展示完成结果，不允许重复提交', async () => {
+  it('已完成整改单进入完成页时只展示结果，不允许重复提交', async () => {
     vi.mocked(realEstateApi.getRealEstateRectification).mockResolvedValueOnce({
       data: {
         rectificationId: 9001,
@@ -137,6 +147,7 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="rectification-complete-side"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('整改完成结果')
     expect(wrapper.text()).toContain('完成时间')
     expect(wrapper.text()).toContain('2026-03-21 14:49:04')

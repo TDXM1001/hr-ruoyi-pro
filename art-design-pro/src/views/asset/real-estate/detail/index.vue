@@ -1,9 +1,11 @@
 ﻿<template>
-  <div class="asset-real-estate-detail-page p-3">
+  <div class="asset-real-estate-detail-page p-3" data-testid="real-estate-detail-reading-page">
     <ElCard class="head-card" shadow="never">
       <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div class="flex flex-col gap-2">
-          <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">返回不动产档案</ElButton>
+          <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack"
+            >返回不动产档案</ElButton
+          >
           <div>
             <div class="page-title">不动产资产详情壳</div>
             <div class="page-desc">{{ activeTabDesc }}</div>
@@ -29,7 +31,12 @@
 
     <ElCard class="tab-card" shadow="never">
       <ElTabs v-model="activeTab" class="detail-tabs" @tab-change="handleTabChange">
-        <ElTabPane v-for="item in detailTabs" :key="item.name" :label="item.label" :name="item.name" />
+        <ElTabPane
+          v-for="item in detailTabs"
+          :key="item.name"
+          :label="item.label"
+          :name="item.name"
+        />
       </ElTabs>
     </ElCard>
 
@@ -86,7 +93,11 @@
 <script setup lang="ts">
   import type { TabPaneName } from 'element-plus'
   import { ElMessage } from 'element-plus'
-  import type { AssetChangeLogRecord, AssetInventoryRecord, AssetRectificationRecord } from '@/api/asset/ledger'
+  import type {
+    AssetChangeLogRecord,
+    AssetInventoryRecord,
+    AssetRectificationRecord
+  } from '@/api/asset/ledger'
   import { getRealEstateDetail, getRealEstateLifecycle } from '@/api/asset/real-estate'
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
@@ -144,7 +155,8 @@
 
   const canEdit = computed(() => {
     return (
-      userStore.permissions.includes('*:*:*') || userStore.permissions.includes('asset:realEstate:edit')
+      userStore.permissions.includes('*:*:*') ||
+      userStore.permissions.includes('asset:realEstate:edit')
     )
   })
 
@@ -200,19 +212,25 @@
   })
 
   const rectificationLogs = computed(() => {
-    return lifecycleData.changeLogs.filter((record) => String(record.changeDesc || '').includes('整改'))
+    return lifecycleData.changeLogs.filter((record) =>
+      String(record.changeDesc || '').includes('整改')
+    )
   })
 
   const findLinkedRectification = (record: AssetInventoryRecord) => {
     if (record.followUpBizId) {
-      const byRectificationId = rectificationRecords.value.find((item) => item.rectificationId === record.followUpBizId)
+      const byRectificationId = rectificationRecords.value.find(
+        (item) => item.rectificationId === record.followUpBizId
+      )
       if (byRectificationId) {
         return byRectificationId
       }
     }
 
     if (record.itemId) {
-      const byInventoryItemId = rectificationRecords.value.find((item) => item.inventoryItemId === record.itemId)
+      const byInventoryItemId = rectificationRecords.value.find(
+        (item) => item.inventoryItemId === record.itemId
+      )
       if (byInventoryItemId) {
         return byInventoryItemId
       }
@@ -236,7 +254,9 @@
       if (isRectifiableRecord(record)) {
         if (!linkedRectification) {
           rectificationLinkStatus = 'NOT_CREATED'
-        } else if (String(linkedRectification.rectificationStatus || '').toUpperCase() === 'COMPLETED') {
+        } else if (
+          String(linkedRectification.rectificationStatus || '').toUpperCase() === 'COMPLETED'
+        ) {
           rectificationLinkStatus = 'COMPLETED'
         } else {
           rectificationLinkStatus = 'PENDING'
@@ -307,7 +327,10 @@
     if (pathTab !== 'overview') {
       return pathTab
     }
-    return readRealEstateDetailTab(assetId.value) || normalizeRealEstateDetailTab(String(route.query.tab || ''))
+    return (
+      readRealEstateDetailTab(assetId.value) ||
+      normalizeRealEstateDetailTab(String(route.query.tab || ''))
+    )
   }
 
   const syncActiveTabFromContext = () => {
@@ -333,7 +356,10 @@
   const isRectifiableRecord = (record: AssetInventoryRecord) => {
     const inventoryResult = String(record.inventoryResult || '').toUpperCase()
     const followUpAction = String(record.followUpAction || '').toUpperCase()
-    return followUpAction !== 'CREATE_DISPOSAL' && (inventoryResult !== 'NORMAL' || followUpAction !== 'NONE')
+    return (
+      followUpAction !== 'CREATE_DISPOSAL' &&
+      (inventoryResult !== 'NORMAL' || followUpAction !== 'NONE')
+    )
   }
 
   const goToInspectionTask = (taskId?: number) => {
@@ -370,7 +396,9 @@
       return
     }
     persistRealEstateDetailTab(assetId.value, 'rectification')
-    router.push(`/asset/real-estate/detail/${assetId.value}/rectification/complete/${rectificationId}`)
+    router.push(
+      `/asset/real-estate/detail/${assetId.value}/rectification/complete/${rectificationId}`
+    )
   }
 
   const goToDisposalModule = () => {

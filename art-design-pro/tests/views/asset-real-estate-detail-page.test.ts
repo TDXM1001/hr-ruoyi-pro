@@ -215,6 +215,9 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="real-estate-detail-reading-page"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="inspection-reading-layout"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="inspection-record-list"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('巡检任务记录')
     expect(wrapper.text()).toContain('未发起整改')
     expect(wrapper.text()).toContain('待整改')
@@ -321,6 +324,9 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="real-estate-detail-reading-page"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-reading-layout"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="rectification-record-list"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('整改单列表')
     expect(wrapper.text()).toContain('RC-2026-0001')
     expect(wrapper.text()).toContain('当前动作')

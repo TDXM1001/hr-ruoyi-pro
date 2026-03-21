@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="asset-real-estate-rectification-complete art-full-height flex flex-col gap-3 overflow-auto p-3">
+  <div class="asset-real-estate-rectification-complete p-3" data-testid="rectification-complete-processing-page">
     <ElCard class="hero-card" shadow="never">
       <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div class="flex flex-col gap-2">
@@ -17,91 +17,116 @@
       </div>
     </ElCard>
 
-    <ElCard class="section-card" shadow="never" v-loading="loading">
-      <template #header>
-        <div class="card-title">整改上下文</div>
-      </template>
+    <div class="complete-layout" data-testid="rectification-complete-layout">
+      <div class="complete-main" data-testid="rectification-complete-main">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">{{ isCompletedRectification ? '完成结果' : '完成登记' }}</div>
+          </template>
 
-      <ElDescriptions class="context-descriptions" :column="3" border>
-        <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="整改单号">{{ rectificationData.rectificationNo || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="任务编号">{{ rectificationData.taskNo || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="任务名称">{{ rectificationData.taskName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="整改状态">{{ rectificationStatusLabel }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="问题类型">{{ rectificationData.issueType || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="问题描述" :span="2">{{ rectificationData.issueDesc || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="责任部门">{{ rectificationData.responsibleDeptName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="责任人">{{ rectificationData.responsibleUserName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="整改期限">{{ rectificationData.deadlineDate || '-' }}</ElDescriptionsItem>
-      </ElDescriptions>
-    </ElCard>
-
-    <ElCard class="section-card" shadow="never">
-      <template #header>
-        <div class="card-title">{{ isCompletedRectification ? '完成结果' : '完成登记' }}</div>
-      </template>
-
-      <div class="section-body">
-        <ElAlert
-          class="mb-4"
-          :type="isCompletedRectification ? 'success' : 'info'"
-          show-icon
-          :closable="false"
-          :title="
-            isCompletedRectification
-              ? '该整改单已完成，当前页面只做结果查看，不再允许重复提交。'
-              : '完成动作只负责收口整改事实，不再修改责任、期限和问题描述等基础信息。'
-          "
-        />
-
-        <ElDescriptions v-if="isCompletedRectification" class="result-descriptions" :column="3" border>
-          <ElDescriptionsItem label="完成时间">{{ rectificationData.completedTime || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="整改状态">{{ rectificationStatusLabel }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
-          <ElDescriptionsItem label="完成说明" :span="2">
-            {{ rectificationData.completionDesc || '-' }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="验收备注">
-            {{ rectificationData.acceptanceRemark || '-' }}
-          </ElDescriptionsItem>
-        </ElDescriptions>
-
-        <ElForm v-else ref="formRef" :model="formData" :rules="rules" label-width="110px">
-          <ElFormItem label="完成说明" prop="completionDesc">
-            <ElInput
-              v-model="formData.completionDesc"
-              type="textarea"
-              :rows="5"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入本次整改已完成的事实说明，例如已修复问题、现场复核结果等"
+          <div class="section-body">
+            <ElAlert
+              class="mb-4"
+              :type="isCompletedRectification ? 'success' : 'info'"
+              show-icon
+              :closable="false"
+              :title="
+                isCompletedRectification
+                  ? '该整改单已完成，当前页面只做结果查看，不再允许重复提交。'
+                  : '完成动作只负责收口整改事实，不再修改责任、期限和问题描述等基础信息。'
+              "
             />
-          </ElFormItem>
 
-          <ElFormItem label="验收备注">
-            <ElInput
-              v-model="formData.acceptanceRemark"
-              type="textarea"
-              :rows="4"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入资产管理员验收备注，可为空"
-            />
-          </ElFormItem>
-        </ElForm>
+            <ElDescriptions
+              v-if="isCompletedRectification"
+              class="result-descriptions"
+              :column="1"
+              border
+            >
+              <ElDescriptionsItem label="完成时间">{{ rectificationData.completedTime || '-' }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="整改状态">{{ rectificationStatusLabel }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
+              <ElDescriptionsItem label="完成说明">
+                {{ rectificationData.completionDesc || '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="验收备注">
+                {{ rectificationData.acceptanceRemark || '-' }}
+              </ElDescriptionsItem>
+            </ElDescriptions>
 
-        <div class="action-bar">
-          <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
-          <ElButton v-if="!isCompletedRectification" type="primary" :loading="submitting" @click="handleSubmit">
-            确认完成整改
-          </ElButton>
-        </div>
+            <ElForm v-else ref="formRef" :model="formData" :rules="rules" label-width="110px">
+              <ElFormItem label="完成说明" prop="completionDesc">
+                <ElInput
+                  v-model="formData.completionDesc"
+                  type="textarea"
+                  :rows="6"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请输入本次整改已完成的事实说明，例如已修复问题、现场复核结果等"
+                />
+              </ElFormItem>
+
+              <ElFormItem label="验收备注">
+                <ElInput
+                  v-model="formData.acceptanceRemark"
+                  type="textarea"
+                  :rows="5"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请输入资产管理员验收备注，可为空"
+                />
+              </ElFormItem>
+            </ElForm>
+          </div>
+
+          <div class="action-bar">
+            <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
+            <ElButton v-if="!isCompletedRectification" type="primary" :loading="submitting" @click="handleSubmit">
+              确认完成整改
+            </ElButton>
+          </div>
+        </ElCard>
       </div>
-    </ElCard>
+
+      <div class="complete-side" data-testid="rectification-complete-side">
+        <ElCard class="section-card" shadow="never" v-loading="loading">
+          <template #header>
+            <div class="card-title">整改上下文</div>
+          </template>
+
+          <ElDescriptions class="context-descriptions" :column="1" border>
+            <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="整改单号">{{ rectificationData.rectificationNo || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="任务编号">{{ rectificationData.taskNo || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="任务名称">{{ rectificationData.taskName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="整改状态">{{ rectificationStatusLabel }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="问题类型">{{ rectificationData.issueType || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="问题描述">{{ rectificationData.issueDesc || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="责任部门">{{ rectificationData.responsibleDeptName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="责任人">{{ rectificationData.responsibleUserName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="整改期限">{{ rectificationData.deadlineDate || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">收口提示</div>
+          </template>
+
+          <div class="guide-panel">
+            <div class="guide-panel__headline">
+              {{ isCompletedRectification ? '本单已完成收口，可重点回看结果。' : '这里只做收口，不再回头改基础信息。' }}
+            </div>
+            <div class="guide-panel__line">完成说明必须体现已完成的事实和现场复核结果。</div>
+            <div class="guide-panel__line">验收备注可选，但建议写明资产管理员是否完成抽检。</div>
+            <div class="guide-panel__line">提交成功后会回到详情壳整改页签，方便继续查看整体整改状态。</div>
+          </div>
+        </ElCard>
+      </div>
+    </div>
   </div>
 </template>
-
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElMessage } from 'element-plus'
@@ -222,7 +247,6 @@
     { immediate: true }
   )
 </script>
-
 <style scoped lang="scss">
   .asset-real-estate-rectification-complete {
     --asset-accent: #0f766e;
@@ -231,6 +255,9 @@
     --asset-text-main: #18233a;
     --asset-text-secondary: #5d6b86;
 
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     background:
       radial-gradient(circle at 0% 0%, rgb(15 118 110 / 8%), transparent 35%),
       radial-gradient(circle at 100% 0%, rgb(249 115 22 / 8%), transparent 38%),
@@ -242,6 +269,20 @@
     border: 1px solid var(--asset-border);
     border-radius: 12px;
     background: var(--asset-panel-bg);
+  }
+
+  .complete-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .complete-main,
+  .complete-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .page-title {
@@ -276,35 +317,83 @@
   }
 
   .section-body {
-    padding: 16px;
+    padding: 16px 16px 0;
   }
 
   .action-bar {
+    position: sticky;
+    bottom: 0;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
+    padding: 16px;
+    margin-top: 12px;
+    border-top: 1px solid #edf2f8;
+    background: linear-gradient(180deg, rgb(255 255 255 / 92%), #fff 35%);
+    backdrop-filter: blur(8px);
   }
 
-  .context-descriptions :deep(.el-descriptions__body) {
-    overflow-x: auto;
-  }
-
-  .context-descriptions :deep(.el-descriptions__table) {
-    min-width: 860px;
-  }
-
+  .context-descriptions :deep(.el-descriptions__body),
   .result-descriptions :deep(.el-descriptions__body) {
     overflow-x: auto;
   }
 
+  .context-descriptions :deep(.el-descriptions__table),
   .result-descriptions :deep(.el-descriptions__table) {
-    min-width: 860px;
+    width: 100%;
+    min-width: 100%;
   }
 
+  .context-descriptions :deep(.el-descriptions__cell),
   .result-descriptions :deep(.el-descriptions__cell) {
     line-height: 1.7;
     word-break: break-word;
     white-space: normal;
+  }
+
+  .guide-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .guide-panel__headline {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #18233a;
+  }
+
+  .guide-panel__line {
+    position: relative;
+    padding-left: 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #51627f;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--asset-accent);
+    }
+  }
+
+  @media (width <= 1080px) {
+    .complete-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (width <= 900px) {
+    .action-bar {
+      position: static;
+      padding-top: 12px;
+    }
   }
 </style>

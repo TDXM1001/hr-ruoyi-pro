@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="asset-real-estate-rectification-form art-full-height flex flex-col gap-3 overflow-auto p-3">
+  <div class="asset-real-estate-rectification-form p-3" data-testid="rectification-processing-page">
     <ElCard class="hero-card" shadow="never">
       <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div class="flex flex-col gap-2">
           <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">返回整改页签</ElButton>
           <div>
             <div class="page-title">{{ pageTitle }}</div>
-            <div class="page-desc">整改页只做登记与更新，不在这里提前做审批流，保持 M1 最小闭环。</div>
+            <div class="page-desc">整改页负责登记、更新和只读回看，不在这里提前塞入审批流，保持处理链路清晰。</div>
           </div>
         </div>
 
@@ -17,153 +17,180 @@
       </div>
     </ElCard>
 
-    <ElCard class="section-card" shadow="never">
-      <template #header>
-        <div class="card-title">整改上下文</div>
-      </template>
+    <div class="processing-layout" data-testid="rectification-processing-layout">
+      <div class="processing-main" data-testid="rectification-processing-main">
+        <ElCard class="section-card" shadow="never" v-loading="loading">
+          <template #header>
+            <div class="card-title">{{ isCompletedRectification ? '整改信息' : '整改登记' }}</div>
+          </template>
 
-      <ElDescriptions :column="3" border>
-        <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="任务编号">{{ taskMeta.taskNo || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="任务名称">{{ taskMeta.taskName || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="问题类型">{{ formData.issueType || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="结果说明">{{ sourceResultDesc || '-' }}</ElDescriptionsItem>
-      </ElDescriptions>
-    </ElCard>
-
-    <ElCard v-if="showCompletionSection" class="section-card" shadow="never">
-      <template #header>
-        <div class="card-title">整改完成信息</div>
-      </template>
-
-      <ElDescriptions class="completion-descriptions" :column="3" border>
-        <ElDescriptionsItem label="完成时间">{{ completionInfo.completedTime || '-' }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="整改状态">{{ completionStatusLabel }}</ElDescriptionsItem>
-        <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
-        <ElDescriptionsItem label="完成说明" :span="2">
-          {{ completionInfo.completionDesc || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="验收备注">
-          {{ completionInfo.acceptanceRemark || '-' }}
-        </ElDescriptionsItem>
-      </ElDescriptions>
-    </ElCard>
-
-    <ElCard class="section-card" shadow="never" v-loading="loading">
-      <template #header>
-        <div class="card-title">{{ isCompletedRectification ? '整改信息' : '整改登记' }}</div>
-      </template>
-
-      <div class="section-body">
-        <ElAlert
-          v-if="isCompletedRectification"
-          class="mb-4"
-          type="success"
-          :closable="false"
-          title="该整改单已完成，当前页面仅供查看。"
-        />
-
-        <ElForm ref="formRef" :model="formData" :rules="rules" label-width="110px">
-          <ElFormItem label="问题类型" prop="issueType">
-            <ElInput
-              v-model="formData.issueType"
-              maxlength="64"
-              placeholder="请输入问题类型"
-              :readonly="isCompletedRectification"
+          <div class="section-body">
+            <ElAlert
+              class="mb-4"
+              :type="isCompletedRectification ? 'success' : 'info'"
+              :closable="false"
+              :title="
+                isCompletedRectification
+                  ? '该整改单已完成，当前页面仅供查看。'
+                  : '先维护问题、责任和期限，再由独立完成页执行整改收口。'
+              "
             />
-          </ElFormItem>
 
-          <ElFormItem label="问题描述" prop="issueDesc">
-            <ElInput
-              v-model="formData.issueDesc"
-              type="textarea"
-              :rows="4"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入整改问题描述"
-              :readonly="isCompletedRectification"
-            />
-          </ElFormItem>
+            <ElForm ref="formRef" :model="formData" :rules="rules" label-width="110px">
+              <ElFormItem label="问题类型" prop="issueType">
+                <ElInput
+                  v-model="formData.issueType"
+                  maxlength="64"
+                  placeholder="请输入问题类型"
+                  :readonly="isCompletedRectification"
+                />
+              </ElFormItem>
 
-          <ElFormItem label="责任部门" prop="responsibleDeptId">
-            <ElTreeSelect
-              v-model="formData.responsibleDeptId"
-              :data="deptTreeOptions"
-              :props="treeSelectProps"
-              value-key="id"
-              check-strictly
-              filterable
-              default-expand-all
-              node-key="id"
-              clearable
-              class="w-full"
-              placeholder="请选择责任部门"
-              :render-after-expand="false"
-              :disabled="isCompletedRectification"
-            />
-          </ElFormItem>
+              <ElFormItem label="问题描述" prop="issueDesc">
+                <ElInput
+                  v-model="formData.issueDesc"
+                  type="textarea"
+                  :rows="5"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请输入整改问题描述"
+                  :readonly="isCompletedRectification"
+                />
+              </ElFormItem>
 
-          <ElFormItem label="责任人" prop="responsibleUserId">
-            <ElSelect
-              v-model="formData.responsibleUserId"
-              filterable
-              remote
-              clearable
-              :remote-method="loadResponsibleUsers"
-              :loading="userOptionsLoading"
-              placeholder="请输入责任人关键字"
-              :disabled="isCompletedRectification"
+              <div class="form-grid">
+                <ElFormItem label="责任部门" prop="responsibleDeptId">
+                  <ElTreeSelect
+                    v-model="formData.responsibleDeptId"
+                    :data="deptTreeOptions"
+                    :props="treeSelectProps"
+                    value-key="id"
+                    check-strictly
+                    filterable
+                    default-expand-all
+                    node-key="id"
+                    clearable
+                    class="w-full"
+                    placeholder="请选择责任部门"
+                    :render-after-expand="false"
+                    :disabled="isCompletedRectification"
+                  />
+                </ElFormItem>
+
+                <ElFormItem label="责任人" prop="responsibleUserId">
+                  <ElSelect
+                    v-model="formData.responsibleUserId"
+                    filterable
+                    remote
+                    clearable
+                    :remote-method="loadResponsibleUsers"
+                    :loading="userOptionsLoading"
+                    placeholder="请输入责任人关键字"
+                    :disabled="isCompletedRectification"
+                  >
+                    <ElOption
+                      v-for="item in responsibleUserOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </ElSelect>
+                </ElFormItem>
+              </div>
+
+              <div class="form-grid">
+                <ElFormItem label="整改期限" prop="deadlineDate">
+                  <ElDatePicker
+                    v-model="formData.deadlineDate"
+                    type="date"
+                    value-format="YYYY-MM-DD"
+                    class="w-full"
+                    placeholder="请选择整改期限"
+                    :disabled="isCompletedRectification"
+                  />
+                </ElFormItem>
+
+                <ElFormItem label="备注">
+                  <ElInput
+                    v-model="formData.remark"
+                    type="textarea"
+                    :rows="3"
+                    maxlength="500"
+                    show-word-limit
+                    placeholder="请输入备注"
+                    :readonly="isCompletedRectification"
+                  />
+                </ElFormItem>
+              </div>
+            </ElForm>
+          </div>
+
+          <div class="action-bar">
+            <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
+            <ElButton
+              v-if="!isCompletedRectification"
+              type="primary"
+              :loading="submitting"
+              @click="handleSubmit"
             >
-              <ElOption
-                v-for="item in responsibleUserOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </ElSelect>
-          </ElFormItem>
-
-          <ElFormItem label="整改期限" prop="deadlineDate">
-            <ElDatePicker
-              v-model="formData.deadlineDate"
-              type="date"
-              value-format="YYYY-MM-DD"
-              class="w-full"
-              placeholder="请选择整改期限"
-              :disabled="isCompletedRectification"
-            />
-          </ElFormItem>
-
-          <ElFormItem label="备注">
-            <ElInput
-              v-model="formData.remark"
-              type="textarea"
-              :rows="3"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入备注"
-              :readonly="isCompletedRectification"
-            />
-          </ElFormItem>
-        </ElForm>
-
-        <div class="action-bar">
-          <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
-          <ElButton
-            v-if="!isCompletedRectification"
-            type="primary"
-            :loading="submitting"
-            @click="handleSubmit"
-          >
-            保存整改单
-          </ElButton>
-        </div>
+              保存整改单
+            </ElButton>
+          </div>
+        </ElCard>
       </div>
-    </ElCard>
+
+      <div class="processing-side" data-testid="rectification-processing-side">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">整改上下文</div>
+          </template>
+
+          <ElDescriptions class="context-descriptions" :column="1" border>
+            <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="任务编号">{{ taskMeta.taskNo || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="任务名称">{{ taskMeta.taskName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="问题类型">{{ formData.issueType || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="结果说明">{{ sourceResultDesc || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">处理提示</div>
+          </template>
+
+          <div class="guide-panel">
+            <div class="guide-panel__headline">
+              {{ isCompletedRectification ? '当前整改单已收口，页面只做回看。' : '先补齐责任与期限，再推进整改。' }}
+            </div>
+            <div class="guide-panel__line">整改登记页只维护基础信息，不在这里执行完成动作。</div>
+            <div class="guide-panel__line">保存后会回到详情壳整改页签，便于继续处理其他记录。</div>
+            <div class="guide-panel__line">如果整改单已完成，基础字段全部切换为只读，避免重复编辑。</div>
+          </div>
+        </ElCard>
+
+        <ElCard v-if="showCompletionSection" class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">整改完成信息</div>
+          </template>
+
+          <ElDescriptions class="completion-descriptions" :column="1" border>
+            <ElDescriptionsItem label="完成时间">{{ completionInfo.completedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="整改状态">{{ completionStatusLabel }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
+            <ElDescriptionsItem label="完成说明">
+              {{ completionInfo.completionDesc || '-' }}
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="验收备注">
+              {{ completionInfo.acceptanceRemark || '-' }}
+            </ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
+      </div>
+    </div>
   </div>
 </template>
-
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElMessage } from 'element-plus'
@@ -465,7 +492,6 @@
     { immediate: true }
   )
 </script>
-
 <style scoped lang="scss">
   .asset-real-estate-rectification-form {
     --asset-accent: #0f766e;
@@ -474,6 +500,9 @@
     --asset-text-main: #18233a;
     --asset-text-secondary: #5d6b86;
 
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     background:
       radial-gradient(circle at 0% 0%, rgb(15 118 110 / 8%), transparent 35%),
       radial-gradient(circle at 100% 0%, rgb(249 115 22 / 8%), transparent 38%),
@@ -485,6 +514,20 @@
     border: 1px solid var(--asset-border);
     border-radius: 12px;
     background: var(--asset-panel-bg);
+  }
+
+  .processing-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.9fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .processing-main,
+  .processing-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .page-title {
@@ -518,27 +561,93 @@
   }
 
   .section-body {
-    padding: 16px;
+    padding: 16px 16px 0;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
   }
 
   .action-bar {
+    position: sticky;
+    bottom: 0;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 24px;
+    padding: 16px;
+    margin-top: 12px;
+    border-top: 1px solid #edf2f8;
+    background: linear-gradient(180deg, rgb(255 255 255 / 92%), #fff 35%);
+    backdrop-filter: blur(8px);
   }
 
+  .context-descriptions :deep(.el-descriptions__body),
   .completion-descriptions :deep(.el-descriptions__body) {
     overflow-x: auto;
   }
 
+  .context-descriptions :deep(.el-descriptions__table),
   .completion-descriptions :deep(.el-descriptions__table) {
-    min-width: 860px;
+    width: 100%;
+    min-width: 100%;
   }
 
+  .context-descriptions :deep(.el-descriptions__cell),
   .completion-descriptions :deep(.el-descriptions__cell) {
     line-height: 1.7;
     word-break: break-word;
     white-space: normal;
+  }
+
+  .guide-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .guide-panel__headline {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: #18233a;
+  }
+
+  .guide-panel__line {
+    position: relative;
+    padding-left: 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #51627f;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--asset-accent);
+    }
+  }
+
+  @media (width <= 1080px) {
+    .processing-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (width <= 900px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .action-bar {
+      position: static;
+      padding-top: 12px;
+    }
   }
 </style>
