@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive, ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
@@ -162,6 +162,8 @@ vi.mock('@/api/asset/real-estate', () => {
 
 describe('AssetRealEstateDetailPage 详情壳', () => {
   beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T10:00:00+08:00'))
     vi.clearAllMocks()
     mockPush.mockReset()
     window.sessionStorage.clear()
@@ -170,6 +172,10 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     routeState.meta = {}
     routeState.path = '/asset/real-estate/detail/20001'
     routeState.fullPath = routeState.path
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('默认展示总览，并且页内切换页签不触发路由跳转', async () => {
@@ -241,6 +247,9 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     expect(wrapper.text()).toContain('整改单列表')
     expect(wrapper.text()).toContain('RC-2026-0001')
+    expect(wrapper.text()).toContain('当前动作')
+    expect(wrapper.text()).toContain('已逾期')
+    expect(wrapper.text()).toContain('尽快完成整改并提交完成信息')
     expect(wrapper.text()).toContain('完成整改')
 
     const vm = wrapper.vm as any
@@ -306,10 +315,16 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await flushPromises()
 
-    expect(wrapper.text()).toContain('整改状态：已完成')
-    expect(wrapper.text()).toContain('完成时间：2026-03-21 14:49:04')
-    expect(wrapper.text()).toContain('完成说明：已完成现场修复并复核，闭门器恢复正常使用。')
-    expect(wrapper.text()).toContain('验收备注：资产管理员现场验收通过，允许关闭本次整改。')
-    expect(wrapper.text()).not.toContain('完成整改')
+    expect(wrapper.text()).toContain('闭环结果')
+    expect(wrapper.text()).toContain('已完成整改并通过验收，可归档留痕')
+    expect(wrapper.text()).toContain('完成时间')
+    expect(wrapper.text()).toContain('2026-03-21 14:49:04')
+    expect(wrapper.text()).toContain('完成说明')
+    expect(wrapper.text()).toContain('已完成现场修复并复核，闭门器恢复正常使用。')
+    expect(wrapper.text()).toContain('验收备注')
+    expect(wrapper.text()).toContain('资产管理员现场验收通过，允许关闭本次整改。')
+    expect(wrapper.find('[data-testid="rectification-complete-link-9001"]').exists()).toBe(false)
   })
 })
+
+
