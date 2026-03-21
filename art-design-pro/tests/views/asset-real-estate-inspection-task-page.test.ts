@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
@@ -47,7 +47,7 @@ vi.mock('@/api/asset/inventory', () => {
       data: {
         taskId: 6,
         taskNo: 'INV-2026-0008',
-        taskName: '一季度不动产巡检',
+        taskName: '第一季度不动产巡检',
         plannedDate: '2026-03-01',
         taskStatus: 'COMPLETED'
       }
@@ -76,12 +76,13 @@ describe('AssetRealEstateInspectionTaskPage 点测', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPush.mockReset()
+    window.sessionStorage.clear()
     routeState.params = { assetId: '20001', taskId: '6' }
     routeState.query = {}
     routeState.meta = {}
   })
 
-  it('应渲染巡检任务明细和整改入口', async () => {
+  it('展示巡检任务明细，并从明细页回到详情壳巡检页签', async () => {
     const wrapper = mount(AssetRealEstateInspectionTaskPage, {
       global: {
         plugins: [ElementPlus]
@@ -91,8 +92,21 @@ describe('AssetRealEstateInspectionTaskPage 点测', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('巡检任务明细')
-    expect(wrapper.text()).toContain('一季度不动产巡检')
-    expect(wrapper.text()).toContain('发起整改')
+    expect(wrapper.text()).toContain('第一季度不动产巡检')
+
+    await wrapper.get('button').trigger('click')
+    expect(mockPush).toHaveBeenCalledWith('/asset/real-estate/detail/20001')
+    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('inspection')
+  })
+
+  it('从巡检任务页发起整改时，保持返回详情壳落在整改页签', async () => {
+    const wrapper = mount(AssetRealEstateInspectionTaskPage, {
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await flushPromises()
 
     await wrapper.get('[data-testid="inspection-task-create-rectification"]').trigger('click')
 
@@ -102,5 +116,6 @@ describe('AssetRealEstateInspectionTaskPage 点测', () => {
         taskId: '6'
       }
     })
+    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
   })
 })

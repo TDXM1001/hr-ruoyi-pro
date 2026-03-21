@@ -50,6 +50,20 @@ interface WorktabState {
   keepAliveExclude: string[]
 }
 
+const DEPRECATED_REAL_ESTATE_DETAIL_TAB_NAMES = new Set([
+  'AssetRealEstateDetailOccupancy',
+  'AssetRealEstateDetailInspection',
+  'AssetRealEstateDetailRectification',
+  'AssetRealEstateDetailDisposal'
+])
+
+const DEPRECATED_REAL_ESTATE_DETAIL_TAB_PATHS = new Set([
+  '/asset/real-estate/detail/:assetId/occupancy',
+  '/asset/real-estate/detail/:assetId/inspection',
+  '/asset/real-estate/detail/:assetId/rectification',
+  '/asset/real-estate/detail/:assetId/disposal'
+])
+
 /**
  * 工作台标签页管理 Store
  */
@@ -396,6 +410,16 @@ export const useWorktabStore = defineStore(
     }
 
     /**
+     * 中文注释：不动产详情页签已改为页内 Tab，旧的子路由工作签需要在会话恢复时主动清掉。
+     */
+    const isDeprecatedRealEstateDetailTab = (tab: Partial<WorkTab>): boolean => {
+      return (
+        DEPRECATED_REAL_ESTATE_DETAIL_TAB_NAMES.has(String(tab.name || '')) ||
+        DEPRECATED_REAL_ESTATE_DETAIL_TAB_PATHS.has(String(tab.path || ''))
+      )
+    }
+
+    /**
      * 切换指定标签页的固定状态
      */
     const toggleFixedTab = (path: string): void => {
@@ -455,15 +479,21 @@ export const useWorktabStore = defineStore(
         }
 
         // 过滤出有效的标签页
-        const validTabs = opened.value.filter((tab) => isTabRouteValid(tab))
+        const validTabs = opened.value.filter((tab) => {
+          return !isDeprecatedRealEstateDetailTab(tab) && isTabRouteValid(tab)
+        })
 
         if (validTabs.length !== opened.value.length) {
+          const removedTabs = opened.value.filter((tab) => !validTabs.includes(tab))
+          markTabsToRemove(removedTabs)
           console.warn('发现无效的标签页路由，已自动清理')
           opened.value = validTabs
         }
 
-        // 验证当前激活标签的有效性
-        const isCurrentValid = current.value && isTabRouteValid(current.value)
+        const isCurrentValid =
+          current.value &&
+          !isDeprecatedRealEstateDetailTab(current.value) &&
+          isTabRouteValid(current.value)
 
         if (!isCurrentValid && validTabs.length > 0) {
           console.warn('当前激活标签无效，已自动切换')

@@ -85,6 +85,7 @@
   import { getInventoryTask, listInventoryTaskAssets } from '@/api/asset/inventory'
   import { getRealEstateDetail } from '@/api/asset/real-estate'
   import { useUserStore } from '@/store/modules/user'
+  import { persistRealEstateDetailTab } from '../detail/tab-state'
 
   defineOptions({ name: 'AssetRealEstateInspectionTaskPage' })
 
@@ -179,13 +180,15 @@
   }
 
   const goBack = () => {
-    router.push(`/asset/real-estate/detail/${assetId.value}/inspection`)
+    persistRealEstateDetailTab(assetId.value, 'inspection')
+    router.push(`/asset/real-estate/detail/${assetId.value}`)
   }
 
   const goToCreateRectification = () => {
     if (!assetId.value || !taskId.value) {
       return
     }
+    persistRealEstateDetailTab(assetId.value, 'rectification')
     router.push({
       path: `/asset/real-estate/detail/${assetId.value}/rectification/create`,
       query: {
@@ -198,6 +201,7 @@
     if (!assetId.value || !rectificationId) {
       return
     }
+    persistRealEstateDetailTab(assetId.value, 'rectification')
     router.push(`/asset/real-estate/detail/${assetId.value}/rectification/edit/${rectificationId}`)
   }
 

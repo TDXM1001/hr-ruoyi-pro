@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus, { ElTreeSelect } from 'element-plus'
@@ -27,11 +27,11 @@ vi.mock('@/api/asset/real-estate', () => {
       data: {
         assetId: 20001,
         assetCode: 'RE-2026-0001',
-        assetName: '???????A?'
+        assetName: '深圳研发办公楼A座'
       }
     }),
-    getRealEstateDeptTree: vi.fn().mockResolvedValue([{ id: 103, label: '????' }]),
-    listRealEstateResponsibleUsers: vi.fn().mockResolvedValue([{ value: 1, label: '????????' }]),
+    getRealEstateDeptTree: vi.fn().mockResolvedValue([{ id: 103, label: '研发部门' }]),
+    listRealEstateResponsibleUsers: vi.fn().mockResolvedValue([{ value: 1, label: '若依（研发部门）' }]),
     getRealEstateRectification: vi.fn().mockResolvedValue({ data: {} }),
     addRealEstateRectification: vi.fn().mockResolvedValue({ data: 9002 }),
     updateRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 })
@@ -44,7 +44,7 @@ vi.mock('@/api/asset/inventory', () => {
       data: {
         taskId: 6,
         taskNo: 'INV-2026-0008',
-        taskName: '????????'
+        taskName: '第一季度不动产巡检'
       }
     }),
     listInventoryTaskAssets: vi.fn().mockResolvedValue({
@@ -53,7 +53,7 @@ vi.mock('@/api/asset/inventory', () => {
           itemId: 66,
           taskId: 6,
           inventoryResult: 'LOCATION_DIFF',
-          resultDesc: '?????????????'
+          resultDesc: '房间实际使用人与台账不一致'
         }
       ],
       total: 1
@@ -61,16 +61,17 @@ vi.mock('@/api/asset/inventory', () => {
   }
 })
 
-describe('AssetRealEstateRectificationFormPage ??', () => {
+describe('AssetRealEstateRectificationFormPage 点测', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPush.mockReset()
+    window.sessionStorage.clear()
     routeState.params = { assetId: '20001' }
     routeState.query = { taskId: '6' }
     routeState.meta = {}
   })
 
-  it('?????????????', async () => {
+  it('展示整改上下文与表单信息', async () => {
     const wrapper = mount(AssetRealEstateRectificationFormPage, {
       global: {
         plugins: [ElementPlus]
@@ -79,12 +80,12 @@ describe('AssetRealEstateRectificationFormPage ??', () => {
 
     await flushPromises()
 
-    expect(wrapper.text()).toContain('?????')
+    expect(wrapper.text()).toContain('新增整改单')
     expect(wrapper.text()).toContain('INV-2026-0008')
-    expect(wrapper.text()).toContain('?????????????')
+    expect(wrapper.text()).toContain('房间实际使用人与台账不一致')
   })
 
-  it('?????????????', async () => {
+  it('保存整改后回到详情壳整改页签，并带正确提交参数', async () => {
     const wrapper = mount(AssetRealEstateRectificationFormPage, {
       global: {
         plugins: [ElementPlus]
@@ -113,10 +114,11 @@ describe('AssetRealEstateRectificationFormPage ??', () => {
         responsibleUserId: 1
       })
     )
-    expect(mockPush).toHaveBeenCalledWith('/asset/real-estate/detail/20001/rectification')
+    expect(mockPush).toHaveBeenCalledWith('/asset/real-estate/detail/20001')
+    expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
   })
 
-  it('?????????????????', async () => {
+  it('责任部门树继续使用资产域树节点协议', async () => {
     const wrapper = mount(AssetRealEstateRectificationFormPage, {
       global: {
         plugins: [ElementPlus]
