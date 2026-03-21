@@ -227,9 +227,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateAssetUsageInfo" parameterType="com.ruoyi.asset.domain.AssetLedger">
         update ast_asset_ledger
         <set>
-            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            use_dept_id = #{useDeptId},
             responsible_user_id = #{responsibleUserId},
-            <if test="locationName != null">location_name = #{locationName},</if>
+            location_name = #{locationName},
             <if test="assetStatus != null and assetStatus != ''">asset_status = #{assetStatus},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()

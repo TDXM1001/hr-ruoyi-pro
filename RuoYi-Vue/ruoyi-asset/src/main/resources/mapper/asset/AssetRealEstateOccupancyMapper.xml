@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRealEstateOccupancyMapper">
+
+    <resultMap id="AssetRealEstateOccupancyOrderResult" type="com.ruoyi.asset.domain.AssetRealEstateOccupancyOrder">
+        <id property="occupancyId" column="occupancy_id"/>
+        <result property="occupancyNo" column="occupancy_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="useDeptId" column="use_dept_id"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="locationName" column="location_name"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="occupancyStatus" column="occupancy_status"/>
+        <result property="changeReason" column="change_reason"/>
+        <result property="releaseReason" column="release_reason"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="AssetRealEstateOccupancyVoResult" type="com.ruoyi.asset.domain.vo.AssetRealEstateOccupancyVo">
+        <id property="occupancyId" column="occupancy_id"/>
+        <result property="occupancyNo" column="occupancy_no"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="useDeptId" column="use_dept_id"/>
+        <result property="useDeptName" column="use_dept_name"/>
+        <result property="responsibleUserId" column="responsible_user_id"/>
+        <result property="responsibleUserName" column="responsible_user_name"/>
+        <result property="locationName" column="location_name"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="occupancyStatus" column="occupancy_status"/>
+        <result property="changeReason" column="change_reason"/>
+        <result property="releaseReason" column="release_reason"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectOccupancyBaseColumns">
+        select occupancy_id, occupancy_no, asset_id, use_dept_id, responsible_user_id, location_name, start_date,
+               end_date, occupancy_status, change_reason, release_reason, create_by, create_time, update_by,
+               update_time, remark
+        from ast_asset_real_estate_occupancy_order
+    </sql>
+
+    <sql id="selectOccupancyVoColumns">
+        select o.occupancy_id, o.occupancy_no, o.asset_id, o.use_dept_id, use_dept.dept_name as use_dept_name,
+               o.responsible_user_id, ifnull(nullif(u.nick_name, ''), u.user_name) as responsible_user_name,
+               o.location_name, o.start_date, o.end_date, o.occupancy_status, o.change_reason, o.release_reason,
+               o.create_by, o.create_time, o.update_by, o.update_time, o.remark
+        from ast_asset_real_estate_occupancy_order o
+        left join sys_dept use_dept on o.use_dept_id = use_dept.dept_id
+        left join sys_user u on o.responsible_user_id = u.user_id
+    </sql>
+
+    <select id="selectActiveOccupancyByAssetId" parameterType="Long" resultMap="AssetRealEstateOccupancyOrderResult">
+        <include refid="selectOccupancyBaseColumns"/>
+        where asset_id = #{assetId}
+          and occupancy_status = 'ACTIVE'
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectOccupancyById" parameterType="Long" resultMap="AssetRealEstateOccupancyOrderResult">
+        <include refid="selectOccupancyBaseColumns"/>
+        where occupancy_id = #{occupancyId}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectOccupancyListByAssetId" parameterType="Long" resultMap="AssetRealEstateOccupancyVoResult">
+        <include refid="selectOccupancyVoColumns"/>
+        where o.asset_id = #{assetId}
+          and o.del_flag = '0'
+        order by case when o.occupancy_status = 'ACTIVE' then 0 else 1 end,
+                 o.start_date desc, o.occupancy_id desc
+    </select>
+
+    <select id="selectMaxOccupancyNoByPrefix" parameterType="String" resultType="String">
+        select max(occupancy_no)
+        from ast_asset_real_estate_occupancy_order
+        where occupancy_no like concat(#{occupancyNoPrefix}, '%')
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertOccupancy" parameterType="com.ruoyi.asset.domain.AssetRealEstateOccupancyOrder"
+        useGeneratedKeys="true" keyProperty="occupancyId">
+        insert into ast_asset_real_estate_occupancy_order (
+            occupancy_no,
+            asset_id,
+            use_dept_id,
+            responsible_user_id,
+            location_name,
+            start_date,
+            occupancy_status,
+            <if test="changeReason != null and changeReason != ''">change_reason,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time,
+            del_flag
+        ) values (
+            #{occupancyNo},
+            #{assetId},
+            #{useDeptId},
+            #{responsibleUserId},
+            #{locationName},
+            #{startDate},
+            #{occupancyStatus},
+            <if test="changeReason != null and changeReason != ''">#{changeReason},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate(),
+            '0'
+        )
+    </insert>
+
+    <update id="updateOccupancy" parameterType="com.ruoyi.asset.domain.AssetRealEstateOccupancyOrder">
+        update ast_asset_real_estate_occupancy_order
+        <set>
+            <if test="useDeptId != null">use_dept_id = #{useDeptId},</if>
+            <if test="responsibleUserId != null">responsible_user_id = #{responsibleUserId},</if>
+            <if test="locationName != null">location_name = #{locationName},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="occupancyStatus != null and occupancyStatus != ''">occupancy_status = #{occupancyStatus},</if>
+            <if test="changeReason != null">change_reason = #{changeReason},</if>
+            <if test="releaseReason != null">release_reason = #{releaseReason},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where occupancy_id = #{occupancyId}
+          and del_flag = '0'
+    </update>
+</mapper>

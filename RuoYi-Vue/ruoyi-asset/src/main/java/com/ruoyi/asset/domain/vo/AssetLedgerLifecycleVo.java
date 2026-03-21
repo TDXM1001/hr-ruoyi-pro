@@ -22,6 +22,8 @@ public class AssetLedgerLifecycleVo
 
     private List<AssetRectificationVo> rectificationOrders = new ArrayList<AssetRectificationVo>();
 
+    private List<AssetRealEstateOccupancyVo> occupancyRecords = new ArrayList<AssetRealEstateOccupancyVo>();
+
     private List<AssetChangeLog> changeLogs = new ArrayList<AssetChangeLog>();
 
     public AssetLedgerVo getLedger()
@@ -72,6 +74,16 @@ public class AssetLedgerLifecycleVo
     public void setRectificationOrders(List<AssetRectificationVo> rectificationOrders)
     {
         this.rectificationOrders = rectificationOrders;
+    }
+
+    public List<AssetRealEstateOccupancyVo> getOccupancyRecords()
+    {
+        return occupancyRecords;
+    }
+
+    public void setOccupancyRecords(List<AssetRealEstateOccupancyVo> occupancyRecords)
+    {
+        this.occupancyRecords = occupancyRecords;
     }
 
     public List<AssetChangeLog> getChangeLogs()

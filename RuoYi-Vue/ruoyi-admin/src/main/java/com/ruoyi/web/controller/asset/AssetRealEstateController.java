@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.asset.domain.bo.AssetRealEstateOccupancyBo;
+import com.ruoyi.asset.domain.bo.AssetRealEstateOccupancyReleaseBo;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
@@ -37,8 +39,7 @@ import com.ruoyi.common.utils.StringUtils;
 /**
  * 不动产档案控制器。
  *
- * <p>用于支撑资产管理员按独立页面模式维护不动产档案，
- * 包括列表、详情、新建、编辑以及表单下拉所需的轻量查询接口。</p>
+ * <p>承接不动产档案、占用、整改等资产域接口。</p>
  *
  * @author Codex
  */
@@ -136,7 +137,7 @@ public class AssetRealEstateController extends BaseController
     /**
      * 查询责任人远程搜索选项。
      *
-     * @param keyword 搜索关键词
+     * @param keyword 搜索关键字
      * @return 责任人下拉项
      */
     @PreAuthorize("@ss.hasAnyPermi('asset:realEstate:list,asset:realEstate:query,asset:realEstate:add,asset:realEstate:edit')")
@@ -176,6 +177,68 @@ public class AssetRealEstateController extends BaseController
     }
 
     /**
+     * 查询不动产占用记录。
+     *
+     * @param assetId 资产ID
+     * @return 占用记录列表
+     */
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:query')")
+    @GetMapping("/{assetId}/occupancies")
+    public AjaxResult listOccupancies(@PathVariable Long assetId)
+    {
+        return success(assetRealEstateService.selectOccupancyListByAssetId(assetId));
+    }
+
+    /**
+     * 发起不动产占用。
+     *
+     * @param assetId 资产ID
+     * @param bo 占用入参
+     * @return 占用单ID
+     */
+    @Log(title = "不动产占用登记", businessType = BusinessType.INSERT)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/occupancies")
+    public AjaxResult addOccupancy(@PathVariable Long assetId, @Validated @RequestBody AssetRealEstateOccupancyBo bo)
+    {
+        return success(assetRealEstateService.createOccupancy(assetId, bo, getUsername()));
+    }
+
+    /**
+     * 变更不动产占用。
+     *
+     * @param assetId 资产ID
+     * @param occupancyId 占用单ID
+     * @param bo 占用入参
+     * @return 新占用单ID
+     */
+    @Log(title = "不动产占用变更", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/occupancies/{occupancyId}/change")
+    public AjaxResult changeOccupancy(@PathVariable Long assetId, @PathVariable Long occupancyId,
+        @Validated @RequestBody AssetRealEstateOccupancyBo bo)
+    {
+        return success(assetRealEstateService.changeOccupancy(assetId, occupancyId, bo, getUsername()));
+    }
+
+    /**
+     * 释放不动产占用。
+     *
+     * @param assetId 资产ID
+     * @param occupancyId 占用单ID
+     * @param bo 释放入参
+     * @return 释放结果
+     */
+    @Log(title = "不动产占用释放", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/occupancies/{occupancyId}/release")
+    public AjaxResult releaseOccupancy(@PathVariable Long assetId, @PathVariable Long occupancyId,
+        @Validated @RequestBody AssetRealEstateOccupancyReleaseBo bo)
+    {
+        return toAjax(assetRealEstateService.releaseOccupancy(assetId, occupancyId, bo, getUsername()));
+    }
+
+    /**
      * 查询整改列表。
      *
      * @param assetId 资产ID
@@ -202,7 +265,7 @@ public class AssetRealEstateController extends BaseController
         AssetRectificationVo detail = assetRectificationService.selectAssetRectificationById(rectificationId);
         if (!assetId.equals(detail.getAssetId()))
         {
-            throw new ServiceException("\u6574\u6539\u5355\u4e0e\u8d44\u4ea7\u4e0d\u5339\u914d");
+            throw new ServiceException("整改单与资产不匹配");
         }
         return success(detail);
     }
@@ -239,6 +302,14 @@ public class AssetRealEstateController extends BaseController
         return toAjax(assetRectificationService.updateAssetRectification(bo, getUsername()));
     }
 
+    /**
+     * 完成整改。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @param bo 完成入参
+     * @return 完成结果
+     */
     @Log(title = "不动产整改完成", businessType = BusinessType.UPDATE)
     @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
     @PostMapping("/{assetId}/rectifications/{rectificationId}/complete")
@@ -248,6 +319,13 @@ public class AssetRealEstateController extends BaseController
         return toAjax(assetRectificationService.completeAssetRectification(assetId, rectificationId, bo, getUsername()));
     }
 
+    /**
+     * 查询整改审批轨迹。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @return 审批轨迹
+     */
     @PreAuthorize("@ss.hasPermi('asset:realEstate:query')")
     @GetMapping("/{assetId}/rectifications/{rectificationId}/approval-records")
     public AjaxResult approvalRecords(@PathVariable Long assetId, @PathVariable Long rectificationId)
@@ -255,6 +333,14 @@ public class AssetRealEstateController extends BaseController
         return success(assetRectificationService.selectRectificationApprovalRecords(assetId, rectificationId));
     }
 
+    /**
+     * 提交整改审批。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @param bo 审批动作入参
+     * @return 提交结果
+     */
     @Log(title = "不动产整改审批提交", businessType = BusinessType.UPDATE)
     @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
     @PostMapping("/{assetId}/rectifications/{rectificationId}/submit-approval")
@@ -264,6 +350,14 @@ public class AssetRealEstateController extends BaseController
         return toAjax(assetRectificationService.submitRectificationApproval(assetId, rectificationId, bo, getUsername()));
     }
 
+    /**
+     * 通过整改审批。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @param bo 审批动作入参
+     * @return 审批结果
+     */
     @Log(title = "不动产整改审批通过", businessType = BusinessType.UPDATE)
     @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
     @PostMapping("/{assetId}/rectifications/{rectificationId}/approve")
@@ -273,6 +367,14 @@ public class AssetRealEstateController extends BaseController
         return toAjax(assetRectificationService.approveRectificationApproval(assetId, rectificationId, bo, getUsername()));
     }
 
+    /**
+     * 驳回整改审批。
+     *
+     * @param assetId 资产ID
+     * @param rectificationId 整改单ID
+     * @param bo 审批动作入参
+     * @return 驳回结果
+     */
     @Log(title = "不动产整改审批驳回", businessType = BusinessType.UPDATE)
     @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
     @PostMapping("/{assetId}/rectifications/{rectificationId}/reject")

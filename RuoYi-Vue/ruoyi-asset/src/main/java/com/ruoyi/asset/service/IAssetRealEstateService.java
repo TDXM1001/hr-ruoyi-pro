@@ -2,8 +2,11 @@ package com.ruoyi.asset.service;
 
 import java.util.List;
 import com.ruoyi.asset.domain.AssetRealEstateProfile;
+import com.ruoyi.asset.domain.bo.AssetRealEstateOccupancyBo;
+import com.ruoyi.asset.domain.bo.AssetRealEstateOccupancyReleaseBo;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
 import com.ruoyi.asset.domain.vo.AssetLedgerLifecycleVo;
+import com.ruoyi.asset.domain.vo.AssetRealEstateOccupancyVo;
 import com.ruoyi.asset.domain.vo.AssetRealEstateVo;
 
 /**
@@ -45,6 +48,8 @@ public interface IAssetRealEstateService
      */
     AssetLedgerLifecycleVo selectLifecycleByAssetId(Long assetId);
 
+    List<AssetRealEstateOccupancyVo> selectOccupancyListByAssetId(Long assetId);
+
     /**
      * 获取下一条建议资产编码。
      *
@@ -69,4 +74,10 @@ public interface IAssetRealEstateService
      * @return 修改结果
      */
     int updateAsset(AssetRealEstateBo bo, String operator);
+
+    Long createOccupancy(Long assetId, AssetRealEstateOccupancyBo bo, String operator);
+
+    Long changeOccupancy(Long assetId, Long occupancyId, AssetRealEstateOccupancyBo bo, String operator);
+
+    int releaseOccupancy(Long assetId, Long occupancyId, AssetRealEstateOccupancyReleaseBo bo, String operator);
 }
