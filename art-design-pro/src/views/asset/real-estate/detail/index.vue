@@ -76,8 +76,13 @@
         :rectification-records="rectificationRecords"
         :rectification-logs="rectificationLogs"
         :get-biz-type-label="getBizTypeLabel"
+        :can-edit="canEdit"
         @edit-rectification="goToEditRectification"
         @complete-rectification="goToCompleteRectification"
+        @submit-approval="handleSubmitApproval"
+        @approve-approval="handleApproveApproval"
+        @reject-approval="handleRejectApproval"
+        @view-approval-records="handleViewApprovalRecords"
       />
 
       <DisposalPanel
@@ -87,18 +92,50 @@
         @jump-disposal="goToDisposalModule"
       />
     </div>
+
+    <ElDrawer
+      v-model="approvalDrawerVisible"
+      title="整改审批轨迹"
+      size="420px"
+      destroy-on-close
+    >
+      <div class="approval-drawer">
+        <div class="approval-drawer__headline">{{ approvalDrawerTitle }}</div>
+        <ElTimeline v-if="approvalRecords.length">
+          <ElTimelineItem
+            v-for="record in approvalRecords"
+            :key="record.approvalRecordId || `${record.operateTime}-${record.approvalStatus}`"
+            :timestamp="record.operateTime || '-'"
+            placement="top"
+          >
+            <div class="timeline-title">{{ getApprovalStatusLabel(record.approvalStatus) }}</div>
+            <div class="timeline-desc">{{ record.opinion || '暂无审批意见' }}</div>
+            <div class="timeline-meta">操作人：{{ record.operateBy || '-' }}</div>
+          </ElTimelineItem>
+        </ElTimeline>
+        <ElEmpty v-else description="暂无审批轨迹" :image-size="72" />
+      </div>
+    </ElDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { TabPaneName } from 'element-plus'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElMessageBox } from 'element-plus'
   import type {
     AssetChangeLogRecord,
     AssetInventoryRecord,
     AssetRectificationRecord
   } from '@/api/asset/ledger'
-  import { getRealEstateDetail, getRealEstateLifecycle } from '@/api/asset/real-estate'
+  import type { AssetRealEstateRectificationApprovalRecord } from '@/api/asset/real-estate'
+  import {
+    approveRealEstateRectification,
+    getRealEstateDetail,
+    getRealEstateLifecycle,
+    listRealEstateRectificationApprovalRecords,
+    rejectRealEstateRectificationApproval,
+    submitRealEstateRectificationApproval
+  } from '@/api/asset/real-estate'
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
   import DisposalPanel from './components/disposal-panel.vue'
@@ -132,6 +169,9 @@
 
   const loading = ref(false)
   const activeTab = ref<RealEstateDetailTabName>('overview')
+  const approvalDrawerVisible = ref(false)
+  const approvalRecords = ref<AssetRealEstateRectificationApprovalRecord[]>([])
+  const approvalDrawerTitle = ref('')
   const detailData = reactive<Record<string, any>>({})
   const lifecycleData = reactive({
     handoverRecords: [] as Record<string, any>[],
@@ -401,6 +441,98 @@
     )
   }
 
+  const getApprovalStatusLabel = (status?: string) => {
+    const mapper: Record<string, string> = {
+      UNSUBMITTED: '待提交审批',
+      SUBMITTED: '审批中',
+      APPROVED: '审批通过',
+      REJECTED: '审批驳回'
+    }
+    return mapper[String(status || '').toUpperCase()] || '待提交审批'
+  }
+
+  const getRectificationTitle = (rectificationId?: number) => {
+    const current = rectificationRecords.value.find((item) => item.rectificationId === rectificationId)
+    return current?.rectificationNo || '整改审批轨迹'
+  }
+
+  const askApprovalOpinion = async (title: string, placeholder: string) => {
+    const result = await ElMessageBox.prompt('请输入审批意见', title, {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPlaceholder: placeholder,
+      inputValidator: (value) => {
+        return value?.trim() ? true : '审批意见不能为空'
+      }
+    })
+    return result.value.trim()
+  }
+
+  const reloadLifecycle = async () => {
+    if (!assetId.value) {
+      return
+    }
+    const lifecycleResponse = await getRealEstateLifecycle(assetId.value)
+    const lifecycle = toObjectData<any>(lifecycleResponse) || {}
+    lifecycleData.handoverRecords = toArrayData(lifecycle.handoverRecords)
+    lifecycleData.inventoryRecords = toArrayData(lifecycle.inventoryRecords)
+    lifecycleData.rectificationOrders = toArrayData(lifecycle.rectificationOrders)
+    lifecycleData.disposalRecords = toArrayData(lifecycle.disposalRecords)
+    lifecycleData.changeLogs = toArrayData(lifecycle.changeLogs)
+  }
+
+  const handleViewApprovalRecords = async (rectificationId?: number) => {
+    if (!assetId.value || !rectificationId) {
+      return
+    }
+    const response = await listRealEstateRectificationApprovalRecords(assetId.value, rectificationId)
+    approvalRecords.value = toArrayData<AssetRealEstateRectificationApprovalRecord>(response)
+    approvalDrawerTitle.value = getRectificationTitle(rectificationId)
+    approvalDrawerVisible.value = true
+  }
+
+  const handleSubmitApproval = async (rectificationId?: number) => {
+    if (!assetId.value || !rectificationId) {
+      return
+    }
+    const opinion = await askApprovalOpinion('提交整改审批', '请输入提交审批说明').catch(() => '')
+    if (!opinion) {
+      return
+    }
+    await submitRealEstateRectificationApproval(assetId.value, rectificationId, { opinion })
+    ElMessage.success('整改审批已提交')
+    await reloadLifecycle()
+    await handleViewApprovalRecords(rectificationId)
+  }
+
+  const handleApproveApproval = async (rectificationId?: number) => {
+    if (!assetId.value || !rectificationId) {
+      return
+    }
+    const opinion = await askApprovalOpinion('整改审批通过', '请输入审批通过意见').catch(() => '')
+    if (!opinion) {
+      return
+    }
+    await approveRealEstateRectification(assetId.value, rectificationId, { opinion })
+    ElMessage.success('整改审批已通过')
+    await reloadLifecycle()
+    await handleViewApprovalRecords(rectificationId)
+  }
+
+  const handleRejectApproval = async (rectificationId?: number) => {
+    if (!assetId.value || !rectificationId) {
+      return
+    }
+    const opinion = await askApprovalOpinion('整改审批驳回', '请输入审批驳回意见').catch(() => '')
+    if (!opinion) {
+      return
+    }
+    await rejectRealEstateRectificationApproval(assetId.value, rectificationId, { opinion })
+    ElMessage.success('整改审批已驳回')
+    await reloadLifecycle()
+    await handleViewApprovalRecords(rectificationId)
+  }
+
   const goToDisposalModule = () => {
     if (!assetId.value) {
       return
@@ -616,6 +748,18 @@
     flex-direction: column;
     gap: 12px;
     padding-bottom: 8px;
+  }
+
+  .approval-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .approval-drawer__headline {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--asset-text-main);
   }
 
   :deep(.section-stack) {

@@ -57,6 +57,15 @@ public class AssetRectificationOrder extends BaseEntity
 
     private String acceptanceRemark;
 
+    /** 审批状态 */
+    private String approvalStatus;
+
+    /** 提交审批时间 */
+    private Date approvalSubmittedTime;
+
+    /** 审批完成时间 */
+    private Date approvalFinishedTime;
+
     public Long getRectificationId()
     {
         return rectificationId;
@@ -197,6 +206,36 @@ public class AssetRectificationOrder extends BaseEntity
         this.acceptanceRemark = acceptanceRemark;
     }
 
+    public String getApprovalStatus()
+    {
+        return approvalStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus)
+    {
+        this.approvalStatus = approvalStatus;
+    }
+
+    public Date getApprovalSubmittedTime()
+    {
+        return approvalSubmittedTime;
+    }
+
+    public void setApprovalSubmittedTime(Date approvalSubmittedTime)
+    {
+        this.approvalSubmittedTime = approvalSubmittedTime;
+    }
+
+    public Date getApprovalFinishedTime()
+    {
+        return approvalFinishedTime;
+    }
+
+    public void setApprovalFinishedTime(Date approvalFinishedTime)
+    {
+        this.approvalFinishedTime = approvalFinishedTime;
+    }
+
     @Override
     public String toString()
     {
@@ -215,6 +254,9 @@ public class AssetRectificationOrder extends BaseEntity
             .append("completedTime", getCompletedTime())
             .append("completionDesc", getCompletionDesc())
             .append("acceptanceRemark", getAcceptanceRemark())
+            .append("approvalStatus", getApprovalStatus())
+            .append("approvalSubmittedTime", getApprovalSubmittedTime())
+            .append("approvalFinishedTime", getApprovalFinishedTime())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

@@ -1,194 +1,292 @@
-# 2026-03-21 资产二期当前实现对照结论
+﻿# 2026-03-21 资产二期当前实现检查点
 
-## 1. 结论摘要
+## 1. 当前结论
 
-当前分支的实现重心，已经明显聚焦到二期 `M1 不动产主线`，并且从“最小闭环可用”继续推进到了“详情体验增强与状态收口”阶段。
+截至 2026-03-21，当前分支的真实推进状态不是“二期三线并行均衡推进”，而是：
 
-这意味着两件事：
+> 不动产主线已经形成稳定闭环，并开始向整改审批挂载位延伸；审批主线进入第一批最小闭环；集成主线仍未启动。
 
-1. 不动产主线方向整体正确，且已经形成较完整的资产域详情壳
-2. 当前推进节奏并不等同于文档中的“三线并行”，审批主线与集成主线尚未同步跟进
+从代码和本地数据库实际状态看，当前最稳的业务口径是：
 
-因此，当前状态更准确的定义应为：
+1. 不动产档案建账闭环：已完成
+2. 巡检异常到整改完成闭环：已完成
+3. 整改审批挂载位第一批：已完成
+4. 占用管理：仅展示层，未闭环
+5. 处置关联：仅跳转过滤，未闭环
+6. 财务 / 采购 / 合同证照集成：未启动
 
-> 已完成 `M1 不动产主线` 的主体建设，并进入细节打磨；审批主线和集成主线仍停留在基线或待启动阶段。
+## 2. 本地 SQL 执行状态
 
----
+### 2.1 已执行到本地库的增量范围
 
-## 2. 对照基准文档
+当前本地数据库 `ruoyi-assets` 已执行到以下增量：
 
-本结论基于以下三份文档进行对照：
+1. `09-asset-real-estate-schema-upgrade-20260320.sql`
+2. `10-asset-real-estate-menu-data-upgrade-20260321.sql`
+3. `11-asset-real-estate-route-upgrade-20260321.sql`
+4. `12-asset-real-estate-detail-tabs-upgrade-20260321.sql`
+5. `13-asset-real-estate-rectification-schema-upgrade-20260321.sql`
+6. `14-asset-real-estate-followup-route-upgrade-20260321.sql`
+7. `15-asset-real-estate-detail-tab-route-cleanup-20260321.sql`
+8. `16-asset-real-estate-rectification-complete-upgrade-20260321.sql`
+9. `17-asset-real-estate-inspection-sample-fix-20260321.sql`
+10. `18-asset-real-estate-rectification-approval-hook-upgrade-20260321.sql`
 
-1. [2026-03-20-asset-phase2-parallel-milestones-design.md](/e:/my-project/hr-ruoyi-pro/docs/plans/2026-03-20-asset-phase2-parallel-milestones-design.md)
-2. [2026-03-20-asset-phase2-parallel-milestones-plan.md](/e:/my-project/hr-ruoyi-pro/docs/plans/2026-03-20-asset-phase2-parallel-milestones-plan.md)
-3. [2026-03-20-asset-phase2-parallel-milestones-weekly-implementation-plan.md](/e:/my-project/hr-ruoyi-pro/docs/plans/2026-03-20-asset-phase2-parallel-milestones-weekly-implementation-plan.md)
+### 2.2 本次新执行的 SQL
 
----
+本次已实际执行：
 
-## 3. 当前分支已实现内容
+- [18-asset-real-estate-rectification-approval-hook-upgrade-20260321.sql](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/sql/asset/18-asset-real-estate-rectification-approval-hook-upgrade-20260321.sql)
 
-### 3.1 M0 公共底座
+执行结果：
 
-已落地：
+1. `ast_asset_rectification_order` 新增字段：
+   - `approval_status`
+   - `approval_submitted_time`
+   - `approval_finished_time`
+2. 新建表：
+   - `ast_asset_rectification_approval_record`
 
-1. 不动产扩展模型与数据基线
-2. 审批回写矩阵基线
+### 2.3 当前有效路由口径
 
-当前判断：
+当前有效口径仍然是：
 
-- `M0` 的不动产模型与审批回写基础已经具备
-- 集成契约与集成幂等能力尚未形成实际代码闭环
+> 详情壳页内 Tab + 独立业务页
 
-### 3.2 M1 不动产主线
+不是旧的“详情子路由页签”模式。原因：
 
-已落地：
+1. `12` 号 SQL 曾补过详情子路由
+2. `15` 号 SQL 已清理旧详情页签子路由 `2135 / 2136 / 2137 / 2138`
+3. 当前保留的是独立业务页：
+   - 巡检任务明细页
+   - 整改单新增页
+   - 整改单编辑页
+   - 整改完成页
 
-1. 不动产档案列表 / 详情 / 新建 / 编辑四页结构
-2. 不动产详情壳与页内 Tab 切换
-3. 占用信息页签
-4. 巡检任务明细页
-5. 整改单新建 / 编辑页
-6. 整改完成页
-7. 已完成整改单只读收口
-8. 整改页签状态分层卡片
-9. 巡检记录与整改单状态联动摘要
+## 3. 代码侧当前闭环
 
-当前判断：
+### 3.1 不动产档案主线
 
-- `不动产建账与权属登记`：已完成
-- `占用记录与责任主体回写`：已具备基础展示与交接轨迹，但“占用管理”作为独立业务域仍偏轻
-- `巡检任务与整改登记最小闭环`：已完成，且已超过文档中的最小闭环要求
+当前已经具备：
 
-### 3.3 M1 审批主线
+1. 列表页
+2. 详情页壳
+3. 新建页
+4. 编辑页
+5. 生命周期聚合展示
+6. 菜单、路由、点测样例
 
-已落地：
+对应代码：
 
-1. 审批回写矩阵基础能力
+- [AssetRealEstateController.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateController.java)
+- [index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/index.vue)
+- [detail/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/detail/index.vue)
+- [form/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/form/index.vue)
 
-未见完整落地：
+结论：不动产档案主线已闭环。
 
-1. 处置审批流程最小闭环
-2. 高价值资产审批策略开关
-3. 审批轨迹查询能力
+### 3.2 巡检异常到整改完成主线
 
-当前判断：
+当前已经具备：
 
-- 审批主线仍处于“规则基线已准备、业务流未真正展开”的状态
+1. 巡检记录展示
+2. 巡检任务明细页
+3. 发起整改
+4. 编辑整改
+5. 完成整改
+6. 完成后只读
+7. 巡检跟进状态回写
+8. 资产变更日志留痕
 
-### 3.4 M1 集成主线
+对应代码：
 
-未见完整落地：
+- [AssetRectificationServiceImpl.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetRectificationServiceImpl.java)
+- [inspection-task/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/inspection-task/index.vue)
+- [rectification/form/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/rectification/form/index.vue)
+- [rectification/complete/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/rectification/complete/index.vue)
 
-1. 财务凭证回写最小接口
-2. 采购来源信息回填
-3. 合同证照关联标识与查询
+结论：巡检异常到整改完成已闭环。
 
-当前判断：
+### 3.3 整改审批挂载位第一批
 
-- 集成主线当前基本未启动
+当前已经具备的后端能力：
 
----
+1. 查询整改审批轨迹
+2. 提交整改审批
+3. 整改审批通过
+4. 整改审批驳回
+5. 驳回后允许再次提交
+6. 审批状态写回整改单
+7. 审批轨迹单独落表
 
-## 4. 当前实现与文档的一致性判断
+对应代码：
 
-### 4.1 一致的部分
+- [AssetRectificationApprovalRecord.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/AssetRectificationApprovalRecord.java)
+- [AssetRectificationApprovalActionBo.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/domain/bo/AssetRectificationApprovalActionBo.java)
+- [AssetRectificationApprovalMapper.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/mapper/AssetRectificationApprovalMapper.java)
+- [AssetRectificationApprovalMapper.xml](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/resources/mapper/asset/AssetRectificationApprovalMapper.xml)
+- [AssetRectificationServiceImpl.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-asset/src/main/java/com/ruoyi/asset/service/impl/AssetRectificationServiceImpl.java)
+- [AssetRealEstateController.java](/e:/my-project/hr-ruoyi-pro/RuoYi-Vue/ruoyi-admin/src/main/java/com/ruoyi/web/controller/asset/AssetRealEstateController.java)
 
-1. 先以不动产主线形成可演示 MVP，再逐步增强详情壳与闭环体验，这一方向与文档中的 `M1 不动产 MVP` 一致
-2. 详情壳、整改状态流转、日志留痕、只读收口等做法，符合文档里“统一详情页骨架”“数据门禁”“可追溯”的要求
-3. 巡检异常到整改闭环的业务方向，符合 `M2` 核心场景的前置建设逻辑
+当前已经具备的前端能力：
 
-### 4.2 偏离的部分
+1. 整改页签卡片展示审批状态
+2. 整改页签支持：
+   - 提交审批
+   - 审批通过
+   - 审批驳回
+   - 查看审批轨迹
+3. 整改完成页展示审批挂载信息并支持审批动作
+4. 整改单编辑页展示审批只读信息
+5. 详情壳支持审批轨迹抽屉
 
-1. 文档要求三线并行推进，但当前代码演进主要集中在不动产主线
-2. 审批主线与集成主线尚未按 `M1` 要求同步形成可独立演示的 MVP
-3. 当前工作更像“先把不动产线做深”，而不是严格的“三线同节奏推进”
+对应代码：
 
----
+- [real-estate.ts](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/api/asset/real-estate.ts)
+- [ledger.ts](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/api/asset/ledger.ts)
+- [rectification-panel.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/detail/components/rectification-panel.vue)
+- [detail/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/detail/index.vue)
+- [rectification/complete/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/rectification/complete/index.vue)
+- [rectification/form/index.vue](/e:/my-project/hr-ruoyi-pro/art-design-pro/src/views/asset/real-estate/rectification/form/index.vue)
 
-## 5. 当前实现是否正确
+结论：整改审批挂载位第一批已闭环。
 
-结论：`方向正确，但节奏偏单线深入`
+## 4. 当前未闭环线路
 
-具体判断：
+### 4.1 占用管理
 
-1. 如果目标是“优先把不动产线打透，再回补审批和集成”，当前实现是正确的
-2. 如果目标是“严格按方案 C 的三线并行门禁推进”，当前实现是不完全正确的，因为审批与集成明显滞后
+当前仅有：
 
-因此，当前分支不应被表述为：
+1. 占用信息展示
+2. 交接轨迹展示
 
-> 二期三线并行已按计划推进
+仍缺：
 
-更准确的表述应为：
+1. 发起占用
+2. 占用变更
+3. 占用释放
+4. 占用状态收口
 
-> 二期当前已优先完成不动产主线 M1 主体能力，并进入详情体验增强阶段；审批与集成主线尚待补齐。
+结论：仅展示层，未形成业务闭环。
 
----
+### 4.2 处置关联
 
-## 6. 当前功能缺口判断
+当前仅有：
 
-结合现有页面实现，巡检页签已经具备：
+1. 不动产详情跳转处置模块
+2. 跳转时带 `assetId / assetCode / tab` 过滤上下文
 
-1. 单条巡检记录卡片
-2. 单条整改联动摘要
-3. 发起整改 / 查看整改动作
+仍缺：
 
-但巡检页签顶部摘要当前仍只有：
+1. 不动产侧发起处置
+2. 处置审批链路
+3. 处置结果回写资产状态
 
-1. 最近巡检日期
-2. 巡检记录数
-3. 待整改数
+结论：仅关联跳转闭环，未形成处置业务闭环。
 
-缺少的能力是：
+### 4.3 集成主线
 
-1. `未发起整改`
-2. `待整改`
-3. `已闭环`
+当前仍未启动：
 
-这三种状态的顶部汇总条。
+1. 财务联动
+2. 采购联动
+3. 合同证照联动
 
-所以，“巡检页签状态汇总条”属于真实缺口，而不是重复建设。
+## 5. 当前阶段定位
 
----
+用二期分层里程碑口径描述，当前最准确的位置是：
 
-## 7. 建议的下一步
+1. `M0`：已完成
+2. `M1 不动产主线`：已完成
+3. `M1 整改审批挂载位第一批`：已完成
+4. `M1 占用管理`：未完成
+5. `M1 处置主线`：未完成
+6. `M2 正式审批主线`：未完成
+7. `M2 集成主线`：未启动
 
-### 7.1 当前推荐动作
+因此，当前分支不应再描述为：
 
-先继续完成：
+> 三条主线都已经并行推进到同一深度
 
-1. 巡检页签顶部状态汇总条
+更准确的说法是：
 
-目标是形成：
+> 当前分支已经把不动产主线做成稳定闭环，并把整改审批挂载位推进到第一批最小闭环；处置、占用、集成仍需继续补齐。
 
-1. 顶部总览数字
-2. 下方单条卡片
+## 6. 推荐下一条闭环线路
 
-即两层视角：
+基于当前代码和数据库状态，返工最少、价值最高的下一条闭环线路是：
 
-1. 管理层快速扫读
-2. 业务层逐条处理
+### 6.1 推荐线路：占用管理最小闭环
 
-### 7.2 完成后建议回到计划纠偏
+建议目标：
 
-在完成巡检页签顶部状态汇总条后，建议进入下一个明确治理动作：
+1. 发起占用
+2. 变更占用部门 / 责任人 / 位置
+3. 释放占用
+4. 占用状态回写到详情壳
+5. 占用轨迹进入生命周期
 
-1. 先补审批主线 MVP
-2. 再补集成主线 MVP
+推荐原因：
 
-否则当前分支会继续朝“不动产线精修”偏移，与三线并行目标越来越远。
+1. 不动产详情壳和页签已稳定
+2. 占用页签目前仍停留在展示层，最容易形成下一条业务闭环
+3. 不需要立即碰通用审批脏文件，风险低于直接进入处置审批主线
 
----
+### 6.2 备选线路：整改审批正式化
 
-## 8. 当前阶段结论
+如果要继续沿审批主线深入，下一步应做：
 
-当前分支已经证明：
+1. 审批角色与权限拆分
+2. 审批待办视图
+3. 审批结果与资产状态更强联动
+4. 与通用审批中心对接
 
-1. 不动产主线可做成完整资产域详情壳
-2. 巡检整改闭环已经具备真实业务价值
-3. 细节打磨方向是对的
+这条线价值高，但因为当前工作区已有通用审批脏文件，推进风险高于占用管理。
 
-但从二期总体计划视角看，当前仍属于：
+## 7. 本次验证证据
 
-> 不动产主线领先，审批与集成待补齐的阶段性状态
+### 7.1 后端验证
 
-这个判断应作为后续继续开发时的基准口径。
+已通过：
+
+- `mvn -pl ruoyi-asset -am test "-Dtest=AssetRectificationServiceImplTest" "-Dsurefire.failIfNoSpecifiedTests=false"`
+- `mvn -pl ruoyi-admin -am -DskipTests compile`
+
+结果：
+
+1. 整改服务单测通过 `12 tests`
+2. 后端编译通过
+
+### 7.2 前端验证
+
+已通过：
+
+- `pnpm vitest run tests/api/asset-real-estate.test.ts tests/views/asset-real-estate-rectification-panel-approval.test.ts tests/views/asset-real-estate-detail-page.test.ts tests/views/asset-real-estate-rectification-form-page.test.ts tests/views/asset-real-estate-rectification-complete-page.test.ts`
+
+结果：
+
+1. `5 files`
+2. `21 tests passed`
+
+### 7.3 数据库验证
+
+已通过：
+
+- `18-asset-real-estate-rectification-approval-hook-upgrade-20260321.sql` 本地执行成功
+
+结果：
+
+1. 整改单审批字段已落库
+2. 整改审批轨迹表已建成
+
+## 8. 最终判断
+
+当前可以清晰下结论：
+
+> 不动产主线已经从“档案可看”推进到“档案可建、巡检可查、整改可做、整改可收口、整改审批可挂载”的稳定阶段。
+
+但同时也必须明确：
+
+> 当前进展主要集中在不动产与整改线；占用、处置、集成仍未形成等深度闭环。
+
+这份检查点文档可作为后续二期开工、排期和验收的统一口径。

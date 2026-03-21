@@ -55,6 +55,14 @@ public class AssetRectificationVo extends BaseEntity
 
     private String acceptanceRemark;
 
+    private String approvalStatus;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date approvalSubmittedTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date approvalFinishedTime;
+
     public Long getRectificationId()
     {
         return rectificationId;
@@ -253,5 +261,35 @@ public class AssetRectificationVo extends BaseEntity
     public void setAcceptanceRemark(String acceptanceRemark)
     {
         this.acceptanceRemark = acceptanceRemark;
+    }
+
+    public String getApprovalStatus()
+    {
+        return approvalStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus)
+    {
+        this.approvalStatus = approvalStatus;
+    }
+
+    public Date getApprovalSubmittedTime()
+    {
+        return approvalSubmittedTime;
+    }
+
+    public void setApprovalSubmittedTime(Date approvalSubmittedTime)
+    {
+        this.approvalSubmittedTime = approvalSubmittedTime;
+    }
+
+    public Date getApprovalFinishedTime()
+    {
+        return approvalFinishedTime;
+    }
+
+    public void setApprovalFinishedTime(Date approvalFinishedTime)
+    {
+        this.approvalFinishedTime = approvalFinishedTime;
     }
 }

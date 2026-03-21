@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="section-stack" data-testid="rectification-reading-layout">
     <ElAlert
       class="section-alert"
       type="success"
       show-icon
       :closable="false"
-      title="整改页签沉淀责任、期限和完成状态，当前阶段只做登记、推进和收口留痕。"
+      title="整改页签沉淀责任、期限、完成结果和审批挂载状态，便于资产管理员连续跟踪闭环。"
     />
 
     <div class="rectification-overview-grid">
@@ -30,7 +30,7 @@
         </div>
 
         <div class="overview-text">
-          整改页签面向资产管理员做持续跟踪。待整改项需要看责任归口、整改期限和完成入口；已完成项只做结果回看。
+          整改页签面向资产管理员做持续跟踪。待整改项需要看责任归口、整改期限和完成入口；已完成项除了结果回看，还要确认审批挂载状态是否推进到位。
         </div>
       </ElCard>
 
@@ -41,7 +41,7 @@
 
         <div class="guide-panel">
           <div class="guide-panel__headline">
-            {{ pendingCount ? '先收口待整改记录，再复核闭环结果' : '当前整改记录已收口，可重点核查闭环结果' }}
+            {{ pendingCount ? '先收口待整改记录，再核查审批挂载状态。' : '当前整改记录已收口，可重点核查闭环结果与审批状态。' }}
           </div>
           <div class="guide-panel__line">编辑整改单负责维护责任、期限和说明。</div>
           <div class="guide-panel__line">完成整改只在独立完成页执行，避免基础信息和收口动作混写。</div>
@@ -56,9 +56,9 @@
       </template>
 
       <div class="record-wrapper" data-testid="rectification-record-list">
-        <div v-if="rectificationRecords.length" class="record-list">
+        <div v-if="props.rectificationRecords.length" class="record-list">
           <div
-            v-for="record in rectificationRecords"
+            v-for="record in props.rectificationRecords"
             :key="record.rectificationId || record.inventoryItemId || record.taskId"
             class="record-item"
             :class="getRecordVariantClass(record)"
@@ -69,7 +69,8 @@
               <div class="record-item__header">
                 <div class="record-item__heading">
                   <div class="record-item__title">
-                    {{ record.rectificationNo || '待同步整改单号' }} / {{ record.taskNo || '-' }} / {{ record.taskName || '-' }}
+                    {{ record.rectificationNo || '待同步整改单号' }} / {{ record.taskNo || '-' }} /
+                    {{ record.taskName || '-' }}
                   </div>
                   <div class="record-item__subtitle">
                     {{
@@ -131,9 +132,7 @@
                 </div>
 
                 <div class="detail-card detail-card--wide">
-                  <div class="detail-card__label">
-                    {{ isCompletedRecord(record) ? '完成说明' : '问题描述' }}
-                  </div>
+                  <div class="detail-card__label">{{ isCompletedRecord(record) ? '完成说明' : '问题描述' }}</div>
                   <div class="detail-card__value">
                     {{ isCompletedRecord(record) ? record.completionDesc || '-' : record.issueDesc || '-' }}
                   </div>
@@ -150,9 +149,34 @@
                 </div>
               </div>
 
+              <div v-if="isCompletedRecord(record)" class="approval-section">
+                <div class="approval-section__header">
+                  <div>
+                    <div class="approval-section__title">整改审批挂载</div>
+                    <div class="approval-section__desc">审批状态与轨迹独立挂载在整改单上，便于后续接正式审批主线。</div>
+                  </div>
+                  <ElTag :type="getApprovalTagType(record.approvalStatus)" effect="light">
+                    {{ getApprovalStatusLabel(record.approvalStatus) }}
+                  </ElTag>
+                </div>
+
+                <div class="approval-grid">
+                  <div class="detail-card">
+                    <div class="detail-card__label">提交时间</div>
+                    <div class="detail-card__value">{{ record.approvalSubmittedTime || '-' }}</div>
+                  </div>
+
+                  <div class="detail-card">
+                    <div class="detail-card__label">审批完成</div>
+                    <div class="detail-card__value">{{ record.approvalFinishedTime || '-' }}</div>
+                  </div>
+                </div>
+              </div>
+
               <div class="record-item__actions">
                 <ElButton
                   v-if="record.rectificationId"
+                  :data-testid="`rectification-edit-link-${record.rectificationId}`"
                   link
                   type="primary"
                   @click="$emit('edit-rectification', record.rectificationId)"
@@ -169,6 +193,46 @@
                 >
                   完成整改
                 </ElButton>
+
+                <ElButton
+                  v-if="record.rectificationId && isCompletedRecord(record) && props.canEdit && canSubmitApproval(record)"
+                  :data-testid="`rectification-submit-approval-link-${record.rectificationId}`"
+                  link
+                  type="success"
+                  @click="$emit('submit-approval', record.rectificationId)"
+                >
+                  提交审批
+                </ElButton>
+
+                <ElButton
+                  v-if="record.rectificationId && isCompletedRecord(record) && props.canEdit && canApproveOrReject(record)"
+                  :data-testid="`rectification-approve-link-${record.rectificationId}`"
+                  link
+                  type="success"
+                  @click="$emit('approve-approval', record.rectificationId)"
+                >
+                  审批通过
+                </ElButton>
+
+                <ElButton
+                  v-if="record.rectificationId && isCompletedRecord(record) && props.canEdit && canApproveOrReject(record)"
+                  :data-testid="`rectification-reject-link-${record.rectificationId}`"
+                  link
+                  type="danger"
+                  @click="$emit('reject-approval', record.rectificationId)"
+                >
+                  审批驳回
+                </ElButton>
+
+                <ElButton
+                  v-if="record.rectificationId && isCompletedRecord(record)"
+                  :data-testid="`rectification-approval-records-link-${record.rectificationId}`"
+                  link
+                  type="info"
+                  @click="$emit('view-approval-records', record.rectificationId)"
+                >
+                  查看审批轨迹
+                </ElButton>
               </div>
             </div>
           </div>
@@ -184,14 +248,14 @@
       </template>
 
       <div class="record-wrapper">
-        <ElTimeline v-if="rectificationLogs.length">
+        <ElTimeline v-if="props.rectificationLogs.length">
           <ElTimelineItem
-            v-for="record in rectificationLogs"
+            v-for="record in props.rectificationLogs"
             :key="record.logId"
             :timestamp="record.operateTime || '-'"
             placement="top"
           >
-            <div class="timeline-title">{{ getBizTypeLabel(record.bizType) }}</div>
+            <div class="timeline-title">{{ props.getBizTypeLabel(record.bizType) }}</div>
             <div class="timeline-desc">{{ record.changeDesc || '暂无整改说明' }}</div>
             <div class="timeline-meta">操作人：{{ record.operateBy || '-' }}</div>
           </ElTimelineItem>
@@ -210,11 +274,16 @@
     rectificationRecords: AssetRectificationRecord[]
     rectificationLogs: AssetChangeLogRecord[]
     getBizTypeLabel: (bizType?: string) => string
+    canEdit?: boolean
   }>()
 
   defineEmits<{
     'edit-rectification': [rectificationId?: number]
     'complete-rectification': [rectificationId?: number]
+    'submit-approval': [rectificationId?: number]
+    'approve-approval': [rectificationId?: number]
+    'reject-approval': [rectificationId?: number]
+    'view-approval-records': [rectificationId?: number]
   }>()
 
   const isCompletedRecord = (record: AssetRectificationRecord) => {
@@ -237,8 +306,37 @@
     return mapper[String(status || '').toUpperCase()] || 'info'
   }
 
+  const getApprovalStatusLabel = (status?: string) => {
+    const mapper: Record<string, string> = {
+      UNSUBMITTED: '待提交审批',
+      SUBMITTED: '审批中',
+      APPROVED: '审批通过',
+      REJECTED: '审批驳回'
+    }
+    return mapper[String(status || '').toUpperCase()] || '待提交审批'
+  }
+
+  const getApprovalTagType = (status?: string) => {
+    const mapper: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
+      UNSUBMITTED: 'info',
+      SUBMITTED: 'warning',
+      APPROVED: 'success',
+      REJECTED: 'danger'
+    }
+    return mapper[String(status || '').toUpperCase()] || 'info'
+  }
+
   const getRecordVariantClass = (record: AssetRectificationRecord) => {
     return isCompletedRecord(record) ? 'record-item--completed' : 'record-item--pending'
+  }
+
+  const canSubmitApproval = (record: AssetRectificationRecord) => {
+    const approvalStatus = String(record.approvalStatus || '').toUpperCase()
+    return !approvalStatus || approvalStatus === 'UNSUBMITTED' || approvalStatus === 'REJECTED'
+  }
+
+  const canApproveOrReject = (record: AssetRectificationRecord) => {
+    return String(record.approvalStatus || '').toUpperCase() === 'SUBMITTED'
   }
 
   const getPendingTone = (deadlineDate?: string) => {
@@ -264,14 +362,8 @@
     return { label: '按期推进', type: 'success' as const }
   }
 
-  const pendingCount = computed(() => {
-    return props.rectificationRecords.filter((record) => !isCompletedRecord(record)).length
-  })
-
-  const completedCount = computed(() => {
-    return props.rectificationRecords.filter((record) => isCompletedRecord(record)).length
-  })
-
+  const pendingCount = computed(() => props.rectificationRecords.filter((record) => !isCompletedRecord(record)).length)
+  const completedCount = computed(() => props.rectificationRecords.filter((record) => isCompletedRecord(record)).length)
   const overdueCount = computed(() => {
     return props.rectificationRecords.filter((record) => {
       return !isCompletedRecord(record) && getPendingTone(record.deadlineDate).label === '已逾期'
@@ -422,17 +514,16 @@
   }
 
   .record-item__title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    line-height: 1.6;
     color: #18233a;
     word-break: break-word;
   }
 
   .record-item__subtitle {
     font-size: 13px;
-    line-height: 1.7;
     color: #5d6b86;
+    line-height: 1.7;
   }
 
   .record-item__tags {
@@ -443,57 +534,77 @@
   }
 
   .record-summary-grid,
-  .record-detail-grid {
+  .record-detail-grid,
+  .approval-grid {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-  }
-
-  .record-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .record-detail-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .summary-card,
   .detail-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
     padding: 14px 16px;
-    border: 1px solid #e5edf6;
+    border: 1px solid #e7edf6;
     border-radius: 14px;
-    background: rgb(255 255 255 / 82%);
+    background: rgb(255 255 255 / 88%);
   }
 
   .summary-card__label,
   .detail-card__label {
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    color: #5d6b86;
+    color: #6f7f99;
   }
 
   .summary-card__value,
   .detail-card__value {
+    margin-top: 10px;
     font-size: 14px;
-    font-weight: 600;
-    line-height: 1.7;
+    line-height: 1.8;
     color: #18233a;
     word-break: break-word;
-    white-space: normal;
+    white-space: pre-wrap;
   }
 
   .detail-card--wide {
     grid-column: span 2;
   }
 
+  .approval-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed #bfd3ea;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 96%), #fff 100%);
+  }
+
+  .approval-section__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .approval-section__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .approval-section__desc {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #607089;
+  }
+
   .record-item__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
+    justify-content: flex-end;
+    gap: 12px;
     padding-top: 4px;
   }
 
@@ -508,12 +619,13 @@
     font-size: 13px;
     line-height: 1.8;
     color: #51627f;
+    word-break: break-word;
   }
 
   .timeline-meta {
-    margin-top: 8px;
+    margin-top: 6px;
     font-size: 12px;
-    color: #7687a1;
+    color: #7b8aa5;
   }
 
   @media (width <= 1080px) {
@@ -523,18 +635,25 @@
   }
 
   @media (width <= 900px) {
-    .overview-strip,
     .record-summary-grid,
-    .record-detail-grid {
+    .record-detail-grid,
+    .approval-grid {
       grid-template-columns: 1fr;
-    }
-
-    .record-item__header {
-      flex-direction: column;
     }
 
     .detail-card--wide {
       grid-column: span 1;
+    }
+
+    .record-item__header,
+    .approval-section__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .record-item__tags,
+    .record-item__actions {
+      justify-content: flex-start;
     }
   }
 </style>

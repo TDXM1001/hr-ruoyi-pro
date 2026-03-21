@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.time.Year;
 import java.util.Date;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,13 +22,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetLedger;
+import com.ruoyi.asset.domain.AssetRectificationApprovalRecord;
 import com.ruoyi.asset.domain.AssetRectificationOrder;
+import com.ruoyi.asset.domain.bo.AssetRectificationApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
 import com.ruoyi.asset.mapper.AssetInventoryMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
+import com.ruoyi.asset.mapper.AssetRectificationApprovalMapper;
 import com.ruoyi.asset.mapper.AssetRectificationMapper;
 import com.ruoyi.common.exception.ServiceException;
 
@@ -53,6 +57,9 @@ class AssetRectificationServiceImplTest
 
     @Mock
     private AssetChangeLogMapper assetChangeLogMapper;
+
+    @Mock
+    private AssetRectificationApprovalMapper assetRectificationApprovalMapper;
 
     @InjectMocks
     private AssetRectificationServiceImpl service;
@@ -158,6 +165,104 @@ class AssetRectificationServiceImplTest
         verify(assetChangeLogMapper).insertAssetChangeLog(any(AssetChangeLog.class));
     }
 
+    @Test
+    @DisplayName("已完成整改单可以提交审批")
+    void shouldSubmitApprovalForCompletedRectification()
+    {
+        AssetRectificationVo current = buildCurrentRectification("COMPLETED");
+        current.setApprovalStatus("UNSUBMITTED");
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+        when(assetRectificationMapper.updateAssetRectification(any())).thenReturn(1);
+        when(assetRectificationApprovalMapper.insertAssetRectificationApprovalRecord(any())).thenReturn(1);
+
+        int rows = service.submitRectificationApproval(20001L, 9001L, buildApprovalBo("提交整改审批"), "asset-admin");
+
+        assertEquals(1, rows);
+        verify(assetRectificationMapper).updateAssetRectification(any(AssetRectificationOrder.class));
+        verify(assetRectificationApprovalMapper).insertAssetRectificationApprovalRecord(any(AssetRectificationApprovalRecord.class));
+        verify(assetChangeLogMapper).insertAssetChangeLog(any(AssetChangeLog.class));
+    }
+
+    @Test
+    @DisplayName("未完成整改单不能提交审批")
+    void shouldRejectSubmittingApprovalForPendingRectification()
+    {
+        AssetRectificationVo current = buildCurrentRectification("PENDING");
+        current.setApprovalStatus("UNSUBMITTED");
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+
+        ServiceException exception = assertThrows(ServiceException.class,
+            () -> service.submitRectificationApproval(20001L, 9001L, buildApprovalBo("提交整改审批"), "asset-admin"));
+
+        assertEquals("只有已完成整改单才能提交审批", exception.getMessage());
+        verify(assetRectificationApprovalMapper, never()).insertAssetRectificationApprovalRecord(any());
+    }
+
+    @Test
+    @DisplayName("已提交审批的整改单可以审批通过")
+    void shouldApproveSubmittedRectification()
+    {
+        AssetRectificationVo current = buildCurrentRectification("COMPLETED");
+        current.setApprovalStatus("SUBMITTED");
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+        when(assetRectificationMapper.updateAssetRectification(any())).thenReturn(1);
+        when(assetRectificationApprovalMapper.insertAssetRectificationApprovalRecord(any())).thenReturn(1);
+
+        int rows = service.approveRectificationApproval(20001L, 9001L, buildApprovalBo("审批通过"), "approver");
+
+        assertEquals(1, rows);
+        verify(assetRectificationMapper).updateAssetRectification(any(AssetRectificationOrder.class));
+        verify(assetRectificationApprovalMapper).insertAssetRectificationApprovalRecord(any(AssetRectificationApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("已提交审批的整改单可以审批驳回")
+    void shouldRejectSubmittedRectification()
+    {
+        AssetRectificationVo current = buildCurrentRectification("COMPLETED");
+        current.setApprovalStatus("SUBMITTED");
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+        when(assetRectificationMapper.updateAssetRectification(any())).thenReturn(1);
+        when(assetRectificationApprovalMapper.insertAssetRectificationApprovalRecord(any())).thenReturn(1);
+
+        int rows = service.rejectRectificationApproval(20001L, 9001L, buildApprovalBo("审批驳回"), "approver");
+
+        assertEquals(1, rows);
+        verify(assetRectificationMapper).updateAssetRectification(any(AssetRectificationOrder.class));
+        verify(assetRectificationApprovalMapper).insertAssetRectificationApprovalRecord(any(AssetRectificationApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("驳回后的整改单允许再次提交审批")
+    void shouldAllowResubmittingRejectedRectification()
+    {
+        AssetRectificationVo current = buildCurrentRectification("COMPLETED");
+        current.setApprovalStatus("REJECTED");
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(current);
+        when(assetRectificationMapper.updateAssetRectification(any())).thenReturn(1);
+        when(assetRectificationApprovalMapper.insertAssetRectificationApprovalRecord(any())).thenReturn(1);
+
+        int rows = service.submitRectificationApproval(20001L, 9001L, buildApprovalBo("重新提交整改审批"), "asset-admin");
+
+        assertEquals(1, rows);
+        verify(assetRectificationMapper).updateAssetRectification(any(AssetRectificationOrder.class));
+        verify(assetRectificationApprovalMapper).insertAssetRectificationApprovalRecord(any(AssetRectificationApprovalRecord.class));
+    }
+
+    @Test
+    @DisplayName("可以查询整改审批轨迹")
+    void shouldListApprovalRecords()
+    {
+        when(assetRectificationMapper.selectAssetRectificationById(9001L)).thenReturn(buildCurrentRectification("COMPLETED"));
+        when(assetRectificationApprovalMapper.selectAssetRectificationApprovalRecords(9001L))
+            .thenReturn(List.of(buildApprovalRecord("SUBMITTED")));
+
+        List<AssetRectificationApprovalRecord> records = service.selectRectificationApprovalRecords(20001L, 9001L);
+
+        assertEquals(1, records.size());
+        assertEquals("SUBMITTED", records.get(0).getApprovalStatus());
+    }
+
     private AssetRectificationVo buildCurrentRectification(String rectificationStatus)
     {
         AssetRectificationVo current = new AssetRectificationVo();
@@ -167,6 +272,7 @@ class AssetRectificationServiceImplTest
         current.setTaskId(6L);
         current.setInventoryItemId(66L);
         current.setRectificationStatus(rectificationStatus);
+        current.setApprovalStatus("UNSUBMITTED");
         current.setCompletedTime(null);
         return current;
     }
@@ -225,5 +331,23 @@ class AssetRectificationServiceImplTest
     private String buildRectificationNo(int sequence)
     {
         return buildNoPrefix() + String.format("%04d", sequence);
+    }
+
+    private AssetRectificationApprovalActionBo buildApprovalBo(String opinion)
+    {
+        AssetRectificationApprovalActionBo bo = new AssetRectificationApprovalActionBo();
+        bo.setOpinion(opinion);
+        return bo;
+    }
+
+    private AssetRectificationApprovalRecord buildApprovalRecord(String approvalStatus)
+    {
+        AssetRectificationApprovalRecord record = new AssetRectificationApprovalRecord();
+        record.setApprovalRecordId(1L);
+        record.setRectificationId(9001L);
+        record.setAssetId(20001L);
+        record.setApprovalStatus(approvalStatus);
+        record.setOpinion("测试审批意见");
+        return record;
     }
 }

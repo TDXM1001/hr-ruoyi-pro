@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetRectificationApprovalMapper">
+
+    <resultMap id="AssetRectificationApprovalRecordResult"
+        type="com.ruoyi.asset.domain.AssetRectificationApprovalRecord">
+        <id property="approvalRecordId" column="approval_record_id"/>
+        <result property="rectificationId" column="rectification_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="opinion" column="opinion"/>
+        <result property="operateBy" column="operate_by"/>
+        <result property="operateTime" column="operate_time"/>
+    </resultMap>
+
+    <insert id="insertAssetRectificationApprovalRecord"
+        parameterType="com.ruoyi.asset.domain.AssetRectificationApprovalRecord"
+        useGeneratedKeys="true" keyProperty="approvalRecordId">
+        insert into ast_asset_rectification_approval_record (
+            rectification_id, asset_id, approval_status, opinion, operate_by, operate_time
+        ) values (
+            #{rectificationId}, #{assetId}, #{approvalStatus}, #{opinion}, #{operateBy}, #{operateTime}
+        )
+    </insert>
+
+    <select id="selectAssetRectificationApprovalRecords" parameterType="Long"
+        resultMap="AssetRectificationApprovalRecordResult">
+        select approval_record_id, rectification_id, asset_id, approval_status, opinion, operate_by, operate_time
+        from ast_asset_rectification_approval_record
+        where rectification_id = #{rectificationId}
+        order by operate_time desc, approval_record_id desc
+    </select>
+</mapper>

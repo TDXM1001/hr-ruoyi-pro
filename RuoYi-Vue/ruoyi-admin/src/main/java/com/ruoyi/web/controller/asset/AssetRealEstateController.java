@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
+import com.ruoyi.asset.domain.bo.AssetRectificationApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
@@ -245,6 +246,40 @@ public class AssetRealEstateController extends BaseController
         @Validated @RequestBody AssetRectificationCompleteBo bo)
     {
         return toAjax(assetRectificationService.completeAssetRectification(assetId, rectificationId, bo, getUsername()));
+    }
+
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:query')")
+    @GetMapping("/{assetId}/rectifications/{rectificationId}/approval-records")
+    public AjaxResult approvalRecords(@PathVariable Long assetId, @PathVariable Long rectificationId)
+    {
+        return success(assetRectificationService.selectRectificationApprovalRecords(assetId, rectificationId));
+    }
+
+    @Log(title = "不动产整改审批提交", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/rectifications/{rectificationId}/submit-approval")
+    public AjaxResult submitApproval(@PathVariable Long assetId, @PathVariable Long rectificationId,
+        @Validated @RequestBody AssetRectificationApprovalActionBo bo)
+    {
+        return toAjax(assetRectificationService.submitRectificationApproval(assetId, rectificationId, bo, getUsername()));
+    }
+
+    @Log(title = "不动产整改审批通过", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/rectifications/{rectificationId}/approve")
+    public AjaxResult approve(@PathVariable Long assetId, @PathVariable Long rectificationId,
+        @Validated @RequestBody AssetRectificationApprovalActionBo bo)
+    {
+        return toAjax(assetRectificationService.approveRectificationApproval(assetId, rectificationId, bo, getUsername()));
+    }
+
+    @Log(title = "不动产整改审批驳回", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:realEstate:edit')")
+    @PostMapping("/{assetId}/rectifications/{rectificationId}/reject")
+    public AjaxResult reject(@PathVariable Long assetId, @PathVariable Long rectificationId,
+        @Validated @RequestBody AssetRectificationApprovalActionBo bo)
+    {
+        return toAjax(assetRectificationService.rejectRectificationApproval(assetId, rectificationId, bo, getUsername()));
     }
 
     /**

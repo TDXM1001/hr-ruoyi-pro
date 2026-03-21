@@ -85,6 +85,20 @@ export interface AssetRealEstateRectificationCompletePayload {
   acceptanceRemark?: string
 }
 
+export interface AssetRealEstateRectificationApprovalActionPayload {
+  opinion: string
+}
+
+export interface AssetRealEstateRectificationApprovalRecord {
+  approvalRecordId?: number
+  rectificationId?: number
+  assetId?: number
+  approvalStatus?: string
+  opinion?: string
+  operateBy?: string
+  operateTime?: string
+}
+
 export function getRealEstateList(params?: AssetRealEstateQuery) {
   return http.request({
     url: '/asset/real-estate/list',
@@ -197,6 +211,52 @@ export function completeRealEstateRectification(
 ) {
   return http.request({
     url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/complete`,
+    method: 'post',
+    data
+  })
+}
+
+export function listRealEstateRectificationApprovalRecords(
+  assetId: number | string,
+  rectificationId: number | string
+) {
+  return http.request<AssetRealEstateRectificationApprovalRecord[]>({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/approval-records`,
+    method: 'get'
+  })
+}
+
+export function submitRealEstateRectificationApproval(
+  assetId: number | string,
+  rectificationId: number | string,
+  data: AssetRealEstateRectificationApprovalActionPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/submit-approval`,
+    method: 'post',
+    data
+  })
+}
+
+export function approveRealEstateRectification(
+  assetId: number | string,
+  rectificationId: number | string,
+  data: AssetRealEstateRectificationApprovalActionPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/approve`,
+    method: 'post',
+    data
+  })
+}
+
+export function rejectRealEstateRectificationApproval(
+  assetId: number | string,
+  rectificationId: number | string,
+  data: AssetRealEstateRectificationApprovalActionPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/rectifications/${rectificationId}/reject`,
     method: 'post',
     data
   })

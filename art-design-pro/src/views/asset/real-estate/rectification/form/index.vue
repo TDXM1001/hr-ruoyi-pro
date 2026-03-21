@@ -187,6 +187,19 @@
             </ElDescriptionsItem>
           </ElDescriptions>
         </ElCard>
+
+        <ElCard v-if="showCompletionSection" class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">审批挂载信息</div>
+          </template>
+
+          <ElDescriptions class="completion-descriptions" :column="1" border>
+            <ElDescriptionsItem label="审批状态">{{ approvalStatusLabel }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="提交时间">{{ approvalInfo.submittedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="审批完成">{{ approvalInfo.finishedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最新意见">{{ approvalInfo.latestOpinion || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
       </div>
     </div>
   </div>
@@ -232,6 +245,12 @@
     completedTime: '',
     completionDesc: '',
     acceptanceRemark: ''
+  })
+  const approvalInfo = reactive({
+    status: 'UNSUBMITTED',
+    submittedTime: '',
+    finishedTime: '',
+    latestOpinion: ''
   })
 
   // 中文注释：树选择器统一复用资产域的节点协议，避免不同页面对同一部门树结构解释不一致。
@@ -281,6 +300,15 @@
       COMPLETED: '已完成'
     }
     return mapper[String(formData.rectificationStatus || '').toUpperCase()] || formData.rectificationStatus || '-'
+  })
+  const approvalStatusLabel = computed(() => {
+    const mapper: Record<string, string> = {
+      UNSUBMITTED: '待提交审批',
+      SUBMITTED: '审批中',
+      APPROVED: '审批通过',
+      REJECTED: '审批驳回'
+    }
+    return mapper[String(approvalInfo.status || '').toUpperCase()] || '待提交审批'
   })
 
   const rules: FormRules = {
@@ -351,6 +379,12 @@
       completionDesc: '',
       acceptanceRemark: ''
     })
+    Object.assign(approvalInfo, {
+      status: 'UNSUBMITTED',
+      submittedTime: '',
+      finishedTime: '',
+      latestOpinion: ''
+    })
 
     if (!createTaskId.value || Number.isNaN(createTaskId.value)) {
       ElMessage.error('缺少巡检任务参数，无法发起整改')
@@ -407,6 +441,12 @@
       completedTime: detail.completedTime || '',
       completionDesc: detail.completionDesc || '',
       acceptanceRemark: detail.acceptanceRemark || ''
+    })
+    Object.assign(approvalInfo, {
+      status: detail.approvalStatus || 'UNSUBMITTED',
+      submittedTime: detail.approvalSubmittedTime || '',
+      finishedTime: detail.approvalFinishedTime || '',
+      latestOpinion: detail.latestApprovalOpinion || ''
     })
 
     sourceResultDesc.value = detail.issueDesc || ''

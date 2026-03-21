@@ -156,7 +156,11 @@ vi.mock('@/api/asset/real-estate', () => {
           }
         ]
       }
-    })
+    }),
+    listRealEstateRectificationApprovalRecords: vi.fn().mockResolvedValue({ data: [] }),
+    submitRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 }),
+    approveRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 }),
+    rejectRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 })
   }
 })
 

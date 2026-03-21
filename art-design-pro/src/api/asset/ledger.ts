@@ -94,6 +94,9 @@ export interface AssetRectificationRecord {
   completedTime?: string
   completionDesc?: string
   acceptanceRemark?: string
+  approvalStatus?: string
+  approvalSubmittedTime?: string
+  approvalFinishedTime?: string
   createTime?: string
   remark?: string
 }

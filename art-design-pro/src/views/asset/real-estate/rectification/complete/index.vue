@@ -123,17 +123,46 @@
             <div class="guide-panel__line">提交成功后会回到详情壳整改页签，方便继续查看整体整改状态。</div>
           </div>
         </ElCard>
+
+        <ElCard v-if="isCompletedRectification" class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">审批挂载信息</div>
+          </template>
+
+          <ElDescriptions class="context-descriptions" :column="1" border>
+            <ElDescriptionsItem label="审批状态">{{ approvalStatusLabel }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="提交时间">{{ rectificationData.approvalSubmittedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="审批完成">{{ rectificationData.approvalFinishedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最新意见">{{ latestApprovalOpinion }}</ElDescriptionsItem>
+          </ElDescriptions>
+
+          <div class="approval-action-bar">
+            <ElButton v-if="canSubmitApproval" type="success" plain :loading="approvalSubmitting" @click="handleApprovalAction('submit')">
+              提交审批
+            </ElButton>
+            <ElButton v-if="canApproveOrReject" type="success" plain :loading="approvalSubmitting" @click="handleApprovalAction('approve')">
+              审批通过
+            </ElButton>
+            <ElButton v-if="canApproveOrReject" type="danger" plain :loading="approvalSubmitting" @click="handleApprovalAction('reject')">
+              审批驳回
+            </ElButton>
+          </div>
+        </ElCard>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElMessageBox } from 'element-plus'
   import {
+    approveRealEstateRectification,
     completeRealEstateRectification,
     getRealEstateDetail,
-    getRealEstateRectification
+    getRealEstateRectification,
+    listRealEstateRectificationApprovalRecords,
+    rejectRealEstateRectificationApproval,
+    submitRealEstateRectificationApproval
   } from '@/api/asset/real-estate'
   import { persistRealEstateDetailTab } from '../../detail/tab-state'
 
@@ -145,9 +174,11 @@
 
   const loading = ref(false)
   const submitting = ref(false)
+  const approvalSubmitting = ref(false)
   const formRef = ref<FormInstance>()
   const detailData = reactive<Record<string, any>>({})
   const rectificationData = reactive<Record<string, any>>({})
+  const approvalRecords = ref<Array<Record<string, any>>>([])
   const formData = reactive({
     completionDesc: '',
     acceptanceRemark: ''
@@ -180,6 +211,29 @@
     return mapper[String(rectificationData.rectificationStatus || '').toUpperCase()] || rectificationData.rectificationStatus || '-'
   })
 
+  const approvalStatusLabel = computed(() => {
+    const mapper: Record<string, string> = {
+      UNSUBMITTED: '待提交审批',
+      SUBMITTED: '审批中',
+      APPROVED: '审批通过',
+      REJECTED: '审批驳回'
+    }
+    return mapper[String(rectificationData.approvalStatus || '').toUpperCase()] || '待提交审批'
+  })
+
+  const latestApprovalOpinion = computed(() => {
+    return approvalRecords.value[0]?.opinion || '-'
+  })
+
+  const canSubmitApproval = computed(() => {
+    const approvalStatus = String(rectificationData.approvalStatus || '').toUpperCase()
+    return isCompletedRectification.value && (!approvalStatus || approvalStatus === 'UNSUBMITTED' || approvalStatus === 'REJECTED')
+  })
+
+  const canApproveOrReject = computed(() => {
+    return isCompletedRectification.value && String(rectificationData.approvalStatus || '').toUpperCase() === 'SUBMITTED'
+  })
+
   const toObjectData = <T,>(response: any): T => {
     if (response?.data !== undefined) {
       return response.data
@@ -210,8 +264,68 @@
       Object.assign(rectificationData, toObjectData<any>(rectificationResponse))
       formData.completionDesc = rectificationData.completionDesc || ''
       formData.acceptanceRemark = rectificationData.acceptanceRemark || ''
+      const approvalResponse = await listRealEstateRectificationApprovalRecords(assetId.value, rectificationId.value)
+      approvalRecords.value = Array.isArray(approvalResponse?.data)
+        ? approvalResponse.data
+        : Array.isArray(approvalResponse)
+          ? approvalResponse
+          : []
     } finally {
       loading.value = false
+    }
+  }
+
+  const askApprovalOpinion = async (title: string, placeholder: string) => {
+    const result = await ElMessageBox.prompt('请输入审批意见', title, {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPlaceholder: placeholder,
+      inputValidator: (value) => {
+        return value?.trim() ? true : '审批意见不能为空'
+      }
+    })
+    return result.value.trim()
+  }
+
+  const handleApprovalAction = async (action: 'submit' | 'approve' | 'reject') => {
+    if (!assetId.value || !rectificationId.value || !isCompletedRectification.value) {
+      return
+    }
+
+    const configs = {
+      submit: {
+        title: '提交整改审批',
+        placeholder: '请输入提交审批说明',
+        success: '整改审批已提交',
+        request: submitRealEstateRectificationApproval
+      },
+      approve: {
+        title: '整改审批通过',
+        placeholder: '请输入审批通过意见',
+        success: '整改审批已通过',
+        request: approveRealEstateRectification
+      },
+      reject: {
+        title: '整改审批驳回',
+        placeholder: '请输入审批驳回意见',
+        success: '整改审批已驳回',
+        request: rejectRealEstateRectificationApproval
+      }
+    } as const
+
+    const config = configs[action]
+    const opinion = await askApprovalOpinion(config.title, config.placeholder).catch(() => '')
+    if (!opinion) {
+      return
+    }
+
+    approvalSubmitting.value = true
+    try {
+      await config.request(assetId.value, rectificationId.value, { opinion })
+      ElMessage.success(config.success)
+      await loadPage()
+    } finally {
+      approvalSubmitting.value = false
     }
   }
 
@@ -354,6 +468,13 @@
   .guide-panel {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .approval-action-bar {
+    display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     padding: 16px;
   }

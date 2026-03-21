@@ -1,6 +1,8 @@
 package com.ruoyi.asset.service;
 
 import java.util.List;
+import com.ruoyi.asset.domain.AssetRectificationApprovalRecord;
+import com.ruoyi.asset.domain.bo.AssetRectificationApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
@@ -47,5 +49,16 @@ public interface IAssetRectificationService
     int updateAssetRectification(AssetRectificationBo bo, String operator);
 
     int completeAssetRectification(Long assetId, Long rectificationId, AssetRectificationCompleteBo bo,
+        String operator);
+
+    List<AssetRectificationApprovalRecord> selectRectificationApprovalRecords(Long assetId, Long rectificationId);
+
+    int submitRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator);
+
+    int approveRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator);
+
+    int rejectRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
         String operator);
 }

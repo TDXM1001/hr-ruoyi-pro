@@ -48,7 +48,11 @@ vi.mock('@/api/asset/real-estate', () => {
         remark: '等待完成'
       }
     }),
-    completeRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 })
+    completeRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 }),
+    listRealEstateRectificationApprovalRecords: vi.fn().mockResolvedValue({ data: [] }),
+    submitRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 }),
+    approveRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 }),
+    rejectRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 })
   }
 })
 

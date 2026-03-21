@@ -11,11 +11,18 @@ vi.mock('@/utils/http', () => {
 import http from '@/utils/http'
 import {
   addRealEstate,
+  approveRealEstateRectification,
+  completeRealEstateRectification,
   getRealEstateCategoryTree,
   getRealEstateDetail,
   getRealEstateLifecycle,
+  getRealEstateRectification,
   getRealEstateList,
   getNextRealEstateCode,
+  listRealEstateRectificationApprovalRecords,
+  listRealEstateRectifications,
+  rejectRealEstateRectificationApproval,
+  submitRealEstateRectificationApproval,
   updateRealEstate
 } from '../../src/api/asset/real-estate'
 
@@ -103,6 +110,64 @@ describe('Asset Real Estate API', () => {
     expect(requestMock).toHaveBeenNthCalledWith(2, {
       url: '/asset/real-estate/nextCode',
       method: 'get'
+    })
+  })
+
+  it('should request rectification detail and approval endpoints', async () => {
+    const requestMock = vi.mocked(http.request)
+    requestMock.mockResolvedValueOnce({ rows: [], total: 0 })
+    requestMock.mockResolvedValueOnce({ data: { rectificationId: 9001 } })
+    requestMock.mockResolvedValueOnce({ data: [] })
+    requestMock.mockResolvedValueOnce({ code: 200 })
+    requestMock.mockResolvedValueOnce({ code: 200 })
+    requestMock.mockResolvedValueOnce({ code: 200 })
+    requestMock.mockResolvedValueOnce({ code: 200 })
+
+    await listRealEstateRectifications(20001)
+    await getRealEstateRectification(20001, 9001)
+    await listRealEstateRectificationApprovalRecords(20001, 9001)
+    await submitRealEstateRectificationApproval(20001, 9001, { opinion: '提交整改审批' })
+    await approveRealEstateRectification(20001, 9001, { opinion: '审批通过' })
+    await rejectRealEstateRectificationApproval(20001, 9001, { opinion: '审批驳回' })
+    await completeRealEstateRectification(20001, 9001, {
+      completionDesc: '完成说明',
+      acceptanceRemark: '验收备注'
+    })
+
+    expect(requestMock).toHaveBeenNthCalledWith(1, {
+      url: '/asset/real-estate/20001/rectifications',
+      method: 'get'
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(2, {
+      url: '/asset/real-estate/20001/rectifications/9001',
+      method: 'get'
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(3, {
+      url: '/asset/real-estate/20001/rectifications/9001/approval-records',
+      method: 'get'
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(4, {
+      url: '/asset/real-estate/20001/rectifications/9001/submit-approval',
+      method: 'post',
+      data: { opinion: '提交整改审批' }
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(5, {
+      url: '/asset/real-estate/20001/rectifications/9001/approve',
+      method: 'post',
+      data: { opinion: '审批通过' }
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(6, {
+      url: '/asset/real-estate/20001/rectifications/9001/reject',
+      method: 'post',
+      data: { opinion: '审批驳回' }
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(7, {
+      url: '/asset/real-estate/20001/rectifications/9001/complete',
+      method: 'post',
+      data: {
+        completionDesc: '完成说明',
+        acceptanceRemark: '验收备注'
+      }
     })
   })
 })

@@ -19,6 +19,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="completedTime" column="completed_time"/>
         <result property="completionDesc" column="completion_desc"/>
         <result property="acceptanceRemark" column="acceptance_remark"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="approvalSubmittedTime" column="approval_submitted_time"/>
+        <result property="approvalFinishedTime" column="approval_finished_time"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -47,6 +50,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="completedTime" column="completed_time"/>
         <result property="completionDesc" column="completion_desc"/>
         <result property="acceptanceRemark" column="acceptance_remark"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="approvalSubmittedTime" column="approval_submitted_time"/>
+        <result property="approvalFinishedTime" column="approval_finished_time"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -75,6 +81,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.completed_time,
                r.completion_desc,
                r.acceptance_remark,
+               r.approval_status,
+               r.approval_submitted_time,
+               r.approval_finished_time,
                r.create_by,
                r.create_time,
                r.update_by,
@@ -103,6 +112,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select rectification_id, rectification_no, asset_id, task_id, inventory_item_id,
                rectification_status, issue_type, issue_desc, responsible_dept_id, responsible_user_id,
                deadline_date, completed_time, completion_desc, acceptance_remark,
+               approval_status, approval_submitted_time, approval_finished_time,
                create_by, create_time, update_by, update_time, remark
         from ast_asset_rectification_order
         where inventory_item_id = #{inventoryItemId}
@@ -120,11 +130,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into ast_asset_rectification_order (
             rectification_no, asset_id, task_id, inventory_item_id, rectification_status,
             issue_type, issue_desc, responsible_dept_id, responsible_user_id, deadline_date,
-            completed_time, completion_desc, acceptance_remark, create_by, create_time, remark
+            completed_time, completion_desc, acceptance_remark, approval_status,
+            approval_submitted_time, approval_finished_time, create_by, create_time, remark
         ) values (
             #{rectificationNo}, #{assetId}, #{taskId}, #{inventoryItemId}, #{rectificationStatus},
             #{issueType}, #{issueDesc}, #{responsibleDeptId}, #{responsibleUserId}, #{deadlineDate},
-            #{completedTime}, #{completionDesc}, #{acceptanceRemark}, #{createBy}, sysdate(), #{remark}
+            #{completedTime}, #{completionDesc}, #{acceptanceRemark}, #{approvalStatus},
+            #{approvalSubmittedTime}, #{approvalFinishedTime}, #{createBy}, sysdate(), #{remark}
         )
     </insert>
 
@@ -139,6 +151,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             completed_time = #{completedTime},
             completion_desc = #{completionDesc},
             acceptance_remark = #{acceptanceRemark},
+            approval_status = #{approvalStatus},
+            approval_submitted_time = #{approvalSubmittedTime},
+            approval_finished_time = #{approvalFinishedTime},
             update_by = #{updateBy},
             update_time = sysdate(),
             remark = #{remark}

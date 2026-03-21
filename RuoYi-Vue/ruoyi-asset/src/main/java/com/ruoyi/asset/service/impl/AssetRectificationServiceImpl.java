@@ -9,13 +9,16 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.asset.domain.AssetChangeLog;
 import com.ruoyi.asset.domain.AssetInventoryItem;
 import com.ruoyi.asset.domain.AssetLedger;
+import com.ruoyi.asset.domain.AssetRectificationApprovalRecord;
 import com.ruoyi.asset.domain.AssetRectificationOrder;
+import com.ruoyi.asset.domain.bo.AssetRectificationApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
 import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 import com.ruoyi.asset.mapper.AssetChangeLogMapper;
 import com.ruoyi.asset.mapper.AssetInventoryMapper;
 import com.ruoyi.asset.mapper.AssetLedgerMapper;
+import com.ruoyi.asset.mapper.AssetRectificationApprovalMapper;
 import com.ruoyi.asset.mapper.AssetRectificationMapper;
 import com.ruoyi.asset.service.IAssetRectificationService;
 import com.ruoyi.common.exception.ServiceException;
@@ -43,6 +46,14 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
 
     private static final String PROCESS_STATUS_PROCESSED = "PROCESSED";
 
+    private static final String APPROVAL_STATUS_UNSUBMITTED = "UNSUBMITTED";
+
+    private static final String APPROVAL_STATUS_SUBMITTED = "SUBMITTED";
+
+    private static final String APPROVAL_STATUS_APPROVED = "APPROVED";
+
+    private static final String APPROVAL_STATUS_REJECTED = "REJECTED";
+
     @Autowired
     private AssetRectificationMapper assetRectificationMapper;
 
@@ -54,6 +65,9 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
 
     @Autowired
     private AssetChangeLogMapper assetChangeLogMapper;
+
+    @Autowired
+    private AssetRectificationApprovalMapper assetRectificationApprovalMapper;
 
     @Override
     public List<AssetRectificationVo> selectAssetRectificationListByAssetId(Long assetId)
@@ -173,6 +187,63 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         return rows;
     }
 
+    @Override
+    public List<AssetRectificationApprovalRecord> selectRectificationApprovalRecords(Long assetId, Long rectificationId)
+    {
+        AssetRectificationVo current = requireRectification(assetId, rectificationId);
+        return assetRectificationApprovalMapper.selectAssetRectificationApprovalRecords(current.getRectificationId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int submitRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator)
+    {
+        validateApprovalBo(assetId, rectificationId, bo);
+        AssetRectificationVo current = requireRectification(assetId, rectificationId);
+        if (!isCompletedRectification(current.getRectificationStatus()))
+        {
+            throw new ServiceException("\u53ea\u6709\u5df2\u5b8c\u6210\u6574\u6539\u5355\u624d\u80fd\u63d0\u4ea4\u5ba1\u6279");
+        }
+        String currentApprovalStatus = normalizeApprovalStatus(current.getApprovalStatus());
+        if (!(APPROVAL_STATUS_UNSUBMITTED.equals(currentApprovalStatus)
+            || APPROVAL_STATUS_REJECTED.equals(currentApprovalStatus)))
+        {
+            throw new ServiceException("\u5f53\u524d\u6574\u6539\u5355\u4e0d\u5141\u8bb8\u63d0\u4ea4\u5ba1\u6279");
+        }
+
+        AssetRectificationOrder order = buildApprovalUpdateOrder(current, APPROVAL_STATUS_SUBMITTED, DateUtils.getNowDate(),
+            null, operator);
+        int rows = assetRectificationMapper.updateAssetRectification(order);
+        if (rows <= 0)
+        {
+            throw new ServiceException("\u63d0\u4ea4\u6574\u6539\u5ba1\u6279\u5931\u8d25");
+        }
+        insertApprovalRecord(current, APPROVAL_STATUS_SUBMITTED, bo.getOpinion(), operator);
+        assetChangeLogMapper.insertAssetChangeLog(buildChangeLog(assetId, operator,
+            "\u63d0\u4ea4\u6574\u6539\u5ba1\u6279\uff1a" + current.getRectificationNo() + "\uff0c\u610f\u89c1\uff1a"
+                + StringUtils.trim(bo.getOpinion())));
+        return rows;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int approveRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator)
+    {
+        return finishApproval(assetId, rectificationId, bo, operator, APPROVAL_STATUS_APPROVED,
+            "\u5ba1\u6279\u901a\u8fc7");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int rejectRectificationApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator)
+    {
+        return finishApproval(assetId, rectificationId, bo, operator, APPROVAL_STATUS_REJECTED,
+            "\u5ba1\u6279\u9a73\u56de");
+    }
+
     private void validateBo(AssetRectificationBo bo)
     {
         if (bo == null)
@@ -281,6 +352,9 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         order.setCompletedTime(current == null ? null : current.getCompletedTime());
         order.setCompletionDesc(current == null ? null : current.getCompletionDesc());
         order.setAcceptanceRemark(current == null ? null : current.getAcceptanceRemark());
+        order.setApprovalStatus(current == null ? APPROVAL_STATUS_UNSUBMITTED : normalizeApprovalStatus(current.getApprovalStatus()));
+        order.setApprovalSubmittedTime(current == null ? null : current.getApprovalSubmittedTime());
+        order.setApprovalFinishedTime(current == null ? null : current.getApprovalFinishedTime());
         order.setRemark(bo.getRemark());
         return order;
     }
@@ -303,6 +377,35 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
         order.setCompletedTime(DateUtils.getNowDate());
         order.setCompletionDesc(StringUtils.trim(bo.getCompletionDesc()));
         order.setAcceptanceRemark(normalizeOptionalText(bo.getAcceptanceRemark()));
+        order.setApprovalStatus(normalizeApprovalStatus(current.getApprovalStatus()));
+        order.setApprovalSubmittedTime(current.getApprovalSubmittedTime());
+        order.setApprovalFinishedTime(current.getApprovalFinishedTime());
+        order.setRemark(current.getRemark());
+        order.setUpdateBy(operator);
+        return order;
+    }
+
+    private AssetRectificationOrder buildApprovalUpdateOrder(AssetRectificationVo current, String approvalStatus,
+        Date approvalSubmittedTime, Date approvalFinishedTime, String operator)
+    {
+        AssetRectificationOrder order = new AssetRectificationOrder();
+        order.setRectificationId(current.getRectificationId());
+        order.setRectificationNo(current.getRectificationNo());
+        order.setAssetId(current.getAssetId());
+        order.setTaskId(current.getTaskId());
+        order.setInventoryItemId(current.getInventoryItemId());
+        order.setRectificationStatus(current.getRectificationStatus());
+        order.setIssueType(current.getIssueType());
+        order.setIssueDesc(current.getIssueDesc());
+        order.setResponsibleDeptId(current.getResponsibleDeptId());
+        order.setResponsibleUserId(current.getResponsibleUserId());
+        order.setDeadlineDate(current.getDeadlineDate());
+        order.setCompletedTime(current.getCompletedTime());
+        order.setCompletionDesc(current.getCompletionDesc());
+        order.setAcceptanceRemark(current.getAcceptanceRemark());
+        order.setApprovalStatus(approvalStatus);
+        order.setApprovalSubmittedTime(approvalSubmittedTime);
+        order.setApprovalFinishedTime(approvalFinishedTime);
         order.setRemark(current.getRemark());
         order.setUpdateBy(operator);
         return order;
@@ -321,6 +424,86 @@ public class AssetRectificationServiceImpl implements IAssetRectificationService
     private boolean isCompletedRectification(String rectificationStatus)
     {
         return RECTIFICATION_STATUS_COMPLETED.equals(StringUtils.upperCase(StringUtils.trim(rectificationStatus)));
+    }
+
+    private String normalizeApprovalStatus(String approvalStatus)
+    {
+        String normalized = StringUtils.upperCase(StringUtils.trim(approvalStatus));
+        return StringUtils.isBlank(normalized) ? APPROVAL_STATUS_UNSUBMITTED : normalized;
+    }
+
+    private AssetRectificationVo requireRectification(Long assetId, Long rectificationId)
+    {
+        if (assetId == null)
+        {
+            throw new ServiceException("\u8d44\u4ea7ID\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+        if (rectificationId == null)
+        {
+            throw new ServiceException("\u6574\u6539\u5355ID\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+        AssetRectificationVo current = selectAssetRectificationById(rectificationId);
+        if (!assetId.equals(current.getAssetId()))
+        {
+            throw new ServiceException("\u6574\u6539\u5355\u4e0e\u8d44\u4ea7\u4e0d\u5339\u914d");
+        }
+        return current;
+    }
+
+    private void validateApprovalBo(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo)
+    {
+        if (assetId == null)
+        {
+            throw new ServiceException("\u8d44\u4ea7ID\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+        if (rectificationId == null)
+        {
+            throw new ServiceException("\u6574\u6539\u5355ID\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+        if (bo == null || StringUtils.isBlank(bo.getOpinion()))
+        {
+            throw new ServiceException("\u5ba1\u6279\u610f\u89c1\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+    }
+
+    private int finishApproval(Long assetId, Long rectificationId, AssetRectificationApprovalActionBo bo,
+        String operator, String targetApprovalStatus, String actionLabel)
+    {
+        validateApprovalBo(assetId, rectificationId, bo);
+        AssetRectificationVo current = requireRectification(assetId, rectificationId);
+        if (!APPROVAL_STATUS_SUBMITTED.equals(normalizeApprovalStatus(current.getApprovalStatus())))
+        {
+            throw new ServiceException("\u53ea\u6709\u5df2\u63d0\u4ea4\u7684\u6574\u6539\u5ba1\u6279\u624d\u80fd\u6267\u884c\u5ba1\u6279\u52a8\u4f5c");
+        }
+        AssetRectificationOrder order = buildApprovalUpdateOrder(current, targetApprovalStatus,
+            current.getApprovalSubmittedTime(), DateUtils.getNowDate(), operator);
+        int rows = assetRectificationMapper.updateAssetRectification(order);
+        if (rows <= 0)
+        {
+            throw new ServiceException(actionLabel + "\u5931\u8d25");
+        }
+        insertApprovalRecord(current, targetApprovalStatus, bo.getOpinion(), operator);
+        assetChangeLogMapper.insertAssetChangeLog(buildChangeLog(assetId, operator,
+            actionLabel + "\uff1a" + current.getRectificationNo() + "\uff0c\u610f\u89c1\uff1a"
+                + StringUtils.trim(bo.getOpinion())));
+        return rows;
+    }
+
+    private void insertApprovalRecord(AssetRectificationVo current, String approvalStatus, String opinion,
+        String operator)
+    {
+        AssetRectificationApprovalRecord record = new AssetRectificationApprovalRecord();
+        record.setRectificationId(current.getRectificationId());
+        record.setAssetId(current.getAssetId());
+        record.setApprovalStatus(approvalStatus);
+        record.setOpinion(StringUtils.trim(opinion));
+        record.setOperateBy(operator);
+        record.setOperateTime(DateUtils.getNowDate());
+        int rows = assetRectificationApprovalMapper.insertAssetRectificationApprovalRecord(record);
+        if (rows <= 0)
+        {
+            throw new ServiceException("\u5199\u5165\u6574\u6539\u5ba1\u6279\u8f68\u8ff9\u5931\u8d25");
+        }
     }
 
     private void syncInventoryFollowUp(Long inventoryItemId, String rectificationStatus, Long rectificationId)
