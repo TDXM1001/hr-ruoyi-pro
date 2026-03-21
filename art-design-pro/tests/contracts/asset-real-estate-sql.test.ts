@@ -61,4 +61,15 @@ describe('Asset Real Estate SQL Contract', () => {
     expect(sql).toContain('inventory_item_id')
     expect(sql).toContain('rectification_status')
   })
+
+  it('修复巡检点测乱码样例，并补充可见的待整改入口样例', () => {
+    const sql = aggregateAssetSql()
+
+    expect(sql).toContain('IV-2026-9001')
+    expect(sql).toContain('不动产B座门厅巡检')
+    expect(sql).toContain('整改完成页点测：发现门厅门禁异常，需要发起整改并完成验收。')
+    expect(sql).toContain('IV-2026-9003')
+    expect(sql).toContain('不动产B座三次巡检')
+    expect(sql).toContain('巡检发现门厅门禁再次松动，当前尚未发起整改。')
+  })
 })
