@@ -5,10 +5,8 @@
         <div class="flex flex-col gap-2">
           <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">返回整改页签</ElButton>
           <div>
-            <div class="page-title">整改完成页</div>
-            <div class="page-desc">
-              完成页只做状态收口，资产管理员在这里补充完成说明与验收备注，确保“待整改 -> 已完成”有明确事实留痕。
-            </div>
+            <div class="page-title">{{ pageTitle }}</div>
+            <div class="page-desc">{{ pageDesc }}</div>
           </div>
         </div>
 
@@ -41,19 +39,35 @@
 
     <ElCard class="section-card" shadow="never">
       <template #header>
-        <div class="card-title">完成登记</div>
+        <div class="card-title">{{ isCompletedRectification ? '完成结果' : '完成登记' }}</div>
       </template>
 
       <div class="section-body">
         <ElAlert
           class="mb-4"
-          type="success"
+          :type="isCompletedRectification ? 'success' : 'info'"
           show-icon
           :closable="false"
-          title="完成动作只负责收口整改事实，不再修改责任、期限和问题描述等基础信息。"
+          :title="
+            isCompletedRectification
+              ? '该整改单已完成，当前页面只做结果查看，不再允许重复提交。'
+              : '完成动作只负责收口整改事实，不再修改责任、期限和问题描述等基础信息。'
+          "
         />
 
-        <ElForm ref="formRef" :model="formData" :rules="rules" label-width="110px">
+        <ElDescriptions v-if="isCompletedRectification" class="result-descriptions" :column="3" border>
+          <ElDescriptionsItem label="完成时间">{{ rectificationData.completedTime || '-' }}</ElDescriptionsItem>
+          <ElDescriptionsItem label="整改状态">{{ rectificationStatusLabel }}</ElDescriptionsItem>
+          <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
+          <ElDescriptionsItem label="完成说明" :span="2">
+            {{ rectificationData.completionDesc || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="验收备注">
+            {{ rectificationData.acceptanceRemark || '-' }}
+          </ElDescriptionsItem>
+        </ElDescriptions>
+
+        <ElForm v-else ref="formRef" :model="formData" :rules="rules" label-width="110px">
           <ElFormItem label="完成说明" prop="completionDesc">
             <ElInput
               v-model="formData.completionDesc"
@@ -78,8 +92,10 @@
         </ElForm>
 
         <div class="action-bar">
-          <ElButton @click="goBack">取消</ElButton>
-          <ElButton type="primary" :loading="submitting" @click="handleSubmit">确认完成整改</ElButton>
+          <ElButton @click="goBack">{{ isCompletedRectification ? '返回整改页签' : '取消' }}</ElButton>
+          <ElButton v-if="!isCompletedRectification" type="primary" :loading="submitting" @click="handleSubmit">
+            确认完成整改
+          </ElButton>
         </div>
       </div>
     </ElCard>
@@ -114,6 +130,18 @@
 
   const assetId = computed(() => Number(route.params.assetId))
   const rectificationId = computed(() => Number(route.params.rectificationId))
+  const isCompletedRectification = computed(() => {
+    return String(rectificationData.rectificationStatus || '').toUpperCase() === 'COMPLETED'
+  })
+  const pageTitle = computed(() => {
+    return isCompletedRectification.value ? '整改完成结果' : '整改完成页'
+  })
+  const pageDesc = computed(() => {
+    if (isCompletedRectification.value) {
+      return '该整改单已按标准收口，当前页面仅用于查看完成事实、完成时间和验收备注。'
+    }
+    return '完成页只做状态收口，资产管理员在这里补充完成说明与验收备注，确保“待整改 -> 已完成”有明确事实留痕。'
+  })
 
   const rules: FormRules = {
     completionDesc: [{ required: true, message: '请输入完成说明', trigger: 'blur' }]
@@ -163,6 +191,11 @@
   }
 
   const handleSubmit = async () => {
+    if (isCompletedRectification.value) {
+      ElMessage.warning('该整改单已完成，请直接查看完成结果')
+      return
+    }
+
     const valid = await formRef.value?.validate().catch(() => false)
     if (!valid) {
       return
@@ -259,5 +292,19 @@
 
   .context-descriptions :deep(.el-descriptions__table) {
     min-width: 860px;
+  }
+
+  .result-descriptions :deep(.el-descriptions__body) {
+    overflow-x: auto;
+  }
+
+  .result-descriptions :deep(.el-descriptions__table) {
+    min-width: 860px;
+  }
+
+  .result-descriptions :deep(.el-descriptions__cell) {
+    line-height: 1.7;
+    word-break: break-word;
+    white-space: normal;
   }
 </style>

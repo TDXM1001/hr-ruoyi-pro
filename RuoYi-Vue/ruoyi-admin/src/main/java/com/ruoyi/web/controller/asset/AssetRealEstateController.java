@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.asset.domain.bo.AssetRealEstateBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationBo;
 import com.ruoyi.asset.domain.bo.AssetRectificationCompleteBo;
+import com.ruoyi.asset.domain.vo.AssetRectificationVo;
 import com.ruoyi.asset.domain.vo.AssetTreeNodeVo;
 import com.ruoyi.asset.domain.vo.AssetUserOptionVo;
 import com.ruoyi.asset.mapper.AssetLookupMapper;
@@ -29,6 +30,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 
 /**
@@ -196,7 +198,12 @@ public class AssetRealEstateController extends BaseController
     @GetMapping("/{assetId}/rectifications/{rectificationId}")
     public AjaxResult getRectificationInfo(@PathVariable Long assetId, @PathVariable Long rectificationId)
     {
-        return success(assetRectificationService.selectAssetRectificationById(rectificationId));
+        AssetRectificationVo detail = assetRectificationService.selectAssetRectificationById(rectificationId);
+        if (!assetId.equals(detail.getAssetId()))
+        {
+            throw new ServiceException("\u6574\u6539\u5355\u4e0e\u8d44\u4ea7\u4e0d\u5339\u914d");
+        }
+        return success(detail);
     }
 
     /**
