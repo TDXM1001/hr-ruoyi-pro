@@ -55,7 +55,7 @@
       <InspectionPanel
         v-else-if="activeTab === 'inspection'"
         :detail-data="detailData"
-        :inspection-records="inspectionRecords"
+        :inspection-records="inspectionLinkedRecords"
         :pending-rectification-count="pendingRectificationCount"
         :can-edit="canEdit"
         @inspection-task="goToInspectionTask"
@@ -129,6 +129,13 @@
     changeLogs: [] as AssetChangeLogRecord[]
   })
 
+  type InspectionLinkStatus = 'NONE_REQUIRED' | 'NOT_CREATED' | 'PENDING' | 'COMPLETED'
+
+  type InspectionRecordView = AssetInventoryRecord & {
+    rectificationLinkStatus: InspectionLinkStatus
+    linkedRectification?: AssetRectificationRecord
+  }
+
   const assetId = computed(() => {
     const value = route.params.assetId
     return value ? Number(value) : undefined
@@ -186,11 +193,61 @@
   })
 
   const pendingRectificationCount = computed(() => {
-    return inspectionRecords.value.filter((record) => isRectifiableRecord(record) && !record.followUpBizId).length
+    return inspectionLinkedRecords.value.filter((record) =>
+      ['NOT_CREATED', 'PENDING'].includes(record.rectificationLinkStatus)
+    ).length
   })
 
   const rectificationLogs = computed(() => {
     return lifecycleData.changeLogs.filter((record) => String(record.changeDesc || '').includes('整改'))
+  })
+
+  const findLinkedRectification = (record: AssetInventoryRecord) => {
+    if (record.followUpBizId) {
+      const byRectificationId = rectificationRecords.value.find((item) => item.rectificationId === record.followUpBizId)
+      if (byRectificationId) {
+        return byRectificationId
+      }
+    }
+
+    if (record.itemId) {
+      const byInventoryItemId = rectificationRecords.value.find((item) => item.inventoryItemId === record.itemId)
+      if (byInventoryItemId) {
+        return byInventoryItemId
+      }
+    }
+
+    if (record.taskId) {
+      const byTaskId = rectificationRecords.value.find((item) => item.taskId === record.taskId)
+      if (byTaskId) {
+        return byTaskId
+      }
+    }
+
+    return undefined
+  }
+
+  const inspectionLinkedRecords = computed<InspectionRecordView[]>(() => {
+    return inspectionRecords.value.map((record) => {
+      const linkedRectification = findLinkedRectification(record)
+      let rectificationLinkStatus: InspectionLinkStatus = 'NONE_REQUIRED'
+
+      if (isRectifiableRecord(record)) {
+        if (!linkedRectification) {
+          rectificationLinkStatus = 'NOT_CREATED'
+        } else if (String(linkedRectification.rectificationStatus || '').toUpperCase() === 'COMPLETED') {
+          rectificationLinkStatus = 'COMPLETED'
+        } else {
+          rectificationLinkStatus = 'PENDING'
+        }
+      }
+
+      return {
+        ...record,
+        rectificationLinkStatus,
+        linkedRectification
+      }
+    })
   })
 
   const preferredDisposalTab = computed<'pool' | 'record'>(() => {

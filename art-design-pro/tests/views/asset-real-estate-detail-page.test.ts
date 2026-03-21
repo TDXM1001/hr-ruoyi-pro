@@ -218,6 +218,11 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.text()).toContain('巡检任务记录')
     expect(wrapper.text()).toContain('发起整改')
     expect(wrapper.text()).toContain('查看整改')
+    expect(wrapper.text()).toContain('整改联动：未发起整改')
+    expect(wrapper.text()).toContain('请尽快发起整改并明确责任人和期限')
+    expect(wrapper.text()).toContain('整改联动：待整改')
+    expect(wrapper.text()).toContain('责任归口：研发部门 / 若依')
+    expect(wrapper.text()).toContain('整改期限：2026-03-20')
 
     await wrapper.get('[data-testid="inspection-task-link-6"]').trigger('click')
     expect(mockPush).toHaveBeenLastCalledWith('/asset/real-estate/detail/20001/inspection-task/6')
@@ -231,6 +236,68 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
       }
     })
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('rectification')
+  })
+
+  it('巡检页签对已闭环整改直接展示闭环摘要', async () => {
+    routeState.path = '/asset/real-estate/detail/20001/inspection'
+    routeState.fullPath = routeState.path
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        handoverRecords: [],
+        inventoryRecords: [
+          {
+            itemId: 67,
+            taskId: 7,
+            taskNo: 'INV-2026-0009',
+            taskName: '消防设施专项巡检',
+            inventoryResult: 'DAMAGED',
+            followUpAction: 'UPDATE_LEDGER',
+            followUpBizId: 9001,
+            processStatus: 'PROCESSED',
+            checkedBy: '资产管理员',
+            checkedTime: '2026-03-05 10:00:00',
+            resultDesc: '消防闭门器损坏'
+          }
+        ],
+        rectificationOrders: [
+          {
+            rectificationId: 9001,
+            rectificationNo: 'RC-2026-0001',
+            assetId: 20001,
+            taskId: 7,
+            taskNo: 'INV-2026-0009',
+            taskName: '消防设施专项巡检',
+            issueType: '损坏',
+            issueDesc: '消防闭门器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            deadlineDate: '2026-03-20',
+            completedTime: '2026-03-21 14:49:04',
+            completionDesc: '已完成现场修复并复核，闭门器恢复正常使用。',
+            acceptanceRemark: '资产管理员现场验收通过，允许关闭本次整改。'
+          }
+        ],
+        disposalRecords: [],
+        changeLogs: []
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('整改联动：已闭环')
+    expect(wrapper.text()).toContain('已完成整改并通过验收，可归档留痕')
+    expect(wrapper.text()).toContain('完成时间：2026-03-21 14:49:04')
+    expect(wrapper.text()).toContain('验收备注：资产管理员现场验收通过，允许关闭本次整改。')
+    expect(wrapper.find('[data-testid="rectification-edit-link-9001"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="rectification-complete-link-9001"]').exists()).toBe(false)
   })
 
   it('从缓存恢复整改页签，并支持跳转整改单和资产处置', async () => {
