@@ -6,6 +6,15 @@
       <ElTabs v-model="activeTab">
         <ElTabPane label="待处置资产池" name="pool">
           <div class="tab-pane-body">
+            <ElAlert
+              v-if="activeTab === 'pool' && scopedAssetCode"
+              class="mb-3"
+              type="info"
+              show-icon
+              :closable="false"
+              :title="`当前已按资产 ${scopedAssetCode} 过滤待处置资产池`"
+            />
+
             <ArtSearchBar
               v-model="poolSearchForm"
               :items="poolSearchItems"
@@ -41,6 +50,15 @@
 
         <ElTabPane label="处置记录" name="record">
           <div class="tab-pane-body">
+            <ElAlert
+              v-if="activeTab === 'record' && scopedAssetCode"
+              class="mb-3"
+              type="success"
+              show-icon
+              :closable="false"
+              :title="`当前已按资产 ${scopedAssetCode} 过滤处置记录`"
+            />
+
             <ArtSearchBar
               v-model="recordSearchForm"
               :items="recordSearchItems"
@@ -227,6 +245,7 @@
   }
 
   const { ast_asset_status } = useDict('ast_asset_status')
+  const route = useRoute()
   const userStore = useUserStore()
   const hasPermission = (permission: string) => {
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
@@ -235,8 +254,11 @@
   // 中文注释：处置确认会改变台账最终状态，仅对具备新增处置权限的用户开放。
   const canConfirmDisposal = computed(() => hasPermission('asset:disposal:add'))
 
-  // 中文注释：默认先展示“待处置资产池”，符合先处理再回看记录的操作习惯。
-  const activeTab = ref<'pool' | 'record'>('pool')
+  const scopedAssetId = Number(route.query.assetId || 0) || undefined
+  const scopedAssetCode = typeof route.query.assetCode === 'string' ? route.query.assetCode : ''
+
+  // 中文注释：如果从资产详情页带着上下文跳转过来，则优先打开对应页签。
+  const activeTab = ref<'pool' | 'record'>(route.query.tab === 'record' ? 'record' : 'pool')
 
   const disposalTypeOptions = [
     { label: '报废', value: 'SCRAP', listClass: 'warning' },
@@ -248,7 +270,7 @@
   const disposalStatusOptions = [{ label: '已确认', value: 'CONFIRMED', listClass: 'success' }]
 
   const poolInitialSearchState = {
-    assetCode: '',
+    assetCode: activeTab.value === 'pool' ? scopedAssetCode : '',
     assetName: ''
   }
   const poolSearchForm = reactive({ ...poolInitialSearchState })
@@ -336,7 +358,8 @@
   const recordInitialSearchState = {
     disposalNo: '',
     disposalType: '',
-    daterange: undefined as string[] | undefined
+    daterange: undefined as string[] | undefined,
+    assetId: activeTab.value === 'record' ? scopedAssetId : undefined as number | undefined
   }
   const recordSearchForm = reactive({ ...recordInitialSearchState })
 
@@ -501,10 +524,15 @@
     return {
       disposalNo: recordSearchForm.disposalNo?.trim() || undefined,
       disposalType: recordSearchForm.disposalType || undefined,
+      assetId: recordSearchForm.assetId,
       'params[beginTime]': beginTime,
       'params[endTime]': endTime
     }
   }
+
+  // 中文注释：在组件初次挂载前预装载路由上下文筛选条件，确保 useTable 首次请求直接带上资产过滤。
+  Object.assign(poolSearchParams, buildPoolQueryParams())
+  Object.assign(recordSearchParams, buildRecordQueryParams())
 
   const handleRecordSearch = () => {
     Object.assign(recordSearchParams, buildRecordQueryParams())

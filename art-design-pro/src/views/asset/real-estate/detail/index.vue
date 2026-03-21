@@ -3,190 +3,302 @@
     <ElCard class="head-card" shadow="never">
       <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div class="flex flex-col gap-2">
-          <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">返回不动产档案</ElButton>
+          <ElButton link type="primary" icon="ri:arrow-left-line" @click="goBack">???????</ElButton>
           <div>
-            <div class="page-title">不动产档案详情</div>
-            <div class="page-desc">
-              当前详情页统一展示不动产台账主数据、权属扩展信息与生命周期轨迹，便于资产管理员在一个页面完成核查与追溯。
-            </div>
+            <div class="page-title">???????</div>
+            <div class="page-desc">{{ activeTabDesc }}</div>
           </div>
         </div>
 
         <div class="meta-tags flex flex-wrap items-center gap-2">
-          <ElTag type="success" effect="light">资产类型：不动产</ElTag>
-          <ElButton v-if="canEdit" type="primary" plain @click="handleEdit">编辑</ElButton>
+          <ElTag type="success" effect="light">????????</ElTag>
+          <ElTag effect="light">?????{{ activeTabLabel }}</ElTag>
+          <ElButton v-if="canEdit" type="primary" plain @click="handleEdit">??</ElButton>
         </div>
       </div>
     </ElCard>
 
+    <ElCard class="summary-card" shadow="never">
+      <div class="summary-grid">
+        <div v-for="item in summaryItems" :key="item.label" class="summary-item">
+          <div class="summary-item__label">{{ item.label }}</div>
+          <div class="summary-item__value">{{ item.value }}</div>
+        </div>
+      </div>
+    </ElCard>
+
+    <ElCard class="tab-card" shadow="never">
+      <ElTabs v-model="activeTab" class="detail-tabs" @tab-change="handleTabChange">
+        <ElTabPane v-for="item in detailTabs" :key="item.name" :label="item.label" :name="item.name" />
+      </ElTabs>
+    </ElCard>
+
     <div class="detail-scroll-area" v-loading="loading">
-      <ElCard class="section-card section-card--overview" shadow="never">
-        <template #header>
-          <div class="card-title">状态概览</div>
-        </template>
-        <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
-          <ElDescriptionsItem label="资产编码">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="资产名称">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="资产状态">
-            <DictTag :options="ast_asset_status" :value="detailData.assetStatus" />
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="录入来源">
-            <DictTag :options="ast_asset_source_type" :value="detailData.sourceType" />
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="取得方式">
-            <DictTag :options="ast_asset_acquire_type" :value="detailData.acquireType" />
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="资产分类">{{ detailData.categoryName || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-      </ElCard>
+      <template v-if="activeTab === 'overview'">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
+            <ElDescriptionsItem label="????">{{ detailData.assetCode || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.assetName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">
+              <DictTag :options="ast_asset_status" :value="detailData.assetStatus" />
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="????">
+              <DictTag :options="ast_asset_source_type" :value="detailData.sourceType" />
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="????">
+              <DictTag :options="ast_asset_acquire_type" :value="detailData.acquireType" />
+            </ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.categoryName || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">权属与使用</div>
-        </template>
-        <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
-          <ElDescriptionsItem label="权属部门">{{ detailData.ownerDeptName || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="使用部门">{{ detailData.useDeptName || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="责任人">{{ detailData.responsibleUserName || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="资产位置" :span="3">{{ detailData.locationName || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-      </ElCard>
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
+            <ElDescriptionsItem label="????" :span="2">{{ detailData.ownershipCertNo || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.landUseType || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????(?)">{{ formatArea(detailData.buildingArea) }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????" :span="2">{{ detailData.locationName || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">权属信息</div>
-        </template>
-        <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
-          <ElDescriptionsItem label="权属证号" :span="2">{{ detailData.ownershipCertNo || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="土地用途">{{ detailData.landUseType || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="建筑面积(㎡)">{{ formatArea(detailData.buildingArea) }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="备注" :span="2">{{ detailData.remark || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-      </ElCard>
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">?????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--4" :column="4" border>
+            <ElDescriptionsItem label="????">{{ formatMoney(detailData.originalValue) }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.specModel || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="???">{{ detailData.serialNo || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.createTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="???">{{ detailData.createBy || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.updateTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="???">{{ detailData.updateBy || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">财务与日期</div>
-        </template>
-        <ElDescriptions class="detail-descriptions detail-descriptions--4" :column="4" border>
-          <ElDescriptionsItem label="资产原值">{{ formatMoney(detailData.originalValue) }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="规格型号">{{ detailData.specModel || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="序列号">{{ detailData.serialNo || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="最近盘点">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="取得日期">{{ detailData.acquisitionDate || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="启用日期">{{ detailData.enableDate || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="建档时间">{{ detailData.createTime || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="更新时间">{{ detailData.updateTime || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-      </ElCard>
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <ElTimeline v-if="lifecycleData.changeLogs.length">
+              <ElTimelineItem
+                v-for="record in lifecycleData.changeLogs"
+                :key="record.logId"
+                :timestamp="record.operateTime || '-'"
+                placement="top"
+              >
+                <div class="timeline-title">{{ getBizTypeLabel(record.bizType) }}</div>
+                <div class="timeline-desc">{{ record.changeDesc || '??????' }}</div>
+                <div class="timeline-meta">
+                  ????{{ record.operateBy || '-' }}????{{ record.beforeStatus || '-' }} ->
+                  {{ record.afterStatus || '-' }}
+                </div>
+              </ElTimelineItem>
+            </ElTimeline>
+            <ElEmpty v-else description="????????" :image-size="68" />
+          </div>
+        </ElCard>
+      </template>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">留痕信息</div>
-        </template>
-        <ElDescriptions class="detail-descriptions detail-descriptions--2" :column="2" border>
-          <ElDescriptionsItem label="创建人">{{ detailData.createBy || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="更新人">{{ detailData.updateBy || '-' }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="备注" :span="2">{{ detailData.remark || '-' }}</ElDescriptionsItem>
-        </ElDescriptions>
-      </ElCard>
+      <template v-else-if="activeTab === 'occupancy'">
+        <ElAlert
+          class="section-alert"
+          type="info"
+          show-icon
+          :closable="false"
+          title="?????????????????????????????????????????"
+        />
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">生命周期轨迹</div>
-        </template>
-        <div class="record-wrapper">
-          <ElTimeline v-if="lifecycleData.changeLogs.length">
-            <ElTimelineItem
-              v-for="record in lifecycleData.changeLogs"
-              :key="record.logId"
-              :timestamp="record.operateTime || '-'"
-              placement="top"
-            >
-              <div class="timeline-title">{{ getBizTypeLabel(record.bizType) }}</div>
-              <div class="timeline-desc">{{ record.changeDesc || '无变更说明' }}</div>
-              <div class="timeline-meta">
-                操作人：{{ record.operateBy || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
-                {{ record.afterStatus || '-' }}
-              </div>
-            </ElTimelineItem>
-          </ElTimeline>
-          <ElEmpty v-else description="暂无生命周期轨迹" :image-size="68" />
-        </div>
-      </ElCard>
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">??????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--2" :column="2" border>
+            <ElDescriptionsItem label="????">{{ detailData.ownerDeptName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.useDeptName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="???">{{ detailData.responsibleUserName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.locationName || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.enableDate || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="????">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">交接记录</div>
-        </template>
-        <div class="record-wrapper">
-          <div v-if="lifecycleData.handoverRecords.length" class="record-list">
-            <div
-              v-for="record in lifecycleData.handoverRecords"
-              :key="`${record.handoverOrderId}-${record.handoverItemId}`"
-              class="record-item"
-            >
-              <div class="record-item__title">
-                {{ record.handoverNo || '-' }} / {{ getHandoverTypeLabel(record.handoverType) }}
-              </div>
-              <div class="record-item__desc">
-                日期：{{ record.handoverDate || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
-                {{ record.afterStatus || '-' }}
-              </div>
-              <div class="record-item__desc">
-                去向：{{ record.toDeptName || '-' }} / {{ record.toUserName || '-' }} /
-                {{ record.toLocationName || '-' }}
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <div v-if="occupancyRecords.length" class="record-list">
+              <div
+                v-for="record in occupancyRecords"
+                :key="`${record.handoverOrderId}-${record.handoverItemId}`"
+                class="record-item"
+              >
+                <div class="record-item__title">
+                  {{ record.handoverNo || '-' }} / {{ getHandoverTypeLabel(record.handoverType) }}
+                </div>
+                <div class="record-item__desc">
+                  ???{{ record.handoverDate || '-' }}????{{ record.beforeStatus || '-' }} ->
+                  {{ record.afterStatus || '-' }}
+                </div>
+                <div class="record-item__desc">
+                  ???{{ record.toDeptName || '-' }} / {{ record.toUserName || '-' }} /
+                  {{ record.toLocationName || '-' }}
+                </div>
               </div>
             </div>
+            <ElEmpty v-else description="??????" :image-size="68" />
           </div>
-          <ElEmpty v-else description="暂无交接记录" :image-size="68" />
-        </div>
-      </ElCard>
+        </ElCard>
+      </template>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">盘点记录</div>
-        </template>
-        <div class="record-wrapper">
-          <div v-if="lifecycleData.inventoryRecords.length" class="record-list">
-            <div v-for="record in lifecycleData.inventoryRecords" :key="`${record.taskId}-${record.checkedTime || ''}`" class="record-item">
-              <div class="record-item__title">{{ record.taskNo || '-' }} / {{ record.taskName || '-' }}</div>
-              <div class="record-item__desc">
-                结果：{{ getInventoryResultLabel(record.inventoryResult) }}，后续动作：{{ getFollowUpActionLabel(record.followUpAction) }}
-              </div>
-              <div class="record-item__desc">
-                盘点人：{{ record.checkedBy || '-' }}，盘点时间：{{ record.checkedTime || '-' }}
+      <template v-else-if="activeTab === 'inspection'">
+        <ElAlert
+          class="section-alert"
+          type="warning"
+          show-icon
+          :closable="false"
+          title="????????????/??????????????????????????????????"
+        />
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
+            <ElDescriptionsItem label="????">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="?????">{{ inspectionRecords.length }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="?????">{{ rectificationItems.length }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <div v-if="inspectionRecords.length" class="record-list">
+              <div v-for="record in inspectionRecords" :key="`${record.taskId}-${record.checkedTime || ''}`" class="record-item">
+                <div class="record-item__title">{{ record.taskNo || '-' }} / {{ record.taskName || '-' }}</div>
+                <div class="record-item__desc">
+                  ???{{ getInventoryResultLabel(record.inventoryResult) }}??????{{ getFollowUpActionLabel(record.followUpAction) }}
+                </div>
+                <div class="record-item__desc">
+                  ????{{ record.checkedBy || '-' }}??????{{ record.checkedTime || '-' }}
+                </div>
               </div>
             </div>
+            <ElEmpty v-else description="??????" :image-size="68" />
           </div>
-          <ElEmpty v-else description="暂无盘点记录" :image-size="68" />
-        </div>
-      </ElCard>
+        </ElCard>
 
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">处置记录</div>
-        </template>
-        <div class="record-wrapper">
-          <div v-if="lifecycleData.disposalRecords.length" class="record-list">
-            <div v-for="record in lifecycleData.disposalRecords" :key="record.disposalId" class="record-item">
-              <div class="record-item__title">{{ record.disposalNo || '-' }} / {{ record.disposalType || '-' }}</div>
-              <div class="record-item__desc">
-                状态：{{ record.disposalStatus || '-' }}，处置日期：{{ record.disposalDate || '-' }}
-              </div>
-              <div class="record-item__desc">
-                确认人：{{ record.confirmedBy || '-' }}，确认时间：{{ record.confirmedTime || '-' }}
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <div v-if="rectificationItems.length" class="record-list">
+              <div v-for="item in rectificationItems" :key="item.key" class="record-item">
+                <div class="record-item__title">{{ item.title }}</div>
+                <div class="record-item__desc">?????{{ item.actionLabel }}</div>
+                <div class="record-item__desc">???{{ item.description }}</div>
               </div>
             </div>
+            <ElEmpty v-else description="?????????" :image-size="68" />
           </div>
-          <ElEmpty v-else description="暂无处置记录" :image-size="68" />
-        </div>
-      </ElCard>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <ElTimeline v-if="rectificationLogs.length">
+              <ElTimelineItem
+                v-for="record in rectificationLogs"
+                :key="record.logId"
+                :timestamp="record.operateTime || '-'"
+                placement="top"
+              >
+                <div class="timeline-title">{{ getBizTypeLabel(record.bizType) }}</div>
+                <div class="timeline-desc">{{ record.changeDesc || '??????' }}</div>
+                <div class="timeline-meta">????{{ record.operateBy || '-' }}</div>
+              </ElTimelineItem>
+            </ElTimeline>
+            <ElEmpty v-else description="??????" :image-size="68" />
+          </div>
+        </ElCard>
+      </template>
+
+      <template v-else>
+        <ElAlert
+          class="section-alert"
+          type="success"
+          show-icon
+          :closable="false"
+          title="????????????????????????????????????????????????"
+        />
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="disposal-link-card">
+            <div class="disposal-link-card__meta">
+              <div class="disposal-link-card__title">?????????</div>
+              <div class="disposal-link-card__desc">
+                ?????{{ detailData.assetStatus || '-' }}?????????{{ disposalRecords.length }} ?
+              </div>
+            </div>
+            <ElButton data-testid="disposal-jump-button" type="primary" @click="goToDisposalModule">??????</ElButton>
+          </div>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
+            <ElDescriptionsItem label="??????">{{ preferredDisposalTab === 'record' ? '????' : '??????' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="??????">{{ latestDisposalRecord?.disposalDate || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="?????">{{ latestDisposalRecord?.confirmedBy || '-' }}</ElDescriptionsItem>
+          </ElDescriptions>
+        </ElCard>
+
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">????</div>
+          </template>
+          <div class="record-wrapper">
+            <div v-if="disposalRecords.length" class="record-list">
+              <div v-for="record in disposalRecords" :key="record.disposalId" class="record-item">
+                <div class="record-item__title">{{ record.disposalNo || '-' }} / {{ record.disposalType || '-' }}</div>
+                <div class="record-item__desc">
+                  ???{{ record.disposalStatus || '-' }}??????{{ record.disposalDate || '-' }}
+                </div>
+                <div class="record-item__desc">
+                  ????{{ record.confirmedBy || '-' }}??????{{ record.confirmedTime || '-' }}
+                </div>
+              </div>
+            </div>
+            <ElEmpty v-else description="??????" :image-size="68" />
+          </div>
+        </ElCard>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+  import type { TabPaneName } from 'element-plus'
   import { ElMessage } from 'element-plus'
   import { getRealEstateDetail, getRealEstateLifecycle } from '@/api/asset/real-estate'
   import { useDict } from '@/utils/dict'
@@ -195,10 +307,35 @@
 
   defineOptions({ name: 'AssetRealEstateDetailPage' })
 
+  type DetailTabName = 'overview' | 'occupancy' | 'inspection' | 'disposal'
+
   const route = useRoute()
   const router = useRouter()
   const userStore = useUserStore()
   route.meta.activePath = '/asset/real-estate'
+
+  const detailTabs: Array<{ name: DetailTabName; label: string; desc: string }> = [
+    {
+      name: 'overview',
+      label: '????',
+      desc: '???????????????????????????????????????????????'
+    },
+    {
+      name: 'occupancy',
+      label: '????',
+      desc: '???????????????????????????????????????????????'
+    },
+    {
+      name: 'inspection',
+      label: '????',
+      desc: '??????????/??????????????????????????????????????'
+    },
+    {
+      name: 'disposal',
+      label: '????',
+      desc: '?????????????????????????????????????????????'
+    }
+  ]
 
   const { ast_asset_status, ast_asset_source_type, ast_asset_acquire_type } = useDict(
     'ast_asset_status',
@@ -207,6 +344,7 @@
   )
 
   const loading = ref(false)
+  const activeTab = ref<DetailTabName>('overview')
   const detailData = reactive<Record<string, any>>({})
   const lifecycleData = reactive({
     handoverRecords: [] as Record<string, any>[],
@@ -224,6 +362,63 @@
     return (
       userStore.permissions.includes('*:*:*') || userStore.permissions.includes('asset:realEstate:edit')
     )
+  })
+
+  const activeTabLabel = computed(() => {
+    return detailTabs.find((item) => item.name === activeTab.value)?.label || '????'
+  })
+
+  const activeTabDesc = computed(() => {
+    return detailTabs.find((item) => item.name === activeTab.value)?.desc || detailTabs[0].desc
+  })
+
+  const summaryItems = computed(() => {
+    return [
+      { label: '????', value: detailData.assetCode || '-' },
+      { label: '????', value: getStatusLabel(detailData.assetStatus) },
+      { label: '????', value: detailData.ownerDeptName || '-' },
+      { label: '????', value: detailData.lastInventoryDate || '-' }
+    ]
+  })
+
+  const occupancyRecords = computed(() => lifecycleData.handoverRecords)
+  const inspectionRecords = computed(() => lifecycleData.inventoryRecords)
+  const disposalRecords = computed(() => lifecycleData.disposalRecords)
+
+  const rectificationItems = computed(() => {
+    return inspectionRecords.value
+      .filter((record) => record.followUpAction && record.followUpAction !== 'NONE')
+      .map((record, index) => ({
+        key: `${record.taskId || 'unknown'}-${index}`,
+        title: `${record.taskName || record.taskNo || '????'}????`,
+        actionLabel: getFollowUpActionLabel(record.followUpAction),
+        description: `?????${getInventoryResultLabel(record.inventoryResult)}??????${record.checkedTime || '-'}`
+      }))
+  })
+
+  const rectificationLogs = computed(() => {
+    return lifecycleData.changeLogs.filter((record) => {
+      const desc = String(record.changeDesc || '')
+      return desc.includes('??') || record.bizType === 'LEDGER_UPDATE' || record.bizType === 'INVENTORY_RESULT'
+    })
+  })
+
+  const preferredDisposalTab = computed<'pool' | 'record'>(() => {
+    if (disposalRecords.value.length) {
+      return 'record'
+    }
+    if (detailData.assetStatus === 'PENDING_DISPOSAL') {
+      return 'pool'
+    }
+    return 'record'
+  })
+
+  const latestDisposalRecord = computed(() => {
+    return [...disposalRecords.value].sort((left, right) => {
+      const leftTime = new Date(left.confirmedTime || left.disposalDate || 0).getTime()
+      const rightTime = new Date(right.confirmedTime || right.disposalDate || 0).getTime()
+      return rightTime - leftTime
+    })[0]
   })
 
   const toObjectData = <T,>(response: any): T => {
@@ -257,6 +452,31 @@
     })
   }
 
+  const resolveTabByPath = (path?: string): DetailTabName => {
+    if (path?.endsWith('/occupancy')) {
+      return 'occupancy'
+    }
+    if (path?.endsWith('/inspection')) {
+      return 'inspection'
+    }
+    if (path?.endsWith('/disposal')) {
+      return 'disposal'
+    }
+    return 'overview'
+  }
+
+  const buildTabPath = (tabName: DetailTabName) => {
+    if (!assetId.value) {
+      return '/asset/real-estate'
+    }
+    const basePath = `/asset/real-estate/detail/${assetId.value}`
+    return tabName === 'overview' ? basePath : `${basePath}/${tabName}`
+  }
+
+  const syncActiveTabFromRoute = () => {
+    activeTab.value = resolveTabByPath(route.path)
+  }
+
   const goBack = () => {
     router.push('/asset/real-estate')
   }
@@ -268,53 +488,80 @@
     router.push(`/asset/real-estate/edit/${assetId.value}`)
   }
 
+  const handleTabChange = (tabName: TabPaneName) => {
+    const nextTab = String(tabName) as DetailTabName
+    const nextPath = buildTabPath(nextTab)
+    if (nextPath !== route.path) {
+      router.push(nextPath)
+    }
+  }
+
+  const goToDisposalModule = () => {
+    if (!assetId.value) {
+      return
+    }
+    router.push({
+      path: '/asset/disposal',
+      query: {
+        tab: preferredDisposalTab.value,
+        assetId: String(assetId.value),
+        assetCode: detailData.assetCode || ''
+      }
+    })
+  }
+
+  const getStatusLabel = (status?: string) => {
+    const option = ast_asset_status.value.find((item: any) => item.value === status)
+    return option?.label || status || '-'
+  }
+
   const getBizTypeLabel = (bizType?: string) => {
     const mapper: Record<string, string> = {
-      LEDGER_CREATE: '台账建档',
-      LEDGER_UPDATE: '档案更新',
-      ASSIGN: '资产领用',
-      TRANSFER: '资产调拨',
-      RETURN: '资产退还',
-      INVENTORY_CREATE: '发起盘点',
-      INVENTORY_RESULT: '盘点登记',
-      DISPOSAL_CONFIRM: '处置确认'
+      LEDGER_CREATE: '????',
+      LEDGER_UPDATE: '????',
+      ASSIGN: '????',
+      TRANSFER: '????',
+      RETURN: '????',
+      INVENTORY_CREATE: '????',
+      INVENTORY_RESULT: '????',
+      DISPOSAL_CONFIRM: '????'
     }
-    return mapper[bizType || ''] || bizType || '未识别动作'
+    return mapper[bizType || ''] || bizType || '?????'
   }
 
   const getHandoverTypeLabel = (handoverType?: string) => {
     const mapper: Record<string, string> = {
-      ASSIGN: '领用',
-      TRANSFER: '调拨',
-      RETURN: '退还'
+      ASSIGN: '??',
+      TRANSFER: '??',
+      RETURN: '??'
     }
-    return mapper[handoverType || ''] || handoverType || '未知类型'
+    return mapper[handoverType || ''] || handoverType || '????'
   }
 
   const getInventoryResultLabel = (result?: string) => {
     const mapper: Record<string, string> = {
-      NORMAL: '正常',
-      LOSS: '盘亏',
-      MISSING: '缺失',
-      DAMAGED: '损坏',
-      LOCATION_DIFF: '位置差异',
-      RESPONSIBLE_DIFF: '责任人差异'
+      NORMAL: '??',
+      LOSS: '??',
+      MISSING: '??',
+      DAMAGED: '??',
+      LOCATION_DIFF: '????',
+      RESPONSIBLE_DIFF: '?????'
     }
     return mapper[result || ''] || result || '-'
   }
 
   const getFollowUpActionLabel = (action?: string) => {
     const mapper: Record<string, string> = {
-      NONE: '无',
-      UPDATE_LEDGER: '修正台账',
-      CREATE_DISPOSAL: '发起处置'
+      NONE: '?',
+      UPDATE_LEDGER: '????',
+      CREATE_DISPOSAL: '????'
     }
     return mapper[action || ''] || action || '-'
   }
 
   const loadDetail = async () => {
     if (!assetId.value) {
-      ElMessage.error('缺少资产ID，无法加载详情')
+      ElMessage.error('????ID???????')
       goBack()
       return
     }
@@ -337,9 +584,26 @@
     }
   }
 
-  onMounted(() => {
-    loadDetail()
-  })
+  watch(
+    () => route.path,
+    () => {
+      syncActiveTabFromRoute()
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => assetId.value,
+    async (currentAssetId, previousAssetId) => {
+      if (!currentAssetId) {
+        return
+      }
+      if (currentAssetId !== previousAssetId || !detailData.assetId) {
+        await loadDetail()
+      }
+    },
+    { immediate: true }
+  )
 </script>
 
 <style scoped lang="scss">
@@ -355,135 +619,219 @@
       radial-gradient(circle at 0% 0%, rgb(31 122 140 / 8%), transparent 34%),
       radial-gradient(circle at 100% 0%, rgb(26 188 156 / 8%), transparent 36%),
       var(--art-main-bg-color);
+  }
 
-    .head-card {
-      border: 1px solid var(--asset-border);
-      border-radius: 12px;
-      background: linear-gradient(120deg, #fff 0%, #f7fcfd 100%);
+  .head-card,
+  .summary-card,
+  .tab-card,
+  .section-card {
+    border: 1px solid var(--asset-border);
+    border-radius: 12px;
+    background: var(--asset-panel-bg);
+  }
 
-      :deep(.el-card__body) {
-        padding: 20px 24px;
-      }
+  .head-card {
+    background: linear-gradient(120deg, #fff 0%, #f7fcfd 100%);
+
+    :deep(.el-card__body) {
+      padding: 20px 24px;
+    }
+  }
+
+  .summary-card :deep(.el-card__body),
+  .tab-card :deep(.el-card__body) {
+    padding: 16px 20px;
+  }
+
+  .page-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--asset-text-main);
+  }
+
+  .page-desc {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--asset-text-secondary);
+    line-height: 1.7;
+    max-width: 880px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .summary-item {
+    border: 1px solid #e9eef6;
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, #fcfeff 0%, #f7fbfd 100%);
+  }
+
+  .summary-item__label {
+    font-size: 12px;
+    color: #7182a0;
+    margin-bottom: 8px;
+  }
+
+  .summary-item__value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--asset-text-main);
+  }
+
+  .detail-tabs :deep(.el-tabs__header) {
+    margin-bottom: 0;
+  }
+
+  .detail-scroll-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .section-alert {
+    margin-bottom: 12px;
+  }
+
+  .section-card {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
     }
 
-    .page-title {
-      font-size: 34px;
-      font-weight: 700;
-      color: var(--asset-text-main);
-    }
-
-    .page-desc {
-      margin-top: 6px;
-      font-size: 14px;
-      color: var(--asset-text-secondary);
-      line-height: 1.7;
-      max-width: 820px;
-    }
-
-    .detail-scroll-area {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-
-    .section-card {
-      margin-bottom: 12px;
-      border: 1px solid var(--asset-border);
-      border-radius: 12px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      :deep(.el-card__header) {
-        padding: 14px 16px;
-        border-bottom: 1px solid #eaf0fb;
-      }
-
-      :deep(.el-card__body) {
-        padding: 0;
-      }
-    }
-
-    .card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--asset-text-main);
-
-      &::before {
-        content: '';
-        width: 4px;
-        height: 14px;
-        border-radius: 999px;
-        background: var(--asset-accent);
-      }
-    }
-
-    .detail-descriptions {
-      width: 100%;
-
-      :deep(.el-descriptions__body) {
-        overflow-x: auto;
-      }
-
-      :deep(.el-descriptions__table) {
-        width: 100%;
-        table-layout: fixed;
-      }
-
-      :deep(.el-descriptions__cell) {
-        padding: 12px 14px;
-        font-size: 13px;
-        line-height: 1.6;
-      }
-
-      :deep(.el-descriptions__label.el-descriptions__cell) {
-        color: #5b6f8c;
-        font-weight: 500;
-        background: var(--asset-panel-muted);
-      }
-    }
-
-    .record-wrapper {
+    :deep(.el-card__header) {
       padding: 14px 16px;
+      border-bottom: 1px solid #eaf0fb;
     }
 
-    .record-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    :deep(.el-card__body) {
+      padding: 0;
+    }
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--asset-text-main);
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--asset-accent);
+    }
+  }
+
+  .detail-descriptions {
+    width: 100%;
+
+    :deep(.el-descriptions__body) {
+      overflow-x: auto;
     }
 
-    .record-item {
-      border: 1px solid #e9edf7;
-      border-radius: 10px;
-      padding: 10px 12px;
-      background: #fbfcff;
+    :deep(.el-descriptions__table) {
+      width: 100%;
+      table-layout: fixed;
     }
 
-    .record-item__title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1d2f4f;
-      margin-bottom: 4px;
-    }
-
-    .record-item__desc,
-    .timeline-desc,
-    .timeline-meta {
-      font-size: 12px;
-      color: #5f7392;
+    :deep(.el-descriptions__cell) {
+      padding: 12px 14px;
+      font-size: 13px;
       line-height: 1.6;
     }
 
-    .timeline-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1d2f4f;
+    :deep(.el-descriptions__label.el-descriptions__cell) {
+      color: #5b6f8c;
+      font-weight: 500;
+      background: var(--asset-panel-muted);
+    }
+  }
+
+  .record-wrapper {
+    padding: 14px 16px;
+  }
+
+  .record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .record-item {
+    border: 1px solid #e9edf7;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fbfcff;
+  }
+
+  .record-item__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2f4f;
+    margin-bottom: 4px;
+  }
+
+  .record-item__desc,
+  .timeline-desc,
+  .timeline-meta {
+    font-size: 12px;
+    color: #5f7392;
+    line-height: 1.6;
+  }
+
+  .timeline-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2f4f;
+  }
+
+  .disposal-link-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .disposal-link-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2f4f;
+    margin-bottom: 4px;
+  }
+
+  .disposal-link-card__desc {
+    font-size: 12px;
+    color: #5f7392;
+  }
+
+  @media (max-width: 960px) {
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .disposal-link-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .page-title {
+      font-size: 28px;
     }
   }
 </style>
