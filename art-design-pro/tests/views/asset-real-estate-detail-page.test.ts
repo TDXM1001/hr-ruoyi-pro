@@ -67,6 +67,34 @@ vi.mock('@/api/asset/real-estate', () => {
     }),
     getRealEstateLifecycle: vi.fn().mockResolvedValue({
       data: {
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptId: 103,
+            useDeptName: '研发部门',
+            responsibleUserId: 1,
+            responsibleUserName: '若依',
+            locationName: '深圳南山科技园A座',
+            startDate: '2026-03-22',
+            changeReason: '用于占用前端闭环点测'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptId: 101,
+            useDeptName: '行政部门',
+            responsibleUserId: 2,
+            responsibleUserName: '王敏',
+            locationName: '深圳南山科技园B座',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: '历史占用',
+            releaseReason: '部门搬离'
+          }
+        ],
         handoverRecords: [
           {
             handoverOrderId: 1,
@@ -158,6 +186,15 @@ vi.mock('@/api/asset/real-estate', () => {
       }
     }),
     listRealEstateRectificationApprovalRecords: vi.fn().mockResolvedValue({ data: [] }),
+    addRealEstateOccupancy: vi.fn().mockResolvedValue({ data: 9102 }),
+    changeRealEstateOccupancy: vi.fn().mockResolvedValue({ data: 9103 }),
+    releaseRealEstateOccupancy: vi.fn().mockResolvedValue({ code: 200 }),
+    getRealEstateDeptTree: vi.fn().mockResolvedValue({
+      data: [{ id: 103, label: '研发部门' }]
+    }),
+    listRealEstateResponsibleUsers: vi.fn().mockResolvedValue({
+      data: [{ value: 1, label: '若依' }]
+    }),
     submitRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 }),
     approveRealEstateRectification: vi.fn().mockResolvedValue({ code: 200 }),
     rejectRealEstateRectificationApproval: vi.fn().mockResolvedValue({ code: 200 })
@@ -200,10 +237,30 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     vm.handleTabChange('occupancy')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('当前占用关系')
-    expect(wrapper.text()).toContain('交接轨迹')
+    expect(wrapper.text()).toContain('当前有效占用')
+    expect(wrapper.text()).toContain('OCC-2026-9001')
+    expect(wrapper.text()).toContain('占用历史记录')
+    expect(wrapper.text()).toContain('OCC-2026-8999')
     expect(mockPush).not.toHaveBeenCalled()
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('occupancy')
+  })
+
+  it('占用页签支持打开变更占用抽屉', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-change-link-9101"]').trigger('click')
+    expect(document.body.textContent || wrapper.text()).toContain('变更占用')
   })
 
   it('兼容旧巡检子路由入口，并支持任务明细和整改跳转', async () => {

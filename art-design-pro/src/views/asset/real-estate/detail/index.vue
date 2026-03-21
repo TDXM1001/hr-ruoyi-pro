@@ -55,8 +55,11 @@
       <OccupancyPanel
         v-else-if="activeTab === 'occupancy'"
         :detail-data="detailData"
-        :handover-records="handoverRecords"
-        :get-handover-type-label="getHandoverTypeLabel"
+        :occupancy-records="occupancyRecords"
+        :can-edit="canEdit"
+        @create-occupancy="openCreateOccupancyDrawer"
+        @change-occupancy="openChangeOccupancyDrawer"
+        @release-occupancy="openReleaseOccupancyDrawer"
       />
 
       <InspectionPanel
@@ -94,6 +97,141 @@
     </div>
 
     <ElDrawer
+      v-model="occupancyDrawerVisible"
+      :title="occupancyDrawerTitle"
+      size="520px"
+      destroy-on-close
+      append-to-body
+    >
+      <div class="occupancy-drawer">
+        <div class="occupancy-drawer__headline">{{ occupancyDrawerDesc }}</div>
+
+        <ElForm
+          ref="occupancyFormRef"
+          :model="occupancyForm"
+          :rules="occupancyFormRules"
+          label-width="96px"
+          class="occupancy-form"
+        >
+          <template v-if="occupancyDrawerMode !== 'release'">
+            <ElFormItem label="使用部门" prop="useDeptId">
+              <ElTreeSelect
+                v-model="occupancyForm.useDeptId"
+                :data="occupancyDeptOptions"
+                :props="treeSelectProps"
+                value-key="id"
+                check-strictly
+                filterable
+                clearable
+                class="w-full"
+                placeholder="请选择使用部门"
+                :render-after-expand="false"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="责任人" prop="responsibleUserId">
+              <ElSelect
+                v-model="occupancyForm.responsibleUserId"
+                clearable
+                filterable
+                remote
+                reserve-keyword
+                class="w-full"
+                placeholder="请输入责任人姓名搜索"
+                :remote-method="loadOccupancyResponsibleUsers"
+                :loading="occupancyResponsibleUserLoading"
+              >
+                <ElOption
+                  v-for="item in occupancyResponsibleUserOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </ElSelect>
+            </ElFormItem>
+
+            <ElFormItem label="使用位置" prop="locationName">
+              <ElInput
+                v-model="occupancyForm.locationName"
+                maxlength="255"
+                placeholder="请输入实际使用位置"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="开始日期" prop="startDate">
+              <ElDatePicker
+                v-model="occupancyForm.startDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                class="w-full"
+                placeholder="请选择占用开始日期"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="原因说明" prop="changeReason">
+              <ElInput
+                v-model="occupancyForm.changeReason"
+                type="textarea"
+                :rows="4"
+                maxlength="500"
+                show-word-limit
+                placeholder="请输入发起/变更原因"
+              />
+            </ElFormItem>
+          </template>
+
+          <template v-else>
+            <ElAlert
+              type="warning"
+              show-icon
+              :closable="false"
+              title="释放后将清空当前占用快照，请确认这条资产已经结束实际使用。"
+            />
+
+            <div class="occupancy-drawer__snapshot">
+              <div class="snapshot-item">
+                <span>当前占用单</span>
+                <strong>{{ currentOccupancyTarget?.occupancyNo || '-' }}</strong>
+              </div>
+              <div class="snapshot-item">
+                <span>当前归口</span>
+                <strong>{{ currentOccupancyTarget?.useDeptName || '-' }}</strong>
+              </div>
+            </div>
+
+            <ElFormItem label="释放日期" prop="endDate">
+              <ElDatePicker
+                v-model="occupancyForm.endDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                class="w-full"
+                placeholder="请选择释放日期"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="释放原因" prop="releaseReason">
+              <ElInput
+                v-model="occupancyForm.releaseReason"
+                type="textarea"
+                :rows="4"
+                maxlength="500"
+                show-word-limit
+                placeholder="请输入释放原因"
+              />
+            </ElFormItem>
+          </template>
+        </ElForm>
+
+        <div class="occupancy-drawer__footer">
+          <ElButton @click="closeOccupancyDrawer">取消</ElButton>
+          <ElButton type="primary" :loading="occupancySubmitting" @click="handleOccupancySubmit">
+            {{ occupancyDrawerMode === 'release' ? '确认释放' : '确认提交' }}
+          </ElButton>
+        </div>
+      </div>
+    </ElDrawer>
+
+    <ElDrawer
       v-model="approvalDrawerVisible"
       title="整改审批轨迹"
       size="420px"
@@ -120,20 +258,30 @@
 </template>
 
 <script setup lang="ts">
-  import type { TabPaneName } from 'element-plus'
+  import type { FormInstance, FormRules, TabPaneName } from 'element-plus'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import type {
     AssetChangeLogRecord,
     AssetInventoryRecord,
+    AssetRealEstateOccupancyRecord,
     AssetRectificationRecord
   } from '@/api/asset/ledger'
-  import type { AssetRealEstateRectificationApprovalRecord } from '@/api/asset/real-estate'
+  import type {
+    AssetRealEstateRectificationApprovalRecord,
+    AssetTreeOption,
+    AssetUserOption
+  } from '@/api/asset/real-estate'
   import {
+    addRealEstateOccupancy,
     approveRealEstateRectification,
+    changeRealEstateOccupancy,
     getRealEstateDetail,
+    getRealEstateDeptTree,
     getRealEstateLifecycle,
     listRealEstateRectificationApprovalRecords,
+    listRealEstateResponsibleUsers,
     rejectRealEstateRectificationApproval,
+    releaseRealEstateOccupancy,
     submitRealEstateRectificationApproval
   } from '@/api/asset/real-estate'
   import { useDict } from '@/utils/dict'
@@ -160,6 +308,12 @@
   route.meta.activePath = '/asset/real-estate'
 
   const detailTabs = REAL_ESTATE_DETAIL_TABS
+  const treeSelectProps = {
+    value: 'id',
+    label: 'label',
+    children: 'children',
+    disabled: 'disabled'
+  }
 
   const { ast_asset_status, ast_asset_source_type, ast_asset_acquire_type } = useDict(
     'ast_asset_status',
@@ -172,13 +326,31 @@
   const approvalDrawerVisible = ref(false)
   const approvalRecords = ref<AssetRealEstateRectificationApprovalRecord[]>([])
   const approvalDrawerTitle = ref('')
+  const occupancyDrawerVisible = ref(false)
+  const occupancySubmitting = ref(false)
+  const occupancyDrawerMode = ref<'create' | 'change' | 'release'>('create')
+  const occupancyFormRef = ref<FormInstance>()
+  const occupancyDeptOptions = ref<AssetTreeOption[]>([])
+  const occupancyResponsibleUserOptions = ref<AssetUserOption[]>([])
+  const occupancyResponsibleUserLoading = ref(false)
+  const currentOccupancyTarget = ref<AssetRealEstateOccupancyRecord>()
   const detailData = reactive<Record<string, any>>({})
   const lifecycleData = reactive({
+    occupancyRecords: [] as AssetRealEstateOccupancyRecord[],
     handoverRecords: [] as Record<string, any>[],
     inventoryRecords: [] as AssetInventoryRecord[],
     rectificationOrders: [] as AssetRectificationRecord[],
     disposalRecords: [] as Record<string, any>[],
     changeLogs: [] as AssetChangeLogRecord[]
+  })
+  const occupancyForm = reactive({
+    useDeptId: undefined as number | undefined,
+    responsibleUserId: undefined as number | undefined,
+    locationName: '',
+    startDate: '',
+    changeReason: '',
+    endDate: '',
+    releaseReason: ''
   })
 
   type InspectionLinkStatus = 'NONE_REQUIRED' | 'NOT_CREATED' | 'PENDING' | 'COMPLETED'
@@ -217,10 +389,44 @@
     ]
   })
 
-  const handoverRecords = computed(() => lifecycleData.handoverRecords)
+  const occupancyRecords = computed(() => lifecycleData.occupancyRecords)
   const inspectionRecords = computed(() => lifecycleData.inventoryRecords)
   const disposalRecords = computed(() => lifecycleData.disposalRecords)
   const changeLogs = computed(() => lifecycleData.changeLogs)
+
+  const occupancyDrawerTitle = computed(() => {
+    const mapper = {
+      create: '发起占用',
+      change: '变更占用',
+      release: '释放占用'
+    }
+    return mapper[occupancyDrawerMode.value]
+  })
+
+  const occupancyDrawerDesc = computed(() => {
+    const mapper = {
+      create: '发起占用会创建第一条有效占用单，并把使用部门、责任人和位置回写到资产主档。',
+      change: '变更占用会关闭当前有效占用，并生成一条新的有效占用单，历史记录继续保留。',
+      release: '释放占用后，当前资产会回到“暂无有效占用”的状态，但释放轨迹会完整留痕。'
+    }
+    return mapper[occupancyDrawerMode.value]
+  })
+
+  const occupancyFormRules = computed<FormRules>(() => {
+    if (occupancyDrawerMode.value === 'release') {
+      return {
+        endDate: [{ required: true, message: '请选择释放日期', trigger: 'change' }],
+        releaseReason: [{ required: true, message: '请输入释放原因', trigger: 'blur' }]
+      }
+    }
+
+    return {
+      useDeptId: [{ required: true, message: '请选择使用部门', trigger: 'change' }],
+      responsibleUserId: [{ required: true, message: '请选择责任人', trigger: 'change' }],
+      startDate: [{ required: true, message: '请选择占用开始日期', trigger: 'change' }],
+      changeReason: [{ required: true, message: '请输入发起/变更原因', trigger: 'blur' }]
+    }
+  })
 
   const rectificationRecords = computed<AssetRectificationRecord[]>(() => {
     if (lifecycleData.rectificationOrders.length) {
@@ -349,7 +555,10 @@
   }
 
   const toArrayData = <T,>(value: any): T[] => {
-    return Array.isArray(value) ? value : []
+    if (Array.isArray(value)) {
+      return value
+    }
+    return Array.isArray(value?.data) ? value.data : []
   }
 
   const formatArea = (value?: number | string) => {
@@ -360,6 +569,50 @@
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })
+  }
+
+  const getToday = () => new Date().toISOString().slice(0, 10)
+
+  const resetOccupancyForm = () => {
+    occupancyForm.useDeptId = undefined
+    occupancyForm.responsibleUserId = undefined
+    occupancyForm.locationName = ''
+    occupancyForm.startDate = getToday()
+    occupancyForm.changeReason = ''
+    occupancyForm.endDate = getToday()
+    occupancyForm.releaseReason = ''
+    currentOccupancyTarget.value = undefined
+  }
+
+  const ensureResponsibleUserOption = (userId?: number, userName?: string) => {
+    if (!userId || !userName) {
+      return
+    }
+    const exists = occupancyResponsibleUserOptions.value.some((item) => item.value === userId)
+    if (!exists) {
+      occupancyResponsibleUserOptions.value.unshift({
+        value: userId,
+        label: userName
+      })
+    }
+  }
+
+  const loadOccupancyDeptTree = async () => {
+    if (occupancyDeptOptions.value.length) {
+      return
+    }
+    const response = await getRealEstateDeptTree()
+    occupancyDeptOptions.value = toArrayData<AssetTreeOption>(response)
+  }
+
+  const loadOccupancyResponsibleUsers = async (keyword = '') => {
+    occupancyResponsibleUserLoading.value = true
+    try {
+      const response = await listRealEstateResponsibleUsers({ keyword: keyword.trim() })
+      occupancyResponsibleUserOptions.value = toArrayData<AssetUserOption>(response)
+    } finally {
+      occupancyResponsibleUserLoading.value = false
+    }
   }
 
   const resolveEntryTab = () => {
@@ -386,6 +639,44 @@
       return
     }
     router.push(`/asset/real-estate/edit/${assetId.value}`)
+  }
+
+  const openOccupancyDrawer = async (
+    mode: 'create' | 'change' | 'release',
+    record?: AssetRealEstateOccupancyRecord
+  ) => {
+    occupancyDrawerMode.value = mode
+    resetOccupancyForm()
+    currentOccupancyTarget.value = record
+
+    if (mode === 'release') {
+      occupancyForm.endDate = getToday()
+      occupancyForm.releaseReason = ''
+    } else {
+      occupancyForm.useDeptId = record?.useDeptId || detailData.useDeptId
+      occupancyForm.responsibleUserId = record?.responsibleUserId || detailData.responsibleUserId
+      occupancyForm.locationName = record?.locationName || detailData.locationName || ''
+      occupancyForm.startDate = mode === 'change' ? getToday() : detailData.enableDate || getToday()
+      occupancyForm.changeReason = ''
+      ensureResponsibleUserOption(
+        record?.responsibleUserId || detailData.responsibleUserId,
+        record?.responsibleUserName || detailData.responsibleUserName
+      )
+      await Promise.all([loadOccupancyDeptTree(), loadOccupancyResponsibleUsers()])
+    }
+
+    occupancyDrawerVisible.value = true
+    nextTick(() => occupancyFormRef.value?.clearValidate())
+  }
+
+  const openCreateOccupancyDrawer = () => openOccupancyDrawer('create')
+
+  const openChangeOccupancyDrawer = (record: AssetRealEstateOccupancyRecord) => {
+    return openOccupancyDrawer('change', record)
+  }
+
+  const openReleaseOccupancyDrawer = (record: AssetRealEstateOccupancyRecord) => {
+    return openOccupancyDrawer('release', record)
   }
 
   const handleTabChange = (tabName: TabPaneName) => {
@@ -474,6 +765,7 @@
     }
     const lifecycleResponse = await getRealEstateLifecycle(assetId.value)
     const lifecycle = toObjectData<any>(lifecycleResponse) || {}
+    lifecycleData.occupancyRecords = toArrayData(lifecycle.occupancyRecords)
     lifecycleData.handoverRecords = toArrayData(lifecycle.handoverRecords)
     lifecycleData.inventoryRecords = toArrayData(lifecycle.inventoryRecords)
     lifecycleData.rectificationOrders = toArrayData(lifecycle.rectificationOrders)
@@ -533,6 +825,71 @@
     await handleViewApprovalRecords(rectificationId)
   }
 
+  const buildOccupancySubmitData = () => {
+    if (occupancyDrawerMode.value === 'release') {
+      return {
+        endDate: occupancyForm.endDate,
+        releaseReason: occupancyForm.releaseReason?.trim()
+      }
+    }
+
+    return {
+      useDeptId: occupancyForm.useDeptId,
+      responsibleUserId: occupancyForm.responsibleUserId,
+      locationName: occupancyForm.locationName?.trim() || undefined,
+      startDate: occupancyForm.startDate,
+      changeReason: occupancyForm.changeReason?.trim()
+    }
+  }
+
+  const closeOccupancyDrawer = () => {
+    occupancyDrawerVisible.value = false
+  }
+
+  const handleOccupancySubmit = async () => {
+    if (!assetId.value) {
+      return
+    }
+    const valid = await occupancyFormRef.value?.validate().catch(() => false)
+    if (!valid) {
+      return
+    }
+
+    occupancySubmitting.value = true
+    try {
+      if (occupancyDrawerMode.value === 'create') {
+        await addRealEstateOccupancy(assetId.value, buildOccupancySubmitData())
+        ElMessage.success('占用已发起')
+      } else if (occupancyDrawerMode.value === 'change') {
+        if (!currentOccupancyTarget.value?.occupancyId) {
+          return
+        }
+        await changeRealEstateOccupancy(
+          assetId.value,
+          currentOccupancyTarget.value.occupancyId,
+          buildOccupancySubmitData()
+        )
+        ElMessage.success('占用已变更')
+      } else {
+        if (!currentOccupancyTarget.value?.occupancyId) {
+          return
+        }
+        await releaseRealEstateOccupancy(
+          assetId.value,
+          currentOccupancyTarget.value.occupancyId,
+          buildOccupancySubmitData()
+        )
+        ElMessage.success('占用已释放')
+      }
+
+      closeOccupancyDrawer()
+      await loadDetail()
+      activeTab.value = 'occupancy'
+    } finally {
+      occupancySubmitting.value = false
+    }
+  }
+
   const goToDisposalModule = () => {
     if (!assetId.value) {
       return
@@ -577,15 +934,6 @@
     return mapper[bizType || ''] || bizType || '业务动作'
   }
 
-  const getHandoverTypeLabel = (handoverType?: string) => {
-    const mapper: Record<string, string> = {
-      ASSIGN: '领用',
-      TRANSFER: '调拨',
-      RETURN: '归还'
-    }
-    return mapper[handoverType || ''] || handoverType || '交接'
-  }
-
   const getInventoryResultLabel = (result?: string) => {
     const mapper: Record<string, string> = {
       NORMAL: '正常',
@@ -614,6 +962,7 @@
 
       Object.assign(detailData, toObjectData<any>(detailResponse))
       const lifecycle = toObjectData<any>(lifecycleResponse) || {}
+      lifecycleData.occupancyRecords = toArrayData(lifecycle.occupancyRecords)
       lifecycleData.handoverRecords = toArrayData(lifecycle.handoverRecords)
       lifecycleData.inventoryRecords = toArrayData(lifecycle.inventoryRecords)
       lifecycleData.rectificationOrders = toArrayData(lifecycle.rectificationOrders)
@@ -639,6 +988,13 @@
     },
     { immediate: false }
   )
+
+  watch(occupancyDrawerVisible, (visible) => {
+    if (!visible) {
+      resetOccupancyForm()
+      nextTick(() => occupancyFormRef.value?.clearValidate())
+    }
+  })
 
   watch(
     () => route.params.assetId,
@@ -753,6 +1109,52 @@
   .approval-drawer {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .occupancy-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .occupancy-drawer__headline {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #5d6b86;
+  }
+
+  .occupancy-drawer__snapshot {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .snapshot-item {
+    padding: 12px 14px;
+    border: 1px solid #e7edf6;
+    border-radius: 12px;
+    background: #f8fbfd;
+
+    span {
+      display: block;
+      font-size: 12px;
+      color: #6f7f99;
+    }
+
+    strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #18233a;
+      word-break: break-word;
+    }
+  }
+
+  .occupancy-drawer__footer {
+    display: flex;
+    justify-content: flex-end;
     gap: 12px;
   }
 
@@ -922,6 +1324,10 @@
 
     .page-title {
       font-size: 28px;
+    }
+
+    .occupancy-drawer__snapshot {
+      grid-template-columns: 1fr;
     }
 
     :deep(.detail-descriptions .el-descriptions__table) {

@@ -1,12 +1,17 @@
-import http from '@/utils/http'
+﻿import http from '@/utils/http'
 import type {
   AssetLedgerLifecycleDetail,
+  AssetRealEstateOccupancyRecord,
   AssetRectificationRecord,
   AssetTreeOption,
   AssetUserOption
 } from '@/api/asset/ledger'
 
-export type { AssetTreeOption, AssetUserOption } from '@/api/asset/ledger'
+export type {
+  AssetRealEstateOccupancyRecord,
+  AssetTreeOption,
+  AssetUserOption
+} from '@/api/asset/ledger'
 
 /**
  * 不动产档案查询参数。
@@ -61,6 +66,25 @@ export interface AssetRealEstateDetail {
   landUseType?: string
   buildingArea?: number
   remark?: string
+}
+
+/**
+ * 不动产占用登记/变更入参。
+ */
+export interface AssetRealEstateOccupancyPayload {
+  useDeptId?: number
+  responsibleUserId?: number
+  locationName?: string
+  startDate?: string
+  changeReason?: string
+}
+
+/**
+ * 不动产占用释放入参。
+ */
+export interface AssetRealEstateOccupancyReleasePayload {
+  endDate?: string
+  releaseReason?: string
 }
 
 /**
@@ -166,6 +190,48 @@ export function getNextRealEstateCode() {
       method: 'get'
     })
     .then((response) => normalizeAssetCodeResponse(response))
+}
+
+export function listRealEstateOccupancies(assetId: number | string) {
+  return http.request<AssetRealEstateOccupancyRecord[]>({
+    url: `/asset/real-estate/${assetId}/occupancies`,
+    method: 'get'
+  })
+}
+
+export function addRealEstateOccupancy(
+  assetId: number | string,
+  data: AssetRealEstateOccupancyPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/occupancies`,
+    method: 'post',
+    data
+  })
+}
+
+export function changeRealEstateOccupancy(
+  assetId: number | string,
+  occupancyId: number | string,
+  data: AssetRealEstateOccupancyPayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/occupancies/${occupancyId}/change`,
+    method: 'post',
+    data
+  })
+}
+
+export function releaseRealEstateOccupancy(
+  assetId: number | string,
+  occupancyId: number | string,
+  data: AssetRealEstateOccupancyReleasePayload
+) {
+  return http.request({
+    url: `/asset/real-estate/${assetId}/occupancies/${occupancyId}/release`,
+    method: 'post',
+    data
+  })
 }
 
 export function listRealEstateRectifications(assetId: number | string) {

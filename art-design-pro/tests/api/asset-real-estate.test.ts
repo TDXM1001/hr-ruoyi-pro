@@ -11,7 +11,9 @@ vi.mock('@/utils/http', () => {
 import http from '@/utils/http'
 import {
   addRealEstate,
+  addRealEstateOccupancy,
   approveRealEstateRectification,
+  changeRealEstateOccupancy,
   completeRealEstateRectification,
   getRealEstateCategoryTree,
   getRealEstateDetail,
@@ -19,8 +21,10 @@ import {
   getRealEstateRectification,
   getRealEstateList,
   getNextRealEstateCode,
+  listRealEstateOccupancies,
   listRealEstateRectificationApprovalRecords,
   listRealEstateRectifications,
+  releaseRealEstateOccupancy,
   rejectRealEstateRectificationApproval,
   submitRealEstateRectificationApproval,
   updateRealEstate
@@ -167,6 +171,69 @@ describe('Asset Real Estate API', () => {
       data: {
         completionDesc: '完成说明',
         acceptanceRemark: '验收备注'
+      }
+    })
+  })
+
+  it('should request occupancy endpoints', async () => {
+    const requestMock = vi.mocked(http.request)
+    requestMock.mockResolvedValueOnce([])
+    requestMock.mockResolvedValueOnce({ data: 9101 })
+    requestMock.mockResolvedValueOnce({ data: 9102 })
+    requestMock.mockResolvedValueOnce({ code: 200 })
+
+    await listRealEstateOccupancies(20001)
+    await addRealEstateOccupancy(20001, {
+      useDeptId: 103,
+      responsibleUserId: 1,
+      locationName: '深圳南山科技园A座',
+      startDate: '2026-03-22',
+      changeReason: '前端点测'
+    })
+    await changeRealEstateOccupancy(20001, 9101, {
+      useDeptId: 105,
+      responsibleUserId: 3,
+      locationName: '深圳南山科技园B座',
+      startDate: '2026-03-23',
+      changeReason: '部门调整'
+    })
+    await releaseRealEstateOccupancy(20001, 9102, {
+      endDate: '2026-03-25',
+      releaseReason: '释放占用'
+    })
+
+    expect(requestMock).toHaveBeenNthCalledWith(1, {
+      url: '/asset/real-estate/20001/occupancies',
+      method: 'get'
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(2, {
+      url: '/asset/real-estate/20001/occupancies',
+      method: 'post',
+      data: {
+        useDeptId: 103,
+        responsibleUserId: 1,
+        locationName: '深圳南山科技园A座',
+        startDate: '2026-03-22',
+        changeReason: '前端点测'
+      }
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(3, {
+      url: '/asset/real-estate/20001/occupancies/9101/change',
+      method: 'post',
+      data: {
+        useDeptId: 105,
+        responsibleUserId: 3,
+        locationName: '深圳南山科技园B座',
+        startDate: '2026-03-23',
+        changeReason: '部门调整'
+      }
+    })
+    expect(requestMock).toHaveBeenNthCalledWith(4, {
+      url: '/asset/real-estate/20001/occupancies/9102/release',
+      method: 'post',
+      data: {
+        endDate: '2026-03-25',
+        releaseReason: '释放占用'
       }
     })
   })

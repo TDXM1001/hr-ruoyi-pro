@@ -1,7 +1,7 @@
-import http from '@/utils/http'
+﻿import http from '@/utils/http'
 
 /**
- * 资产树形选择节点。
+ * 资产树形选项。
  */
 export interface AssetTreeOption {
   id: number
@@ -11,7 +11,7 @@ export interface AssetTreeOption {
 }
 
 /**
- * 责任人下拉选项。
+ * 责任人选项。
  */
 export interface AssetUserOption {
   value: number
@@ -19,7 +19,7 @@ export interface AssetUserOption {
 }
 
 /**
- * 资产生命周期轨迹记录。
+ * 资产生命周期变更记录。
  */
 export interface AssetChangeLogRecord {
   logId?: number
@@ -50,6 +50,25 @@ export interface AssetHandoverRecord {
   toDeptName?: string
   toUserName?: string
   toLocationName?: string
+}
+
+/**
+ * 不动产占用记录。
+ */
+export interface AssetRealEstateOccupancyRecord {
+  occupancyId?: number
+  occupancyNo?: string
+  assetId?: number
+  useDeptId?: number
+  useDeptName?: string
+  responsibleUserId?: number
+  responsibleUserName?: string
+  locationName?: string
+  startDate?: string
+  endDate?: string
+  occupancyStatus?: string
+  changeReason?: string
+  releaseReason?: string
 }
 
 /**
@@ -117,10 +136,11 @@ export interface AssetDisposalRecord {
 }
 
 /**
- * 资产生命周期详情。
+ * 资产生命周期聚合详情。
  */
 export interface AssetLedgerLifecycleDetail {
   ledger?: Record<string, any>
+  occupancyRecords?: AssetRealEstateOccupancyRecord[]
   handoverRecords?: AssetHandoverRecord[]
   inventoryRecords?: AssetInventoryRecord[]
   rectificationOrders?: AssetRectificationRecord[]
@@ -130,8 +150,6 @@ export interface AssetLedgerLifecycleDetail {
 
 /**
  * 查询资产台账列表。
- * @param query 查询条件
- * @returns 台账分页数据
  */
 export function listAssetLedger(query?: any) {
   return http.request({ url: '/asset/ledger/list', method: 'get', params: query })
@@ -139,8 +157,6 @@ export function listAssetLedger(query?: any) {
 
 /**
  * 查询资产台账详情。
- * @param assetId 资产ID
- * @returns 台账详情
  */
 export function getAssetLedger(assetId: number | string) {
   return http.request({ url: '/asset/ledger/' + assetId, method: 'get' })
@@ -148,8 +164,6 @@ export function getAssetLedger(assetId: number | string) {
 
 /**
  * 查询资产生命周期聚合详情。
- * @param assetId 资产ID
- * @returns 生命周期详情
  */
 export function getAssetLedgerLifecycle(assetId: number | string) {
   return http.request<AssetLedgerLifecycleDetail>({
@@ -160,8 +174,6 @@ export function getAssetLedgerLifecycle(assetId: number | string) {
 
 /**
  * 新增资产台账。
- * @param data 台账数据
- * @returns 新增结果
  */
 export function addAssetLedger(data: any) {
   return http.request({ url: '/asset/ledger', method: 'post', data })
@@ -169,8 +181,6 @@ export function addAssetLedger(data: any) {
 
 /**
  * 修改资产台账。
- * @param data 台账数据
- * @returns 修改结果
  */
 export function updateAssetLedger(data: any) {
   return http.request({ url: '/asset/ledger', method: 'put', data })
@@ -178,8 +188,6 @@ export function updateAssetLedger(data: any) {
 
 /**
  * 导出资产台账。
- * @param data 查询条件
- * @returns 导出的二进制文件
  */
 export function exportAssetLedger(data?: any) {
   return http.request<Blob>({
@@ -191,8 +199,7 @@ export function exportAssetLedger(data?: any) {
 }
 
 /**
- * 获取下一条建议资产编号。
- * @returns 资产编号
+ * 获取下一条建议资产编码。
  */
 export function getNextAssetCode() {
   return http
@@ -203,11 +210,6 @@ export function getNextAssetCode() {
     .then((response) => normalizeAssetCodeResponse(response))
 }
 
-/**
- * 兼容不同响应形态，统一提取资产编号字符串。
- * @param response 响应内容
- * @returns 资产编号
- */
 function normalizeAssetCodeResponse(response: any) {
   if (typeof response === 'string') {
     return response
@@ -229,7 +231,6 @@ function normalizeAssetCodeResponse(response: any) {
 
 /**
  * 查询资产分类树。
- * @returns 资产分类树
  */
 export function getAssetCategoryTree() {
   return http.request<AssetTreeOption[]>({
@@ -240,7 +241,6 @@ export function getAssetCategoryTree() {
 
 /**
  * 查询部门树。
- * @returns 部门树
  */
 export function getAssetDeptTree() {
   return http.request<AssetTreeOption[]>({
@@ -251,8 +251,6 @@ export function getAssetDeptTree() {
 
 /**
  * 远程搜索责任人。
- * @param query 搜索条件
- * @returns 责任人选项
  */
 export function listAssetResponsibleUsers(query?: { keyword?: string }) {
   return http.request<AssetUserOption[]>({
