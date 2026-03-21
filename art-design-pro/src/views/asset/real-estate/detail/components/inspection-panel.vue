@@ -12,6 +12,23 @@
       <template #header>
         <div class="card-title">巡检摘要</div>
       </template>
+      <div class="status-strip">
+        <div data-testid="inspection-status-not-created" class="status-metric-card status-metric-card--not-created">
+          <div class="status-metric-card__label">未发起整改</div>
+          <div class="status-metric-card__value">{{ inspectionStatusSummary.notCreated }}</div>
+          <div class="status-metric-card__hint">需要尽快明确责任人与整改期限</div>
+        </div>
+        <div data-testid="inspection-status-pending" class="status-metric-card status-metric-card--pending">
+          <div class="status-metric-card__label">待整改</div>
+          <div class="status-metric-card__value">{{ inspectionStatusSummary.pending }}</div>
+          <div class="status-metric-card__hint">已进入整改流程，需持续跟踪推进</div>
+        </div>
+        <div data-testid="inspection-status-completed" class="status-metric-card status-metric-card--completed">
+          <div class="status-metric-card__label">已闭环</div>
+          <div class="status-metric-card__value">{{ inspectionStatusSummary.completed }}</div>
+          <div class="status-metric-card__hint">已完成整改并通过验收，可归档留痕</div>
+        </div>
+      </div>
       <ElDescriptions class="detail-descriptions detail-descriptions--3" :column="3" border>
         <ElDescriptionsItem label="最近巡检日期">{{ detailData.lastInventoryDate || '-' }}</ElDescriptionsItem>
         <ElDescriptionsItem label="巡检记录数">{{ inspectionRecords.length }}</ElDescriptionsItem>
@@ -112,6 +129,11 @@
   defineProps<{
     detailData: Record<string, any>
     inspectionRecords: InspectionRecordView[]
+    inspectionStatusSummary: {
+      notCreated: number
+      pending: number
+      completed: number
+    }
     pendingRectificationCount: number
     canEdit: boolean
   }>()
@@ -196,6 +218,56 @@
 </script>
 
 <style scoped lang="scss">
+  .status-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .status-metric-card {
+    padding: 16px;
+    border: 1px solid #e5edf6;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  .status-metric-card--not-created {
+    border-color: #fdba74;
+    background: linear-gradient(180deg, rgb(255 237 213 / 92%), #fff 100%);
+  }
+
+  .status-metric-card--pending {
+    border-color: #facc15;
+    background: linear-gradient(180deg, rgb(254 249 195 / 92%), #fff 100%);
+  }
+
+  .status-metric-card--completed {
+    border-color: #86efac;
+    background: linear-gradient(180deg, rgb(220 252 231 / 92%), #fff 100%);
+  }
+
+  .status-metric-card__label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #26415f;
+  }
+
+  .status-metric-card__value {
+    margin-top: 8px;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    color: #112847;
+  }
+
+  .status-metric-card__hint {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #5f7392;
+  }
+
   .link-summary-card {
     margin-top: 10px;
     padding: 12px 14px;
@@ -256,6 +328,12 @@
   .record-item--not_created {
     border-color: #fed7aa;
     background: #fffaf5;
+  }
+
+  @media (width <= 900px) {
+    .status-strip {
+      grid-template-columns: 1fr;
+    }
   }
 
   .record-item--pending {

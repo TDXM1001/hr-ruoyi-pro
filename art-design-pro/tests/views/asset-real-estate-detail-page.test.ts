@@ -216,6 +216,12 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('巡检任务记录')
+    expect(wrapper.text()).toContain('未发起整改')
+    expect(wrapper.text()).toContain('待整改')
+    expect(wrapper.text()).toContain('已闭环')
+    expect(wrapper.get('[data-testid="inspection-status-not-created"]').text()).toContain('1')
+    expect(wrapper.get('[data-testid="inspection-status-pending"]').text()).toContain('1')
+    expect(wrapper.get('[data-testid="inspection-status-completed"]').text()).toContain('0')
     expect(wrapper.text()).toContain('发起整改')
     expect(wrapper.text()).toContain('查看整改')
     expect(wrapper.text()).toContain('整改联动：未发起整改')
@@ -292,6 +298,9 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await flushPromises()
 
+    expect(wrapper.get('[data-testid="inspection-status-not-created"]').text()).toContain('0')
+    expect(wrapper.get('[data-testid="inspection-status-pending"]').text()).toContain('0')
+    expect(wrapper.get('[data-testid="inspection-status-completed"]').text()).toContain('1')
     expect(wrapper.text()).toContain('整改联动：已闭环')
     expect(wrapper.text()).toContain('已完成整改并通过验收，可归档留痕')
     expect(wrapper.text()).toContain('完成时间：2026-03-21 14:49:04')

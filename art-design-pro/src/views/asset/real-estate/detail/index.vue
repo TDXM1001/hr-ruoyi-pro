@@ -56,6 +56,7 @@
         v-else-if="activeTab === 'inspection'"
         :detail-data="detailData"
         :inspection-records="inspectionLinkedRecords"
+        :inspection-status-summary="inspectionStatusSummary"
         :pending-rectification-count="pendingRectificationCount"
         :can-edit="canEdit"
         @inspection-task="goToInspectionTask"
@@ -248,6 +249,26 @@
         linkedRectification
       }
     })
+  })
+
+  const inspectionStatusSummary = computed(() => {
+    const summary = {
+      notCreated: 0,
+      pending: 0,
+      completed: 0
+    }
+
+    inspectionLinkedRecords.value.forEach((record) => {
+      if (record.rectificationLinkStatus === 'NOT_CREATED') {
+        summary.notCreated += 1
+      } else if (record.rectificationLinkStatus === 'PENDING') {
+        summary.pending += 1
+      } else if (record.rectificationLinkStatus === 'COMPLETED') {
+        summary.completed += 1
+      }
+    })
+
+    return summary
   })
 
   const preferredDisposalTab = computed<'pool' | 'record'>(() => {
