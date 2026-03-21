@@ -32,6 +32,24 @@
       </ElDescriptions>
     </ElCard>
 
+    <ElCard v-if="showCompletionSection" class="section-card" shadow="never">
+      <template #header>
+        <div class="card-title">整改完成信息</div>
+      </template>
+
+      <ElDescriptions class="completion-descriptions" :column="3" border>
+        <ElDescriptionsItem label="完成时间">{{ completionInfo.completedTime || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="整改状态">{{ completionStatusLabel }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="关闭方式">整改完成收口</ElDescriptionsItem>
+        <ElDescriptionsItem label="完成说明" :span="2">
+          {{ completionInfo.completionDesc || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="验收备注">
+          {{ completionInfo.acceptanceRemark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElCard>
+
     <ElCard class="section-card" shadow="never" v-loading="loading">
       <template #header>
         <div class="card-title">整改登记</div>
@@ -158,6 +176,11 @@
   const deptTreeOptions = ref<any[]>([])
   const responsibleUserOptions = ref<Array<{ value: number; label: string }>>([])
   const sourceResultDesc = ref('')
+  const completionInfo = reactive({
+    completedTime: '',
+    completionDesc: '',
+    acceptanceRemark: ''
+  })
 
   // 中文注释：树选择器统一复用资产域的节点协议，避免不同页面对同一部门树结构解释不一致。
   const treeSelectProps = {
@@ -191,6 +214,16 @@
   })
   const isEditMode = computed(() => !!rectificationId.value)
   const pageTitle = computed(() => (isEditMode.value ? '编辑整改单' : '新增整改单'))
+  const showCompletionSection = computed(() => {
+    return isEditMode.value && String(formData.rectificationStatus || '').toUpperCase() === 'COMPLETED'
+  })
+  const completionStatusLabel = computed(() => {
+    const mapper: Record<string, string> = {
+      PENDING: '待整改',
+      COMPLETED: '已完成'
+    }
+    return mapper[String(formData.rectificationStatus || '').toUpperCase()] || formData.rectificationStatus || '-'
+  })
 
   const rules: FormRules = {
     issueType: [{ required: true, message: '请输入问题类型', trigger: 'blur' }],
@@ -255,6 +288,12 @@
   }
 
   const loadCreateContext = async () => {
+    Object.assign(completionInfo, {
+      completedTime: '',
+      completionDesc: '',
+      acceptanceRemark: ''
+    })
+
     if (!createTaskId.value || Number.isNaN(createTaskId.value)) {
       ElMessage.error('缺少巡检任务参数，无法发起整改')
       goBack()
@@ -305,6 +344,11 @@
     Object.assign(taskMeta, {
       taskNo: detail.taskNo,
       taskName: detail.taskName
+    })
+    Object.assign(completionInfo, {
+      completedTime: detail.completedTime || '',
+      completionDesc: detail.completionDesc || '',
+      acceptanceRemark: detail.acceptanceRemark || ''
     })
 
     sourceResultDesc.value = detail.issueDesc || ''
@@ -446,5 +490,19 @@
     justify-content: flex-end;
     gap: 12px;
     margin-top: 24px;
+  }
+
+  .completion-descriptions :deep(.el-descriptions__body) {
+    overflow-x: auto;
+  }
+
+  .completion-descriptions :deep(.el-descriptions__table) {
+    min-width: 860px;
+  }
+
+  .completion-descriptions :deep(.el-descriptions__cell) {
+    line-height: 1.7;
+    word-break: break-word;
+    white-space: normal;
   }
 </style>

@@ -137,4 +137,45 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
     })
     expect(treeSelect.props('valueKey')).toBe('id')
   })
+
+  it('查看已完成整改单时展示完成信息只读分区', async () => {
+    routeState.params = { assetId: '20001', rectificationId: '9001' } as any
+    routeState.query = {}
+    vi.mocked(realEstateApi.getRealEstateRectification).mockResolvedValue({
+      data: {
+        rectificationId: 9001,
+        rectificationNo: 'RC-2026-0001',
+        assetId: 20001,
+        taskId: 6,
+        taskNo: 'INV-2026-0008',
+        taskName: '第一季度不动产巡检',
+        inventoryItemId: 66,
+        rectificationStatus: 'COMPLETED',
+        issueType: '位置不符',
+        issueDesc: '房间实际使用人与台账不一致',
+        responsibleDeptId: 103,
+        responsibleUserId: 1,
+        deadlineDate: '2026-03-25',
+        completedTime: '2026-03-21 14:49:04',
+        completionDesc: '已完成现场复核并修正责任人信息。',
+        acceptanceRemark: '资产管理员复核通过。'
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateRectificationFormPage, {
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('整改完成信息')
+    expect(wrapper.text()).toContain('完成时间')
+    expect(wrapper.text()).toContain('2026-03-21 14:49:04')
+    expect(wrapper.text()).toContain('完成说明')
+    expect(wrapper.text()).toContain('已完成现场复核并修正责任人信息。')
+    expect(wrapper.text()).toContain('验收备注')
+    expect(wrapper.text()).toContain('资产管理员复核通过。')
+  })
 })
