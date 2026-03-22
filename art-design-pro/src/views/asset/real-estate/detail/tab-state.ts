@@ -7,6 +7,7 @@
 
 const DETAIL_TAB_STORAGE_PREFIX = 'asset-real-estate-detail-tab:'
 const DETAIL_RETURN_TAB_STORAGE_PREFIX = 'asset-real-estate-detail-return-tab:'
+const DETAIL_RETURN_SOURCE_STORAGE_PREFIX = 'asset-real-estate-detail-return-source:'
 
 export const REAL_ESTATE_DETAIL_TABS: Array<{
   name: RealEstateDetailTabName
@@ -78,6 +79,13 @@ function buildReturnStorageKey(assetId?: number | string) {
   return `${DETAIL_RETURN_TAB_STORAGE_PREFIX}${assetId}`
 }
 
+function buildReturnSourceStorageKey(assetId?: number | string) {
+  if (assetId === undefined || assetId === null || assetId === '') {
+    return ''
+  }
+  return `${DETAIL_RETURN_SOURCE_STORAGE_PREFIX}${assetId}`
+}
+
 export function persistRealEstateDetailTab(assetId?: number | string, tab?: RealEstateDetailTabName) {
   if (typeof window === 'undefined') {
     return
@@ -132,6 +140,45 @@ export function clearRealEstateReturnTab(assetId?: number | string) {
     return
   }
   const storageKey = buildReturnStorageKey(assetId)
+  if (!storageKey) {
+    return
+  }
+  window.sessionStorage.removeItem(storageKey)
+}
+
+export function persistRealEstateReturnSource(assetId?: number | string, sourceLabel?: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const storageKey = buildReturnSourceStorageKey(assetId)
+  if (!storageKey) {
+    return
+  }
+  const normalized = String(sourceLabel || '').trim()
+  if (!normalized) {
+    window.sessionStorage.removeItem(storageKey)
+    return
+  }
+  window.sessionStorage.setItem(storageKey, normalized)
+}
+
+export function readRealEstateReturnSource(assetId?: number | string) {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+  const storageKey = buildReturnSourceStorageKey(assetId)
+  if (!storageKey) {
+    return undefined
+  }
+  const cachedValue = window.sessionStorage.getItem(storageKey)
+  return cachedValue ? String(cachedValue) : undefined
+}
+
+export function clearRealEstateReturnSource(assetId?: number | string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const storageKey = buildReturnSourceStorageKey(assetId)
   if (!storageKey) {
     return
   }

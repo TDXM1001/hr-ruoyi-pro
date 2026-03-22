@@ -331,6 +331,48 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(window.sessionStorage.getItem('asset-real-estate-detail-return-tab:20001')).toBeNull()
   })
 
+  it('跨页签联动后展示回跳来源提示，并在刷新后恢复', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="detail-return-occupancy-source"]').text()).toContain(
+      '来自：看巡检联动'
+    )
+
+    wrapper.unmount()
+
+    const remountWrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(remountWrapper.get('[data-testid="detail-return-occupancy-source"]').text()).toContain(
+      '来自：看巡检联动'
+    )
+
+    await remountWrapper.get('[data-testid="detail-return-occupancy-link"]').trigger('click')
+    await flushPromises()
+
+    expect(remountWrapper.find('[data-testid="detail-return-occupancy-source"]').exists()).toBe(false)
+  })
+
   it('变更占用抽屉支持原因模板快捷填充', async () => {
     const wrapper = mount(AssetRealEstateDetailPage, {
       global: {

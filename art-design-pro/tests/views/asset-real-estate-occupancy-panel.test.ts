@@ -1058,4 +1058,129 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1)
     expect(revokeObjectURL).toHaveBeenCalledTimes(1)
   })
+
+  it('duplicates system preset into custom preset and restores it after remount', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9100,
+          occupancyNo: 'OCC-2026-8999',
+          occupancyStatus: 'RELEASED',
+          useDeptName: 'dept-beta',
+          responsibleUserName: 'user-beta',
+          locationName: 'loc-beta',
+          startDate: '2026-03-01',
+          endDate: '2026-03-10',
+          changeReason: 'reason-beta',
+          releaseReason: 'release-beta'
+        }
+      ],
+      canEdit: true
+    }
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-source-release"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('释放复盘增强')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+
+    expect(firstWrapper.get('[data-testid="occupancy-export-preset-custom-0"]').text()).toContain(
+      '释放复盘增强'
+    )
+
+    await firstWrapper.get('[data-testid="occupancy-export-field-releaseReason"]').trigger('click')
+    expect(
+      firstWrapper.get('[data-testid="occupancy-export-field-releaseReason"]').classes()
+    ).not.toContain('export-field-chip--active')
+
+    await firstWrapper.get('[data-testid="occupancy-export-preset-custom-0"]').trigger('click')
+    expect(
+      firstWrapper.get('[data-testid="occupancy-export-field-releaseReason"]').classes()
+    ).toContain('export-field-chip--active')
+
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    expect(secondWrapper.get('[data-testid="occupancy-export-preset-custom-0"]').text()).toContain(
+      '释放复盘增强'
+    )
+  })
+
+  it('switches annotation templates and uses the selected template during export', async () => {
+    const createObjectURL = vi.fn(() => 'blob:occupancy-annotation-export-template')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-view-annotation"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-annotation-template-audit"]').trigger('click')
+
+    const annotationList = wrapper.get('[data-testid="occupancy-annotation-list"]')
+    expect(annotationList.text()).toContain('审计视角')
+
+    await wrapper.get('[data-testid="occupancy-export-annotation-link"]').trigger('click')
+
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('审计视角')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
+  })
 })

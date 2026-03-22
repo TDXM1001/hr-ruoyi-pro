@@ -535,6 +535,14 @@
               >
                 {{ presetNameEditOpen ? '收起命名设置' : '命名设置' }}
               </ElButton>
+              <ElButton
+                data-testid="occupancy-preset-copy-toggle"
+                size="small"
+                text
+                @click="presetCopyOpen = !presetCopyOpen"
+              >
+                {{ presetCopyOpen ? '收起复制新预设' : '复制新预设' }}
+              </ElButton>
             </div>
           </div>
           <div
@@ -569,13 +577,63 @@
               </ElButton>
             </div>
           </div>
+          <div
+            v-if="presetCopyOpen"
+            class="preset-copy-panel"
+            data-testid="occupancy-preset-copy-panel"
+          >
+            <div class="preset-copy-panel__title">复制新预设</div>
+            <div class="preset-copy-panel__desc">
+              从系统预设、已保存的自定义预设或当前字段选择快速复制一套新的导出口径。
+            </div>
+            <div class="preset-copy-panel__sources">
+              <button
+                type="button"
+                class="export-preset-chip export-preset-chip--subtle"
+                :class="presetCopySourceKey === 'current' ? 'export-preset-chip--active' : ''"
+                data-testid="occupancy-preset-copy-source-current"
+                @click="presetCopySourceKey = 'current'"
+              >
+                当前字段
+              </button>
+              <button
+                v-for="(preset, presetIndex) in computedExportPresetOptions"
+                :key="`copy-${preset.key}`"
+                type="button"
+                class="export-preset-chip export-preset-chip--subtle"
+                :class="presetCopySourceKey === preset.key ? 'export-preset-chip--active' : ''"
+                :data-testid="getPresetCopySourceTestId(preset, presetIndex)"
+                @click="presetCopySourceKey = preset.key"
+              >
+                {{ preset.label }}
+              </button>
+            </div>
+            <div class="preset-copy-panel__form">
+              <input
+                v-model="presetCopyName"
+                data-testid="occupancy-preset-copy-name"
+                type="text"
+                class="preset-name-field__input"
+                placeholder="请输入新预设名称"
+              />
+              <ElButton
+                data-testid="occupancy-preset-copy-apply"
+                size="small"
+                type="primary"
+                plain
+                @click="createCustomPreset"
+              >
+                复制创建
+              </ElButton>
+            </div>
+          </div>
           <div class="export-config-panel__presets">
             <button
-              v-for="preset in computedExportPresetOptions"
+              v-for="(preset, presetIndex) in computedExportPresetOptions"
               :key="preset.key"
               type="button"
               class="export-preset-chip"
-              :data-testid="`occupancy-export-preset-${preset.key}`"
+              :data-testid="getExportPresetTestId(preset, presetIndex)"
               @click="applyExportPreset(preset.key)"
             >
               {{ preset.label }}
@@ -599,6 +657,26 @@
 
       <div ref="historyListRef" class="record-wrapper" data-testid="occupancy-history-list">
         <div v-if="filteredRecords.length" class="record-list">
+          <div
+            v-if="groupViewMode === 'ANNOTATION'"
+            class="annotation-template-toolbar"
+            data-testid="occupancy-annotation-template-toolbar"
+          >
+            <div class="annotation-template-toolbar__label">批注模板</div>
+            <div class="annotation-template-toolbar__items">
+              <button
+                v-for="template in annotationTemplateOptions"
+                :key="template.key"
+                type="button"
+                class="export-preset-chip export-preset-chip--subtle"
+                :class="annotationTemplate === template.key ? 'export-preset-chip--active' : ''"
+                :data-testid="`occupancy-annotation-template-${template.key}`"
+                @click="annotationTemplate = template.key"
+              >
+                {{ template.label }}
+              </button>
+            </div>
+          </div>
           <div
             v-if="groupViewMode === 'ANNOTATION'"
             class="annotation-list"
@@ -633,21 +711,15 @@
               <div class="annotation-card__notes">
                 <div class="annotation-note">
                   <div class="annotation-note__label">状态说明</div>
-                  <div class="annotation-note__value">
-                    {{
-                      record.occupancyStatus === 'ACTIVE'
-                        ? '该轨迹仍是当前有效占用，主档应以这条占用记录为准。'
-                        : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
-                    }}
-                  </div>
+                  <div class="annotation-note__value">{{ buildAnnotationStatusNote(record) }}</div>
                 </div>
                 <div class="annotation-note">
                   <div class="annotation-note__label">占用批注</div>
-                  <div class="annotation-note__value">{{ record.changeReason || '-' }}</div>
+                  <div class="annotation-note__value">{{ buildAnnotationChangeNote(record) }}</div>
                 </div>
                 <div class="annotation-note">
                   <div class="annotation-note__label">释放批注</div>
-                  <div class="annotation-note__value">{{ record.releaseReason || '-' }}</div>
+                  <div class="annotation-note__value">{{ buildAnnotationReleaseNote(record) }}</div>
                 </div>
               </div>
             </div>
@@ -769,6 +841,17 @@
     fields: ExportFieldKey[]
   }
 
+  interface CustomExportPresetOption {
+    key: string
+    label: string
+    fields: ExportFieldKey[]
+    source: 'custom'
+  }
+
+  type ExportPresetViewOption = (ExportPresetOption & { source: 'system' }) | CustomExportPresetOption
+  type PresetCopySourceKey = 'current' | ExportPresetViewOption['key']
+  type AnnotationTemplateKey = 'standard' | 'manager' | 'audit'
+
   const props = defineProps<{
     detailData: Record<string, any>
     occupancyRecords: AssetRealEstateOccupancyRecord[]
@@ -787,11 +870,16 @@
   const timeFilter = ref<TimeFilter>('ALL')
   const sortDirection = ref<SortDirection>('DESC')
   const groupViewMode = ref<GroupViewMode>('LIST')
+  const annotationTemplate = ref<AnnotationTemplateKey>('standard')
   const exportConfigOpen = ref(false)
   const presetNameEditOpen = ref(false)
+  const presetCopyOpen = ref(false)
+  const presetCopyName = ref('')
+  const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
+  const customExportPresets = ref<CustomExportPresetOption[]>([])
   const customRangeDraft = reactive({
     start: '',
     end: ''
@@ -834,6 +922,11 @@
       fields: ['occupancyNo', 'occupancyStatus', 'useDeptName', 'locationName', 'endDate', 'changeReason', 'releaseReason']
     }
   ]
+  const annotationTemplateOptions: Array<{ key: AnnotationTemplateKey; label: string }> = [
+    { key: 'standard', label: '标准模板' },
+    { key: 'manager', label: '管理视角' },
+    { key: 'audit', label: '审计视角' }
+  ]
   const exportPresetNameDraft = reactive<Record<ExportPresetOption['key'], string>>({
     operations: '运营摘要',
     audit: '审计复盘',
@@ -865,12 +958,15 @@
   })
   const exportFieldsStorageKey = 'asset-real-estate-occupancy-export-fields'
   const exportPresetNameStorageKey = 'asset-real-estate-occupancy-export-preset-names'
+  const customPresetStorageKey = 'asset-real-estate-occupancy-export-custom-presets'
 
   const computedExportPresetOptions = computed(() => {
-    return exportPresetOptions.map((item) => ({
+    const systemPresets: ExportPresetViewOption[] = exportPresetOptions.map((item) => ({
       ...item,
-      label: exportPresetNameDraft[item.key] || item.label
+      label: exportPresetNameDraft[item.key] || item.label,
+      source: 'system'
     }))
+    return [...systemPresets, ...customExportPresets.value]
   })
 
   const parseDateValue = (value?: string) => {
@@ -893,6 +989,20 @@
 
   const getRecordKey = (record: AssetRealEstateOccupancyRecord) => {
     return String(record.occupancyId || record.occupancyNo || record.startDate || 'unknown')
+  }
+
+  const getExportPresetTestId = (preset: ExportPresetViewOption, presetIndex: number) => {
+    if (preset.source === 'custom') {
+      return `occupancy-export-preset-custom-${presetIndex - exportPresetOptions.length}`
+    }
+    return `occupancy-export-preset-${preset.key}`
+  }
+
+  const getPresetCopySourceTestId = (preset: ExportPresetViewOption, presetIndex: number) => {
+    if (preset.source === 'custom') {
+      return `occupancy-preset-copy-source-custom-${presetIndex - exportPresetOptions.length}`
+    }
+    return `occupancy-preset-copy-source-${preset.key}`
   }
 
   const setRecordRef = (record: AssetRealEstateOccupancyRecord, element: Element | null) => {
@@ -1136,9 +1246,42 @@
   }
 
   const buildAnnotationStatusNote = (record: AssetRealEstateOccupancyRecord) => {
-    return String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
+    const isActive = String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
+    if (annotationTemplate.value === 'manager') {
+      return isActive
+        ? '管理视角：当前占用仍在持续，请优先核对责任归属和主档同步状态。'
+        : '管理视角：该条轨迹已经释放，可作为本次占用结束与重新分配的依据。'
+    }
+    if (annotationTemplate.value === 'audit') {
+      return isActive
+        ? '审计视角：当前轨迹仍为有效占用，应作为最近一次占用依据。'
+        : '审计视角：该轨迹已释放，应作为历史留痕和释放凭据记录。'
+    }
+    return isActive
       ? '该轨迹仍是当前有效占用，主档应以这条占用记录为准。'
       : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
+  }
+
+  const buildAnnotationChangeNote = (record: AssetRealEstateOccupancyRecord) => {
+    const reason = record.changeReason || '-'
+    if (annotationTemplate.value === 'manager') {
+      return `管理视角：占用依据 ${reason}`
+    }
+    if (annotationTemplate.value === 'audit') {
+      return `审计视角：占用凭据 ${reason}`
+    }
+    return reason
+  }
+
+  const buildAnnotationReleaseNote = (record: AssetRealEstateOccupancyRecord) => {
+    const reason = record.releaseReason || '-'
+    if (annotationTemplate.value === 'manager') {
+      return `管理视角：释放结论 ${reason}`
+    }
+    if (annotationTemplate.value === 'audit') {
+      return `审计视角：释放凭据 ${reason}`
+    }
+    return reason
   }
 
   const emitTabSwitch = (tab: LinkedTabName) => {
@@ -1318,6 +1461,45 @@
     }
   }
 
+  const restoreCustomPresets = () => {
+    const raw = window.localStorage.getItem(customPresetStorageKey)
+    if (!raw) {
+      customExportPresets.value = []
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      customExportPresets.value = Array.isArray(parsed)
+        ? parsed
+            .map((item) => {
+              const key = String(item?.key || '').trim()
+              const label = String(item?.label || '').trim()
+              const fields = Array.isArray(item?.fields)
+                ? item.fields.filter((field): field is ExportFieldKey =>
+                    exportFieldOptions.some((option) => option.key === field)
+                  )
+                : []
+
+              if (!key || !label || !fields.length) {
+                return undefined
+              }
+
+              return {
+                key,
+                label,
+                fields,
+                source: 'custom' as const
+              }
+            })
+            .filter((item): item is CustomExportPresetOption => !!item)
+        : []
+    } catch {
+      customExportPresets.value = []
+      window.localStorage.removeItem(customPresetStorageKey)
+    }
+  }
+
   const toggleExportField = (fieldKey: ExportFieldKey) => {
     if (selectedExportFields.value.includes(fieldKey)) {
       if (selectedExportFields.value.length === 1) {
@@ -1329,8 +1511,8 @@
     selectedExportFields.value = [...selectedExportFields.value, fieldKey]
   }
 
-  const applyExportPreset = (presetKey: ExportPresetOption['key']) => {
-    const preset = exportPresetOptions.find((item) => item.key === presetKey)
+  const applyExportPreset = (presetKey: string) => {
+    const preset = computedExportPresetOptions.value.find((item) => item.key === presetKey)
     if (!preset) {
       return
     }
@@ -1340,6 +1522,35 @@
   const applyPresetNames = () => {
     window.localStorage.setItem(exportPresetNameStorageKey, JSON.stringify(exportPresetNameDraft))
     presetNameEditOpen.value = false
+  }
+
+  const resolvePresetCopySourceFields = () => {
+    if (presetCopySourceKey.value === 'current') {
+      return [...selectedExportFields.value]
+    }
+    const preset = computedExportPresetOptions.value.find((item) => item.key === presetCopySourceKey.value)
+    return preset ? [...preset.fields] : []
+  }
+
+  const createCustomPreset = () => {
+    const nextLabel = presetCopyName.value.trim()
+    const nextFields = resolvePresetCopySourceFields()
+    if (!nextLabel || !nextFields.length) {
+      return
+    }
+
+    customExportPresets.value = [
+      ...customExportPresets.value,
+      {
+        key: `custom-${Date.now()}-${customExportPresets.value.length}`,
+        label: nextLabel,
+        fields: nextFields,
+        source: 'custom'
+      }
+    ]
+    selectedExportFields.value = [...nextFields]
+    presetCopyName.value = ''
+    presetCopyOpen.value = false
   }
 
   const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
@@ -1392,8 +1603,8 @@
         record.occupancyNo || '',
         getStatusLabel(record.occupancyStatus),
         buildAnnotationStatusNote(record),
-        record.changeReason || '',
-        record.releaseReason || ''
+        buildAnnotationChangeNote(record),
+        buildAnnotationReleaseNote(record)
       ]
         .map((item) => escapeCsvCell(item))
         .join(',')
@@ -1417,6 +1628,7 @@
   onMounted(() => {
     restoreExportFields()
     restorePresetNames()
+    restoreCustomPresets()
   })
 
   watch(
@@ -1442,6 +1654,14 @@
     selectedExportFields,
     (value) => {
       window.localStorage.setItem(exportFieldsStorageKey, JSON.stringify(value))
+    },
+    { deep: true }
+  )
+
+  watch(
+    customExportPresets,
+    (value) => {
+      window.localStorage.setItem(customPresetStorageKey, JSON.stringify(value))
     },
     { deep: true }
   )
@@ -1811,6 +2031,41 @@
     justify-content: flex-end;
   }
 
+  .preset-copy-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 88%);
+  }
+
+  .preset-copy-panel__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .preset-copy-panel__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+  }
+
+  .preset-copy-panel__sources,
+  .preset-copy-panel__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .preset-copy-panel__form .preset-name-field__input {
+    flex: 1;
+    min-width: 220px;
+  }
+
   .export-field-chip {
     padding: 6px 12px;
     border: 1px solid #d7e1ee;
@@ -1835,11 +2090,18 @@
     transition: all 0.2s ease;
   }
 
+  .export-preset-chip--subtle {
+    color: #375173;
+    border-color: #d7e1ee;
+    background: #fff;
+  }
+
   .export-preset-chip:hover,
   .export-field-chip:hover {
     transform: translateY(-1px);
   }
 
+  .export-preset-chip--active,
   .export-field-chip--active {
     border-color: #60a5fa;
     color: #1d4ed8;
@@ -1920,6 +2182,26 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .annotation-template-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .annotation-template-toolbar__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
+  .annotation-template-toolbar__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .annotation-list {

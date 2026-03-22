@@ -24,6 +24,14 @@
           >
             返回占用联动
           </ElButton>
+          <ElTag
+            v-if="returnOccupancySourceLabel"
+            data-testid="detail-return-occupancy-source"
+            type="warning"
+            effect="light"
+          >
+            来自：{{ returnOccupancySourceLabel }}
+          </ElTag>
           <ElButton v-if="canEdit" type="primary" plain @click="handleEdit">编辑档案</ElButton>
         </div>
       </div>
@@ -332,12 +340,15 @@
   import OverviewPanel from './components/overview-panel.vue'
   import RectificationPanel from './components/rectification-panel.vue'
   import {
+    clearRealEstateReturnSource,
     clearRealEstateReturnTab,
     type RealEstateDetailTabName,
     REAL_ESTATE_DETAIL_TABS,
     normalizeRealEstateDetailTab,
     persistRealEstateDetailTab,
+    persistRealEstateReturnSource,
     persistRealEstateReturnTab,
+    readRealEstateReturnSource,
     readRealEstateReturnTab,
     readRealEstateDetailTab,
     resolveRealEstateDetailTabByPath
@@ -370,6 +381,7 @@
   const approvalRecords = ref<AssetRealEstateRectificationApprovalRecord[]>([])
   const approvalDrawerTitle = ref('')
   const rememberedReturnTab = ref<RealEstateDetailTabName>()
+  const rememberedReturnSourceLabel = ref('')
   const occupancyDrawerVisible = ref(false)
   const occupancySubmitting = ref(false)
   const occupancyDrawerMode = ref<'create' | 'change' | 'release'>('create')
@@ -438,6 +450,13 @@
 
   const showReturnToOccupancyLink = computed(() => {
     return rememberedReturnTab.value === 'occupancy' && activeTab.value !== 'occupancy'
+  })
+
+  const returnOccupancySourceLabel = computed(() => {
+    if (!showReturnToOccupancyLink.value) {
+      return ''
+    }
+    return rememberedReturnSourceLabel.value
   })
 
   const summaryItems = computed(() => {
@@ -753,13 +772,23 @@
     activeTab.value = nextTab
     if (rememberedReturnTab.value === nextTab) {
       rememberedReturnTab.value = undefined
+      rememberedReturnSourceLabel.value = ''
       clearRealEstateReturnTab(assetId.value)
+      clearRealEstateReturnSource(assetId.value)
     }
   }
 
   const handleOccupancySwitchTab = (tabName: RealEstateDetailTabName) => {
+    const sourceLabel = {
+      overview: '回总览核对主档',
+      inspection: '看巡检联动',
+      rectification: '看整改进展',
+      disposal: '看处置关联'
+    }[tabName]
     rememberedReturnTab.value = 'occupancy'
+    rememberedReturnSourceLabel.value = sourceLabel || ''
     persistRealEstateReturnTab(assetId.value, 'occupancy')
+    persistRealEstateReturnSource(assetId.value, sourceLabel)
     activeTab.value = normalizeRealEstateDetailTab(tabName)
   }
 
@@ -769,7 +798,9 @@
     }
     activeTab.value = rememberedReturnTab.value
     clearRealEstateReturnTab(assetId.value)
+    clearRealEstateReturnSource(assetId.value)
     rememberedReturnTab.value = undefined
+    rememberedReturnSourceLabel.value = ''
   }
 
   const isRectifiableRecord = (record: AssetInventoryRecord) => {
@@ -1066,6 +1097,7 @@
     () => {
       syncActiveTabFromContext()
       rememberedReturnTab.value = readRealEstateReturnTab(assetId.value)
+      rememberedReturnSourceLabel.value = readRealEstateReturnSource(assetId.value) || ''
     },
     { immediate: true }
   )
