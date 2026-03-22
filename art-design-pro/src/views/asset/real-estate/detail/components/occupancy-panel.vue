@@ -198,12 +198,37 @@
 
           <div class="occupancy-link-stats">
             <div class="occupancy-link-stats__header">
-              <div class="occupancy-link-stats__title">来源链路统计</div>
-              <div
-                class="occupancy-link-stats__last"
-                data-testid="occupancy-link-stat-last-target"
-              >
-                最近一次联动：{{ linkStats.lastTargetLabel || '暂无' }}
+              <div class="occupancy-link-stats__meta">
+                <div class="occupancy-link-stats__title">来源链路统计</div>
+                <div
+                  class="occupancy-link-stats__last"
+                  data-testid="occupancy-link-stat-last-target"
+                >
+                  最近一次联动：{{ displayedLinkLastTargetLabel || '暂无' }}
+                </div>
+              </div>
+              <div class="occupancy-link-stats__toolbar">
+                <div class="occupancy-link-stats__window-switch">
+                  <button
+                    v-for="item in linkStatsWindowOptions"
+                    :key="item.key"
+                    type="button"
+                    class="export-preset-chip export-preset-chip--subtle"
+                    :class="linkStatsWindow === item.key ? 'export-preset-chip--active' : ''"
+                    :data-testid="`occupancy-link-window-${item.key.toLowerCase()}`"
+                    @click="setLinkStatsWindow(item.key)"
+                  >
+                    {{ item.label }}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  data-testid="occupancy-link-stats-reset"
+                  @click="resetLinkStatsView"
+                >
+                  重置统计
+                </button>
               </div>
             </div>
             <div class="occupancy-link-stats__grid">
@@ -218,13 +243,15 @@
               </div>
             </div>
             <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
-              <div class="occupancy-link-trend__title">近 7 天联动趋势</div>
+              <div class="occupancy-link-trend__title">{{ linkTrendTitle }}</div>
               <div class="occupancy-link-trend__grid">
                 <div
                   v-for="item in linkTrendItems"
                   :key="item.date"
                   class="occupancy-link-trend__item"
+                  :class="trendDrilldown?.date === item.date ? 'occupancy-link-trend__item--active' : ''"
                   :data-testid="`occupancy-link-trend-day-${item.date}`"
+                  @click="toggleTrendDrilldown(item)"
                 >
                   <div class="occupancy-link-trend__date">{{ item.label }}</div>
                   <div class="occupancy-link-trend__bar-wrap">
@@ -236,6 +263,28 @@
                   <div class="occupancy-link-trend__count">{{ item.count }}</div>
                   <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
                 </div>
+              </div>
+              <div
+                v-if="trendDrilldown"
+                class="occupancy-link-drilldown"
+                data-testid="occupancy-link-drilldown-panel"
+              >
+                <div class="occupancy-link-drilldown__title">
+                  趋势钻取：{{ trendDrilldown.date }}
+                </div>
+                <div class="occupancy-link-drilldown__desc">
+                  当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
+                  {{ trendDrilldown.count }} 次。
+                </div>
+                <ElButton
+                  size="small"
+                  text
+                  type="primary"
+                  data-testid="occupancy-link-drilldown-clear"
+                  @click="clearTrendDrilldown"
+                >
+                  取消钻取
+                </ElButton>
               </div>
             </div>
           </div>
@@ -326,12 +375,37 @@
 
           <div class="occupancy-link-stats">
             <div class="occupancy-link-stats__header">
-              <div class="occupancy-link-stats__title">来源链路统计</div>
-              <div
-                class="occupancy-link-stats__last"
-                data-testid="occupancy-link-stat-last-target"
-              >
-                最近一次联动：{{ linkStats.lastTargetLabel || '暂无' }}
+              <div class="occupancy-link-stats__meta">
+                <div class="occupancy-link-stats__title">来源链路统计</div>
+                <div
+                  class="occupancy-link-stats__last"
+                  data-testid="occupancy-link-stat-last-target"
+                >
+                  最近一次联动：{{ displayedLinkLastTargetLabel || '暂无' }}
+                </div>
+              </div>
+              <div class="occupancy-link-stats__toolbar">
+                <div class="occupancy-link-stats__window-switch">
+                  <button
+                    v-for="item in linkStatsWindowOptions"
+                    :key="item.key"
+                    type="button"
+                    class="export-preset-chip export-preset-chip--subtle"
+                    :class="linkStatsWindow === item.key ? 'export-preset-chip--active' : ''"
+                    :data-testid="`occupancy-link-window-${item.key.toLowerCase()}`"
+                    @click="setLinkStatsWindow(item.key)"
+                  >
+                    {{ item.label }}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  data-testid="occupancy-link-stats-reset"
+                  @click="resetLinkStatsView"
+                >
+                  重置统计
+                </button>
               </div>
             </div>
             <div class="occupancy-link-stats__grid">
@@ -346,13 +420,15 @@
               </div>
             </div>
             <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
-              <div class="occupancy-link-trend__title">近 7 天联动趋势</div>
+              <div class="occupancy-link-trend__title">{{ linkTrendTitle }}</div>
               <div class="occupancy-link-trend__grid">
                 <div
                   v-for="item in linkTrendItems"
                   :key="item.date"
                   class="occupancy-link-trend__item"
+                  :class="trendDrilldown?.date === item.date ? 'occupancy-link-trend__item--active' : ''"
                   :data-testid="`occupancy-link-trend-day-${item.date}`"
+                  @click="toggleTrendDrilldown(item)"
                 >
                   <div class="occupancy-link-trend__date">{{ item.label }}</div>
                   <div class="occupancy-link-trend__bar-wrap">
@@ -364,6 +440,28 @@
                   <div class="occupancy-link-trend__count">{{ item.count }}</div>
                   <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
                 </div>
+              </div>
+              <div
+                v-if="trendDrilldown"
+                class="occupancy-link-drilldown"
+                data-testid="occupancy-link-drilldown-panel"
+              >
+                <div class="occupancy-link-drilldown__title">
+                  趋势钻取：{{ trendDrilldown.date }}
+                </div>
+                <div class="occupancy-link-drilldown__desc">
+                  当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
+                  {{ trendDrilldown.count }} 次。
+                </div>
+                <ElButton
+                  size="small"
+                  text
+                  type="primary"
+                  data-testid="occupancy-link-drilldown-clear"
+                  @click="clearTrendDrilldown"
+                >
+                  取消钻取
+                </ElButton>
               </div>
             </div>
           </div>
@@ -667,14 +765,66 @@
             />
             <div class="preset-import-panel__actions">
               <ElButton
+                data-testid="occupancy-preset-import-preview"
+                size="small"
+                plain
+                @click="previewImportedPresets"
+              >
+                解析预览
+              </ElButton>
+              <ElButton
                 data-testid="occupancy-preset-import-apply"
                 size="small"
                 type="primary"
                 plain
-                @click="importCustomPresets"
+                :disabled="!presetImportPreviewItems.length"
+                @click="applyImportedPresets"
               >
-                导入并追加
+                确认导入
               </ElButton>
+            </div>
+            <div
+              v-if="presetImportPreviewItems.length"
+              class="preset-import-preview"
+              data-testid="occupancy-preset-import-preview-panel"
+            >
+              <div class="preset-import-preview__header">
+                <div class="preset-import-preview__title">导入预览</div>
+                <div class="preset-import-preview__policies">
+                  <button
+                    v-for="item in importConflictPolicyOptions"
+                    :key="item.key"
+                    type="button"
+                    class="export-preset-chip export-preset-chip--subtle"
+                    :class="presetImportPolicy === item.key ? 'export-preset-chip--active' : ''"
+                    :data-testid="`occupancy-preset-import-policy-${item.key.toLowerCase()}`"
+                    @click="presetImportPolicy = item.key"
+                  >
+                    {{ item.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="preset-import-preview__list">
+                <div
+                  v-for="item in presetImportPreviewItems"
+                  :key="item.key"
+                  class="preset-import-preview__item"
+                >
+                  <div class="preset-import-preview__item-header">
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ buildImportConflictLabel(item.conflictType) }}</span>
+                  </div>
+                  <div class="preset-import-preview__item-desc">
+                    字段数：{{ item.fields.length }}，导入后名称：{{ item.resolvedLabel }}
+                  </div>
+                  <div
+                    v-if="item.invalidFields.length"
+                    class="preset-import-preview__item-desc"
+                  >
+                    已过滤非法字段：{{ item.invalidFields.join('、') }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div
@@ -1060,6 +1210,8 @@
   type StatusFilter = 'ALL' | 'ACTIVE' | 'RELEASED'
   type GroupViewMode = 'LIST' | 'GROUPED' | 'ANNOTATION'
   type LinkedTabName = 'overview' | 'inspection' | 'rectification' | 'disposal'
+  type LinkStatsWindow = '7D' | '30D'
+  type ImportConflictPolicy = 'SKIP' | 'RENAME' | 'OVERWRITE'
   type ExportFieldKey =
     | 'occupancyNo'
     | 'occupancyStatus'
@@ -1104,6 +1256,7 @@
   type PresetCopySourceKey = 'current' | ExportPresetViewOption['key']
   type AnnotationTemplateKey = 'standard' | 'manager' | 'audit'
   type AnnotationCompareItemKey = 'status' | 'change' | 'release'
+  type ImportConflictType = 'none' | 'system' | 'custom'
 
   interface OccupancyLinkStatEvent {
     targetKey: LinkedTabName
@@ -1116,6 +1269,29 @@
     lastTargetKey: LinkedTabName | ''
     lastTargetLabel: string
     events: OccupancyLinkStatEvent[]
+  }
+
+  interface PresetImportPreviewItem {
+    key: string
+    label: string
+    fields: ExportFieldKey[]
+    invalidFields: string[]
+    conflictType: ImportConflictType
+    resolvedLabel: string
+  }
+
+  interface LinkTrendItem {
+    date: string
+    label: string
+    count: number
+    topLabel: string
+    barHeight: number
+  }
+
+  interface TrendDrilldownState {
+    date: string
+    label: string
+    count: number
   }
 
   const props = defineProps<{
@@ -1145,12 +1321,16 @@
   const editingCustomPresetKey = ref('')
   const presetCopyName = ref('')
   const presetImportText = ref('')
+  const presetImportPolicy = ref<ImportConflictPolicy>('RENAME')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
+  const presetImportPreviewItems = ref<PresetImportPreviewItem[]>([])
   const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
+  const linkStatsWindow = ref<LinkStatsWindow>('7D')
+  const trendDrilldown = ref<TrendDrilldownState | null>(null)
   const linkStats = reactive<OccupancyLinkStatsState>({
     counts: {
       overview: 0,
@@ -1209,6 +1389,11 @@
     { key: 'manager', label: '管理视角' },
     { key: 'audit', label: '审计视角' }
   ]
+  const importConflictPolicyOptions: Array<{ key: ImportConflictPolicy; label: string }> = [
+    { key: 'SKIP', label: '跳过同名' },
+    { key: 'RENAME', label: '自动改名' },
+    { key: 'OVERWRITE', label: '覆盖同名' }
+  ]
   const exportPresetNameDraft = reactive<Record<ExportPresetOption['key'], string>>({
     operations: '运营摘要',
     audit: '审计复盘',
@@ -1220,6 +1405,10 @@
     { key: 'inspection', label: '看巡检联动' },
     { key: 'rectification', label: '看整改进展' },
     { key: 'disposal', label: '看处置关联' }
+  ]
+  const linkStatsWindowOptions: Array<{ key: LinkStatsWindow; label: string }> = [
+    { key: '7D', label: '近 7 天' },
+    { key: '30D', label: '近 30 天' }
   ]
   const recordRefs = new Map<string, HTMLElement>()
   const selectedExportFields = ref<ExportFieldKey[]>([...defaultExportFieldKeys])
@@ -1274,12 +1463,64 @@
     )
   })
 
+  const visibleLinkEvents = computed(() => {
+    if (!linkStats.events.length) {
+      return [] as OccupancyLinkStatEvent[]
+    }
+
+    const limitDays = linkStatsWindow.value === '30D' ? 30 : 7
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    start.setDate(start.getDate() - (limitDays - 1))
+
+    return linkStats.events.filter((event) => {
+      const eventDate = parseDateValue(event.occurredAt)
+      return !!eventDate && eventDate.getTime() >= start.getTime()
+    })
+  })
+
+  const displayedLinkLastTargetLabel = computed(() => {
+    const latestEvent = visibleLinkEvents.value[visibleLinkEvents.value.length - 1]
+    if (latestEvent) {
+      return latestEvent.targetLabel
+    }
+    if (!linkStats.events.length) {
+      return linkStats.lastTargetLabel
+    }
+    return ''
+  })
+
   const linkStatItems = computed(() => {
+    if (visibleLinkEvents.value.length) {
+      const counter = visibleLinkEvents.value.reduce<Record<LinkedTabName, number>>(
+        (accumulator, event) => {
+          accumulator[event.targetKey] += 1
+          return accumulator
+        },
+        {
+          overview: 0,
+          inspection: 0,
+          rectification: 0,
+          disposal: 0
+        }
+      )
+
+      return tabLinkOptions.map((item) => ({
+        key: item.key,
+        label: item.label,
+        count: counter[item.key]
+      }))
+    }
+
     return tabLinkOptions.map((item) => ({
       key: item.key,
       label: item.label,
       count: linkStats.counts[item.key]
     }))
+  })
+
+  const linkTrendTitle = computed(() => {
+    return linkStatsWindow.value === '30D' ? '近 30 天联动趋势' : '近 7 天联动趋势'
   })
 
   const annotationCompareItems = computed(() => {
@@ -1321,17 +1562,18 @@
     return items
   })
 
-  const linkTrendItems = computed(() => {
-    const dayKeys = Array.from({ length: 7 }).map((_, index) => {
+  const linkTrendItems = computed<LinkTrendItem[]>(() => {
+    const days = linkStatsWindow.value === '30D' ? 30 : 7
+    const dayKeys = Array.from({ length: days }).map((_, index) => {
       const current = new Date()
       current.setHours(0, 0, 0, 0)
-      current.setDate(current.getDate() - (6 - index))
+      current.setDate(current.getDate() - ((days - 1) - index))
       return current
     })
 
     const buckets = dayKeys.map((date) => {
       const dateKey = formatLocalDateKey(date)
-      const sameDayEvents = linkStats.events.filter((event) => {
+      const sameDayEvents = visibleLinkEvents.value.filter((event) => {
         const eventDate = parseDateValue(event.occurredAt)
         return eventDate && formatLocalDateKey(eventDate) === dateKey
       })
@@ -1735,6 +1977,47 @@
     emit('switch-tab', tab)
   }
 
+  const setLinkStatsWindow = (window: LinkStatsWindow) => {
+    linkStatsWindow.value = window
+    trendDrilldown.value = null
+  }
+
+  const clearTrendDrilldown = () => {
+    trendDrilldown.value = null
+  }
+
+  const toggleTrendDrilldown = (item: LinkTrendItem) => {
+    if (!item.count) {
+      return
+    }
+
+    if (trendDrilldown.value?.date === item.date) {
+      clearTrendDrilldown()
+      return
+    }
+
+    trendDrilldown.value = {
+      date: item.date,
+      label: item.topLabel,
+      count: item.count
+    }
+    groupViewMode.value = 'LIST'
+    resetFocusedRecord()
+    nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const resetLinkStatsView = () => {
+    linkStats.counts.overview = 0
+    linkStats.counts.inspection = 0
+    linkStats.counts.rectification = 0
+    linkStats.counts.disposal = 0
+    linkStats.lastTargetKey = ''
+    linkStats.lastTargetLabel = ''
+    linkStats.events = []
+    linkStatsWindow.value = '7D'
+    clearTrendDrilldown()
+  }
+
   const focusReleasedHistory = () => {
     statusFilter.value = 'RELEASED'
     resetTimeFilters()
@@ -2031,6 +2314,89 @@
     return `custom-${Date.now()}-${customExportPresets.value.length + seedIndex}`
   }
 
+  const buildImportConflictLabel = (conflictType: ImportConflictType) => {
+    const mapper: Record<ImportConflictType, string> = {
+      none: '可直接导入',
+      system: '系统预设重名',
+      custom: '自定义预设重名'
+    }
+    return mapper[conflictType]
+  }
+
+  const resolveImportConflictType = (label: string): ImportConflictType => {
+    const normalized = label.trim()
+    const systemLabels = exportPresetOptions.map((item) => exportPresetNameDraft[item.key] || item.label)
+    if (systemLabels.includes(normalized)) {
+      return 'system'
+    }
+    if (customExportPresets.value.some((item) => item.label === normalized)) {
+      return 'custom'
+    }
+    return 'none'
+  }
+
+  const buildImportedPresetLabel = (baseLabel: string, takenLabels: Set<string>) => {
+    let nextLabel = `${baseLabel}（导入）`
+    let index = 2
+    while (takenLabels.has(nextLabel)) {
+      nextLabel = `${baseLabel}（导入${index}）`
+      index += 1
+    }
+    return nextLabel
+  }
+
+  const parsePresetImportPreviewItems = () => {
+    const raw = presetImportText.value.trim()
+    if (!raw) {
+      return [] as PresetImportPreviewItem[]
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      const candidates = Array.isArray(parsed?.presets) ? parsed.presets : []
+      const takenLabels = new Set(computedExportPresetOptions.value.map((item) => item.label))
+
+      return candidates
+        .map((item, index) => {
+          const label = String(item?.label || '').trim()
+          const rawFields = Array.isArray(item?.fields) ? item.fields.map((field) => String(field)) : []
+          const fields = rawFields.filter((field): field is ExportFieldKey =>
+            exportFieldOptions.some((option) => option.key === field)
+          )
+          const invalidFields = rawFields.filter(
+            (field) => !exportFieldOptions.some((option) => option.key === field)
+          )
+
+          if (!label || !fields.length) {
+            return undefined
+          }
+
+          const conflictType = resolveImportConflictType(label)
+          const resolvedLabel =
+            conflictType === 'none' && !takenLabels.has(label)
+              ? label
+              : buildImportedPresetLabel(label, takenLabels)
+          takenLabels.add(resolvedLabel)
+
+          return {
+            key: `preview-${index}`,
+            label,
+            fields,
+            invalidFields,
+            conflictType,
+            resolvedLabel
+          }
+        })
+        .filter((item): item is PresetImportPreviewItem => !!item)
+    } catch {
+      return []
+    }
+  }
+
+  const previewImportedPresets = () => {
+    presetImportPreviewItems.value = parsePresetImportPreviewItems()
+  }
+
   const resetPresetEditor = () => {
     presetCopyMode.value = 'create'
     editingCustomPresetKey.value = ''
@@ -2129,47 +2495,87 @@
     URL.revokeObjectURL(url)
   }
 
-  const importCustomPresets = () => {
-    const raw = presetImportText.value.trim()
-    if (!raw) {
+  const applyImportedPresets = () => {
+    if (!presetImportPreviewItems.value.length) {
       return
     }
 
-    try {
-      const parsed = JSON.parse(raw)
-      const candidates = Array.isArray(parsed?.presets) ? parsed.presets : []
-      const normalized = candidates
-        .map((item, index) => {
-          const label = String(item?.label || '').trim()
-          const fields = Array.isArray(item?.fields)
-            ? item.fields.filter((field): field is ExportFieldKey =>
-                exportFieldOptions.some((option) => option.key === field)
-              )
-            : []
+    const systemLabels = new Set(
+      exportPresetOptions.map((item) => exportPresetNameDraft[item.key] || item.label)
+    )
+    let nextCustomPresets = [...customExportPresets.value]
+    const takenLabels = new Set([
+      ...systemLabels,
+      ...nextCustomPresets.map((item) => item.label)
+    ])
 
-          if (!label || !fields.length) {
-            return undefined
-          }
-
-          return {
+    presetImportPreviewItems.value.forEach((item, index) => {
+      if (item.conflictType === 'system') {
+        if (presetImportPolicy.value !== 'RENAME') {
+          return
+        }
+        const renamedLabel = buildImportedPresetLabel(item.label, takenLabels)
+        nextCustomPresets = [
+          ...nextCustomPresets,
+          {
             key: buildCustomPresetKey(index),
-            label,
-            fields,
-            source: 'custom' as const
+            label: renamedLabel,
+            fields: [...item.fields],
+            source: 'custom'
           }
-        })
-        .filter((item): item is CustomExportPresetOption => !!item)
-
-      if (!normalized.length) {
+        ]
+        takenLabels.add(renamedLabel)
         return
       }
 
-      customExportPresets.value = [...customExportPresets.value, ...normalized]
-      presetImportText.value = ''
-      presetImportOpen.value = false
-    } catch {
-      return
-    }
+      if (item.conflictType === 'custom') {
+        if (presetImportPolicy.value === 'SKIP') {
+          return
+        }
+
+        if (presetImportPolicy.value === 'OVERWRITE') {
+          nextCustomPresets = nextCustomPresets.map((preset) =>
+            preset.label === item.label
+              ? {
+                  ...preset,
+                  fields: [...item.fields]
+                }
+              : preset
+          )
+          return
+        }
+
+        const renamedLabel = buildImportedPresetLabel(item.label, takenLabels)
+        nextCustomPresets = [
+          ...nextCustomPresets,
+          {
+            key: buildCustomPresetKey(index),
+            label: renamedLabel,
+            fields: [...item.fields],
+            source: 'custom'
+          }
+        ]
+        takenLabels.add(renamedLabel)
+        return
+      }
+
+      const nextLabel = takenLabels.has(item.label) ? buildImportedPresetLabel(item.label, takenLabels) : item.label
+      nextCustomPresets = [
+        ...nextCustomPresets,
+        {
+          key: buildCustomPresetKey(index),
+          label: nextLabel,
+          fields: [...item.fields],
+          source: 'custom'
+        }
+      ]
+      takenLabels.add(nextLabel)
+    })
+
+    customExportPresets.value = nextCustomPresets
+    presetImportPreviewItems.value = []
+    presetImportText.value = ''
+    presetImportOpen.value = false
   }
 
   const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
@@ -2253,6 +2659,13 @@
       }
     },
     { immediate: true }
+  )
+
+  watch(
+    presetImportText,
+    () => {
+      presetImportPreviewItems.value = []
+    }
   )
 
   watch(
@@ -2536,6 +2949,20 @@
     gap: 12px;
   }
 
+  .occupancy-link-stats__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .occupancy-link-stats__toolbar,
+  .occupancy-link-stats__window-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
   .occupancy-link-stats__title,
   .custom-preset-item__title,
   .annotation-preview__title {
@@ -2604,6 +3031,12 @@
     border: 1px solid #dbe6f5;
     border-radius: 14px;
     background: rgb(255 255 255 / 92%);
+    cursor: pointer;
+  }
+
+  .occupancy-link-trend__item--active {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgb(96 165 250 / 16%);
   }
 
   .occupancy-link-trend__date,
@@ -2634,6 +3067,28 @@
     font-size: 16px;
     font-weight: 700;
     color: #18233a;
+  }
+
+  .occupancy-link-drilldown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(239 246 255 / 90%), #fff 100%);
+  }
+
+  .occupancy-link-drilldown__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .occupancy-link-drilldown__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
   }
 
   .history-toolbar {
@@ -2820,7 +3275,76 @@
 
   .preset-import-panel__actions {
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: flex-end;
+  }
+
+  .preset-import-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed #d7e3f4;
+    border-radius: 14px;
+    background: rgb(248 250 252 / 88%);
+  }
+
+  .preset-import-preview__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .preset-import-preview__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .preset-import-preview__policies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .preset-import-preview__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .preset-import-preview__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #dbe6f5;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .preset-import-preview__item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    color: #6f7f99;
+  }
+
+  .preset-import-preview__item-header strong {
+    font-size: 13px;
+    color: #18233a;
+  }
+
+  .preset-import-preview__item-desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+    word-break: break-word;
   }
 
   .preset-name-panel {
@@ -3257,6 +3781,7 @@
     .preset-name-panel__grid,
     .annotation-preview__grid,
     .annotation-compare__grid,
+    .preset-import-preview__list,
     .occupancy-link-stats__grid,
     .occupancy-link-trend__grid {
       grid-template-columns: 1fr;
@@ -3291,7 +3816,8 @@
     .occupancy-link-stats__header,
     .custom-preset-item,
     .annotation-compare__header,
-    .annotation-compare-item__header {
+    .annotation-compare-item__header,
+    .preset-import-preview__header {
       width: 100%;
       justify-content: flex-start;
     }
