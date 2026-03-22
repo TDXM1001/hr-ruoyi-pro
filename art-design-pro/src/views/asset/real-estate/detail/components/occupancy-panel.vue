@@ -268,6 +268,18 @@
             </div>
             <div class="matrix-item__desc">{{ rule.desc }}</div>
             <div class="matrix-item__actions">可执行动作：{{ rule.actions }}</div>
+            <div v-if="rule.shortcuts?.length" class="matrix-item__shortcuts">
+              <ElButton
+                v-for="shortcut in rule.shortcuts"
+                :key="shortcut.key"
+                :data-testid="shortcut.testId"
+                size="small"
+                plain
+                @click="applyLinkedFilter(shortcut.status)"
+              >
+                {{ shortcut.label }}
+              </ElButton>
+            </div>
           </div>
         </div>
       </ElCard>
@@ -415,68 +427,135 @@
             placeholder="搜索占用单号/部门/责任人/位置/原因"
             class="history-toolbar__search"
           />
-          <ElButton
-            data-testid="occupancy-export-link"
-            type="primary"
-            plain
-            :disabled="!filteredRecords.length"
-            @click="exportFilteredRecords"
-          >
-            导出占用轨迹
-          </ElButton>
+          <div class="history-toolbar__actions">
+            <div class="history-toolbar__filters">
+              <ElButton
+                data-testid="occupancy-view-list"
+                size="small"
+                :type="groupViewMode === 'LIST' ? 'primary' : 'default'"
+                @click="groupViewMode = 'LIST'"
+              >
+                平铺视图
+              </ElButton>
+              <ElButton
+                data-testid="occupancy-view-grouped"
+                size="small"
+                :type="groupViewMode === 'GROUPED' ? 'primary' : 'default'"
+                @click="groupViewMode = 'GROUPED'"
+              >
+                分组视图
+              </ElButton>
+            </div>
+            <ElButton
+              data-testid="occupancy-export-config-toggle"
+              size="small"
+              @click="exportConfigOpen = !exportConfigOpen"
+            >
+              导出字段
+            </ElButton>
+            <ElButton
+              data-testid="occupancy-export-link"
+              type="primary"
+              plain
+              :disabled="!filteredRecords.length"
+              @click="exportFilteredRecords"
+            >
+              导出占用轨迹
+            </ElButton>
+          </div>
+        </div>
+
+        <div
+          v-if="exportConfigOpen"
+          class="export-config-panel"
+          data-testid="occupancy-export-config-panel"
+        >
+          <div class="export-config-panel__header">
+            <div class="export-config-panel__title">导出字段配置</div>
+            <div class="export-config-panel__desc">
+              当前已选择 {{ selectedExportFields.length }} 个字段
+            </div>
+          </div>
+          <div class="export-config-panel__fields">
+            <button
+              v-for="field in exportFieldOptions"
+              :key="field.key"
+              type="button"
+              class="export-field-chip"
+              :data-testid="`occupancy-export-field-${field.key}`"
+              :class="selectedExportFields.includes(field.key) ? 'export-field-chip--active' : ''"
+              @click="toggleExportField(field.key)"
+            >
+              {{ field.label }}
+            </button>
+          </div>
         </div>
       </div>
 
       <div ref="historyListRef" class="record-wrapper" data-testid="occupancy-history-list">
         <div v-if="filteredRecords.length" class="record-list">
           <div
-            v-for="record in filteredRecords"
-            :key="record.occupancyId || record.occupancyNo || record.startDate"
-            :ref="(element) => setRecordRef(record, element)"
-            :data-testid="`occupancy-record-${getRecordKey(record)}`"
-            class="record-item"
-            :class="[
-              record.occupancyStatus === 'ACTIVE' ? 'record-item--active' : 'record-item--released',
-              focusedRecordKey === getRecordKey(record) ? 'record-item--focused' : ''
-            ]"
+            v-for="group in recordGroups"
+            :key="group.key"
+            class="record-group"
+            :data-testid="groupViewMode === 'GROUPED' ? `occupancy-group-${group.key}` : undefined"
           >
-            <div class="record-item__header">
-              <div>
-                <div class="record-item__title">
-                  {{ record.occupancyNo || '待生成占用单号' }}
-                </div>
-                <div class="record-item__subtitle">
-                  {{ record.useDeptName || '-' }} / {{ record.responsibleUserName || '-' }} /
-                  {{ record.locationName || '-' }}
-                </div>
-              </div>
-
-              <div class="record-item__tags">
-                <ElTag :type="record.occupancyStatus === 'ACTIVE' ? 'success' : 'info'" effect="light">
-                  {{ getStatusLabel(record.occupancyStatus) }}
-                </ElTag>
-                <ElTag v-if="record.occupancyStatus === 'RELEASED'" type="warning" effect="light">
-                  已释放
-                </ElTag>
-              </div>
+            <div v-if="groupViewMode === 'GROUPED'" class="record-group__header">
+              <div class="record-group__title">{{ group.title }}</div>
+              <ElTag effect="light">{{ group.records.length }} 条</ElTag>
             </div>
 
-            <div class="record-detail-grid">
-              <div class="detail-card">
-                <div class="detail-card__label">占用起始</div>
-                <div class="detail-card__value">{{ record.startDate || '-' }}</div>
-              </div>
-              <div class="detail-card">
-                <div class="detail-card__label">释放时间</div>
-                <div class="detail-card__value">{{ record.endDate || '-' }}</div>
-              </div>
-              <div class="detail-card detail-card--wide">
-                <div class="detail-card__label">发起/变更原因</div>
-                <div class="detail-card__value">{{ record.changeReason || '-' }}</div>
-              </div>
-              <div class="detail-card detail-card--wide">
-                <div class="detail-card__label">释放原因</div>
-                <div class="detail-card__value">{{ record.releaseReason || '-' }}</div>
+            <div class="record-group__items">
+              <div
+                v-for="record in group.records"
+                :key="record.occupancyId || record.occupancyNo || record.startDate"
+                :ref="(element) => setRecordRef(record, element)"
+                :data-testid="`occupancy-record-${getRecordKey(record)}`"
+                class="record-item"
+                :class="[
+                  record.occupancyStatus === 'ACTIVE' ? 'record-item--active' : 'record-item--released',
+                  focusedRecordKey === getRecordKey(record) ? 'record-item--focused' : ''
+                ]"
+              >
+                <div class="record-item__header">
+                  <div>
+                    <div class="record-item__title">
+                      {{ record.occupancyNo || '待生成占用单号' }}
+                    </div>
+                    <div class="record-item__subtitle">
+                      {{ record.useDeptName || '-' }} / {{ record.responsibleUserName || '-' }} /
+                      {{ record.locationName || '-' }}
+                    </div>
+                  </div>
+
+                  <div class="record-item__tags">
+                    <ElTag :type="record.occupancyStatus === 'ACTIVE' ? 'success' : 'info'" effect="light">
+                      {{ getStatusLabel(record.occupancyStatus) }}
+                    </ElTag>
+                    <ElTag v-if="record.occupancyStatus === 'RELEASED'" type="warning" effect="light">
+                      已释放
+                    </ElTag>
+                  </div>
+                </div>
+
+                <div class="record-detail-grid">
+                  <div class="detail-card">
+                    <div class="detail-card__label">占用起始</div>
+                    <div class="detail-card__value">{{ record.startDate || '-' }}</div>
+                  </div>
+                  <div class="detail-card">
+                    <div class="detail-card__label">释放时间</div>
+                    <div class="detail-card__value">{{ record.endDate || '-' }}</div>
+                  </div>
+                  <div class="detail-card detail-card--wide">
+                    <div class="detail-card__label">发起/变更原因</div>
+                    <div class="detail-card__value">{{ record.changeReason || '-' }}</div>
+                  </div>
+                  <div class="detail-card detail-card--wide">
+                    <div class="detail-card__label">释放原因</div>
+                    <div class="detail-card__value">{{ record.releaseReason || '-' }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -495,6 +574,17 @@
   type SortDirection = 'DESC' | 'ASC'
   type CompareFieldKey = 'useDeptName' | 'responsibleUserName' | 'locationName'
   type StatusFilter = 'ALL' | 'ACTIVE' | 'RELEASED'
+  type GroupViewMode = 'LIST' | 'GROUPED'
+  type ExportFieldKey =
+    | 'occupancyNo'
+    | 'occupancyStatus'
+    | 'useDeptName'
+    | 'responsibleUserName'
+    | 'locationName'
+    | 'startDate'
+    | 'endDate'
+    | 'changeReason'
+    | 'releaseReason'
 
   interface OccupancyFilterState {
     statusFilter: StatusFilter
@@ -505,6 +595,11 @@
     customRangeDraftEnd: string
     customRangeAppliedStart: string
     customRangeAppliedEnd: string
+  }
+
+  interface ExportFieldOption {
+    key: ExportFieldKey
+    label: string
   }
 
   const props = defineProps<{
@@ -523,6 +618,8 @@
   const statusFilter = ref<StatusFilter>('ALL')
   const timeFilter = ref<TimeFilter>('ALL')
   const sortDirection = ref<SortDirection>('DESC')
+  const groupViewMode = ref<GroupViewMode>('LIST')
+  const exportConfigOpen = ref(false)
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
@@ -540,7 +637,20 @@
     responsibleUserName: '责任人',
     locationName: '使用位置'
   }
+  const exportFieldOptions: ExportFieldOption[] = [
+    { key: 'occupancyNo', label: '占用单号' },
+    { key: 'occupancyStatus', label: '占用状态' },
+    { key: 'useDeptName', label: '使用部门' },
+    { key: 'responsibleUserName', label: '责任人' },
+    { key: 'locationName', label: '使用位置' },
+    { key: 'startDate', label: '占用起始' },
+    { key: 'endDate', label: '释放时间' },
+    { key: 'changeReason', label: '发起/变更原因' },
+    { key: 'releaseReason', label: '释放原因' }
+  ]
+  const defaultExportFieldKeys: ExportFieldKey[] = exportFieldOptions.map((item) => item.key)
   const recordRefs = new Map<string, HTMLElement>()
+  const selectedExportFields = ref<ExportFieldKey[]>([...defaultExportFieldKeys])
   const defaultFilterState: OccupancyFilterState = {
     statusFilter: 'ALL',
     timeFilter: 'ALL',
@@ -556,6 +666,7 @@
     const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
     return assetKey ? `asset-real-estate-occupancy-filters:${assetKey}` : ''
   })
+  const exportFieldsStorageKey = 'asset-real-estate-occupancy-export-fields'
 
   const parseDateValue = (value?: string) => {
     if (!value) {
@@ -664,7 +775,15 @@
         tagType: activeRecord.value ? 'info' : 'primary',
         desc: '当前资产没有有效占用关系，需要先登记归口、责任人与位置。',
         actions: '发起占用',
-        highlight: !activeRecord.value
+        highlight: !activeRecord.value,
+        shortcuts: [
+          {
+            key: 'all',
+            label: '查看全部轨迹',
+            status: 'ALL' as StatusFilter,
+            testId: 'occupancy-shortcut-all'
+          }
+        ]
       },
       {
         key: 'active',
@@ -673,7 +792,15 @@
         tagType: activeRecord.value ? 'success' : 'info',
         desc: '当前资产存在一条有效占用单，后续变更与释放都从当前有效单继续。',
         actions: '变更占用、释放占用',
-        highlight: !!activeRecord.value
+        highlight: !!activeRecord.value,
+        shortcuts: [
+          {
+            key: 'active',
+            label: '只看有效占用',
+            status: 'ACTIVE' as StatusFilter,
+            testId: 'occupancy-shortcut-active'
+          }
+        ]
       },
       {
         key: 'released',
@@ -682,9 +809,46 @@
         tagType: 'warning',
         desc: '已释放记录只保留轨迹，不允许直接对历史单再次执行变更或释放。',
         actions: '查看轨迹',
-        highlight: false
+        highlight: false,
+        shortcuts: [
+          {
+            key: 'released',
+            label: '只看已释放',
+            status: 'RELEASED' as StatusFilter,
+            testId: 'occupancy-shortcut-released'
+          }
+        ]
       }
     ]
+  })
+
+  const recordGroups = computed(() => {
+    if (groupViewMode.value === 'LIST') {
+      return [
+        {
+          key: 'ALL',
+          title: '全部轨迹',
+          records: filteredRecords.value
+        }
+      ]
+    }
+
+    return [
+      {
+        key: 'ACTIVE',
+        title: '有效占用',
+        records: filteredRecords.value.filter(
+          (record) => String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
+        )
+      },
+      {
+        key: 'RELEASED',
+        title: '已释放',
+        records: filteredRecords.value.filter(
+          (record) => String(record.occupancyStatus || '').toUpperCase() === 'RELEASED'
+        )
+      }
+    ].filter((group) => group.records.length)
   })
 
   const filteredRecords = computed(() => {
@@ -837,6 +1001,15 @@
   const focusActiveHistory = () => focusRecord(activeRecord.value, 'ACTIVE')
   const focusLatestReleasedHistory = () => focusRecord(latestReleasedRecord.value, 'RELEASED')
 
+  const applyLinkedFilter = (status: StatusFilter) => {
+    statusFilter.value = status
+    sortDirection.value = 'DESC'
+    keyword.value = ''
+    resetTimeFilters()
+    resetFocusedRecord()
+    nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
+  }
+
   const buildPersistedState = (): OccupancyFilterState => {
     return {
       statusFilter: statusFilter.value,
@@ -891,6 +1064,44 @@
     filtersReady.value = true
   }
 
+  const restoreExportFields = () => {
+    const raw = window.localStorage.getItem(exportFieldsStorageKey)
+    if (!raw) {
+      selectedExportFields.value = [...defaultExportFieldKeys]
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      const nextFields = Array.isArray(parsed)
+        ? parsed.filter((item): item is ExportFieldKey =>
+            exportFieldOptions.some((field) => field.key === item)
+          )
+        : []
+      selectedExportFields.value = nextFields.length ? nextFields : [...defaultExportFieldKeys]
+    } catch {
+      selectedExportFields.value = [...defaultExportFieldKeys]
+    }
+  }
+
+  const toggleExportField = (fieldKey: ExportFieldKey) => {
+    if (selectedExportFields.value.includes(fieldKey)) {
+      if (selectedExportFields.value.length === 1) {
+        return
+      }
+      selectedExportFields.value = selectedExportFields.value.filter((item) => item !== fieldKey)
+      return
+    }
+    selectedExportFields.value = [...selectedExportFields.value, fieldKey]
+  }
+
+  const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
+    if (fieldKey === 'occupancyStatus') {
+      return getStatusLabel(record.occupancyStatus)
+    }
+    return String(record[fieldKey] || '')
+  }
+
   const escapeCsvCell = (value?: string) => {
     const normalized = String(value || '').replace(/"/g, '""')
     return `"${normalized}"`
@@ -901,29 +1112,13 @@
       return
     }
 
-    const header = [
-      '占用单号',
-      '占用状态',
-      '使用部门',
-      '责任人',
-      '使用位置',
-      '占用起始',
-      '释放时间',
-      '发起/变更原因',
-      '释放原因'
-    ]
+    const exportFields = exportFieldOptions.filter((item) =>
+      selectedExportFields.value.includes(item.key)
+    )
+    const header = exportFields.map((item) => item.label)
     const rows = filteredRecords.value.map((record) => {
-      return [
-        record.occupancyNo,
-        getStatusLabel(record.occupancyStatus),
-        record.useDeptName,
-        record.responsibleUserName,
-        record.locationName,
-        record.startDate,
-        record.endDate,
-        record.changeReason,
-        record.releaseReason
-      ]
+      return exportFields
+        .map((field) => resolveExportValue(record, field.key))
         .map((item) => escapeCsvCell(item))
         .join(',')
     })
@@ -943,6 +1138,10 @@
     restorePersistedFilters()
   }, { immediate: true })
 
+  onMounted(() => {
+    restoreExportFields()
+  })
+
   watch(
     () => [
       statusFilter.value,
@@ -960,6 +1159,14 @@
       }
       window.localStorage.setItem(storageKey.value, JSON.stringify(buildPersistedState()))
     }
+  )
+
+  watch(
+    selectedExportFields,
+    (value) => {
+      window.localStorage.setItem(exportFieldsStorageKey, JSON.stringify(value))
+    },
+    { deep: true }
   )
 
 </script>
@@ -1138,6 +1345,13 @@
     background: linear-gradient(180deg, rgb(236 253 245 / 92%), #fff 100%);
   }
 
+  .matrix-item__shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
   .history-toolbar {
     padding: 16px 16px 0;
   }
@@ -1200,6 +1414,67 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+  }
+
+  .history-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .export-config-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border: 1px dashed #cfd9e8;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 96%), #fff 100%);
+  }
+
+  .export-config-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .export-config-panel__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .export-config-panel__desc {
+    font-size: 12px;
+    color: #6f7f99;
+  }
+
+  .export-config-panel__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .export-field-chip {
+    padding: 6px 12px;
+    border: 1px solid #d7e1ee;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #4a5a74;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .export-field-chip--active {
+    border-color: #60a5fa;
+    color: #1d4ed8;
+    background: rgb(239 246 255 / 92%);
   }
 
   .compare-item {
@@ -1272,6 +1547,31 @@
     box-shadow: 0 0 0 2px rgb(96 165 250 / 18%), 0 12px 26px rgb(37 99 235 / 10%);
   }
 
+  .record-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .record-group__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .record-group__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .record-group__items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
   @media (width <= 1080px) {
     .occupancy-overview-grid {
       grid-template-columns: 1fr;
@@ -1307,6 +1607,13 @@
 
     .history-toolbar__footer {
       align-items: stretch;
+    }
+
+    .history-toolbar__actions,
+    .export-config-panel__header,
+    .record-group__header {
+      width: 100%;
+      justify-content: flex-start;
     }
 
     .history-toolbar__range,
