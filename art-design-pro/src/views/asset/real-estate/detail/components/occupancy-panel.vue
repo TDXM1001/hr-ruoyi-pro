@@ -505,7 +505,16 @@
 
     <ElCard class="section-card" shadow="never">
       <template #header>
-        <div class="card-title">占用历史记录</div>
+        <div class="history-card-header">
+          <div class="card-title">占用历史记录</div>
+          <div
+            v-if="historyDrilldownTip"
+            class="history-card-header__tip"
+            data-testid="occupancy-history-drilldown-tip"
+          >
+            {{ historyDrilldownTip }}
+          </div>
+        </div>
       </template>
 
       <div class="history-toolbar">
@@ -784,7 +793,7 @@
               </ElButton>
             </div>
             <div
-              v-if="presetImportPreviewItems.length"
+              v-if="presetImportPreviewItems.length || presetImportInvalidItems.length"
               class="preset-import-preview"
               data-testid="occupancy-preset-import-preview-panel"
             >
@@ -802,6 +811,28 @@
                   >
                     {{ item.label }}
                   </button>
+                </div>
+              </div>
+              <div class="preset-import-preview__summary" data-testid="occupancy-preset-import-summary">
+                <span>可导入 {{ presetImportSummary.importableCount }}</span>
+                <span>冲突 {{ presetImportSummary.conflictCount }}</span>
+                <span>无效 {{ presetImportSummary.invalidCount }}</span>
+              </div>
+              <div
+                v-if="presetImportInvalidItems.length"
+                class="preset-import-preview__invalid-list"
+                data-testid="occupancy-preset-import-invalid-list"
+              >
+                <div
+                  v-for="item in presetImportInvalidItems"
+                  :key="item.key"
+                  class="preset-import-preview__invalid-item"
+                >
+                  <strong>{{ item.label }}</strong>
+                  <span>{{ item.reason }}</span>
+                  <span v-if="item.invalidFields.length">
+                    非法字段：{{ item.invalidFields.join('、') }}
+                  </span>
                 </div>
               </div>
               <div class="preset-import-preview__list">
@@ -822,6 +853,48 @@
                     class="preset-import-preview__item-desc"
                   >
                     已过滤非法字段：{{ item.invalidFields.join('、') }}
+                  </div>
+                  <div
+                    v-if="item.conflictType !== 'none'"
+                    class="preset-import-preview__item-policies"
+                  >
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :class="item.policyOverride === 'DEFAULT' ? 'export-preset-chip--active' : ''"
+                      :data-testid="`occupancy-preset-import-item-policy-default-${item.key}`"
+                      @click="setPreviewItemPolicy(item.key, 'DEFAULT')"
+                    >
+                      跟随全局
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :class="item.policyOverride === 'SKIP' ? 'export-preset-chip--active' : ''"
+                      :data-testid="`occupancy-preset-import-item-policy-skip-${item.key}`"
+                      @click="setPreviewItemPolicy(item.key, 'SKIP')"
+                    >
+                      跳过
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :class="item.policyOverride === 'RENAME' ? 'export-preset-chip--active' : ''"
+                      :data-testid="`occupancy-preset-import-item-policy-rename-${item.key}`"
+                      @click="setPreviewItemPolicy(item.key, 'RENAME')"
+                    >
+                      改名
+                    </button>
+                    <button
+                      v-if="item.conflictType === 'custom'"
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :class="item.policyOverride === 'OVERWRITE' ? 'export-preset-chip--active' : ''"
+                      :data-testid="`occupancy-preset-import-item-policy-overwrite-${item.key}`"
+                      @click="setPreviewItemPolicy(item.key, 'OVERWRITE')"
+                    >
+                      覆盖
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1203,6 +1276,7 @@
 
 <script setup lang="ts">
   import type { AssetRealEstateOccupancyRecord } from '@/api/asset/real-estate'
+  import { ElMessageBox } from 'element-plus'
 
   type TimeFilter = 'ALL' | '7D' | '30D' | '90D' | 'CUSTOM'
   type SortDirection = 'DESC' | 'ASC'
@@ -1257,6 +1331,7 @@
   type AnnotationTemplateKey = 'standard' | 'manager' | 'audit'
   type AnnotationCompareItemKey = 'status' | 'change' | 'release'
   type ImportConflictType = 'none' | 'system' | 'custom'
+  type ItemImportConflictPolicy = ImportConflictPolicy | 'DEFAULT'
 
   interface OccupancyLinkStatEvent {
     targetKey: LinkedTabName
@@ -1278,6 +1353,14 @@
     invalidFields: string[]
     conflictType: ImportConflictType
     resolvedLabel: string
+    policyOverride: ItemImportConflictPolicy
+  }
+
+  interface PresetImportInvalidItem {
+    key: string
+    label: string
+    reason: string
+    invalidFields: string[]
   }
 
   interface LinkTrendItem {
@@ -1292,6 +1375,17 @@
     date: string
     label: string
     count: number
+  }
+
+  interface TrendFilterSnapshot {
+    statusFilter: StatusFilter
+    timeFilter: TimeFilter
+    sortDirection: SortDirection
+    keyword: string
+    customRangeDraftStart: string
+    customRangeDraftEnd: string
+    customRangeAppliedStart: string
+    customRangeAppliedEnd: string
   }
 
   const props = defineProps<{
@@ -1328,9 +1422,11 @@
   const keyword = ref('')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
   const presetImportPreviewItems = ref<PresetImportPreviewItem[]>([])
+  const presetImportInvalidItems = ref<PresetImportInvalidItem[]>([])
   const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
   const linkStatsWindow = ref<LinkStatsWindow>('7D')
   const trendDrilldown = ref<TrendDrilldownState | null>(null)
+  const trendFilterSnapshot = ref<TrendFilterSnapshot | null>(null)
   const linkStats = reactive<OccupancyLinkStatsState>({
     counts: {
       overview: 0,
@@ -1521,6 +1617,23 @@
 
   const linkTrendTitle = computed(() => {
     return linkStatsWindow.value === '30D' ? '近 30 天联动趋势' : '近 7 天联动趋势'
+  })
+
+  const presetImportSummary = computed(() => {
+    const previewItems = presetImportPreviewItems.value
+    const conflictCount = previewItems.filter((item) => item.conflictType !== 'none').length
+    return {
+      importableCount: previewItems.length,
+      conflictCount,
+      invalidCount: presetImportInvalidItems.value.length
+    }
+  })
+
+  const historyDrilldownTip = computed(() => {
+    if (!trendDrilldown.value) {
+      return ''
+    }
+    return `当前来自趋势钻取：${trendDrilldown.value.date}`
   })
 
   const annotationCompareItems = computed(() => {
@@ -1979,11 +2092,44 @@
 
   const setLinkStatsWindow = (window: LinkStatsWindow) => {
     linkStatsWindow.value = window
-    trendDrilldown.value = null
+    if (trendDrilldown.value) {
+      clearTrendDrilldown()
+    }
+  }
+
+  const buildTrendFilterSnapshot = (): TrendFilterSnapshot => {
+    return {
+      statusFilter: statusFilter.value,
+      timeFilter: timeFilter.value,
+      sortDirection: sortDirection.value,
+      keyword: keyword.value,
+      customRangeDraftStart: customRangeDraft.start,
+      customRangeDraftEnd: customRangeDraft.end,
+      customRangeAppliedStart: customRangeApplied.start,
+      customRangeAppliedEnd: customRangeApplied.end
+    }
+  }
+
+  const applyTrendDrilldownFilters = (date: string) => {
+    if (!trendFilterSnapshot.value) {
+      trendFilterSnapshot.value = buildTrendFilterSnapshot()
+    }
+    statusFilter.value = 'ALL'
+    sortDirection.value = 'DESC'
+    keyword.value = ''
+    customRangeDraft.start = date
+    customRangeDraft.end = date
+    customRangeApplied.start = date
+    customRangeApplied.end = date
+    timeFilter.value = 'CUSTOM'
   }
 
   const clearTrendDrilldown = () => {
     trendDrilldown.value = null
+    if (trendFilterSnapshot.value) {
+      applyFilterState(trendFilterSnapshot.value)
+      trendFilterSnapshot.value = null
+    }
   }
 
   const toggleTrendDrilldown = (item: LinkTrendItem) => {
@@ -2001,12 +2147,22 @@
       label: item.topLabel,
       count: item.count
     }
+    applyTrendDrilldownFilters(item.date)
     groupViewMode.value = 'LIST'
     resetFocusedRecord()
     nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
   }
 
-  const resetLinkStatsView = () => {
+  const resetLinkStatsView = async () => {
+    try {
+      await ElMessageBox.confirm('确认清空来源链路统计与趋势数据吗？', '重置统计', {
+        type: 'warning',
+        confirmButtonText: '确认重置',
+        cancelButtonText: '取消'
+      })
+    } catch {
+      return
+    }
     linkStats.counts.overview = 0
     linkStats.counts.inspection = 0
     linkStats.counts.rectification = 0
@@ -2015,6 +2171,7 @@
     linkStats.lastTargetLabel = ''
     linkStats.events = []
     linkStatsWindow.value = '7D'
+    trendFilterSnapshot.value = null
     clearTrendDrilldown()
   }
 
@@ -2348,15 +2505,19 @@
   const parsePresetImportPreviewItems = () => {
     const raw = presetImportText.value.trim()
     if (!raw) {
-      return [] as PresetImportPreviewItem[]
+      return {
+        previewItems: [] as PresetImportPreviewItem[],
+        invalidItems: [] as PresetImportInvalidItem[]
+      }
     }
 
     try {
       const parsed = JSON.parse(raw)
       const candidates = Array.isArray(parsed?.presets) ? parsed.presets : []
       const takenLabels = new Set(computedExportPresetOptions.value.map((item) => item.label))
+      const invalidItems: PresetImportInvalidItem[] = []
 
-      return candidates
+      const previewItems = candidates
         .map((item, index) => {
           const label = String(item?.label || '').trim()
           const rawFields = Array.isArray(item?.fields) ? item.fields.map((field) => String(field)) : []
@@ -2367,7 +2528,23 @@
             (field) => !exportFieldOptions.some((option) => option.key === field)
           )
 
-          if (!label || !fields.length) {
+          if (!label) {
+            invalidItems.push({
+              key: `invalid-${index}`,
+              label: '未命名预设',
+              reason: '名称为空',
+              invalidFields
+            })
+            return undefined
+          }
+
+          if (!fields.length) {
+            invalidItems.push({
+              key: `invalid-${index}`,
+              label,
+              reason: '无有效字段',
+              invalidFields
+            })
             return undefined
           }
 
@@ -2384,17 +2561,48 @@
             fields,
             invalidFields,
             conflictType,
-            resolvedLabel
+            resolvedLabel,
+            policyOverride: 'DEFAULT'
           }
         })
         .filter((item): item is PresetImportPreviewItem => !!item)
+      return {
+        previewItems,
+        invalidItems
+      }
     } catch {
-      return []
+      return {
+        previewItems: [] as PresetImportPreviewItem[],
+        invalidItems: [
+          {
+            key: 'invalid-json',
+            label: '导入内容',
+            reason: 'JSON 解析失败',
+            invalidFields: []
+          }
+        ]
+      }
     }
   }
 
   const previewImportedPresets = () => {
-    presetImportPreviewItems.value = parsePresetImportPreviewItems()
+    const { previewItems, invalidItems } = parsePresetImportPreviewItems()
+    presetImportPreviewItems.value = previewItems
+    presetImportInvalidItems.value = invalidItems
+  }
+
+  const setPreviewItemPolicy = (itemKey: string, policy: ItemImportConflictPolicy) => {
+    presetImportPreviewItems.value = presetImportPreviewItems.value.map((item) =>
+      item.key === itemKey ? { ...item, policyOverride: policy } : item
+    )
+  }
+
+  const getEffectiveImportPolicy = (item: PresetImportPreviewItem) => {
+    const candidate = item.policyOverride === 'DEFAULT' ? presetImportPolicy.value : item.policyOverride
+    if (item.conflictType === 'system' && candidate === 'OVERWRITE') {
+      return 'RENAME' as ImportConflictPolicy
+    }
+    return candidate as ImportConflictPolicy
   }
 
   const resetPresetEditor = () => {
@@ -2510,8 +2718,10 @@
     ])
 
     presetImportPreviewItems.value.forEach((item, index) => {
+      const effectivePolicy = getEffectiveImportPolicy(item)
+
       if (item.conflictType === 'system') {
-        if (presetImportPolicy.value !== 'RENAME') {
+        if (effectivePolicy !== 'RENAME') {
           return
         }
         const renamedLabel = buildImportedPresetLabel(item.label, takenLabels)
@@ -2529,11 +2739,11 @@
       }
 
       if (item.conflictType === 'custom') {
-        if (presetImportPolicy.value === 'SKIP') {
+        if (effectivePolicy === 'SKIP') {
           return
         }
 
-        if (presetImportPolicy.value === 'OVERWRITE') {
+        if (effectivePolicy === 'OVERWRITE') {
           nextCustomPresets = nextCustomPresets.map((preset) =>
             preset.label === item.label
               ? {
@@ -2574,6 +2784,7 @@
 
     customExportPresets.value = nextCustomPresets
     presetImportPreviewItems.value = []
+    presetImportInvalidItems.value = []
     presetImportText.value = ''
     presetImportOpen.value = false
   }
@@ -2665,6 +2876,7 @@
     presetImportText,
     () => {
       presetImportPreviewItems.value = []
+      presetImportInvalidItems.value = []
     }
   )
 
@@ -3091,6 +3303,23 @@
     color: #6f7f99;
   }
 
+  .history-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .history-card-header__tip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563eb;
+    background: rgb(219 234 254 / 70%);
+  }
+
   .history-toolbar {
     padding: 16px 16px 0;
   }
@@ -3310,6 +3539,33 @@
     gap: 8px;
   }
 
+  .preset-import-preview__summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #52637d;
+  }
+
+  .preset-import-preview__invalid-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .preset-import-preview__invalid-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #fde2e2;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #9f3f3f;
+    background: rgb(254 242 242 / 92%);
+  }
+
   .preset-import-preview__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3345,6 +3601,12 @@
     line-height: 1.7;
     color: #6f7f99;
     word-break: break-word;
+  }
+
+  .preset-import-preview__item-policies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .preset-name-panel {

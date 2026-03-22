@@ -1,6 +1,6 @@
 ﻿import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ElementPlus from 'element-plus'
+import ElementPlus, { ElMessageBox } from 'element-plus'
 import { nextTick } from 'vue'
 import OccupancyPanel from '@/views/asset/real-estate/detail/components/occupancy-panel.vue'
 
@@ -1830,6 +1830,7 @@ describe('OccupancyPanel occupancy flow', () => {
   it('resets link stats and clears drilldown state', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    vi.spyOn(ElMessageBox, 'confirm').mockResolvedValue('confirm' as any)
     const currentTime = new Date()
     const twoHoursAgo = new Date(currentTime.getTime() - 2 * 60 * 60 * 1000).toISOString()
     window.localStorage.setItem(
@@ -1885,6 +1886,243 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(wrapper.get('[data-testid="occupancy-link-stat-last-target"]').text()).toContain('暂无')
     expect(vm.linkTrendItems.every((item: any) => item.count === 0)).toBe(true)
     expect(wrapper.find('[data-testid="occupancy-link-drilldown-panel"]').exists()).toBe(false)
+  })
+
+  it('shows import validation summary including invalid preset items', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "释放分析",
+      "fields": ["occupancyNo", "releaseReason"]
+    },
+    {
+      "label": "",
+      "fields": ["occupancyNo"]
+    },
+    {
+      "label": "全非法字段",
+      "fields": ["invalidOnly"]
+    }
+  ]
+}`)
+    await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
+
+    const summary = wrapper.get('[data-testid="occupancy-preset-import-summary"]')
+    expect(summary.text()).toContain('可导入 1')
+    expect(summary.text()).toContain('冲突 1')
+    expect(summary.text()).toContain('无效 2')
+
+    const invalidList = wrapper.get('[data-testid="occupancy-preset-import-invalid-list"]')
+    expect(invalidList.text()).toContain('名称为空')
+    expect(invalidList.text()).toContain('无有效字段')
+  })
+
+  it('applies row-level conflict policy before global policy', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('点测自定义预设')
+    await wrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+
+    await wrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "点测自定义预设",
+      "fields": ["occupancyNo", "releaseReason"]
+    }
+  ]
+}`)
+    await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-policy-skip"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-item-policy-overwrite-preview-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-apply"]').trigger('click')
+
+    expect(wrapper.findAll('[data-testid^="occupancy-export-preset-custom-"]')).toHaveLength(1)
+    await wrapper.get('[data-testid="occupancy-export-preset-custom-0"]').trigger('click')
+    const vm = wrapper.vm as any
+    expect(vm.selectedExportFields).toContain('releaseReason')
+  })
+
+  it('syncs trend drilldown into history filters and restores them on clear', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 0,
+          inspection: 1,
+          rectification: 0,
+          disposal: 0
+        },
+        lastTargetKey: 'inspection',
+        lastTargetLabel: '看巡检联动',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-21T09:00:00+08:00'
+          }
+        ]
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      attachTo: document.body,
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    const vm = wrapper.vm as any
+    vm.customRangeDraft.start = '2026-03-01'
+    vm.customRangeDraft.end = '2026-03-02'
+    await nextTick()
+
+    await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-history-drilldown-tip"]').text()).toContain(
+      '2026-03-21'
+    )
+    expect(vm.timeFilter).toBe('CUSTOM')
+    expect(vm.customRangeDraft.start).toBe('2026-03-21')
+    expect(vm.customRangeDraft.end).toBe('2026-03-21')
+
+    await wrapper.get('[data-testid="occupancy-link-drilldown-clear"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="occupancy-history-drilldown-tip"]').exists()).toBe(false)
+    expect(vm.customRangeDraft.start).toBe('2026-03-01')
+    expect(vm.customRangeDraft.end).toBe('2026-03-02')
+  })
+
+  it('requires confirmation before resetting link stats', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    const confirmSpy = vi.spyOn(ElMessageBox, 'confirm')
+    confirmSpy.mockResolvedValue('confirm' as any)
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 0,
+          inspection: 1,
+          rectification: 0,
+          disposal: 0
+        },
+        lastTargetKey: 'inspection',
+        lastTargetLabel: '看巡检联动',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-21T09:00:00+08:00'
+          }
+        ]
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(wrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('0')
   })
 })
 
