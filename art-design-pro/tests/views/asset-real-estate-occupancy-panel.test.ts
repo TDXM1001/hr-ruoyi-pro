@@ -958,4 +958,104 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(wrapper.emitted('switch-tab')?.[0]).toEqual(['inspection'])
     expect(wrapper.emitted('switch-tab')?.[1]).toEqual(['rectification'])
   })
+
+  it('renames export preset labels and restores them after remount', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9101,
+          occupancyNo: 'OCC-2026-9001',
+          occupancyStatus: 'ACTIVE',
+          useDeptName: 'dept-alpha',
+          responsibleUserName: 'user-alpha',
+          locationName: 'loc-alpha',
+          startDate: '2026-03-20',
+          changeReason: 'reason-alpha'
+        }
+      ],
+      canEdit: true
+    }
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-name-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-name-release"]').setValue('释放回顾')
+    await firstWrapper.get('[data-testid="occupancy-preset-name-apply"]').trigger('click')
+
+    expect(firstWrapper.get('[data-testid="occupancy-export-preset-release"]').text()).toContain(
+      '释放回顾'
+    )
+
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    expect(secondWrapper.get('[data-testid="occupancy-export-preset-release"]').text()).toContain(
+      '释放回顾'
+    )
+  })
+
+  it('exports annotation view as csv', async () => {
+    const createObjectURL = vi.fn(() => 'blob:occupancy-annotation-export')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-view-annotation"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-export-annotation-link"]').trigger('click')
+
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('状态说明')
+    expect(content).toContain('占用批注')
+    expect(content).toContain('释放批注')
+    expect(content).toContain('release-beta')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
+  })
 })

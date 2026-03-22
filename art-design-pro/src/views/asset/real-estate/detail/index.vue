@@ -15,6 +15,15 @@
         <div class="meta-tags flex flex-wrap items-center gap-2">
           <ElTag type="success" effect="light">不动产档案</ElTag>
           <ElTag effect="light">当前页签：{{ activeTabLabel }}</ElTag>
+          <ElButton
+            v-if="showReturnToOccupancyLink"
+            data-testid="detail-return-occupancy-link"
+            type="success"
+            plain
+            @click="handleReturnToRememberedTab"
+          >
+            返回占用联动
+          </ElButton>
           <ElButton v-if="canEdit" type="primary" plain @click="handleEdit">编辑档案</ElButton>
         </div>
       </div>
@@ -323,10 +332,13 @@
   import OverviewPanel from './components/overview-panel.vue'
   import RectificationPanel from './components/rectification-panel.vue'
   import {
+    clearRealEstateReturnTab,
     type RealEstateDetailTabName,
     REAL_ESTATE_DETAIL_TABS,
     normalizeRealEstateDetailTab,
     persistRealEstateDetailTab,
+    persistRealEstateReturnTab,
+    readRealEstateReturnTab,
     readRealEstateDetailTab,
     resolveRealEstateDetailTabByPath
   } from './tab-state'
@@ -357,6 +369,7 @@
   const approvalDrawerVisible = ref(false)
   const approvalRecords = ref<AssetRealEstateRectificationApprovalRecord[]>([])
   const approvalDrawerTitle = ref('')
+  const rememberedReturnTab = ref<RealEstateDetailTabName>()
   const occupancyDrawerVisible = ref(false)
   const occupancySubmitting = ref(false)
   const occupancyDrawerMode = ref<'create' | 'change' | 'release'>('create')
@@ -421,6 +434,10 @@
 
   const activeTabDesc = computed(() => {
     return detailTabs.find((item) => item.name === activeTab.value)?.desc || detailTabs[0].desc
+  })
+
+  const showReturnToOccupancyLink = computed(() => {
+    return rememberedReturnTab.value === 'occupancy' && activeTab.value !== 'occupancy'
   })
 
   const summaryItems = computed(() => {
@@ -732,11 +749,27 @@
 
   const handleTabChange = (tabName: TabPaneName) => {
     // 中文注释：详情页签只在当前页面切换组件，不再推送新路由，避免用户感知上“还在详情里却像换页”。
-    activeTab.value = normalizeRealEstateDetailTab(String(tabName))
+    const nextTab = normalizeRealEstateDetailTab(String(tabName))
+    activeTab.value = nextTab
+    if (rememberedReturnTab.value === nextTab) {
+      rememberedReturnTab.value = undefined
+      clearRealEstateReturnTab(assetId.value)
+    }
   }
 
   const handleOccupancySwitchTab = (tabName: RealEstateDetailTabName) => {
+    rememberedReturnTab.value = 'occupancy'
+    persistRealEstateReturnTab(assetId.value, 'occupancy')
     activeTab.value = normalizeRealEstateDetailTab(tabName)
+  }
+
+  const handleReturnToRememberedTab = () => {
+    if (!rememberedReturnTab.value) {
+      return
+    }
+    activeTab.value = rememberedReturnTab.value
+    clearRealEstateReturnTab(assetId.value)
+    rememberedReturnTab.value = undefined
   }
 
   const isRectifiableRecord = (record: AssetInventoryRecord) => {
@@ -1032,6 +1065,7 @@
     () => [route.params.assetId, route.path, route.query.tab],
     () => {
       syncActiveTabFromContext()
+      rememberedReturnTab.value = readRealEstateReturnTab(assetId.value)
     },
     { immediate: true }
   )

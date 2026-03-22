@@ -6,6 +6,7 @@
   | 'disposal'
 
 const DETAIL_TAB_STORAGE_PREFIX = 'asset-real-estate-detail-tab:'
+const DETAIL_RETURN_TAB_STORAGE_PREFIX = 'asset-real-estate-detail-return-tab:'
 
 export const REAL_ESTATE_DETAIL_TABS: Array<{
   name: RealEstateDetailTabName
@@ -70,6 +71,13 @@ function buildStorageKey(assetId?: number | string) {
   return `${DETAIL_TAB_STORAGE_PREFIX}${assetId}`
 }
 
+function buildReturnStorageKey(assetId?: number | string) {
+  if (assetId === undefined || assetId === null || assetId === '') {
+    return ''
+  }
+  return `${DETAIL_RETURN_TAB_STORAGE_PREFIX}${assetId}`
+}
+
 export function persistRealEstateDetailTab(assetId?: number | string, tab?: RealEstateDetailTabName) {
   if (typeof window === 'undefined') {
     return
@@ -91,4 +99,41 @@ export function readRealEstateDetailTab(assetId?: number | string) {
   }
   const cachedValue = window.sessionStorage.getItem(storageKey)
   return cachedValue ? normalizeRealEstateDetailTab(cachedValue) : undefined
+}
+
+export function persistRealEstateReturnTab(
+  assetId?: number | string,
+  tab?: RealEstateDetailTabName
+) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const storageKey = buildReturnStorageKey(assetId)
+  if (!storageKey) {
+    return
+  }
+  window.sessionStorage.setItem(storageKey, normalizeRealEstateDetailTab(tab))
+}
+
+export function readRealEstateReturnTab(assetId?: number | string) {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+  const storageKey = buildReturnStorageKey(assetId)
+  if (!storageKey) {
+    return undefined
+  }
+  const cachedValue = window.sessionStorage.getItem(storageKey)
+  return cachedValue ? normalizeRealEstateDetailTab(cachedValue) : undefined
+}
+
+export function clearRealEstateReturnTab(assetId?: number | string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const storageKey = buildReturnStorageKey(assetId)
+  if (!storageKey) {
+    return
+  }
+  window.sessionStorage.removeItem(storageKey)
 }

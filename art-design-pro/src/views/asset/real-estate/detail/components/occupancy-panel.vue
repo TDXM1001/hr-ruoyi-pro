@@ -494,6 +494,17 @@
               导出字段
             </ElButton>
             <ElButton
+              v-if="groupViewMode === 'ANNOTATION'"
+              data-testid="occupancy-export-annotation-link"
+              size="small"
+              type="success"
+              plain
+              :disabled="!filteredRecords.length"
+              @click="exportAnnotationRecords"
+            >
+              导出批注
+            </ElButton>
+            <ElButton
               data-testid="occupancy-export-link"
               type="primary"
               plain
@@ -512,13 +523,55 @@
         >
           <div class="export-config-panel__header">
             <div class="export-config-panel__title">导出字段配置</div>
-            <div class="export-config-panel__desc">
-              当前已选择 {{ selectedExportFields.length }} 个字段
+            <div class="export-config-panel__header-actions">
+              <div class="export-config-panel__desc">
+                当前已选择 {{ selectedExportFields.length }} 个字段
+              </div>
+              <ElButton
+                data-testid="occupancy-preset-name-toggle"
+                size="small"
+                text
+                @click="presetNameEditOpen = !presetNameEditOpen"
+              >
+                {{ presetNameEditOpen ? '收起命名设置' : '命名设置' }}
+              </ElButton>
+            </div>
+          </div>
+          <div
+            v-if="presetNameEditOpen"
+            class="preset-name-panel"
+            data-testid="occupancy-preset-name-panel"
+          >
+            <div class="preset-name-panel__grid">
+              <label
+                v-for="preset in exportPresetOptions"
+                :key="preset.key"
+                class="preset-name-field"
+              >
+                <span class="preset-name-field__label">{{ preset.label }}</span>
+                <input
+                  v-model="exportPresetNameDraft[preset.key]"
+                  :data-testid="`occupancy-preset-name-${preset.key}`"
+                  type="text"
+                  class="preset-name-field__input"
+                />
+              </label>
+            </div>
+            <div class="preset-name-panel__actions">
+              <ElButton
+                data-testid="occupancy-preset-name-apply"
+                size="small"
+                type="primary"
+                plain
+                @click="applyPresetNames"
+              >
+                应用命名
+              </ElButton>
             </div>
           </div>
           <div class="export-config-panel__presets">
             <button
-              v-for="preset in exportPresetOptions"
+              v-for="preset in computedExportPresetOptions"
               :key="preset.key"
               type="button"
               class="export-preset-chip"
@@ -735,6 +788,7 @@
   const sortDirection = ref<SortDirection>('DESC')
   const groupViewMode = ref<GroupViewMode>('LIST')
   const exportConfigOpen = ref(false)
+  const presetNameEditOpen = ref(false)
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
@@ -780,6 +834,11 @@
       fields: ['occupancyNo', 'occupancyStatus', 'useDeptName', 'locationName', 'endDate', 'changeReason', 'releaseReason']
     }
   ]
+  const exportPresetNameDraft = reactive<Record<ExportPresetOption['key'], string>>({
+    operations: '运营摘要',
+    audit: '审计复盘',
+    release: '释放分析'
+  })
   const defaultExportFieldKeys: ExportFieldKey[] = exportFieldOptions.map((item) => item.key)
   const tabLinkOptions: { key: LinkedTabName; label: string }[] = [
     { key: 'overview', label: '回总览核对主档' },
@@ -805,6 +864,14 @@
     return assetKey ? `asset-real-estate-occupancy-filters:${assetKey}` : ''
   })
   const exportFieldsStorageKey = 'asset-real-estate-occupancy-export-fields'
+  const exportPresetNameStorageKey = 'asset-real-estate-occupancy-export-preset-names'
+
+  const computedExportPresetOptions = computed(() => {
+    return exportPresetOptions.map((item) => ({
+      ...item,
+      label: exportPresetNameDraft[item.key] || item.label
+    }))
+  })
 
   const parseDateValue = (value?: string) => {
     if (!value) {
@@ -1068,6 +1135,12 @@
     return mapper[String(status || '').toUpperCase()] || status || '-'
   }
 
+  const buildAnnotationStatusNote = (record: AssetRealEstateOccupancyRecord) => {
+    return String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
+      ? '该轨迹仍是当前有效占用，主档应以这条占用记录为准。'
+      : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
+  }
+
   const emitTabSwitch = (tab: LinkedTabName) => {
     emit('switch-tab', tab)
   }
@@ -1226,6 +1299,25 @@
     }
   }
 
+  const restorePresetNames = () => {
+    const raw = window.localStorage.getItem(exportPresetNameStorageKey)
+    if (!raw) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<Record<ExportPresetOption['key'], string>>
+      ;(['operations', 'audit', 'release'] as const).forEach((key) => {
+        const nextLabel = String(parsed[key] || '').trim()
+        if (nextLabel) {
+          exportPresetNameDraft[key] = nextLabel
+        }
+      })
+    } catch {
+      window.localStorage.removeItem(exportPresetNameStorageKey)
+    }
+  }
+
   const toggleExportField = (fieldKey: ExportFieldKey) => {
     if (selectedExportFields.value.includes(fieldKey)) {
       if (selectedExportFields.value.length === 1) {
@@ -1243,6 +1335,11 @@
       return
     }
     selectedExportFields.value = [...preset.fields]
+  }
+
+  const applyPresetNames = () => {
+    window.localStorage.setItem(exportPresetNameStorageKey, JSON.stringify(exportPresetNameDraft))
+    presetNameEditOpen.value = false
   }
 
   const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
@@ -1284,12 +1381,42 @@
     URL.revokeObjectURL(url)
   }
 
+  const exportAnnotationRecords = () => {
+    if (!filteredRecords.value.length) {
+      return
+    }
+
+    const header = ['占用单号', '轨迹状态', '状态说明', '占用批注', '释放批注']
+    const rows = filteredRecords.value.map((record) => {
+      return [
+        record.occupancyNo || '',
+        getStatusLabel(record.occupancyStatus),
+        buildAnnotationStatusNote(record),
+        record.changeReason || '',
+        record.releaseReason || ''
+      ]
+        .map((item) => escapeCsvCell(item))
+        .join(',')
+    })
+    const csvContent = `\uFEFF${header.map((item) => escapeCsvCell(item)).join(',')}\n${rows.join('\n')}`
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${props.detailData.assetCode || 'asset'}-occupancy-annotations.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   watch(storageKey, () => {
     restorePersistedFilters()
   }, { immediate: true })
 
   onMounted(() => {
     restoreExportFields()
+    restorePresetNames()
   })
 
   watch(
@@ -1609,6 +1736,14 @@
     gap: 12px;
   }
 
+  .export-config-panel__header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
   .export-config-panel__title {
     font-size: 14px;
     font-weight: 700;
@@ -1630,6 +1765,50 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+
+  .preset-name-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 88%);
+  }
+
+  .preset-name-panel__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .preset-name-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .preset-name-field__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
+  .preset-name-field__input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #d8e0ec;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #18233a;
+    background: #fff;
+  }
+
+  .preset-name-panel__actions {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .export-field-chip {
@@ -1848,7 +2027,8 @@
     .empty-occupancy-card__meta,
     .insight-card-grid,
     .insight-card__grid,
-    .annotation-card__notes {
+    .annotation-card__notes,
+    .preset-name-panel__grid {
       grid-template-columns: 1fr;
     }
 
@@ -1875,6 +2055,7 @@
 
     .history-toolbar__actions,
     .export-config-panel__header,
+    .export-config-panel__header-actions,
     .record-group__header,
     .annotation-card__header {
       width: 100%;
