@@ -207,6 +207,7 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     vi.setSystemTime(new Date('2026-03-21T10:00:00+08:00'))
     vi.clearAllMocks()
     mockPush.mockReset()
+    window.localStorage.clear()
     window.sessionStorage.clear()
     routeState.params = { assetId: '20001' }
     routeState.query = {}
@@ -371,6 +372,51 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     await flushPromises()
 
     expect(remountWrapper.find('[data-testid="detail-return-occupancy-source"]').exists()).toBe(false)
+  })
+
+  it('跨页签联动后立即卸载占用面板时仍会持久化来源链路统计', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
+    await flushPromises()
+
+    const storageKey = 'asset-real-estate-occupancy-link-stats:RE-2026-0001'
+    const persistedRaw = window.localStorage.getItem(storageKey)
+    expect(persistedRaw).not.toBeNull()
+
+    const persisted = JSON.parse(String(persistedRaw))
+    expect(persisted.counts.inspection).toBe(1)
+    expect(persisted.lastTargetLabel).toBe('看巡检联动')
+
+    wrapper.unmount()
+
+    const remountWrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    await remountWrapper.get('[data-testid="detail-return-occupancy-link"]').trigger('click')
+    await flushPromises()
+
+    expect(remountWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('1')
+    expect(remountWrapper.get('[data-testid="occupancy-link-stat-last-target"]').text()).toContain(
+      '看巡检联动'
+    )
   })
 
   it('变更占用抽屉支持原因模板快捷填充', async () => {

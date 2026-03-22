@@ -1183,4 +1183,203 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1)
     expect(revokeObjectURL).toHaveBeenCalledTimes(1)
   })
+
+  it('edits custom preset name and overwrites its fields with current selection', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9100,
+          occupancyNo: 'OCC-2026-8999',
+          occupancyStatus: 'RELEASED',
+          useDeptName: 'dept-beta',
+          responsibleUserName: 'user-beta',
+          locationName: 'loc-beta',
+          startDate: '2026-03-01',
+          endDate: '2026-03-10',
+          changeReason: 'reason-beta',
+          releaseReason: 'release-beta'
+        }
+      ],
+      canEdit: true
+    }
+
+    const wrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-source-release"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('释放复盘增强')
+    await wrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+
+    await wrapper.get('[data-testid="occupancy-export-field-releaseReason"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-custom-preset-edit-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('释放复盘终版')
+    await wrapper.get('[data-testid="occupancy-preset-copy-save"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-export-preset-custom-0"]').text()).toContain(
+      '释放复盘终版'
+    )
+
+    await wrapper.get('[data-testid="occupancy-export-field-occupancyStatus"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-export-preset-custom-0"]').trigger('click')
+
+    expect(
+      wrapper.get('[data-testid="occupancy-export-field-releaseReason"]').classes()
+    ).not.toContain('export-field-chip--active')
+    expect(
+      wrapper.get('[data-testid="occupancy-export-field-occupancyStatus"]').classes()
+    ).toContain('export-field-chip--active')
+  })
+
+  it('deletes custom preset and does not restore it after remount', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9100,
+          occupancyNo: 'OCC-2026-8999',
+          occupancyStatus: 'RELEASED',
+          useDeptName: 'dept-beta',
+          responsibleUserName: 'user-beta',
+          locationName: 'loc-beta',
+          startDate: '2026-03-01',
+          endDate: '2026-03-10',
+          changeReason: 'reason-beta',
+          releaseReason: 'release-beta'
+        }
+      ],
+      canEdit: true
+    }
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-source-release"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('待删除预设')
+    await firstWrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+
+    expect(firstWrapper.find('[data-testid="occupancy-export-preset-custom-0"]').exists()).toBe(true)
+
+    await firstWrapper.get('[data-testid="occupancy-custom-preset-delete-0"]').trigger('click')
+    expect(firstWrapper.find('[data-testid="occupancy-export-preset-custom-0"]').exists()).toBe(false)
+
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    expect(secondWrapper.find('[data-testid="occupancy-export-preset-custom-0"]').exists()).toBe(false)
+  })
+
+  it('shows template preview content for the selected annotation template', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-view-annotation"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-annotation-template-manager"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-annotation-preview"]').text()).toContain('管理视角')
+
+    await wrapper.get('[data-testid="occupancy-annotation-template-audit"]').trigger('click')
+    expect(wrapper.get('[data-testid="occupancy-annotation-preview"]').text()).toContain('审计视角')
+  })
+
+  it('tracks cross-tab link statistics and restores them after remount', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9101,
+          occupancyNo: 'OCC-2026-9001',
+          occupancyStatus: 'ACTIVE',
+          useDeptName: 'dept-alpha',
+          responsibleUserName: 'user-alpha',
+          locationName: 'loc-alpha',
+          startDate: '2026-03-20',
+          changeReason: 'reason-alpha'
+        }
+      ],
+      canEdit: true
+    }
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-tab-link-rectification"]').trigger('click')
+
+    expect(firstWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('2')
+    expect(firstWrapper.get('[data-testid="occupancy-link-stat-rectification"]').text()).toContain('1')
+    expect(firstWrapper.get('[data-testid="occupancy-link-stat-last-target"]').text()).toContain(
+      '看整改进展'
+    )
+
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    expect(secondWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('2')
+    expect(secondWrapper.get('[data-testid="occupancy-link-stat-rectification"]').text()).toContain('1')
+    expect(secondWrapper.get('[data-testid="occupancy-link-stat-last-target"]').text()).toContain(
+      '看整改进展'
+    )
+  })
 })

@@ -195,6 +195,29 @@
               </ElButton>
             </div>
           </div>
+
+          <div class="occupancy-link-stats">
+            <div class="occupancy-link-stats__header">
+              <div class="occupancy-link-stats__title">来源链路统计</div>
+              <div
+                class="occupancy-link-stats__last"
+                data-testid="occupancy-link-stat-last-target"
+              >
+                最近一次联动：{{ linkStats.lastTargetLabel || '暂无' }}
+              </div>
+            </div>
+            <div class="occupancy-link-stats__grid">
+              <div
+                v-for="item in linkStatItems"
+                :key="item.key"
+                class="occupancy-link-stats__item"
+                :data-testid="`occupancy-link-stat-${item.key}`"
+              >
+                <div class="occupancy-link-stats__label">{{ item.label }}</div>
+                <div class="occupancy-link-stats__value">{{ item.count }}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div v-else class="empty-occupancy-card">
@@ -277,6 +300,29 @@
               >
                 {{ item.label }}
               </ElButton>
+            </div>
+          </div>
+
+          <div class="occupancy-link-stats">
+            <div class="occupancy-link-stats__header">
+              <div class="occupancy-link-stats__title">来源链路统计</div>
+              <div
+                class="occupancy-link-stats__last"
+                data-testid="occupancy-link-stat-last-target"
+              >
+                最近一次联动：{{ linkStats.lastTargetLabel || '暂无' }}
+              </div>
+            </div>
+            <div class="occupancy-link-stats__grid">
+              <div
+                v-for="item in linkStatItems"
+                :key="item.key"
+                class="occupancy-link-stats__item"
+                :data-testid="`occupancy-link-stat-${item.key}`"
+              >
+                <div class="occupancy-link-stats__label">{{ item.label }}</div>
+                <div class="occupancy-link-stats__value">{{ item.count }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -582,9 +628,15 @@
             class="preset-copy-panel"
             data-testid="occupancy-preset-copy-panel"
           >
-            <div class="preset-copy-panel__title">复制新预设</div>
+            <div class="preset-copy-panel__title">
+              {{ presetCopyMode === 'edit' ? '编辑自定义预设' : '复制新预设' }}
+            </div>
             <div class="preset-copy-panel__desc">
-              从系统预设、已保存的自定义预设或当前字段选择快速复制一套新的导出口径。
+              {{
+                presetCopyMode === 'edit'
+                  ? '基于当前已勾选字段覆盖这条自定义预设，同时可以直接修改名称。'
+                  : '从系统预设、已保存的自定义预设或当前字段选择快速复制一套新的导出口径。'
+              }}
             </div>
             <div class="preset-copy-panel__sources">
               <button
@@ -617,13 +669,17 @@
                 placeholder="请输入新预设名称"
               />
               <ElButton
-                data-testid="occupancy-preset-copy-apply"
+                :data-testid="
+                  presetCopyMode === 'edit'
+                    ? 'occupancy-preset-copy-save'
+                    : 'occupancy-preset-copy-apply'
+                "
                 size="small"
                 type="primary"
                 plain
-                @click="createCustomPreset"
+                @click="presetCopyMode === 'edit' ? saveCustomPreset() : createCustomPreset()"
               >
-                复制创建
+                {{ presetCopyMode === 'edit' ? '保存预设' : '复制创建' }}
               </ElButton>
             </div>
           </div>
@@ -638,6 +694,43 @@
             >
               {{ preset.label }}
             </button>
+          </div>
+          <div
+            v-if="customExportPresets.length"
+            class="custom-preset-list"
+            data-testid="occupancy-custom-preset-list"
+          >
+            <div
+              v-for="(preset, presetIndex) in customExportPresets"
+              :key="preset.key"
+              class="custom-preset-item"
+            >
+              <div class="custom-preset-item__meta">
+                <div class="custom-preset-item__title">{{ preset.label }}</div>
+                <div class="custom-preset-item__desc">
+                  当前保存 {{ preset.fields.length }} 个字段，可继续覆盖字段并编辑名称。
+                </div>
+              </div>
+              <div class="custom-preset-item__actions">
+                <ElButton
+                  :data-testid="`occupancy-custom-preset-edit-${presetIndex}`"
+                  size="small"
+                  text
+                  @click="startEditCustomPreset(preset)"
+                >
+                  编辑
+                </ElButton>
+                <ElButton
+                  :data-testid="`occupancy-custom-preset-delete-${presetIndex}`"
+                  size="small"
+                  text
+                  type="danger"
+                  @click="removeCustomPreset(preset.key)"
+                >
+                  删除
+                </ElButton>
+              </div>
+            </div>
           </div>
           <div class="export-config-panel__fields">
             <button
@@ -682,6 +775,26 @@
             class="annotation-list"
             data-testid="occupancy-annotation-list"
           >
+            <div
+              v-if="annotationPreviewRecord"
+              class="annotation-preview"
+              data-testid="occupancy-annotation-preview"
+            >
+              <div class="annotation-preview__header">
+                <div class="annotation-preview__title">模板预览</div>
+                <ElTag effect="light">{{ annotationTemplateLabel }}</ElTag>
+              </div>
+              <div class="annotation-preview__grid">
+                <div
+                  v-for="item in buildAnnotationPreviewItems(annotationPreviewRecord)"
+                  :key="item.label"
+                  class="annotation-note annotation-note--preview"
+                >
+                  <div class="annotation-note__label">{{ item.label }}</div>
+                  <div class="annotation-note__value">{{ item.value }}</div>
+                </div>
+              </div>
+            </div>
             <div
               v-for="record in filteredRecords"
               :key="`annotation-${getRecordKey(record)}`"
@@ -852,6 +965,12 @@
   type PresetCopySourceKey = 'current' | ExportPresetViewOption['key']
   type AnnotationTemplateKey = 'standard' | 'manager' | 'audit'
 
+  interface OccupancyLinkStatsState {
+    counts: Record<LinkedTabName, number>
+    lastTargetKey: LinkedTabName | ''
+    lastTargetLabel: string
+  }
+
   const props = defineProps<{
     detailData: Record<string, any>
     occupancyRecords: AssetRealEstateOccupancyRecord[]
@@ -874,12 +993,24 @@
   const exportConfigOpen = ref(false)
   const presetNameEditOpen = ref(false)
   const presetCopyOpen = ref(false)
+  const presetCopyMode = ref<'create' | 'edit'>('create')
+  const editingCustomPresetKey = ref('')
   const presetCopyName = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
+  const linkStats = reactive<OccupancyLinkStatsState>({
+    counts: {
+      overview: 0,
+      inspection: 0,
+      rectification: 0,
+      disposal: 0
+    },
+    lastTargetKey: '',
+    lastTargetLabel: ''
+  })
   const customRangeDraft = reactive({
     start: '',
     end: ''
@@ -959,6 +1090,10 @@
   const exportFieldsStorageKey = 'asset-real-estate-occupancy-export-fields'
   const exportPresetNameStorageKey = 'asset-real-estate-occupancy-export-preset-names'
   const customPresetStorageKey = 'asset-real-estate-occupancy-export-custom-presets'
+  const linkStatsStorageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-link-stats:${assetKey}` : ''
+  })
 
   const computedExportPresetOptions = computed(() => {
     const systemPresets: ExportPresetViewOption[] = exportPresetOptions.map((item) => ({
@@ -967,6 +1102,22 @@
       source: 'system'
     }))
     return [...systemPresets, ...customExportPresets.value]
+  })
+
+  const annotationPreviewRecord = computed(() => {
+    return activeRecord.value || sortedRecords.value[0]
+  })
+
+  const annotationTemplateLabel = computed(() => {
+    return annotationTemplateOptions.find((item) => item.key === annotationTemplate.value)?.label || '标准模板'
+  })
+
+  const linkStatItems = computed(() => {
+    return tabLinkOptions.map((item) => ({
+      key: item.key,
+      label: item.label,
+      count: linkStats.counts[item.key]
+    }))
   })
 
   const parseDateValue = (value?: string) => {
@@ -1284,7 +1435,37 @@
     return reason
   }
 
+  const buildAnnotationPreviewItems = (record?: AssetRealEstateOccupancyRecord) => {
+    if (!record) {
+      return []
+    }
+    return [
+      { label: '状态说明样例', value: buildAnnotationStatusNote(record) },
+      { label: '占用批注样例', value: buildAnnotationChangeNote(record) },
+      { label: '释放批注样例', value: buildAnnotationReleaseNote(record) }
+    ]
+  }
+
+  const persistLinkStats = () => {
+    if (!linkStatsStorageKey.value) {
+      return
+    }
+    window.localStorage.setItem(
+      linkStatsStorageKey.value,
+      JSON.stringify({
+        counts: { ...linkStats.counts },
+        lastTargetKey: linkStats.lastTargetKey,
+        lastTargetLabel: linkStats.lastTargetLabel
+      })
+    )
+  }
+
   const emitTabSwitch = (tab: LinkedTabName) => {
+    const linkOption = tabLinkOptions.find((item) => item.key === tab)
+    linkStats.counts[tab] += 1
+    linkStats.lastTargetKey = tab
+    linkStats.lastTargetLabel = linkOption?.label || ''
+    persistLinkStats()
     emit('switch-tab', tab)
   }
 
@@ -1500,6 +1681,40 @@
     }
   }
 
+  const restoreLinkStats = () => {
+    linkStats.counts.overview = 0
+    linkStats.counts.inspection = 0
+    linkStats.counts.rectification = 0
+    linkStats.counts.disposal = 0
+    linkStats.lastTargetKey = ''
+    linkStats.lastTargetLabel = ''
+
+    if (!linkStatsStorageKey.value) {
+      return
+    }
+
+    const raw = window.localStorage.getItem(linkStatsStorageKey.value)
+    if (!raw) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<OccupancyLinkStatsState>
+      ;(['overview', 'inspection', 'rectification', 'disposal'] as LinkedTabName[]).forEach((key) => {
+        const nextValue = Number(parsed?.counts?.[key] || 0)
+        linkStats.counts[key] = Number.isFinite(nextValue) ? nextValue : 0
+      })
+      linkStats.lastTargetKey = ['overview', 'inspection', 'rectification', 'disposal'].includes(
+        String(parsed.lastTargetKey || '')
+      )
+        ? (parsed.lastTargetKey as LinkedTabName)
+        : ''
+      linkStats.lastTargetLabel = String(parsed.lastTargetLabel || '')
+    } catch {
+      window.localStorage.removeItem(linkStatsStorageKey.value)
+    }
+  }
+
   const toggleExportField = (fieldKey: ExportFieldKey) => {
     if (selectedExportFields.value.includes(fieldKey)) {
       if (selectedExportFields.value.length === 1) {
@@ -1522,6 +1737,13 @@
   const applyPresetNames = () => {
     window.localStorage.setItem(exportPresetNameStorageKey, JSON.stringify(exportPresetNameDraft))
     presetNameEditOpen.value = false
+  }
+
+  const resetPresetEditor = () => {
+    presetCopyMode.value = 'create'
+    editingCustomPresetKey.value = ''
+    presetCopyName.value = ''
+    presetCopySourceKey.value = 'current'
   }
 
   const resolvePresetCopySourceFields = () => {
@@ -1549,8 +1771,43 @@
       }
     ]
     selectedExportFields.value = [...nextFields]
-    presetCopyName.value = ''
     presetCopyOpen.value = false
+    resetPresetEditor()
+  }
+
+  const startEditCustomPreset = (preset: CustomExportPresetOption) => {
+    presetCopyOpen.value = true
+    presetCopyMode.value = 'edit'
+    editingCustomPresetKey.value = preset.key
+    presetCopyName.value = preset.label
+    presetCopySourceKey.value = preset.key
+  }
+
+  const saveCustomPreset = () => {
+    const nextLabel = presetCopyName.value.trim()
+    if (!nextLabel || !editingCustomPresetKey.value) {
+      return
+    }
+
+    customExportPresets.value = customExportPresets.value.map((preset) =>
+      preset.key === editingCustomPresetKey.value
+        ? {
+            ...preset,
+            label: nextLabel,
+            fields: [...selectedExportFields.value]
+          }
+        : preset
+    )
+    presetCopyOpen.value = false
+    resetPresetEditor()
+  }
+
+  const removeCustomPreset = (presetKey: string) => {
+    customExportPresets.value = customExportPresets.value.filter((preset) => preset.key !== presetKey)
+    if (editingCustomPresetKey.value === presetKey) {
+      presetCopyOpen.value = false
+      resetPresetEditor()
+    }
   }
 
   const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
@@ -1625,10 +1882,19 @@
     restorePersistedFilters()
   }, { immediate: true })
 
+  watch(
+    linkStatsStorageKey,
+    () => {
+      restoreLinkStats()
+    },
+    { immediate: true }
+  )
+
   onMounted(() => {
     restoreExportFields()
     restorePresetNames()
     restoreCustomPresets()
+    restoreLinkStats()
   })
 
   watch(
@@ -1662,6 +1928,18 @@
     customExportPresets,
     (value) => {
       window.localStorage.setItem(customPresetStorageKey, JSON.stringify(value))
+    },
+    { deep: true }
+  )
+
+  watch(
+    () => ({
+      counts: { ...linkStats.counts },
+      lastTargetKey: linkStats.lastTargetKey,
+      lastTargetLabel: linkStats.lastTargetLabel
+    }),
+    () => {
+      persistLinkStats()
     },
     { deep: true }
   )
@@ -1866,6 +2144,65 @@
     color: #6f7f99;
   }
 
+  .occupancy-link-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dce5f2;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 94%), #fff 100%);
+  }
+
+  .occupancy-link-stats__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .occupancy-link-stats__title,
+  .custom-preset-item__title,
+  .annotation-preview__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .occupancy-link-stats__last,
+  .custom-preset-item__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+  }
+
+  .occupancy-link-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .occupancy-link-stats__item {
+    padding: 12px 14px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 92%);
+  }
+
+  .occupancy-link-stats__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
+  .occupancy-link-stats__value {
+    margin-top: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d4ed8;
+  }
+
   .history-toolbar {
     padding: 16px 16px 0;
   }
@@ -1984,6 +2321,32 @@
   .export-config-panel__presets {
     display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .custom-preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .custom-preset-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 92%);
+  }
+
+  .custom-preset-item__meta,
+  .custom-preset-item__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 10px;
   }
 
@@ -2204,6 +2567,34 @@
     gap: 10px;
   }
 
+  .annotation-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed #cfd9e8;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 96%), #fff 100%);
+  }
+
+  .annotation-preview__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .annotation-preview__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .annotation-note--preview {
+    background: rgb(255 255 255 / 92%);
+  }
+
   .annotation-list {
     display: flex;
     flex-direction: column;
@@ -2310,7 +2701,9 @@
     .insight-card-grid,
     .insight-card__grid,
     .annotation-card__notes,
-    .preset-name-panel__grid {
+    .preset-name-panel__grid,
+    .annotation-preview__grid,
+    .occupancy-link-stats__grid {
       grid-template-columns: 1fr;
     }
 
@@ -2339,7 +2732,9 @@
     .export-config-panel__header,
     .export-config-panel__header-actions,
     .record-group__header,
-    .annotation-card__header {
+    .annotation-card__header,
+    .occupancy-link-stats__header,
+    .custom-preset-item {
       width: 100%;
       justify-content: flex-start;
     }
