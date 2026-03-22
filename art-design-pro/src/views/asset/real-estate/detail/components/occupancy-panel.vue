@@ -217,6 +217,27 @@
                 <div class="occupancy-link-stats__value">{{ item.count }}</div>
               </div>
             </div>
+            <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
+              <div class="occupancy-link-trend__title">近 7 天联动趋势</div>
+              <div class="occupancy-link-trend__grid">
+                <div
+                  v-for="item in linkTrendItems"
+                  :key="item.date"
+                  class="occupancy-link-trend__item"
+                  :data-testid="`occupancy-link-trend-day-${item.date}`"
+                >
+                  <div class="occupancy-link-trend__date">{{ item.label }}</div>
+                  <div class="occupancy-link-trend__bar-wrap">
+                    <div
+                      class="occupancy-link-trend__bar"
+                      :style="{ height: `${item.barHeight}%` }"
+                    />
+                  </div>
+                  <div class="occupancy-link-trend__count">{{ item.count }}</div>
+                  <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -322,6 +343,27 @@
               >
                 <div class="occupancy-link-stats__label">{{ item.label }}</div>
                 <div class="occupancy-link-stats__value">{{ item.count }}</div>
+              </div>
+            </div>
+            <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
+              <div class="occupancy-link-trend__title">近 7 天联动趋势</div>
+              <div class="occupancy-link-trend__grid">
+                <div
+                  v-for="item in linkTrendItems"
+                  :key="item.date"
+                  class="occupancy-link-trend__item"
+                  :data-testid="`occupancy-link-trend-day-${item.date}`"
+                >
+                  <div class="occupancy-link-trend__date">{{ item.label }}</div>
+                  <div class="occupancy-link-trend__bar-wrap">
+                    <div
+                      class="occupancy-link-trend__bar"
+                      :style="{ height: `${item.barHeight}%` }"
+                    />
+                  </div>
+                  <div class="occupancy-link-trend__count">{{ item.count }}</div>
+                  <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -582,12 +624,56 @@
                 {{ presetNameEditOpen ? '收起命名设置' : '命名设置' }}
               </ElButton>
               <ElButton
+                data-testid="occupancy-preset-import-toggle"
+                size="small"
+                text
+                @click="presetImportOpen = !presetImportOpen"
+              >
+                {{ presetImportOpen ? '收起导入预设' : '导入预设' }}
+              </ElButton>
+              <ElButton
                 data-testid="occupancy-preset-copy-toggle"
                 size="small"
                 text
                 @click="presetCopyOpen = !presetCopyOpen"
               >
                 {{ presetCopyOpen ? '收起复制新预设' : '复制新预设' }}
+              </ElButton>
+              <ElButton
+                data-testid="occupancy-preset-export-link"
+                size="small"
+                text
+                :disabled="!customExportPresets.length"
+                @click="exportCustomPresets"
+              >
+                导出预设
+              </ElButton>
+            </div>
+          </div>
+          <div
+            v-if="presetImportOpen"
+            class="preset-import-panel"
+            data-testid="occupancy-preset-import-panel"
+          >
+            <div class="preset-import-panel__title">导入自定义预设</div>
+            <div class="preset-import-panel__desc">
+              粘贴由“导出预设”生成的 JSON 文本，系统会自动过滤非法字段并追加为新的自定义预设。
+            </div>
+            <textarea
+              v-model="presetImportText"
+              data-testid="occupancy-preset-import-input"
+              class="preset-import-panel__input"
+              placeholder="请粘贴自定义预设 JSON"
+            />
+            <div class="preset-import-panel__actions">
+              <ElButton
+                data-testid="occupancy-preset-import-apply"
+                size="small"
+                type="primary"
+                plain
+                @click="importCustomPresets"
+              >
+                导入并追加
               </ElButton>
             </div>
           </div>
@@ -796,6 +882,59 @@
               </div>
             </div>
             <div
+              v-if="annotationPreviewRecord"
+              class="annotation-compare"
+              data-testid="occupancy-annotation-compare"
+            >
+              <div class="annotation-compare__header">
+                <div class="annotation-preview__title">模板差异对比</div>
+                <div class="annotation-compare__switches">
+                  <button
+                    v-for="template in annotationCompareTargetOptions"
+                    :key="template.key"
+                    type="button"
+                    class="export-preset-chip export-preset-chip--subtle"
+                    :class="
+                      annotationCompareTarget === template.key ? 'export-preset-chip--active' : ''
+                    "
+                    :data-testid="`occupancy-annotation-compare-target-${template.key}`"
+                    @click="annotationCompareTarget = template.key"
+                  >
+                    {{ template.label }}
+                  </button>
+                </div>
+              </div>
+              <div class="annotation-compare__desc">
+                当前模板：{{ annotationTemplateLabel }}，对比模板：{{ annotationCompareTargetLabel }}
+              </div>
+              <div class="annotation-compare__grid">
+                <div
+                  v-for="item in annotationCompareItems"
+                  :key="item.key"
+                  class="annotation-compare-item"
+                  :class="
+                    item.changed ? 'annotation-compare-item--changed' : 'annotation-compare-item--stable'
+                  "
+                  :data-testid="`occupancy-annotation-compare-item-${item.key}`"
+                >
+                  <div class="annotation-compare-item__header">
+                    <div class="annotation-note__label">{{ item.label }}</div>
+                    <ElTag :type="item.changed ? 'warning' : 'success'" effect="light" size="small">
+                      {{ item.changed ? '有差异' : '无差异' }}
+                    </ElTag>
+                  </div>
+                  <div class="annotation-compare-item__row">
+                    <span>{{ annotationTemplateLabel }}</span>
+                    <strong>{{ item.currentValue }}</strong>
+                  </div>
+                  <div class="annotation-compare-item__row">
+                    <span>{{ annotationCompareTargetLabel }}</span>
+                    <strong>{{ item.compareValue }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
               v-for="record in filteredRecords"
               :key="`annotation-${getRecordKey(record)}`"
               :data-testid="`occupancy-annotation-card-${getRecordKey(record)}`"
@@ -964,11 +1103,19 @@
   type ExportPresetViewOption = (ExportPresetOption & { source: 'system' }) | CustomExportPresetOption
   type PresetCopySourceKey = 'current' | ExportPresetViewOption['key']
   type AnnotationTemplateKey = 'standard' | 'manager' | 'audit'
+  type AnnotationCompareItemKey = 'status' | 'change' | 'release'
+
+  interface OccupancyLinkStatEvent {
+    targetKey: LinkedTabName
+    targetLabel: string
+    occurredAt: string
+  }
 
   interface OccupancyLinkStatsState {
     counts: Record<LinkedTabName, number>
     lastTargetKey: LinkedTabName | ''
     lastTargetLabel: string
+    events: OccupancyLinkStatEvent[]
   }
 
   const props = defineProps<{
@@ -993,14 +1140,17 @@
   const exportConfigOpen = ref(false)
   const presetNameEditOpen = ref(false)
   const presetCopyOpen = ref(false)
+  const presetImportOpen = ref(false)
   const presetCopyMode = ref<'create' | 'edit'>('create')
   const editingCustomPresetKey = ref('')
   const presetCopyName = ref('')
+  const presetImportText = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
   const keyword = ref('')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
+  const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
   const linkStats = reactive<OccupancyLinkStatsState>({
     counts: {
       overview: 0,
@@ -1009,7 +1159,8 @@
       disposal: 0
     },
     lastTargetKey: '',
-    lastTargetLabel: ''
+    lastTargetLabel: '',
+    events: []
   })
   const customRangeDraft = reactive({
     start: '',
@@ -1112,11 +1263,99 @@
     return annotationTemplateOptions.find((item) => item.key === annotationTemplate.value)?.label || '标准模板'
   })
 
+  const annotationCompareTargetOptions = computed(() => {
+    return annotationTemplateOptions.filter((item) => item.key !== annotationTemplate.value)
+  })
+
+  const annotationCompareTargetLabel = computed(() => {
+    return (
+      annotationTemplateOptions.find((item) => item.key === annotationCompareTarget.value)?.label ||
+      '对比模板'
+    )
+  })
+
   const linkStatItems = computed(() => {
     return tabLinkOptions.map((item) => ({
       key: item.key,
       label: item.label,
       count: linkStats.counts[item.key]
+    }))
+  })
+
+  const annotationCompareItems = computed(() => {
+    const record = annotationPreviewRecord.value
+    if (!record) {
+      return []
+    }
+
+    const items: Array<{ key: AnnotationCompareItemKey; label: string; currentValue: string; compareValue: string; changed: boolean }> = [
+      {
+        key: 'status',
+        label: '状态说明',
+        currentValue: buildAnnotationStatusNote(record, annotationTemplate.value),
+        compareValue: buildAnnotationStatusNote(record, annotationCompareTarget.value),
+        changed:
+          buildAnnotationStatusNote(record, annotationTemplate.value) !==
+          buildAnnotationStatusNote(record, annotationCompareTarget.value)
+      },
+      {
+        key: 'change',
+        label: '占用批注',
+        currentValue: buildAnnotationChangeNote(record, annotationTemplate.value),
+        compareValue: buildAnnotationChangeNote(record, annotationCompareTarget.value),
+        changed:
+          buildAnnotationChangeNote(record, annotationTemplate.value) !==
+          buildAnnotationChangeNote(record, annotationCompareTarget.value)
+      },
+      {
+        key: 'release',
+        label: '释放批注',
+        currentValue: buildAnnotationReleaseNote(record, annotationTemplate.value),
+        compareValue: buildAnnotationReleaseNote(record, annotationCompareTarget.value),
+        changed:
+          buildAnnotationReleaseNote(record, annotationTemplate.value) !==
+          buildAnnotationReleaseNote(record, annotationCompareTarget.value)
+      }
+    ]
+
+    return items
+  })
+
+  const linkTrendItems = computed(() => {
+    const dayKeys = Array.from({ length: 7 }).map((_, index) => {
+      const current = new Date()
+      current.setHours(0, 0, 0, 0)
+      current.setDate(current.getDate() - (6 - index))
+      return current
+    })
+
+    const buckets = dayKeys.map((date) => {
+      const dateKey = formatLocalDateKey(date)
+      const sameDayEvents = linkStats.events.filter((event) => {
+        const eventDate = parseDateValue(event.occurredAt)
+        return eventDate && formatLocalDateKey(eventDate) === dateKey
+      })
+
+      const targetCounter = sameDayEvents.reduce<Record<string, number>>((accumulator, event) => {
+        accumulator[event.targetLabel] = (accumulator[event.targetLabel] || 0) + 1
+        return accumulator
+      }, {})
+
+      const topEntry =
+        Object.entries(targetCounter).sort((left, right) => right[1] - left[1])[0] || undefined
+
+      return {
+        date: dateKey,
+        label: dateKey.slice(5),
+        count: sameDayEvents.length,
+        topLabel: topEntry?.[0] || '暂无联动'
+      }
+    })
+
+    const maxCount = Math.max(...buckets.map((item) => item.count), 1)
+    return buckets.map((item) => ({
+      ...item,
+      barHeight: item.count ? Math.max((item.count / maxCount) * 100, 12) : 0
     }))
   })
 
@@ -1127,6 +1366,14 @@
     const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value
     const parsed = new Date(normalized)
     return Number.isNaN(parsed.getTime()) ? undefined : parsed
+  }
+
+  // 趋势图按浏览器本地自然日分桶，避免 UTC 字符串把当日联动偏移到前一天。
+  const formatLocalDateKey = (date: Date) => {
+    const year = date.getFullYear()
+    const month = `${date.getMonth() + 1}`.padStart(2, '0')
+    const day = `${date.getDate()}`.padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const resolveTimelineDate = (record: AssetRealEstateOccupancyRecord) => {
@@ -1396,14 +1643,17 @@
     return mapper[String(status || '').toUpperCase()] || status || '-'
   }
 
-  const buildAnnotationStatusNote = (record: AssetRealEstateOccupancyRecord) => {
+  const buildAnnotationStatusNote = (
+    record: AssetRealEstateOccupancyRecord,
+    templateKey: AnnotationTemplateKey = annotationTemplate.value
+  ) => {
     const isActive = String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
-    if (annotationTemplate.value === 'manager') {
+    if (templateKey === 'manager') {
       return isActive
         ? '管理视角：当前占用仍在持续，请优先核对责任归属和主档同步状态。'
         : '管理视角：该条轨迹已经释放，可作为本次占用结束与重新分配的依据。'
     }
-    if (annotationTemplate.value === 'audit') {
+    if (templateKey === 'audit') {
       return isActive
         ? '审计视角：当前轨迹仍为有效占用，应作为最近一次占用依据。'
         : '审计视角：该轨迹已释放，应作为历史留痕和释放凭据记录。'
@@ -1413,23 +1663,29 @@
       : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
   }
 
-  const buildAnnotationChangeNote = (record: AssetRealEstateOccupancyRecord) => {
+  const buildAnnotationChangeNote = (
+    record: AssetRealEstateOccupancyRecord,
+    templateKey: AnnotationTemplateKey = annotationTemplate.value
+  ) => {
     const reason = record.changeReason || '-'
-    if (annotationTemplate.value === 'manager') {
+    if (templateKey === 'manager') {
       return `管理视角：占用依据 ${reason}`
     }
-    if (annotationTemplate.value === 'audit') {
+    if (templateKey === 'audit') {
       return `审计视角：占用凭据 ${reason}`
     }
     return reason
   }
 
-  const buildAnnotationReleaseNote = (record: AssetRealEstateOccupancyRecord) => {
+  const buildAnnotationReleaseNote = (
+    record: AssetRealEstateOccupancyRecord,
+    templateKey: AnnotationTemplateKey = annotationTemplate.value
+  ) => {
     const reason = record.releaseReason || '-'
-    if (annotationTemplate.value === 'manager') {
+    if (templateKey === 'manager') {
       return `管理视角：释放结论 ${reason}`
     }
-    if (annotationTemplate.value === 'audit') {
+    if (templateKey === 'audit') {
       return `审计视角：释放凭据 ${reason}`
     }
     return reason
@@ -1455,16 +1711,26 @@
       JSON.stringify({
         counts: { ...linkStats.counts },
         lastTargetKey: linkStats.lastTargetKey,
-        lastTargetLabel: linkStats.lastTargetLabel
+        lastTargetLabel: linkStats.lastTargetLabel,
+        events: [...linkStats.events]
       })
     )
   }
 
   const emitTabSwitch = (tab: LinkedTabName) => {
     const linkOption = tabLinkOptions.find((item) => item.key === tab)
+    const occurredAt = new Date().toISOString()
     linkStats.counts[tab] += 1
     linkStats.lastTargetKey = tab
     linkStats.lastTargetLabel = linkOption?.label || ''
+    linkStats.events = [
+      ...linkStats.events,
+      {
+        targetKey: tab,
+        targetLabel: linkOption?.label || '',
+        occurredAt
+      }
+    ].slice(-200)
     persistLinkStats()
     emit('switch-tab', tab)
   }
@@ -1688,6 +1954,7 @@
     linkStats.counts.disposal = 0
     linkStats.lastTargetKey = ''
     linkStats.lastTargetLabel = ''
+    linkStats.events = []
 
     if (!linkStatsStorageKey.value) {
       return
@@ -1710,6 +1977,27 @@
         ? (parsed.lastTargetKey as LinkedTabName)
         : ''
       linkStats.lastTargetLabel = String(parsed.lastTargetLabel || '')
+      linkStats.events = Array.isArray(parsed.events)
+        ? parsed.events
+            .map((item) => {
+              const targetKey = String(item?.targetKey || '') as LinkedTabName
+              const targetLabel = String(item?.targetLabel || '').trim()
+              const occurredAt = String(item?.occurredAt || '').trim()
+              if (
+                !['overview', 'inspection', 'rectification', 'disposal'].includes(targetKey) ||
+                !targetLabel ||
+                !parseDateValue(occurredAt)
+              ) {
+                return undefined
+              }
+              return {
+                targetKey,
+                targetLabel,
+                occurredAt
+              }
+            })
+            .filter((item): item is OccupancyLinkStatEvent => !!item)
+        : []
     } catch {
       window.localStorage.removeItem(linkStatsStorageKey.value)
     }
@@ -1739,6 +2027,10 @@
     presetNameEditOpen.value = false
   }
 
+  const buildCustomPresetKey = (seedIndex = 0) => {
+    return `custom-${Date.now()}-${customExportPresets.value.length + seedIndex}`
+  }
+
   const resetPresetEditor = () => {
     presetCopyMode.value = 'create'
     editingCustomPresetKey.value = ''
@@ -1764,7 +2056,7 @@
     customExportPresets.value = [
       ...customExportPresets.value,
       {
-        key: `custom-${Date.now()}-${customExportPresets.value.length}`,
+        key: buildCustomPresetKey(),
         label: nextLabel,
         fields: nextFields,
         source: 'custom'
@@ -1807,6 +2099,76 @@
     if (editingCustomPresetKey.value === presetKey) {
       presetCopyOpen.value = false
       resetPresetEditor()
+    }
+  }
+
+  const exportCustomPresets = () => {
+    if (!customExportPresets.value.length) {
+      return
+    }
+
+    const content = JSON.stringify(
+      {
+        version: 1,
+        presets: customExportPresets.value.map((preset) => ({
+          label: preset.label,
+          fields: preset.fields
+        }))
+      },
+      null,
+      0
+    )
+    const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${props.detailData.assetCode || 'asset'}-occupancy-presets.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const importCustomPresets = () => {
+    const raw = presetImportText.value.trim()
+    if (!raw) {
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      const candidates = Array.isArray(parsed?.presets) ? parsed.presets : []
+      const normalized = candidates
+        .map((item, index) => {
+          const label = String(item?.label || '').trim()
+          const fields = Array.isArray(item?.fields)
+            ? item.fields.filter((field): field is ExportFieldKey =>
+                exportFieldOptions.some((option) => option.key === field)
+              )
+            : []
+
+          if (!label || !fields.length) {
+            return undefined
+          }
+
+          return {
+            key: buildCustomPresetKey(index),
+            label,
+            fields,
+            source: 'custom' as const
+          }
+        })
+        .filter((item): item is CustomExportPresetOption => !!item)
+
+      if (!normalized.length) {
+        return
+      }
+
+      customExportPresets.value = [...customExportPresets.value, ...normalized]
+      presetImportText.value = ''
+      presetImportOpen.value = false
+    } catch {
+      return
     }
   }
 
@@ -1883,6 +2245,17 @@
   }, { immediate: true })
 
   watch(
+    annotationTemplate,
+    (value) => {
+      if (annotationCompareTarget.value === value) {
+        annotationCompareTarget.value =
+          annotationTemplateOptions.find((item) => item.key !== value)?.key || 'manager'
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
     linkStatsStorageKey,
     () => {
       restoreLinkStats()
@@ -1936,7 +2309,8 @@
     () => ({
       counts: { ...linkStats.counts },
       lastTargetKey: linkStats.lastTargetKey,
-      lastTargetLabel: linkStats.lastTargetLabel
+      lastTargetLabel: linkStats.lastTargetLabel,
+      events: [...linkStats.events]
     }),
     () => {
       persistLinkStats()
@@ -2203,6 +2577,65 @@
     color: #1d4ed8;
   }
 
+  .occupancy-link-trend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .occupancy-link-trend__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
+  .occupancy-link-trend__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .occupancy-link-trend__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 92%);
+  }
+
+  .occupancy-link-trend__date,
+  .occupancy-link-trend__target {
+    font-size: 11px;
+    line-height: 1.6;
+    color: #6f7f99;
+    text-align: center;
+  }
+
+  .occupancy-link-trend__bar-wrap {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 52px;
+    width: 100%;
+  }
+
+  .occupancy-link-trend__bar {
+    width: 20px;
+    min-height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #60a5fa, #1d4ed8);
+    transition: height 0.2s ease;
+  }
+
+  .occupancy-link-trend__count {
+    font-size: 16px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
   .history-toolbar {
     padding: 16px 16px 0;
   }
@@ -2348,6 +2781,46 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+  }
+
+  .preset-import-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 88%);
+  }
+
+  .preset-import-panel__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .preset-import-panel__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+  }
+
+  .preset-import-panel__input {
+    min-height: 120px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d8e0ec;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #18233a;
+    resize: vertical;
+    background: #fff;
+  }
+
+  .preset-import-panel__actions {
+    display: flex;
+    justify-content: flex-end;
   }
 
   .preset-name-panel {
@@ -2595,6 +3068,86 @@
     background: rgb(255 255 255 / 92%);
   }
 
+  .annotation-compare {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dce5f2;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 94%), #fff 100%);
+  }
+
+  .annotation-compare__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .annotation-compare__switches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .annotation-compare__desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+  }
+
+  .annotation-compare__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .annotation-compare-item {
+    padding: 14px 16px;
+    border: 1px solid #dce5f2;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 92%);
+  }
+
+  .annotation-compare-item--changed {
+    border-color: #f9c97f;
+    background: linear-gradient(180deg, rgb(255 247 237 / 92%), #fff 100%);
+  }
+
+  .annotation-compare-item--stable {
+    border-color: #cceadb;
+    background: linear-gradient(180deg, rgb(236 253 245 / 88%), #fff 100%);
+  }
+
+  .annotation-compare-item__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .annotation-compare-item__row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #6f7f99;
+  }
+
+  .annotation-compare-item__row + .annotation-compare-item__row {
+    margin-top: 10px;
+  }
+
+  .annotation-compare-item__row strong {
+    color: #18233a;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
   .annotation-list {
     display: flex;
     flex-direction: column;
@@ -2703,7 +3256,9 @@
     .annotation-card__notes,
     .preset-name-panel__grid,
     .annotation-preview__grid,
-    .occupancy-link-stats__grid {
+    .annotation-compare__grid,
+    .occupancy-link-stats__grid,
+    .occupancy-link-trend__grid {
       grid-template-columns: 1fr;
     }
 
@@ -2734,7 +3289,9 @@
     .record-group__header,
     .annotation-card__header,
     .occupancy-link-stats__header,
-    .custom-preset-item {
+    .custom-preset-item,
+    .annotation-compare__header,
+    .annotation-compare-item__header {
       width: 100%;
       justify-content: flex-start;
     }

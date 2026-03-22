@@ -1382,4 +1382,226 @@ describe('OccupancyPanel occupancy flow', () => {
       '看整改进展'
     )
   })
+
+  it('exports custom presets as json', async () => {
+    const createObjectURL = vi.fn(() => 'blob:occupancy-preset-export')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-source-release"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('释放复盘导出')
+    await wrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-export-link"]').trigger('click')
+
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('"version":1')
+    expect(content).toContain('释放复盘导出')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
+  })
+
+  it('imports custom presets from json and restores them after remount', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9100,
+          occupancyNo: 'OCC-2026-8999',
+          occupancyStatus: 'RELEASED',
+          useDeptName: 'dept-beta',
+          responsibleUserName: 'user-beta',
+          locationName: 'loc-beta',
+          startDate: '2026-03-01',
+          endDate: '2026-03-10',
+          changeReason: 'reason-beta',
+          releaseReason: 'release-beta'
+        }
+      ],
+      canEdit: true
+    }
+
+    const wrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "导入运营摘要",
+      "fields": ["occupancyNo", "useDeptName", "locationName"]
+    }
+  ]
+}`)
+    await wrapper.get('[data-testid="occupancy-preset-import-apply"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-export-preset-custom-0"]').text()).toContain(
+      '导入运营摘要'
+    )
+
+    wrapper.unmount()
+
+    const remountWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await remountWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    expect(remountWrapper.get('[data-testid="occupancy-export-preset-custom-0"]').text()).toContain(
+      '导入运营摘要'
+    )
+  })
+
+  it('shows annotation template compare panel and highlights differences', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-view-annotation"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-annotation-template-standard"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-annotation-compare-target-audit"]').trigger('click')
+
+    const comparePanel = wrapper.get('[data-testid="occupancy-annotation-compare"]')
+    expect(comparePanel.text()).toContain('标准模板')
+    expect(comparePanel.text()).toContain('审计视角')
+    expect(
+      wrapper.get('[data-testid="occupancy-annotation-compare-item-status"]').classes()
+    ).toContain('annotation-compare-item--changed')
+  })
+
+  it('shows 7 day link trend chart from persisted events', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    const currentTime = new Date()
+    const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000).toISOString()
+    const twoHoursAgo = new Date(currentTime.getTime() - 2 * 60 * 60 * 1000).toISOString()
+    const yesterday = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 1,
+          inspection: 2,
+          rectification: 1,
+          disposal: 0
+        },
+        lastTargetKey: 'rectification',
+        lastTargetLabel: '看整改进展',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: oneHourAgo
+          },
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: twoHoursAgo
+          },
+          {
+            targetKey: 'rectification',
+            targetLabel: '看整改进展',
+            occurredAt: yesterday
+          }
+        ]
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    const trendChart = wrapper.get('[data-testid="occupancy-link-trend-chart"]')
+    const vm = wrapper.vm as any
+
+    expect(trendChart.text()).toContain('近 7 天联动趋势')
+    expect(vm.linkTrendItems).toHaveLength(7)
+    expect(vm.linkTrendItems.some((item: any) => item.count > 0)).toBe(true)
+    expect(vm.linkTrendItems.some((item: any) => item.topLabel !== '暂无联动')).toBe(true)
+  })
 })
