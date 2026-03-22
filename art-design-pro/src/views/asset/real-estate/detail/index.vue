@@ -177,6 +177,21 @@
                 show-word-limit
                 placeholder="请输入发起/变更原因"
               />
+              <div class="occupancy-template-group">
+                <span class="occupancy-template-group__label">原因模板</span>
+                <div class="occupancy-template-group__items">
+                  <button
+                    v-for="(template, index) in occupancyChangeReasonTemplates"
+                    :key="template"
+                    :data-testid="`occupancy-change-template-${index}`"
+                    type="button"
+                    class="occupancy-template-chip"
+                    @click="applyOccupancyReasonTemplate(template)"
+                  >
+                    {{ template }}
+                  </button>
+                </div>
+              </div>
             </ElFormItem>
           </template>
 
@@ -218,6 +233,21 @@
                 show-word-limit
                 placeholder="请输入释放原因"
               />
+              <div class="occupancy-template-group">
+                <span class="occupancy-template-group__label">释放模板</span>
+                <div class="occupancy-template-group__items">
+                  <button
+                    v-for="(template, index) in occupancyReleaseReasonTemplates"
+                    :key="template"
+                    :data-testid="`occupancy-release-template-${index}`"
+                    type="button"
+                    class="occupancy-template-chip"
+                    @click="applyOccupancyReasonTemplate(template)"
+                  >
+                    {{ template }}
+                  </button>
+                </div>
+              </div>
             </ElFormItem>
           </template>
         </ElForm>
@@ -352,6 +382,18 @@
     endDate: '',
     releaseReason: ''
   })
+  const occupancyChangeReasonTemplates = [
+    '部门调整交接',
+    '办公区域调整',
+    '项目入驻占用',
+    '台账口径校正'
+  ]
+  const occupancyReleaseReasonTemplates = [
+    '部门搬离释放',
+    '装修改造临时释放',
+    '处置前清场',
+    '权属收回'
+  ]
 
   type InspectionLinkStatus = 'NONE_REQUIRED' | 'NOT_CREATED' | 'PENDING' | 'COMPLETED'
 
@@ -677,6 +719,14 @@
 
   const openReleaseOccupancyDrawer = (record: AssetRealEstateOccupancyRecord) => {
     return openOccupancyDrawer('release', record)
+  }
+
+  const applyOccupancyReasonTemplate = (template: string) => {
+    if (occupancyDrawerMode.value === 'release') {
+      occupancyForm.releaseReason = template
+      return
+    }
+    occupancyForm.changeReason = template
   }
 
   const handleTabChange = (tabName: TabPaneName) => {
@@ -1156,6 +1206,57 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+  }
+
+  .occupancy-template-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .occupancy-template-group__label {
+    font-size: 12px;
+    color: #6f7f99;
+  }
+
+  .occupancy-template-group__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .occupancy-template-chip {
+    padding: 0 12px;
+    height: 28px;
+    border: 1px solid var(--el-border-color);
+    border-radius: 999px;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-regular);
+    font-size: 12px;
+    line-height: 26px;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      border-color: var(--el-color-primary);
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary-light-5);
+      outline-offset: 2px;
+    }
+  }
+
+  .occupancy-template-tag {
+    cursor: pointer;
   }
 
   .approval-drawer__headline {

@@ -263,6 +263,58 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(document.body.textContent || wrapper.text()).toContain('变更占用')
   })
 
+  it('变更占用抽屉支持原因模板快捷填充', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-change-link-9101"]').trigger('click')
+    await flushPromises()
+
+    const changeTemplate = Array.from(
+      document.body.querySelectorAll('[data-testid="occupancy-change-template-0"]')
+    ).at(-1) as HTMLButtonElement | undefined
+    changeTemplate?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+
+    expect(vm.occupancyForm.changeReason).toBe('部门调整交接')
+  })
+
+  it('释放占用抽屉支持释放原因模板快捷填充', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-release-link-9101"]').trigger('click')
+    await flushPromises()
+
+    const releaseTemplate = Array.from(
+      document.body.querySelectorAll('[data-testid="occupancy-release-template-0"]')
+    ).at(-1) as HTMLButtonElement | undefined
+    releaseTemplate?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+
+    expect(vm.occupancyForm.releaseReason).toBe('部门搬离释放')
+  })
+
   it('兼容旧巡检子路由入口，并支持任务明细和整改跳转', async () => {
     routeState.path = '/asset/real-estate/detail/20001/inspection'
     routeState.fullPath = routeState.path
@@ -469,5 +521,3 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.find('[data-testid="rectification-complete-link-9001"]').exists()).toBe(false)
   })
 })
-
-

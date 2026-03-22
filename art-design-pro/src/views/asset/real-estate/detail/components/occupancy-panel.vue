@@ -110,16 +110,23 @@
 
       <ElCard class="section-card" shadow="never">
         <template #header>
-          <div class="card-title">操作提示</div>
+          <div class="card-title">状态矩阵</div>
         </template>
 
-        <div class="guide-panel">
-          <div class="guide-panel__headline">
-            {{ activeRecord ? '先确认当前占用是否仍然有效，再决定是变更还是释放。' : '当前没有有效占用，优先补齐使用归口后再继续流转。' }}
+        <div class="matrix-panel">
+          <div
+            v-for="rule in matrixRules"
+            :key="rule.key"
+            class="matrix-item"
+            :class="rule.highlight ? 'matrix-item--highlight' : ''"
+          >
+            <div class="matrix-item__header">
+              <div class="matrix-item__title">{{ rule.title }}</div>
+              <ElTag :type="rule.tagType" effect="light">{{ rule.tagLabel }}</ElTag>
+            </div>
+            <div class="matrix-item__desc">{{ rule.desc }}</div>
+            <div class="matrix-item__actions">可执行动作：{{ rule.actions }}</div>
           </div>
-          <div class="guide-panel__line">发起占用会同步回写资产主档的使用部门、责任人和位置。</div>
-          <div class="guide-panel__line">变更占用会关闭旧占用，并生成一条新的有效占用单。</div>
-          <div class="guide-panel__line">释放占用后，详情页会回到“暂无有效占用”的状态，但释放轨迹会完整留痕。</div>
         </div>
       </ElCard>
     </div>
@@ -129,10 +136,47 @@
         <div class="card-title">占用历史记录</div>
       </template>
 
+      <div class="history-toolbar">
+        <div class="history-toolbar__filters">
+          <ElButton
+            data-testid="occupancy-filter-all"
+            size="small"
+            :type="statusFilter === 'ALL' ? 'primary' : 'default'"
+            @click="statusFilter = 'ALL'"
+          >
+            全部
+          </ElButton>
+          <ElButton
+            data-testid="occupancy-filter-active"
+            size="small"
+            :type="statusFilter === 'ACTIVE' ? 'primary' : 'default'"
+            @click="statusFilter = 'ACTIVE'"
+          >
+            有效占用
+          </ElButton>
+          <ElButton
+            data-testid="occupancy-filter-released"
+            size="small"
+            :type="statusFilter === 'RELEASED' ? 'primary' : 'default'"
+            @click="statusFilter = 'RELEASED'"
+          >
+            已释放
+          </ElButton>
+        </div>
+
+        <ElInput
+          v-model="keyword"
+          data-testid="occupancy-keyword-input"
+          clearable
+          placeholder="搜索占用单号/部门/责任人/位置/原因"
+          class="history-toolbar__search"
+        />
+      </div>
+
       <div class="record-wrapper" data-testid="occupancy-history-list">
-        <div v-if="props.occupancyRecords.length" class="record-list">
+        <div v-if="filteredRecords.length" class="record-list">
           <div
-            v-for="record in props.occupancyRecords"
+            v-for="record in filteredRecords"
             :key="record.occupancyId || record.occupancyNo || record.startDate"
             class="record-item"
             :class="record.occupancyStatus === 'ACTIVE' ? 'record-item--active' : 'record-item--released'"
@@ -179,7 +223,7 @@
           </div>
         </div>
 
-        <ElEmpty v-else description="暂无占用历史" :image-size="68" />
+        <ElEmpty v-else description="当前筛选条件下暂无占用轨迹" :image-size="68" />
       </div>
     </ElCard>
   </div>
@@ -200,8 +244,77 @@
     'release-occupancy': [record: AssetRealEstateOccupancyRecord]
   }>()
 
+  const statusFilter = ref<'ALL' | 'ACTIVE' | 'RELEASED'>('ALL')
+  const keyword = ref('')
+
   const activeRecord = computed(() => {
-    return props.occupancyRecords.find((record) => String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE')
+    return props.occupancyRecords.find(
+      (record) => String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
+    )
+  })
+
+  const matrixRules = computed(() => {
+    return [
+      {
+        key: 'empty',
+        title: '无有效占用',
+        tagLabel: activeRecord.value ? '待切换' : '当前状态',
+        tagType: activeRecord.value ? 'info' : 'primary',
+        desc: '当前资产没有有效占用关系，需要先登记归口、责任人与位置。',
+        actions: '发起占用',
+        highlight: !activeRecord.value
+      },
+      {
+        key: 'active',
+        title: '存在有效占用',
+        tagLabel: activeRecord.value ? '当前状态' : '待触发',
+        tagType: activeRecord.value ? 'success' : 'info',
+        desc: '当前资产存在一条有效占用单，后续变更与释放都从当前有效单继续。',
+        actions: '变更占用、释放占用',
+        highlight: !!activeRecord.value
+      },
+      {
+        key: 'released',
+        title: '已释放历史',
+        tagLabel: '历史状态',
+        tagType: 'warning',
+        desc: '已释放记录只保留轨迹，不允许直接对历史单再次执行变更或释放。',
+        actions: '查看轨迹',
+        highlight: false
+      }
+    ]
+  })
+
+  const filteredRecords = computed(() => {
+    const normalizedKeyword = keyword.value.trim().toLowerCase()
+
+    return props.occupancyRecords.filter((record) => {
+      const matchesStatus =
+        statusFilter.value === 'ALL' ||
+        String(record.occupancyStatus || '').toUpperCase() === statusFilter.value
+
+      if (!matchesStatus) {
+        return false
+      }
+
+      if (!normalizedKeyword) {
+        return true
+      }
+
+      const searchableText = [
+        record.occupancyNo,
+        record.useDeptName,
+        record.responsibleUserName,
+        record.locationName,
+        record.changeReason,
+        record.releaseReason
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return searchableText.includes(normalizedKeyword)
+    })
   })
 
   const getStatusLabel = (status?: string) => {
@@ -222,7 +335,7 @@
 
   .current-occupancy-card,
   .empty-occupancy-card,
-  .guide-panel,
+  .matrix-panel,
   .record-list {
     display: flex;
     flex-direction: column;
@@ -231,7 +344,9 @@
   }
 
   .current-occupancy-card__header,
-  .record-item__header {
+  .record-item__header,
+  .matrix-item__header,
+  .history-toolbar {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -240,7 +355,7 @@
 
   .current-occupancy-card__title,
   .record-item__title,
-  .guide-panel__headline {
+  .matrix-item__title {
     font-size: 18px;
     font-weight: 700;
     line-height: 1.5;
@@ -249,7 +364,8 @@
 
   .current-occupancy-card__subtitle,
   .record-item__subtitle,
-  .guide-panel__line,
+  .matrix-item__desc,
+  .matrix-item__actions,
   .empty-occupancy-card__desc {
     font-size: 13px;
     line-height: 1.8;
@@ -260,7 +376,8 @@
 
   .current-occupancy-card__tags,
   .record-item__tags,
-  .current-occupancy-card__actions {
+  .current-occupancy-card__actions,
+  .history-toolbar__filters {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -268,7 +385,8 @@
 
   .current-occupancy-grid,
   .detail-card-grid,
-  .record-detail-grid {
+  .record-detail-grid,
+  .empty-occupancy-card__meta {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
@@ -276,7 +394,8 @@
 
   .summary-card,
   .detail-card,
-  .record-item {
+  .record-item,
+  .matrix-item {
     border: 1px solid #e7edf6;
     border-radius: 14px;
     background: rgb(255 255 255 / 90%);
@@ -326,9 +445,7 @@
   }
 
   .empty-occupancy-card__meta {
-    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
     width: 100%;
   }
 
@@ -339,20 +456,23 @@
     background: rgb(255 255 255 / 86%);
   }
 
-  .guide-panel__line {
-    position: relative;
-    padding-left: 14px;
+  .matrix-item {
+    padding: 14px 16px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 98%), #fff 100%);
+  }
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 10px;
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #1f7a8c;
-    }
+  .matrix-item--highlight {
+    border-color: #99f6e4;
+    background: linear-gradient(180deg, rgb(236 253 245 / 92%), #fff 100%);
+  }
+
+  .history-toolbar {
+    padding: 16px 16px 0;
+  }
+
+  .history-toolbar__search {
+    width: 320px;
+    max-width: 100%;
   }
 
   .record-list {
@@ -391,9 +511,15 @@
     }
 
     .current-occupancy-card__header,
-    .record-item__header {
+    .record-item__header,
+    .matrix-item__header,
+    .history-toolbar {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .history-toolbar__search {
+      width: 100%;
     }
   }
 </style>
