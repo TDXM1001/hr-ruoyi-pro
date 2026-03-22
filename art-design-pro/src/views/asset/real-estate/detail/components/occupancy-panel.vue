@@ -58,7 +58,11 @@
           </div>
 
           <div class="insight-card-grid">
-            <div class="insight-card" data-testid="occupancy-ledger-sync-summary">
+            <div
+              class="insight-card insight-card--interactive"
+              data-testid="occupancy-ledger-sync-summary"
+              @click="focusActiveHistory"
+            >
               <div class="insight-card__header">
                 <div class="insight-card__title">主档联动摘要</div>
                 <ElTag :type="ledgerSyncTagType" effect="light">
@@ -72,13 +76,14 @@
                     : '当前有效占用与主档快照存在差异，建议回到总览核对使用部门、责任人和位置。'
                 }}
               </div>
-            <div class="insight-card__grid">
+              <div class="insight-card__grid">
                 <div
                   v-for="item in ledgerSyncCompareItems"
                   :key="item.key"
                   :data-testid="`occupancy-ledger-sync-item-${item.key}`"
-                  class="compare-item"
+                  class="compare-item compare-item--interactive"
                   :class="item.changed ? 'compare-item--changed' : 'compare-item--stable'"
+                  @click.stop="focusActiveHistory"
                 >
                   <div class="compare-item__header">
                     <div class="detail-card__label">{{ item.label }}</div>
@@ -100,7 +105,12 @@
               </div>
             </div>
 
-            <div class="insight-card" data-testid="occupancy-last-change-summary">
+            <div
+              class="insight-card"
+              :class="latestReleasedRecord ? 'insight-card--interactive' : ''"
+              data-testid="occupancy-last-change-summary"
+              @click="focusLatestReleasedHistory"
+            >
               <div class="insight-card__header">
                 <div class="insight-card__title">最近一次变更摘要</div>
                 <ElTag effect="light">
@@ -122,8 +132,9 @@
                     v-for="item in lastChangeCompareItems"
                     :key="item.key"
                     :data-testid="`occupancy-last-change-item-${item.key}`"
-                    class="compare-item"
+                    class="compare-item compare-item--interactive"
                     :class="item.changed ? 'compare-item--changed' : 'compare-item--stable'"
+                    @click.stop="focusLatestReleasedHistory"
                   >
                     <div class="compare-item__header">
                       <div class="detail-card__label">{{ item.label }}</div>
@@ -396,13 +407,24 @@
           </div>
         </div>
 
-        <ElInput
-          v-model="keyword"
-          data-testid="occupancy-keyword-input"
-          clearable
-          placeholder="搜索占用单号/部门/责任人/位置/原因"
-          class="history-toolbar__search"
-        />
+        <div class="history-toolbar__footer">
+          <ElInput
+            v-model="keyword"
+            data-testid="occupancy-keyword-input"
+            clearable
+            placeholder="搜索占用单号/部门/责任人/位置/原因"
+            class="history-toolbar__search"
+          />
+          <ElButton
+            data-testid="occupancy-export-link"
+            type="primary"
+            plain
+            :disabled="!filteredRecords.length"
+            @click="exportFilteredRecords"
+          >
+            导出占用轨迹
+          </ElButton>
+        </div>
       </div>
 
       <div ref="historyListRef" class="record-wrapper" data-testid="occupancy-history-list">
@@ -410,8 +432,13 @@
           <div
             v-for="record in filteredRecords"
             :key="record.occupancyId || record.occupancyNo || record.startDate"
+            :ref="(element) => setRecordRef(record, element)"
+            :data-testid="`occupancy-record-${getRecordKey(record)}`"
             class="record-item"
-            :class="record.occupancyStatus === 'ACTIVE' ? 'record-item--active' : 'record-item--released'"
+            :class="[
+              record.occupancyStatus === 'ACTIVE' ? 'record-item--active' : 'record-item--released',
+              focusedRecordKey === getRecordKey(record) ? 'record-item--focused' : ''
+            ]"
           >
             <div class="record-item__header">
               <div>
@@ -467,6 +494,18 @@
   type TimeFilter = 'ALL' | '7D' | '30D' | '90D' | 'CUSTOM'
   type SortDirection = 'DESC' | 'ASC'
   type CompareFieldKey = 'useDeptName' | 'responsibleUserName' | 'locationName'
+  type StatusFilter = 'ALL' | 'ACTIVE' | 'RELEASED'
+
+  interface OccupancyFilterState {
+    statusFilter: StatusFilter
+    timeFilter: TimeFilter
+    sortDirection: SortDirection
+    keyword: string
+    customRangeDraftStart: string
+    customRangeDraftEnd: string
+    customRangeAppliedStart: string
+    customRangeAppliedEnd: string
+  }
 
   const props = defineProps<{
     detailData: Record<string, any>
@@ -481,9 +520,11 @@
   }>()
 
   const historyListRef = ref<HTMLElement>()
-  const statusFilter = ref<'ALL' | 'ACTIVE' | 'RELEASED'>('ALL')
+  const statusFilter = ref<StatusFilter>('ALL')
   const timeFilter = ref<TimeFilter>('ALL')
   const sortDirection = ref<SortDirection>('DESC')
+  const focusedRecordKey = ref('')
+  const filtersReady = ref(false)
   const keyword = ref('')
   const customRangeDraft = reactive({
     start: '',
@@ -499,6 +540,22 @@
     responsibleUserName: '责任人',
     locationName: '使用位置'
   }
+  const recordRefs = new Map<string, HTMLElement>()
+  const defaultFilterState: OccupancyFilterState = {
+    statusFilter: 'ALL',
+    timeFilter: 'ALL',
+    sortDirection: 'DESC',
+    keyword: '',
+    customRangeDraftStart: '',
+    customRangeDraftEnd: '',
+    customRangeAppliedStart: '',
+    customRangeAppliedEnd: ''
+  }
+
+  const storageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-filters:${assetKey}` : ''
+  })
 
   const parseDateValue = (value?: string) => {
     if (!value) {
@@ -516,6 +573,19 @@
   const getDisplayValue = (value?: string) => {
     const text = String(value || '').trim()
     return text || '-'
+  }
+
+  const getRecordKey = (record: AssetRealEstateOccupancyRecord) => {
+    return String(record.occupancyId || record.occupancyNo || record.startDate || 'unknown')
+  }
+
+  const setRecordRef = (record: AssetRealEstateOccupancyRecord, element: Element | null) => {
+    const key = getRecordKey(record)
+    if (element instanceof HTMLElement) {
+      recordRefs.set(key, element)
+      return
+    }
+    recordRefs.delete(key)
   }
 
   const buildCompareItems = (
@@ -698,17 +768,21 @@
 
   const focusReleasedHistory = () => {
     statusFilter.value = 'RELEASED'
-    setQuickTimeFilter('ALL')
+    resetTimeFilters()
     keyword.value = ''
     nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
   }
 
-  const clearCustomRange = () => {
+  const resetTimeFilters = () => {
     customRangeDraft.start = ''
     customRangeDraft.end = ''
     customRangeApplied.start = ''
     customRangeApplied.end = ''
     timeFilter.value = 'ALL'
+  }
+
+  const clearCustomRange = () => {
+    resetTimeFilters()
   }
 
   const setQuickTimeFilter = (filter: Exclude<TimeFilter, 'CUSTOM'>) => {
@@ -737,6 +811,157 @@
     }
     timeFilter.value = 'CUSTOM'
   }
+
+  const resetFocusedRecord = () => {
+    focusedRecordKey.value = ''
+  }
+
+  const focusRecord = async (record: AssetRealEstateOccupancyRecord | undefined, filter: StatusFilter) => {
+    if (!record) {
+      return
+    }
+
+    statusFilter.value = filter
+    sortDirection.value = 'DESC'
+    keyword.value = ''
+    resetTimeFilters()
+    focusedRecordKey.value = getRecordKey(record)
+    await nextTick()
+    await nextTick()
+    recordRefs.get(focusedRecordKey.value)?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  }
+
+  const focusActiveHistory = () => focusRecord(activeRecord.value, 'ACTIVE')
+  const focusLatestReleasedHistory = () => focusRecord(latestReleasedRecord.value, 'RELEASED')
+
+  const buildPersistedState = (): OccupancyFilterState => {
+    return {
+      statusFilter: statusFilter.value,
+      timeFilter: timeFilter.value,
+      sortDirection: sortDirection.value,
+      keyword: keyword.value,
+      customRangeDraftStart: customRangeDraft.start,
+      customRangeDraftEnd: customRangeDraft.end,
+      customRangeAppliedStart: customRangeApplied.start,
+      customRangeAppliedEnd: customRangeApplied.end
+    }
+  }
+
+  const applyFilterState = (state: Partial<OccupancyFilterState>) => {
+    statusFilter.value = ['ALL', 'ACTIVE', 'RELEASED'].includes(String(state.statusFilter))
+      ? (state.statusFilter as StatusFilter)
+      : defaultFilterState.statusFilter
+    timeFilter.value = ['ALL', '7D', '30D', '90D', 'CUSTOM'].includes(String(state.timeFilter))
+      ? (state.timeFilter as TimeFilter)
+      : defaultFilterState.timeFilter
+    sortDirection.value = ['DESC', 'ASC'].includes(String(state.sortDirection))
+      ? (state.sortDirection as SortDirection)
+      : defaultFilterState.sortDirection
+    keyword.value = String(state.keyword || '')
+    customRangeDraft.start = String(state.customRangeDraftStart || '')
+    customRangeDraft.end = String(state.customRangeDraftEnd || '')
+    customRangeApplied.start = String(state.customRangeAppliedStart || '')
+    customRangeApplied.end = String(state.customRangeAppliedEnd || '')
+  }
+
+  const restorePersistedFilters = () => {
+    filtersReady.value = false
+    resetFocusedRecord()
+    applyFilterState(defaultFilterState)
+
+    if (!storageKey.value) {
+      filtersReady.value = true
+      return
+    }
+
+    const raw = window.localStorage.getItem(storageKey.value)
+    if (!raw) {
+      filtersReady.value = true
+      return
+    }
+
+    try {
+      applyFilterState(JSON.parse(raw) as Partial<OccupancyFilterState>)
+    } catch {
+      window.localStorage.removeItem(storageKey.value)
+    }
+    filtersReady.value = true
+  }
+
+  const escapeCsvCell = (value?: string) => {
+    const normalized = String(value || '').replace(/"/g, '""')
+    return `"${normalized}"`
+  }
+
+  const exportFilteredRecords = () => {
+    if (!filteredRecords.value.length) {
+      return
+    }
+
+    const header = [
+      '占用单号',
+      '占用状态',
+      '使用部门',
+      '责任人',
+      '使用位置',
+      '占用起始',
+      '释放时间',
+      '发起/变更原因',
+      '释放原因'
+    ]
+    const rows = filteredRecords.value.map((record) => {
+      return [
+        record.occupancyNo,
+        getStatusLabel(record.occupancyStatus),
+        record.useDeptName,
+        record.responsibleUserName,
+        record.locationName,
+        record.startDate,
+        record.endDate,
+        record.changeReason,
+        record.releaseReason
+      ]
+        .map((item) => escapeCsvCell(item))
+        .join(',')
+    })
+    const csvContent = `\uFEFF${header.map((item) => escapeCsvCell(item)).join(',')}\n${rows.join('\n')}`
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${props.detailData.assetCode || 'asset'}-occupancy-history.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  watch(storageKey, () => {
+    restorePersistedFilters()
+  }, { immediate: true })
+
+  watch(
+    () => [
+      statusFilter.value,
+      timeFilter.value,
+      sortDirection.value,
+      keyword.value,
+      customRangeDraft.start,
+      customRangeDraft.end,
+      customRangeApplied.start,
+      customRangeApplied.end
+    ],
+    () => {
+      if (!filtersReady.value || !storageKey.value) {
+        return
+      }
+      window.localStorage.setItem(storageKey.value, JSON.stringify(buildPersistedState()))
+    }
+  )
+
 </script>
 
 <style scoped lang="scss">
@@ -891,6 +1116,11 @@
     color: #18233a;
   }
 
+  .insight-card--interactive,
+  .compare-item--interactive {
+    cursor: pointer;
+  }
+
   .empty-occupancy-card__meta-item {
     padding: 14px 16px;
     border: 1px dashed #cdd8e8;
@@ -964,6 +1194,14 @@
     max-width: 100%;
   }
 
+  .history-toolbar__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .compare-item {
     padding: 14px 16px;
     border: 1px solid #dce5f2;
@@ -1029,6 +1267,11 @@
     background: linear-gradient(180deg, rgb(248 250 252 / 94%), #fff 100%);
   }
 
+  .record-item--focused {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgb(96 165 250 / 18%), 0 12px 26px rgb(37 99 235 / 10%);
+  }
+
   @media (width <= 1080px) {
     .occupancy-overview-grid {
       grid-template-columns: 1fr;
@@ -1060,6 +1303,10 @@
 
     .history-toolbar__search {
       width: 100%;
+    }
+
+    .history-toolbar__footer {
+      align-items: stretch;
     }
 
     .history-toolbar__range,

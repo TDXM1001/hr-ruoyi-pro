@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
+import { nextTick } from 'vue'
 import OccupancyPanel from '@/views/asset/real-estate/detail/components/occupancy-panel.vue'
 
 describe('OccupancyPanel occupancy flow', () => {
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
+    window.localStorage.clear()
   })
 
   it('shows create entry when no active occupancy exists', async () => {
@@ -468,5 +471,213 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(
       wrapper.get('[data-testid="occupancy-last-change-item-responsibleUserName"]').classes()
     ).not.toContain('compare-item--changed')
+  })
+
+  it('links summaries to corresponding occupancy history records', async () => {
+    if (!HTMLElement.prototype.scrollIntoView) {
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+        value: () => undefined,
+        configurable: true,
+        writable: true
+      })
+    }
+    const scrollSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollIntoView')
+      .mockImplementation(() => undefined)
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept',
+          useDeptName: 'dept-alpha',
+          responsibleUserName: 'user-alpha',
+          locationName: 'loc-alpha'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-22',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-21',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-last-change-summary"]').trigger('click')
+    await nextTick()
+    expect(wrapper.get('[data-testid="occupancy-filter-released"]').classes()).toContain(
+      'el-button--primary'
+    )
+    expect(wrapper.get('[data-testid="occupancy-record-9100"]').classes()).toContain(
+      'record-item--focused'
+    )
+    expect(scrollSpy).toHaveBeenCalled()
+
+    await wrapper.get('[data-testid="occupancy-ledger-sync-summary"]').trigger('click')
+    await nextTick()
+    expect(wrapper.get('[data-testid="occupancy-filter-active"]').classes()).toContain(
+      'el-button--primary'
+    )
+    expect(wrapper.get('[data-testid="occupancy-record-9101"]').classes()).toContain(
+      'record-item--focused'
+    )
+  })
+
+  it('restores persisted occupancy filters for the same asset', async () => {
+    const props = {
+      detailData: {
+        assetCode: 'RE-2026-0001',
+        ownerDeptName: 'owner-dept'
+      },
+      occupancyRecords: [
+        {
+          occupancyId: 9101,
+          occupancyNo: 'OCC-2026-9001',
+          occupancyStatus: 'ACTIVE',
+          useDeptName: 'dept-alpha',
+          responsibleUserName: 'user-alpha',
+          locationName: 'loc-alpha',
+          startDate: '2026-03-20',
+          changeReason: 'reason-alpha'
+        },
+        {
+          occupancyId: 9100,
+          occupancyNo: 'OCC-2026-8999',
+          occupancyStatus: 'RELEASED',
+          useDeptName: 'dept-beta',
+          responsibleUserName: 'user-beta',
+          locationName: 'loc-beta',
+          startDate: '2026-03-01',
+          endDate: '2026-03-10',
+          changeReason: 'reason-beta',
+          releaseReason: 'release-beta'
+        }
+      ],
+      canEdit: true
+    }
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-filter-released"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-keyword-input"]').setValue('dept-beta')
+    await firstWrapper.get('[data-testid="occupancy-custom-start"]').setValue('2026-03-01')
+    await firstWrapper.get('[data-testid="occupancy-custom-end"]').setValue('2026-03-15')
+    await firstWrapper.get('[data-testid="occupancy-custom-apply"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-sort-asc"]').trigger('click')
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    expect(secondWrapper.get('[data-testid="occupancy-filter-released"]').classes()).toContain(
+      'el-button--primary'
+    )
+    expect(secondWrapper.get('[data-testid="occupancy-sort-asc"]').classes()).toContain(
+      'el-button--primary'
+    )
+    expect(
+      (secondWrapper.get('[data-testid="occupancy-keyword-input"]').element as HTMLInputElement).value
+    ).toBe('dept-beta')
+    expect(
+      (secondWrapper.get('[data-testid="occupancy-custom-start"]').element as HTMLInputElement).value
+    ).toBe('2026-03-01')
+    expect(
+      (secondWrapper.get('[data-testid="occupancy-custom-end"]').element as HTMLInputElement).value
+    ).toBe('2026-03-15')
+    expect(secondWrapper.get('[data-testid="occupancy-history-list"]').text()).toContain(
+      'OCC-2026-8999'
+    )
+    expect(secondWrapper.get('[data-testid="occupancy-history-list"]').text()).not.toContain(
+      'OCC-2026-9001'
+    )
+  })
+
+  it('exports current filtered occupancy history as csv', async () => {
+    const createObjectURL = vi.fn(() => 'blob:occupancy-export')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-filter-released"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-keyword-input"]').setValue('dept-beta')
+    await wrapper.get('[data-testid="occupancy-export-link"]').trigger('click')
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('OCC-2026-8999')
+    expect(content).not.toContain('OCC-2026-9001')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
   })
 })
