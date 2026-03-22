@@ -263,6 +263,32 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(document.body.textContent || wrapper.text()).toContain('变更占用')
   })
 
+  it('占用页签支持通过跨页签联动入口切到其他页签', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="inspection-reading-layout"]').exists()).toBe(true)
+
+    vm.handleTabChange('occupancy')
+    await flushPromises()
+
+    await wrapper.get('[data-testid="occupancy-tab-link-rectification"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="rectification-reading-layout"]').exists()).toBe(true)
+  })
+
   it('变更占用抽屉支持原因模板快捷填充', async () => {
     const wrapper = mount(AssetRealEstateDetailPage, {
       global: {

@@ -179,6 +179,22 @@
               释放占用
             </ElButton>
           </div>
+
+          <div class="occupancy-tab-links">
+            <div class="occupancy-tab-links__label">跨页签联动</div>
+            <div class="occupancy-tab-links__items">
+              <ElButton
+                v-for="item in tabLinkOptions"
+                :key="item.key"
+                :data-testid="`occupancy-tab-link-${item.key}`"
+                size="small"
+                plain
+                @click="emitTabSwitch(item.key)"
+              >
+                {{ item.label }}
+              </ElButton>
+            </div>
+          </div>
         </div>
 
         <div v-else class="empty-occupancy-card">
@@ -246,6 +262,22 @@
             >
               查看已释放轨迹
             </ElButton>
+          </div>
+
+          <div class="occupancy-tab-links">
+            <div class="occupancy-tab-links__label">跨页签联动</div>
+            <div class="occupancy-tab-links__items">
+              <ElButton
+                v-for="item in tabLinkOptions"
+                :key="item.key"
+                :data-testid="`occupancy-tab-link-${item.key}`"
+                size="small"
+                plain
+                @click="emitTabSwitch(item.key)"
+              >
+                {{ item.label }}
+              </ElButton>
+            </div>
           </div>
         </div>
       </ElCard>
@@ -445,6 +477,14 @@
               >
                 分组视图
               </ElButton>
+              <ElButton
+                data-testid="occupancy-view-annotation"
+                size="small"
+                :type="groupViewMode === 'ANNOTATION' ? 'primary' : 'default'"
+                @click="groupViewMode = 'ANNOTATION'"
+              >
+                批注视图
+              </ElButton>
             </div>
             <ElButton
               data-testid="occupancy-export-config-toggle"
@@ -476,6 +516,18 @@
               当前已选择 {{ selectedExportFields.length }} 个字段
             </div>
           </div>
+          <div class="export-config-panel__presets">
+            <button
+              v-for="preset in exportPresetOptions"
+              :key="preset.key"
+              type="button"
+              class="export-preset-chip"
+              :data-testid="`occupancy-export-preset-${preset.key}`"
+              @click="applyExportPreset(preset.key)"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
           <div class="export-config-panel__fields">
             <button
               v-for="field in exportFieldOptions"
@@ -495,6 +547,61 @@
       <div ref="historyListRef" class="record-wrapper" data-testid="occupancy-history-list">
         <div v-if="filteredRecords.length" class="record-list">
           <div
+            v-if="groupViewMode === 'ANNOTATION'"
+            class="annotation-list"
+            data-testid="occupancy-annotation-list"
+          >
+            <div
+              v-for="record in filteredRecords"
+              :key="`annotation-${getRecordKey(record)}`"
+              :data-testid="`occupancy-annotation-card-${getRecordKey(record)}`"
+              class="annotation-card"
+              :class="[
+                record.occupancyStatus === 'ACTIVE'
+                  ? 'annotation-card--active'
+                  : 'annotation-card--released'
+              ]"
+            >
+              <div class="annotation-card__header">
+                <div>
+                  <div class="annotation-card__title">
+                    {{ record.occupancyNo || '待生成占用单号' }}
+                  </div>
+                  <div class="annotation-card__meta">
+                    {{ getStatusLabel(record.occupancyStatus) }} / {{ record.useDeptName || '-' }} /
+                    {{ record.responsibleUserName || '-' }}
+                  </div>
+                </div>
+                <ElTag :type="record.occupancyStatus === 'ACTIVE' ? 'success' : 'warning'" effect="light">
+                  轨迹批注
+                </ElTag>
+              </div>
+
+              <div class="annotation-card__notes">
+                <div class="annotation-note">
+                  <div class="annotation-note__label">状态说明</div>
+                  <div class="annotation-note__value">
+                    {{
+                      record.occupancyStatus === 'ACTIVE'
+                        ? '该轨迹仍是当前有效占用，主档应以这条占用记录为准。'
+                        : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
+                    }}
+                  </div>
+                </div>
+                <div class="annotation-note">
+                  <div class="annotation-note__label">占用批注</div>
+                  <div class="annotation-note__value">{{ record.changeReason || '-' }}</div>
+                </div>
+                <div class="annotation-note">
+                  <div class="annotation-note__label">释放批注</div>
+                  <div class="annotation-note__value">{{ record.releaseReason || '-' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else
             v-for="group in recordGroups"
             :key="group.key"
             class="record-group"
@@ -574,7 +681,8 @@
   type SortDirection = 'DESC' | 'ASC'
   type CompareFieldKey = 'useDeptName' | 'responsibleUserName' | 'locationName'
   type StatusFilter = 'ALL' | 'ACTIVE' | 'RELEASED'
-  type GroupViewMode = 'LIST' | 'GROUPED'
+  type GroupViewMode = 'LIST' | 'GROUPED' | 'ANNOTATION'
+  type LinkedTabName = 'overview' | 'inspection' | 'rectification' | 'disposal'
   type ExportFieldKey =
     | 'occupancyNo'
     | 'occupancyStatus'
@@ -602,16 +710,23 @@
     label: string
   }
 
+  interface ExportPresetOption {
+    key: 'operations' | 'audit' | 'release'
+    label: string
+    fields: ExportFieldKey[]
+  }
+
   const props = defineProps<{
     detailData: Record<string, any>
     occupancyRecords: AssetRealEstateOccupancyRecord[]
     canEdit?: boolean
   }>()
 
-  defineEmits<{
+  const emit = defineEmits<{
     'create-occupancy': []
     'change-occupancy': [record: AssetRealEstateOccupancyRecord]
     'release-occupancy': [record: AssetRealEstateOccupancyRecord]
+    'switch-tab': [tab: LinkedTabName]
   }>()
 
   const historyListRef = ref<HTMLElement>()
@@ -648,7 +763,30 @@
     { key: 'changeReason', label: '发起/变更原因' },
     { key: 'releaseReason', label: '释放原因' }
   ]
+  const exportPresetOptions: ExportPresetOption[] = [
+    {
+      key: 'operations',
+      label: '运营摘要',
+      fields: ['occupancyNo', 'occupancyStatus', 'useDeptName', 'responsibleUserName', 'locationName']
+    },
+    {
+      key: 'audit',
+      label: '审计复盘',
+      fields: [...exportFieldOptions.map((item) => item.key)]
+    },
+    {
+      key: 'release',
+      label: '释放分析',
+      fields: ['occupancyNo', 'occupancyStatus', 'useDeptName', 'locationName', 'endDate', 'changeReason', 'releaseReason']
+    }
+  ]
   const defaultExportFieldKeys: ExportFieldKey[] = exportFieldOptions.map((item) => item.key)
+  const tabLinkOptions: { key: LinkedTabName; label: string }[] = [
+    { key: 'overview', label: '回总览核对主档' },
+    { key: 'inspection', label: '看巡检联动' },
+    { key: 'rectification', label: '看整改进展' },
+    { key: 'disposal', label: '看处置关联' }
+  ]
   const recordRefs = new Map<string, HTMLElement>()
   const selectedExportFields = ref<ExportFieldKey[]>([...defaultExportFieldKeys])
   const defaultFilterState: OccupancyFilterState = {
@@ -930,6 +1068,10 @@
     return mapper[String(status || '').toUpperCase()] || status || '-'
   }
 
+  const emitTabSwitch = (tab: LinkedTabName) => {
+    emit('switch-tab', tab)
+  }
+
   const focusReleasedHistory = () => {
     statusFilter.value = 'RELEASED'
     resetTimeFilters()
@@ -1095,6 +1237,14 @@
     selectedExportFields.value = [...selectedExportFields.value, fieldKey]
   }
 
+  const applyExportPreset = (presetKey: ExportPresetOption['key']) => {
+    const preset = exportPresetOptions.find((item) => item.key === presetKey)
+    if (!preset) {
+      return
+    }
+    selectedExportFields.value = [...preset.fields]
+  }
+
   const resolveExportValue = (record: AssetRealEstateOccupancyRecord, fieldKey: ExportFieldKey) => {
     if (fieldKey === 'occupancyStatus') {
       return getStatusLabel(record.occupancyStatus)
@@ -1224,7 +1374,8 @@
   .record-item__tags,
   .current-occupancy-card__actions,
   .empty-occupancy-card__actions,
-  .history-toolbar__filters {
+  .history-toolbar__filters,
+  .occupancy-tab-links__items {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -1352,6 +1503,22 @@
     margin-top: 12px;
   }
 
+  .occupancy-tab-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px dashed #cfd9e8;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgb(248 250 252 / 96%), #fff 100%);
+  }
+
+  .occupancy-tab-links__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
   .history-toolbar {
     padding: 16px 16px 0;
   }
@@ -1459,6 +1626,12 @@
     gap: 10px;
   }
 
+  .export-config-panel__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .export-field-chip {
     padding: 6px 12px;
     border: 1px solid #d7e1ee;
@@ -1469,6 +1642,23 @@
     background: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
+  }
+
+  .export-preset-chip {
+    padding: 6px 12px;
+    border: 1px solid #cfe1ff;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #1d4ed8;
+    background: rgb(239 246 255 / 92%);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .export-preset-chip:hover,
+  .export-field-chip:hover {
+    transform: translateY(-1px);
   }
 
   .export-field-chip--active {
@@ -1553,6 +1743,79 @@
     gap: 12px;
   }
 
+  .annotation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .annotation-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid #e7edf6;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgb(15 23 42 / 4%);
+  }
+
+  .annotation-card--active {
+    background: linear-gradient(180deg, rgb(236 253 245 / 88%), #fff 100%);
+  }
+
+  .annotation-card--released {
+    background: linear-gradient(180deg, rgb(255 247 237 / 92%), #fff 100%);
+  }
+
+  .annotation-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .annotation-card__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .annotation-card__meta {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #5d6b86;
+  }
+
+  .annotation-card__notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .annotation-note {
+    padding: 14px 16px;
+    border: 1px solid #dce5f2;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 88%);
+  }
+
+  .annotation-note__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f7f99;
+  }
+
+  .annotation-note__value {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #18233a;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .record-group__header {
     display: flex;
     align-items: center;
@@ -1584,7 +1847,8 @@
     .record-detail-grid,
     .empty-occupancy-card__meta,
     .insight-card-grid,
-    .insight-card__grid {
+    .insight-card__grid,
+    .annotation-card__notes {
       grid-template-columns: 1fr;
     }
 
@@ -1611,7 +1875,8 @@
 
     .history-toolbar__actions,
     .export-config-panel__header,
-    .record-group__header {
+    .record-group__header,
+    .annotation-card__header {
       width: 100%;
       justify-content: flex-start;
     }

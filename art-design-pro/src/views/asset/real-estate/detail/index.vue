@@ -60,6 +60,7 @@
         @create-occupancy="openCreateOccupancyDrawer"
         @change-occupancy="openChangeOccupancyDrawer"
         @release-occupancy="openReleaseOccupancyDrawer"
+        @switch-tab="handleOccupancySwitchTab"
       />
 
       <InspectionPanel
@@ -732,6 +733,10 @@
   const handleTabChange = (tabName: TabPaneName) => {
     // 中文注释：详情页签只在当前页面切换组件，不再推送新路由，避免用户感知上“还在详情里却像换页”。
     activeTab.value = normalizeRealEstateDetailTab(String(tabName))
+  }
+
+  const handleOccupancySwitchTab = (tabName: RealEstateDetailTabName) => {
+    activeTab.value = normalizeRealEstateDetailTab(tabName)
   }
 
   const isRectifiableRecord = (record: AssetInventoryRecord) => {
