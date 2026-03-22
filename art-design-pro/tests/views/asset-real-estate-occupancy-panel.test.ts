@@ -79,10 +79,14 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(wrapper.text()).toContain('\u91ca\u653e\u5360\u7528')
 
     await wrapper.get('[data-testid="occupancy-change-link-9101"]').trigger('click')
-    expect(wrapper.emitted('change-occupancy')?.[0]).toEqual([expect.objectContaining({ occupancyId: 9101 })])
+    expect(wrapper.emitted('change-occupancy')?.[0]).toEqual([
+      expect.objectContaining({ occupancyId: 9101 })
+    ])
 
     await wrapper.get('[data-testid="occupancy-release-link-9101"]').trigger('click')
-    expect(wrapper.emitted('release-occupancy')?.[0]).toEqual([expect.objectContaining({ occupancyId: 9101 })])
+    expect(wrapper.emitted('release-occupancy')?.[0]).toEqual([
+      expect.objectContaining({ occupancyId: 9101 })
+    ])
   })
 
   it('filters occupancy history by status and keyword', async () => {
@@ -182,7 +186,7 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(syncSummary.text()).toContain('dept-alpha')
     expect(syncSummary.text()).toContain('user-alpha')
     expect(syncSummary.text()).toContain('loc-alpha')
-    expect(syncSummary.text()).toContain('主档已同步')
+    expect(syncSummary.text()).toContain('\u4e3b\u6863\u5df2\u540c\u6b65')
 
     const latestChangeSummary = wrapper.get('[data-testid="occupancy-last-change-summary"]')
     expect(latestChangeSummary.text()).toContain('OCC-2026-8999')
@@ -288,5 +292,181 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(historyList.text()).toContain('OCC-2026-9001')
     expect(historyList.text()).toContain('OCC-2026-8999')
     expect(historyList.text()).not.toContain('OCC-2025-8001')
+  })
+
+  it('filters occupancy history by custom time range', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          },
+          {
+            occupancyId: 9099,
+            occupancyNo: 'OCC-2026-8998',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-gamma',
+            responsibleUserName: 'user-gamma',
+            locationName: 'loc-gamma',
+            startDate: '2026-03-15',
+            endDate: '2026-03-16',
+            changeReason: 'reason-gamma',
+            releaseReason: 'release-gamma'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-custom-start"]').setValue('2026-03-12')
+    await wrapper.get('[data-testid="occupancy-custom-end"]').setValue('2026-03-20')
+    await wrapper.get('[data-testid="occupancy-custom-apply"]').trigger('click')
+
+    const historyList = wrapper.get('[data-testid="occupancy-history-list"]')
+    expect(historyList.text()).toContain('OCC-2026-9001')
+    expect(historyList.text()).toContain('OCC-2026-8998')
+    expect(historyList.text()).not.toContain('OCC-2026-8999')
+  })
+
+  it('switches occupancy history sort order', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-beta',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-10',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          },
+          {
+            occupancyId: 9099,
+            occupancyNo: 'OCC-2026-8998',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-gamma',
+            responsibleUserName: 'user-gamma',
+            locationName: 'loc-gamma',
+            startDate: '2026-03-15',
+            endDate: '2026-03-16',
+            changeReason: 'reason-gamma',
+            releaseReason: 'release-gamma'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    const getTitles = () =>
+      wrapper
+        .findAll('.record-item__title')
+        .map((node) => node.text())
+
+    expect(getTitles()[0]).toBe('OCC-2026-9001')
+
+    await wrapper.get('[data-testid="occupancy-sort-asc"]').trigger('click')
+    expect(getTitles()[0]).toBe('OCC-2026-8999')
+  })
+
+  it('highlights diff items in summary cards', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept',
+          useDeptName: 'dept-ledger',
+          responsibleUserName: 'user-ledger',
+          locationName: 'loc-alpha'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-22',
+            changeReason: 'reason-alpha'
+          },
+          {
+            occupancyId: 9100,
+            occupancyNo: 'OCC-2026-8999',
+            occupancyStatus: 'RELEASED',
+            useDeptName: 'dept-beta',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-beta',
+            startDate: '2026-03-01',
+            endDate: '2026-03-21',
+            changeReason: 'reason-beta',
+            releaseReason: 'release-beta'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    expect(wrapper.get('[data-testid="occupancy-ledger-sync-item-useDeptName"]').classes()).toContain(
+      'compare-item--changed'
+    )
+    expect(
+      wrapper.get('[data-testid="occupancy-ledger-sync-item-responsibleUserName"]').classes()
+    ).toContain('compare-item--changed')
+    expect(
+      wrapper.get('[data-testid="occupancy-last-change-item-locationName"]').classes()
+    ).toContain('compare-item--changed')
+    expect(
+      wrapper.get('[data-testid="occupancy-last-change-item-responsibleUserName"]').classes()
+    ).not.toContain('compare-item--changed')
   })
 })
