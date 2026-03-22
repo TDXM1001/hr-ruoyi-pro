@@ -289,6 +289,13 @@
                   当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
                   {{ trendDrilldown.count }} 次。
                 </div>
+                <input
+                  v-model="trendSnapshotName"
+                  data-testid="occupancy-link-drilldown-snapshot-name"
+                  type="text"
+                  class="preset-name-field__input occupancy-link-drilldown__input"
+                  placeholder="输入快照名称，可选"
+                />
                 <div class="occupancy-link-drilldown__actions">
                   <ElButton
                     size="small"
@@ -548,7 +555,7 @@
               type="button"
               class="export-preset-chip export-preset-chip--subtle"
               data-testid="occupancy-history-restore-snapshot"
-              @click="applySavedTrendSnapshot"
+              @click="applySavedTrendSnapshot()"
             >
               恢复快照
             </button>
@@ -556,7 +563,7 @@
               type="button"
               class="export-preset-chip export-preset-chip--subtle"
               data-testid="occupancy-history-clear-snapshot"
-              @click="clearSavedTrendSnapshot"
+              @click="clearSavedTrendSnapshot()"
             >
               清空快照
             </button>
@@ -736,6 +743,13 @@
               导出字段
             </ElButton>
             <ElButton
+              data-testid="occupancy-governance-toggle"
+              size="small"
+              @click="toggleGovernancePanel"
+            >
+              {{ governanceOpen ? '收起治理工具' : '治理工具' }}
+            </ElButton>
+            <ElButton
               v-if="groupViewMode === 'ANNOTATION'"
               data-testid="occupancy-export-annotation-link"
               size="small"
@@ -801,6 +815,14 @@
                 @click="exportCustomPresets"
               >
                 导出预设
+              </ElButton>
+              <ElButton
+                data-testid="occupancy-governance-toggle-inline"
+                size="small"
+                text
+                @click="toggleGovernancePanel"
+              >
+                {{ governanceOpen ? '收起治理工具' : '治理工具' }}
               </ElButton>
             </div>
           </div>
@@ -989,6 +1011,137 @@
                 <span>{{ buildImportConflictLabel(item.conflictType) }}</span>
                 <span>{{ buildImportPolicyLabel(item.effectivePolicy) }}</span>
                 <span>结果：{{ item.resolvedLabel }}</span>
+              </div>
+            </div>
+          </div>
+          <div
+            v-if="governanceOpen"
+            class="governance-panel"
+            data-testid="occupancy-governance-panel"
+          >
+            <div class="governance-panel__section">
+              <div class="governance-panel__section-title">导入策略模板</div>
+              <div class="governance-panel__section-desc">
+                将当前导入预览的全局策略与逐条覆盖策略沉淀为模板，后续可复用。
+              </div>
+              <div class="governance-panel__form">
+                <input
+                  v-model="policyTemplateName"
+                  data-testid="occupancy-policy-template-name"
+                  type="text"
+                  class="preset-name-field__input"
+                  placeholder="输入模板名称，可选"
+                />
+                <ElButton
+                  data-testid="occupancy-policy-template-save"
+                  size="small"
+                  type="primary"
+                  plain
+                  :disabled="!presetImportPreviewItems.length"
+                  @click="saveImportPolicyTemplate"
+                >
+                  保存当前策略
+                </ElButton>
+              </div>
+              <div
+                v-if="importPolicyTemplates.length"
+                class="governance-panel__list"
+              >
+                <div
+                  v-for="(item, index) in importPolicyTemplates"
+                  :key="item.key"
+                  class="governance-panel__item"
+                  :data-testid="`occupancy-policy-template-item-${index}`"
+                >
+                  <div class="governance-panel__item-main">
+                    <strong>{{ item.name }}</strong>
+                    <span>全局策略：{{ buildImportPolicyLabel(item.globalPolicy) }}</span>
+                    <span>逐条策略：{{ item.itemPolicies.length }} 项</span>
+                  </div>
+                  <div class="governance-panel__item-actions">
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-policy-template-apply-${index}`"
+                      @click="applyImportPolicyTemplate(item.key)"
+                    >
+                      应用
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-policy-template-delete-${index}`"
+                      @click="removeImportPolicyTemplate(item.key)"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="governance-panel__section">
+              <div class="governance-panel__section-title">趋势快照管理</div>
+              <div class="governance-panel__section-desc">
+                管理已保存的趋势钻取快照，支持恢复和删除，顶部快捷入口默认作用于最近一次快照。
+              </div>
+              <div
+                v-if="visibleSavedTrendSnapshots.length"
+                class="governance-panel__list"
+              >
+                <div
+                  v-for="(item, index) in visibleSavedTrendSnapshots"
+                  :key="item.key"
+                  class="governance-panel__item"
+                  :data-testid="`occupancy-snapshot-item-${index}`"
+                >
+                  <div class="governance-panel__item-main">
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ item.savedAt }}</span>
+                  </div>
+                  <div class="governance-panel__item-actions">
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-snapshot-restore-${index}`"
+                      @click="applySavedTrendSnapshot(item)"
+                    >
+                      恢复
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-snapshot-delete-${index}`"
+                      @click="clearSavedTrendSnapshot(item.key)"
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="governance-panel__section">
+              <div class="governance-panel__section-title">重置记录</div>
+              <div class="governance-panel__section-desc">
+                记录趋势、来源和全量重置操作，便于回看治理动作。
+              </div>
+              <div
+                v-if="linkResetLogs.length"
+                class="governance-panel__list"
+              >
+                <div
+                  v-for="(item, index) in linkResetLogs.slice(0, 5)"
+                  :key="item.key"
+                  class="governance-panel__item"
+                  :data-testid="`occupancy-reset-log-item-${index}`"
+                >
+                  <div class="governance-panel__item-main">
+                    <strong>{{ buildResetScopeLabel(item.scope) }}</strong>
+                    <span>{{ item.summary }}</span>
+                    <span>{{ item.executedAt }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1501,10 +1654,33 @@
   }
 
   interface SavedTrendSnapshotState {
+    key: string
+    name: string
     savedAt: string
     linkStatsWindow: LinkStatsWindow
     drilldown: TrendDrilldownState | null
     filterState: TrendFilterSnapshot
+  }
+
+  interface ImportPolicyTemplateItem {
+    label: string
+    conflictType: ImportConflictType
+    effectivePolicy: ImportConflictPolicy
+  }
+
+  interface ImportPolicyTemplateState {
+    key: string
+    name: string
+    createdAt: string
+    globalPolicy: ImportConflictPolicy
+    itemPolicies: ImportPolicyTemplateItem[]
+  }
+
+  interface LinkResetLogState {
+    key: string
+    executedAt: string
+    scope: LinkStatsResetScope
+    summary: string
   }
 
   const props = defineProps<{
@@ -1527,6 +1703,7 @@
   const groupViewMode = ref<GroupViewMode>('LIST')
   const annotationTemplate = ref<AnnotationTemplateKey>('standard')
   const exportConfigOpen = ref(false)
+  const governanceOpen = ref(false)
   const presetNameEditOpen = ref(false)
   const presetCopyOpen = ref(false)
   const presetImportOpen = ref(false)
@@ -1535,6 +1712,8 @@
   const presetCopyName = ref('')
   const presetImportText = ref('')
   const presetImportPolicy = ref<ImportConflictPolicy>('RENAME')
+  const policyTemplateName = ref('')
+  const trendSnapshotName = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
@@ -1543,12 +1722,15 @@
   const presetImportPreviewItems = ref<PresetImportPreviewItem[]>([])
   const presetImportInvalidItems = ref<PresetImportInvalidItem[]>([])
   const lastPresetImportResult = ref<PresetImportResultState | null>(null)
+  const importPolicyTemplates = ref<ImportPolicyTemplateState[]>([])
   const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
   const linkStatsWindow = ref<LinkStatsWindow>('7D')
   const linkStatsResetScope = ref<LinkStatsResetScope>('ALL')
   const trendDrilldown = ref<TrendDrilldownState | null>(null)
   const trendFilterSnapshot = ref<TrendFilterSnapshot | null>(null)
   const savedTrendSnapshot = ref<SavedTrendSnapshotState | null>(null)
+  const savedTrendSnapshotHistory = ref<SavedTrendSnapshotState[]>([])
+  const linkResetLogs = ref<LinkResetLogState[]>([])
   const linkStats = reactive<OccupancyLinkStatsState>({
     counts: {
       overview: 0,
@@ -1664,6 +1846,14 @@
   const trendSnapshotStorageKey = computed(() => {
     const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
     return assetKey ? `asset-real-estate-occupancy-trend-snapshot:${assetKey}` : ''
+  })
+  const importPolicyTemplateStorageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-import-policy-templates:${assetKey}` : ''
+  })
+  const linkResetLogStorageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-reset-logs:${assetKey}` : ''
   })
 
   const computedExportPresetOptions = computed(() => {
@@ -1787,6 +1977,8 @@
       )
     )
   })
+
+  const visibleSavedTrendSnapshots = computed(() => savedTrendSnapshotHistory.value.slice(0, 5))
 
   const historyDrilldownTip = computed(() => {
     if (!trendDrilldown.value) {
@@ -2249,14 +2441,42 @@
     if (!trendSnapshotStorageKey.value) {
       return
     }
-    if (!savedTrendSnapshot.value) {
+    if (!savedTrendSnapshot.value && !savedTrendSnapshotHistory.value.length) {
       window.localStorage.removeItem(trendSnapshotStorageKey.value)
       return
     }
     window.localStorage.setItem(
       trendSnapshotStorageKey.value,
-      JSON.stringify(savedTrendSnapshot.value)
+      JSON.stringify({
+        current: savedTrendSnapshot.value,
+        items: savedTrendSnapshotHistory.value
+      })
     )
+  }
+
+  const persistImportPolicyTemplates = () => {
+    if (!importPolicyTemplateStorageKey.value) {
+      return
+    }
+    if (!importPolicyTemplates.value.length) {
+      window.localStorage.removeItem(importPolicyTemplateStorageKey.value)
+      return
+    }
+    window.localStorage.setItem(
+      importPolicyTemplateStorageKey.value,
+      JSON.stringify(importPolicyTemplates.value)
+    )
+  }
+
+  const persistLinkResetLogs = () => {
+    if (!linkResetLogStorageKey.value) {
+      return
+    }
+    if (!linkResetLogs.value.length) {
+      window.localStorage.removeItem(linkResetLogStorageKey.value)
+      return
+    }
+    window.localStorage.setItem(linkResetLogStorageKey.value, JSON.stringify(linkResetLogs.value))
   }
 
   const emitTabSwitch = (tab: LinkedTabName) => {
@@ -2341,7 +2561,10 @@
   }
 
   const saveTrendSnapshot = () => {
-    savedTrendSnapshot.value = {
+    const snapshotIndex = savedTrendSnapshotHistory.value.length + 1
+    const snapshot: SavedTrendSnapshotState = {
+      key: `snapshot-${Date.now()}-${snapshotIndex}`,
+      name: trendSnapshotName.value.trim() || `趋势快照 ${snapshotIndex}`,
       savedAt: new Date().toISOString(),
       linkStatsWindow: linkStatsWindow.value,
       drilldown: trendDrilldown.value
@@ -2351,18 +2574,33 @@
         : null,
       filterState: buildTrendFilterSnapshot()
     }
+    savedTrendSnapshot.value = snapshot
+    savedTrendSnapshotHistory.value = [snapshot, ...savedTrendSnapshotHistory.value].slice(0, 10)
+    trendSnapshotName.value = ''
   }
 
-  const applySavedTrendSnapshot = async () => {
-    if (!savedTrendSnapshot.value) {
+  const toggleGovernancePanel = () => {
+    governanceOpen.value = !governanceOpen.value
+    if (governanceOpen.value) {
+      exportConfigOpen.value = true
+    }
+  }
+
+  const applySavedTrendSnapshot = async (snapshot?: SavedTrendSnapshotState | Event) => {
+    const targetSnapshot =
+      snapshot && typeof snapshot === 'object' && 'filterState' in snapshot
+        ? (snapshot as SavedTrendSnapshotState)
+        : savedTrendSnapshot.value
+    if (!targetSnapshot?.filterState) {
       return
     }
-    linkStatsWindow.value = savedTrendSnapshot.value.linkStatsWindow
+    savedTrendSnapshot.value = targetSnapshot
+    linkStatsWindow.value = targetSnapshot.linkStatsWindow
     trendFilterSnapshot.value = null
-    applyFilterState(savedTrendSnapshot.value.filterState)
-    trendDrilldown.value = savedTrendSnapshot.value.drilldown
+    applyFilterState(targetSnapshot.filterState)
+    trendDrilldown.value = targetSnapshot.drilldown
       ? {
-          ...savedTrendSnapshot.value.drilldown
+          ...targetSnapshot.drilldown
         }
       : null
     resetFocusedRecord()
@@ -2370,8 +2608,21 @@
     historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
   }
 
-  const clearSavedTrendSnapshot = () => {
-    savedTrendSnapshot.value = null
+  const clearSavedTrendSnapshot = (snapshotKey?: string | Event) => {
+    let resolvedSnapshotKey = typeof snapshotKey === 'string' ? snapshotKey : undefined
+    if (!resolvedSnapshotKey && savedTrendSnapshot.value) {
+      resolvedSnapshotKey = savedTrendSnapshot.value.key
+    }
+    if (!resolvedSnapshotKey) {
+      savedTrendSnapshot.value = null
+      return
+    }
+    savedTrendSnapshotHistory.value = savedTrendSnapshotHistory.value.filter(
+      (item) => item.key !== resolvedSnapshotKey
+    )
+    if (savedTrendSnapshot.value?.key === resolvedSnapshotKey) {
+      savedTrendSnapshot.value = savedTrendSnapshotHistory.value[0] || null
+    }
   }
 
   const resetLinkStatsView = async () => {
@@ -2390,10 +2641,18 @@
       return
     }
 
+    const clearedEvents = linkStats.events.length
+    const clearedCount =
+      linkStats.counts.overview +
+      linkStats.counts.inspection +
+      linkStats.counts.rectification +
+      linkStats.counts.disposal
+
     if (linkStatsResetScope.value === 'EVENTS' || linkStatsResetScope.value === 'ALL') {
       linkStats.events = []
       trendFilterSnapshot.value = null
       savedTrendSnapshot.value = null
+      savedTrendSnapshotHistory.value = []
       clearTrendDrilldown()
       linkStatsWindow.value = '7D'
     }
@@ -2406,6 +2665,21 @@
       linkStats.lastTargetKey = ''
       linkStats.lastTargetLabel = ''
     }
+
+    const summaryMap: Record<LinkStatsResetScope, string> = {
+      EVENTS: `已清空趋势事件 ${clearedEvents} 条`,
+      COUNTS: `已清空来源计数 ${clearedCount} 次`,
+      ALL: `已清空趋势事件 ${clearedEvents} 条，来源计数 ${clearedCount} 次`
+    }
+    linkResetLogs.value = [
+      {
+        key: `reset-${Date.now()}-${linkStatsResetScope.value.toLowerCase()}`,
+        executedAt: new Date().toISOString(),
+        scope: linkStatsResetScope.value,
+        summary: summaryMap[linkStatsResetScope.value]
+      },
+      ...linkResetLogs.value
+    ].slice(0, 10)
   }
 
   const focusReleasedHistory = () => {
@@ -2734,6 +3008,7 @@
 
   const restoreSavedTrendSnapshot = () => {
     savedTrendSnapshot.value = null
+    savedTrendSnapshotHistory.value = []
     if (!trendSnapshotStorageKey.value) {
       return
     }
@@ -2744,35 +3019,152 @@
     }
 
     try {
-      const parsed = JSON.parse(raw) as Partial<SavedTrendSnapshotState>
-      const drilldown = parsed.drilldown
-        ? {
-            date: String(parsed.drilldown.date || ''),
-            label: String(parsed.drilldown.label || ''),
-            count: Number(parsed.drilldown.count || 0)
-          }
-        : null
-      savedTrendSnapshot.value = {
-        savedAt: String(parsed.savedAt || ''),
-        linkStatsWindow: parsed.linkStatsWindow === '30D' ? '30D' : '7D',
-        drilldown: drilldown?.date ? drilldown : null,
-        filterState: {
-          statusFilter: ['ALL', 'ACTIVE', 'RELEASED'].includes(String(parsed.filterState?.statusFilter || ''))
-            ? (parsed.filterState?.statusFilter as StatusFilter)
-            : 'ALL',
-          timeFilter: ['ALL', '7D', '30D', '90D', 'CUSTOM'].includes(String(parsed.filterState?.timeFilter || ''))
-            ? (parsed.filterState?.timeFilter as TimeFilter)
-            : 'ALL',
-          sortDirection: parsed.filterState?.sortDirection === 'ASC' ? 'ASC' : 'DESC',
-          keyword: String(parsed.filterState?.keyword || ''),
-          customRangeDraftStart: String(parsed.filterState?.customRangeDraftStart || ''),
-          customRangeDraftEnd: String(parsed.filterState?.customRangeDraftEnd || ''),
-          customRangeAppliedStart: String(parsed.filterState?.customRangeAppliedStart || ''),
-          customRangeAppliedEnd: String(parsed.filterState?.customRangeAppliedEnd || '')
+      const parsed = JSON.parse(raw) as
+        | Partial<SavedTrendSnapshotState>
+        | { current?: Partial<SavedTrendSnapshotState>; items?: Partial<SavedTrendSnapshotState>[] }
+      const normalizeSnapshot = (item?: Partial<SavedTrendSnapshotState>) => {
+        if (!item) {
+          return undefined
         }
+        const drilldown = item.drilldown
+          ? {
+              date: String(item.drilldown.date || ''),
+              label: String(item.drilldown.label || ''),
+              count: Number(item.drilldown.count || 0)
+            }
+          : null
+        const normalized: SavedTrendSnapshotState = {
+          key: String(item.key || `snapshot-${Date.now()}`),
+          name: String(item.name || '未命名快照'),
+          savedAt: String(item.savedAt || ''),
+          linkStatsWindow: item.linkStatsWindow === '30D' ? '30D' : '7D',
+          drilldown: drilldown?.date ? drilldown : null,
+          filterState: {
+            statusFilter: ['ALL', 'ACTIVE', 'RELEASED'].includes(String(item.filterState?.statusFilter || ''))
+              ? (item.filterState?.statusFilter as StatusFilter)
+              : 'ALL',
+            timeFilter: ['ALL', '7D', '30D', '90D', 'CUSTOM'].includes(String(item.filterState?.timeFilter || ''))
+              ? (item.filterState?.timeFilter as TimeFilter)
+              : 'ALL',
+            sortDirection: item.filterState?.sortDirection === 'ASC' ? 'ASC' : 'DESC',
+            keyword: String(item.filterState?.keyword || ''),
+            customRangeDraftStart: String(item.filterState?.customRangeDraftStart || ''),
+            customRangeDraftEnd: String(item.filterState?.customRangeDraftEnd || ''),
+            customRangeAppliedStart: String(item.filterState?.customRangeAppliedStart || ''),
+            customRangeAppliedEnd: String(item.filterState?.customRangeAppliedEnd || '')
+          }
+        }
+        return normalized.savedAt ? normalized : undefined
       }
+
+      if ('items' in parsed || 'current' in parsed) {
+        savedTrendSnapshotHistory.value = Array.isArray(parsed.items)
+          ? parsed.items
+              .map((item) => normalizeSnapshot(item))
+              .filter((item): item is SavedTrendSnapshotState => !!item)
+          : []
+        savedTrendSnapshot.value =
+          normalizeSnapshot(parsed.current) || savedTrendSnapshotHistory.value[0] || null
+        return
+      }
+
+      const legacySnapshot = normalizeSnapshot(parsed as Partial<SavedTrendSnapshotState>)
+      savedTrendSnapshot.value = legacySnapshot || null
+      savedTrendSnapshotHistory.value = legacySnapshot ? [legacySnapshot] : []
     } catch {
       window.localStorage.removeItem(trendSnapshotStorageKey.value)
+    }
+  }
+
+  const restoreImportPolicyTemplates = () => {
+    importPolicyTemplates.value = []
+    if (!importPolicyTemplateStorageKey.value) {
+      return
+    }
+    const raw = window.localStorage.getItem(importPolicyTemplateStorageKey.value)
+    if (!raw) {
+      return
+    }
+    try {
+      const parsed = JSON.parse(raw)
+      importPolicyTemplates.value = Array.isArray(parsed)
+        ? parsed
+            .map((item) => {
+              const name = String(item?.name || '').trim()
+              const key = String(item?.key || '').trim()
+              const createdAt = String(item?.createdAt || '').trim()
+              const globalPolicy = String(item?.globalPolicy || '') as ImportConflictPolicy
+              const itemPolicies = Array.isArray(item?.itemPolicies)
+                ? item.itemPolicies
+                    .map((policyItem) => {
+                      const label = String(policyItem?.label || '').trim()
+                      const conflictType = String(policyItem?.conflictType || '') as ImportConflictType
+                      const effectivePolicy = String(policyItem?.effectivePolicy || '') as ImportConflictPolicy
+                      if (
+                        !label ||
+                        !['none', 'system', 'custom'].includes(conflictType) ||
+                        !['SKIP', 'RENAME', 'OVERWRITE'].includes(effectivePolicy)
+                      ) {
+                        return undefined
+                      }
+                      return {
+                        label,
+                        conflictType,
+                        effectivePolicy
+                      }
+                    })
+                    .filter((policyItem): policyItem is ImportPolicyTemplateItem => !!policyItem)
+                : []
+              if (!name || !key || !createdAt || !['SKIP', 'RENAME', 'OVERWRITE'].includes(globalPolicy)) {
+                return undefined
+              }
+              return {
+                key,
+                name,
+                createdAt,
+                globalPolicy,
+                itemPolicies
+              }
+            })
+            .filter((item): item is ImportPolicyTemplateState => !!item)
+        : []
+    } catch {
+      window.localStorage.removeItem(importPolicyTemplateStorageKey.value)
+    }
+  }
+
+  const restoreLinkResetLogs = () => {
+    linkResetLogs.value = []
+    if (!linkResetLogStorageKey.value) {
+      return
+    }
+    const raw = window.localStorage.getItem(linkResetLogStorageKey.value)
+    if (!raw) {
+      return
+    }
+    try {
+      const parsed = JSON.parse(raw)
+      linkResetLogs.value = Array.isArray(parsed)
+        ? parsed
+            .map((item) => {
+              const key = String(item?.key || '').trim()
+              const executedAt = String(item?.executedAt || '').trim()
+              const scope = String(item?.scope || '') as LinkStatsResetScope
+              const summary = String(item?.summary || '').trim()
+              if (!key || !executedAt || !['EVENTS', 'COUNTS', 'ALL'].includes(scope) || !summary) {
+                return undefined
+              }
+              return {
+                key,
+                executedAt,
+                scope,
+                summary
+              }
+            })
+            .filter((item): item is LinkResetLogState => !!item)
+        : []
+    } catch {
+      window.localStorage.removeItem(linkResetLogStorageKey.value)
     }
   }
 
@@ -2804,6 +3196,67 @@
     return `custom-${Date.now()}-${customExportPresets.value.length + seedIndex}`
   }
 
+  const buildImportPolicyTemplateKey = () => {
+    return `policy-template-${Date.now()}-${importPolicyTemplates.value.length}`
+  }
+
+  const saveImportPolicyTemplate = () => {
+    if (!presetImportPreviewItems.value.length) {
+      return
+    }
+    const templateName = policyTemplateName.value.trim() || `策略模板 ${importPolicyTemplates.value.length + 1}`
+    importPolicyTemplates.value = [
+      {
+        key: buildImportPolicyTemplateKey(),
+        name: templateName,
+        createdAt: new Date().toISOString(),
+        globalPolicy: presetImportPolicy.value,
+        itemPolicies: presetImportPreviewItems.value
+          .filter((item) => item.conflictType !== 'none')
+          .map((item) => ({
+            label: item.label,
+            conflictType: item.conflictType,
+            effectivePolicy: getEffectiveImportPolicy(item)
+          }))
+      },
+      ...importPolicyTemplates.value
+    ].slice(0, 10)
+    policyTemplateName.value = ''
+  }
+
+  const applyImportPolicyTemplate = (templateKey: string) => {
+    const targetTemplate = importPolicyTemplates.value.find((item) => item.key === templateKey)
+    if (!targetTemplate) {
+      return
+    }
+    presetImportPolicy.value = targetTemplate.globalPolicy
+    presetImportPreviewItems.value = presetImportPreviewItems.value.map((item) => {
+      const matched = targetTemplate.itemPolicies.find(
+        (policyItem) => policyItem.label === item.label && policyItem.conflictType === item.conflictType
+      )
+      if (!matched) {
+        return {
+          ...item,
+          policyOverride: 'DEFAULT'
+        }
+      }
+      if (item.conflictType === 'system' && matched.effectivePolicy === 'OVERWRITE') {
+        return {
+          ...item,
+          policyOverride: 'RENAME'
+        }
+      }
+      return {
+        ...item,
+        policyOverride: matched.effectivePolicy
+      }
+    })
+  }
+
+  const removeImportPolicyTemplate = (templateKey: string) => {
+    importPolicyTemplates.value = importPolicyTemplates.value.filter((item) => item.key !== templateKey)
+  }
+
   const buildImportConflictLabel = (conflictType: ImportConflictType) => {
     const mapper: Record<ImportConflictType, string> = {
       none: '可直接导入',
@@ -2820,6 +3273,15 @@
       OVERWRITE: '覆盖'
     }
     return mapper[policy]
+  }
+
+  const buildResetScopeLabel = (scope: LinkStatsResetScope) => {
+    const mapper: Record<LinkStatsResetScope, string> = {
+      EVENTS: '只重置趋势',
+      COUNTS: '只重置来源',
+      ALL: '全部重置'
+    }
+    return mapper[scope]
   }
 
   const resolveImportConflictType = (label: string): ImportConflictType => {
@@ -3376,6 +3838,22 @@
     { immediate: true }
   )
 
+  watch(
+    importPolicyTemplateStorageKey,
+    () => {
+      restoreImportPolicyTemplates()
+    },
+    { immediate: true }
+  )
+
+  watch(
+    linkResetLogStorageKey,
+    () => {
+      restoreLinkResetLogs()
+    },
+    { immediate: true }
+  )
+
   onMounted(() => {
     restoreExportFields()
     restorePresetNames()
@@ -3383,6 +3861,8 @@
     restoreLinkStats()
     restoreLastPresetImportResult()
     restoreSavedTrendSnapshot()
+    restoreImportPolicyTemplates()
+    restoreLinkResetLogs()
   })
 
   watch(
@@ -3445,6 +3925,30 @@
     savedTrendSnapshot,
     () => {
       persistSavedTrendSnapshot()
+    },
+    { deep: true }
+  )
+
+  watch(
+    savedTrendSnapshotHistory,
+    () => {
+      persistSavedTrendSnapshot()
+    },
+    { deep: true }
+  )
+
+  watch(
+    importPolicyTemplates,
+    () => {
+      persistImportPolicyTemplates()
+    },
+    { deep: true }
+  )
+
+  watch(
+    linkResetLogs,
+    () => {
+      persistLinkResetLogs()
     },
     { deep: true }
   )
@@ -3816,6 +4320,10 @@
     gap: 8px;
   }
 
+  .occupancy-link-drilldown__input {
+    max-width: 260px;
+  }
+
   .history-card-header {
     display: flex;
     flex-wrap: wrap;
@@ -4167,6 +4675,71 @@
     padding: 10px 12px;
     border-radius: 10px;
     background: rgb(255 255 255 / 88%);
+  }
+
+  .governance-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #dbe6f5;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgb(248 250 252 / 96%), rgb(255 255 255 / 98%));
+  }
+
+  .governance-panel__section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 88%);
+    box-shadow: inset 0 0 0 1px rgb(219 230 245 / 80%);
+  }
+
+  .governance-panel__section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .governance-panel__section-desc,
+  .governance-panel__item-main {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #5d6b86;
+  }
+
+  .governance-panel__form,
+  .governance-panel__item,
+  .governance-panel__item-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .governance-panel__form {
+    align-items: center;
+  }
+
+  .governance-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .governance-panel__item {
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgb(241 245 249 / 72%);
+  }
+
+  .governance-panel__item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .preset-name-panel {
@@ -4604,6 +5177,7 @@
     .annotation-preview__grid,
     .annotation-compare__grid,
     .preset-import-preview__list,
+    .governance-panel,
     .occupancy-link-stats__grid,
     .occupancy-link-trend__grid {
       grid-template-columns: 1fr;
@@ -4637,6 +5211,7 @@
     .annotation-card__header,
     .occupancy-link-stats__header,
     .custom-preset-item,
+    .governance-panel__item,
     .annotation-compare__header,
     .annotation-compare-item__header,
     .preset-import-preview__header {

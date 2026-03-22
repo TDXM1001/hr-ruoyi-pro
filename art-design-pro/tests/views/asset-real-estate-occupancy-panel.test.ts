@@ -2386,6 +2386,302 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(wrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('0')
     expect(wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').text()).toContain('0')
   })
+
+  it('saves and applies import policy templates', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('第十五批冲突预设')
+    await wrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "第十五批冲突预设",
+      "fields": ["occupancyNo", "releaseReason"]
+    }
+  ]
+}`)
+    await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-item-policy-overwrite-preview-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('冲突覆盖模板')
+    await wrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
+
+    await wrapper.get('[data-testid="occupancy-preset-import-item-policy-default-preview-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-policy-template-apply-0"]').trigger('click')
+
+    expect(
+      wrapper
+        .get('[data-testid="occupancy-preset-import-item-policy-overwrite-preview-0"]')
+        .classes()
+    ).toContain('export-preset-chip--active')
+  })
+
+  it('restores saved policy templates after remount', async () => {
+    const firstWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "释放分析",
+      "fields": ["occupancyNo", "releaseReason"]
+    }
+  ]
+}`)
+    await firstWrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('可恢复模板')
+    await firstWrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-20',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await secondWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    expect(secondWrapper.get('[data-testid="occupancy-policy-template-apply-0"]').text()).toContain(
+      '应用'
+    )
+    expect(secondWrapper.get('[data-testid="occupancy-policy-template-item-0"]').text()).toContain(
+      '可恢复模板'
+    )
+  })
+
+  it('saves multiple named snapshots and restores the selected one', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 0,
+          inspection: 2,
+          rectification: 0,
+          disposal: 0
+        },
+        lastTargetKey: 'inspection',
+        lastTargetLabel: '看巡检联动',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-20T09:00:00+08:00'
+          },
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-21T09:00:00+08:00'
+          }
+        ]
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('今日快照')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-clear"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-20"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('昨日快照')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-snapshot-restore-1"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-history-drilldown-tip"]').text()).toContain(
+      '2026-03-21'
+    )
+    expect(wrapper.get('[data-testid="occupancy-snapshot-item-0"]').text()).toContain('昨日快照')
+    expect(wrapper.get('[data-testid="occupancy-snapshot-item-1"]').text()).toContain('今日快照')
+  })
+
+  it('records scoped reset history and restores it after remount', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-21T12:00:00+08:00'))
+    const confirmSpy = vi.spyOn(ElMessageBox, 'confirm')
+    confirmSpy.mockResolvedValue('confirm' as any)
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 0,
+          inspection: 2,
+          rectification: 1,
+          disposal: 0
+        },
+        lastTargetKey: 'rectification',
+        lastTargetLabel: '看整改进展',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-21T09:00:00+08:00'
+          }
+        ]
+      })
+    )
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-link-stats-reset-scope-events"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+
+    expect(firstWrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain(
+      '只重置趋势'
+    )
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    expect(secondWrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain(
+      '只重置趋势'
+    )
+  })
 })
 
 
