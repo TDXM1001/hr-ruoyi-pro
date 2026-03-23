@@ -320,6 +320,31 @@ describe('AssetDisposalPage 来源上下文接入', () => {
     expect(afterCalls).toBeGreaterThan(beforeCalls)
   })
 
+  it('来源入口卡会随当前视图切换而更新办理说明和锁定范围', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('处置记录')
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-entry-primary-action"]').text()).toContain('查看处置记录')
+
+    await wrapper.get('[data-testid="disposal-entry-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('待处置资产池')
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('待处置资产池办理')
+    expect(wrapper.get('[data-testid="disposal-entry-primary-action"]').text()).toContain('进入待处置资产池')
+  })
+
   it('无来源参数时不展示来源横幅和返回入口', async () => {
     routeState.query = {
       tab: 'record',

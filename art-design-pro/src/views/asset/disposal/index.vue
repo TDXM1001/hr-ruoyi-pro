@@ -14,7 +14,7 @@
 
     <DisposalEntryCard
       v-if="sourceContext.hasSource"
-      :context="sourceContext"
+      :context="entryContext"
       @back="handleBackToRealEstate"
       @primary-action="handleEntryPrimaryAction"
       @secondary-action="handleEntrySecondaryAction"
@@ -292,7 +292,7 @@
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElButton, ElMessage, ElTag } from 'element-plus'
-  import { nextTick } from 'vue'
+  import { computed, nextTick } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { listAssetLedger } from '@/api/asset/ledger'
   import {
@@ -304,7 +304,7 @@
   } from '@/api/asset/disposal'
   import DictTag from '@/components/DictTag/index.vue'
   import DisposalEntryCard from './components/disposal-entry-card.vue'
-  import { buildDisposalSourceContext } from './disposal-source-context'
+  import { buildDisposalActiveViewContext, buildDisposalSourceContext } from './disposal-source-context'
   import { useDict } from '@/utils/dict'
   import { useTable } from '@/hooks/core/useTable'
   import { useUserStore } from '@/store/modules/user'
@@ -364,6 +364,7 @@
 
   // 中文注释：显式 tab 优先；如果没有显式 tab，则按来源意图选择首屏落点。
   const activeTab = ref<'pool' | 'record'>(sourceContext.preferredTab)
+  const entryContext = computed(() => buildDisposalActiveViewContext(sourceContext, activeTab.value))
 
   const disposalTypeOptions = [
     { label: '报废', value: 'SCRAP', listClass: 'warning' },
@@ -821,9 +822,9 @@
   }
 
   const handleEntryPrimaryAction = async () => {
-    activeTab.value = sourceContext.preferredTab
+    activeTab.value = entryContext.value.preferredTab
     await nextTick()
-    if (sourceContext.preferredTab === 'record') {
+    if (entryContext.value.preferredTab === 'record') {
       await refreshRecordData()
       return
     }

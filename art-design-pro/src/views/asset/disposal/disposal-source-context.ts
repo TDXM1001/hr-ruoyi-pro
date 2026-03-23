@@ -147,3 +147,57 @@ export function buildDisposalSourceContext(query: Record<string, unknown>): Disp
       : undefined
   }
 }
+
+export function buildDisposalActiveViewContext(
+  context: DisposalSourceContext,
+  activeTab: 'pool' | 'record'
+): DisposalSourceContext {
+  const preferredTabLabel = activeTab === 'record' ? '处置记录' : '待处置资产池'
+  const scopeDescription =
+    activeTab === 'record'
+      ? `当前已按资产 ${context.assetCode || '-'} 锁定处置记录视图。`
+      : `当前已按资产 ${context.assetCode || '-'} 锁定待处置资产池视图。`
+
+  const entryDescription =
+    activeTab === 'record'
+      ? '当前更适合先回看该资产的处置记录、审批结果和责任归口。'
+      : '当前更适合继续进入待处置资产池，确认该资产的处置办理入口。'
+
+  const nextStepSuggestion =
+    activeTab === 'record'
+      ? '先核对该资产的处置记录、审批轨迹和责任归口，再决定是否继续办理。'
+      : '先确认该资产是否在待处置资产池中，再继续发起处置或补齐处置资料。'
+
+  const workflowLabel = activeTab === 'record' ? '处置记录回看' : '待处置资产池办理'
+  const workflowDescription =
+    activeTab === 'record'
+      ? '当前更适合回看该资产的处置记录、审批状态和责任归口，再决定是否继续办理。'
+      : '当前更适合在待处置资产池中确认该资产并继续办理处置流程。'
+
+  const primaryActionLabel = activeTab === 'record' ? '查看处置记录' : '进入待处置资产池'
+  const primaryActionDescription =
+    activeTab === 'record'
+      ? '继续核对该资产的处置记录、审批进展和责任归口。'
+      : '继续进入待处置资产池，发起或补齐该资产的处置流程。'
+
+  const secondaryActionLabel = activeTab === 'record' ? '去待处置资产池' : '查看处置记录'
+  const secondaryActionDescription =
+    activeTab === 'record'
+      ? '如需继续推进该资产处置，可切到待处置资产池继续办理。'
+      : '如需回看审批和确认结果，可切到处置记录查看进展。'
+
+  return {
+    ...context,
+    preferredTab: activeTab,
+    preferredTabLabel,
+    scopeDescription,
+    entryDescription,
+    nextStepSuggestion,
+    workflowLabel,
+    workflowDescription,
+    primaryActionLabel,
+    primaryActionDescription,
+    secondaryActionLabel,
+    secondaryActionDescription
+  }
+}
