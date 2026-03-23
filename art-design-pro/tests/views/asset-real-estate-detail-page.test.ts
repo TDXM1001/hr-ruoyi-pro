@@ -246,6 +246,229 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('occupancy')
   })
 
+  it('总览展示整改闭环摘要和最近整改动作', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [
+          {
+            rectificationId: 9101,
+            rectificationNo: 'RC-2026-0010',
+            assetId: 20001,
+            taskId: 11,
+            taskNo: 'INV-2026-0010',
+            taskName: '门禁巡检',
+            issueType: '损坏',
+            issueDesc: '门禁控制器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'PENDING',
+            deadlineDate: '2026-03-25'
+          },
+          {
+            rectificationId: 9102,
+            rectificationNo: 'RC-2026-0011',
+            assetId: 20001,
+            taskId: 12,
+            taskNo: 'INV-2026-0011',
+            taskName: '消防巡检',
+            issueType: '损坏',
+            issueDesc: '消防闭门器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'UNSUBMITTED',
+            completedTime: '2026-03-21 09:30:00'
+          },
+          {
+            rectificationId: 9103,
+            rectificationNo: 'RC-2026-0012',
+            assetId: 20001,
+            taskId: 13,
+            taskNo: 'INV-2026-0012',
+            taskName: '设备巡检',
+            issueType: '缺失',
+            issueDesc: '监控补光灯缺失',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'SUBMITTED',
+            approvalSubmittedTime: '2026-03-21 10:30:00'
+          },
+          {
+            rectificationId: 9104,
+            rectificationNo: 'RC-2026-0013',
+            assetId: 20001,
+            taskId: 14,
+            taskNo: 'INV-2026-0013',
+            taskName: '门厅巡检',
+            issueType: '损坏',
+            issueDesc: '门厅玻璃门闭合异常',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'REJECTED',
+            approvalFinishedTime: '2026-03-21 13:00:00',
+            latestApprovalOpinion: '请补充现场照片后重新提交审批'
+          },
+          {
+            rectificationId: 9105,
+            rectificationNo: 'RC-2026-0014',
+            assetId: 20001,
+            taskId: 15,
+            taskNo: 'INV-2026-0014',
+            taskName: '照明巡检',
+            issueType: '损坏',
+            issueDesc: '楼道照明恢复',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'APPROVED',
+            approvalFinishedTime: '2026-03-21 14:00:00'
+          }
+        ],
+        disposalRecords: [],
+        changeLogs: [
+          {
+            logId: 210,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '发起整改单：RC-2026-0010，问题类型：损坏',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 08:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 211,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '完成整改单：RC-2026-0011，完成说明：已完成闭门器维修',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 09:30:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 212,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '提交整改审批：RC-2026-0012，意见：整改已完成，请审批',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 10:30:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 213,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '审批驳回：RC-2026-0013，意见：请补充现场照片后重新提交审批',
+            operateBy: 'auditor',
+            operateTime: '2026-03-21 13:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          }
+        ]
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('整改闭环摘要')
+    expect(wrapper.get('[data-testid="overview-rectification-count-pending-rectification"]').text()).toContain(
+      '1'
+    )
+    expect(wrapper.get('[data-testid="overview-rectification-count-pending-submit"]').text()).toContain(
+      '1'
+    )
+    expect(wrapper.get('[data-testid="overview-rectification-count-in-review"]').text()).toContain(
+      '1'
+    )
+    expect(wrapper.get('[data-testid="overview-rectification-count-rejected-resubmit"]').text()).toContain(
+      '1'
+    )
+    expect(wrapper.get('[data-testid="overview-rectification-count-approved-closed"]').text()).toContain(
+      '1'
+    )
+    expect(wrapper.text()).toContain('整改闭环')
+    expect(wrapper.text()).toContain('审批驳回待重提')
+    expect(wrapper.text()).toContain('最近整改动作')
+    expect(wrapper.text()).toContain('审批驳回')
+    expect(wrapper.text()).toContain('请补充现场照片后重新提交审批')
+  })
+
+  it('总览生命周期轨迹对整改节点展示阶段标签', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [],
+        disposalRecords: [],
+        changeLogs: [
+          {
+            logId: 301,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '发起整改单：RC-2026-0020，问题类型：损坏',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 08:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 302,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '完成整改单：RC-2026-0020，完成说明：门禁检修已完成',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 09:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 303,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '提交整改审批：RC-2026-0020，意见：请审批',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 10:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          },
+          {
+            logId: 304,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '审批通过：RC-2026-0020，意见：同意闭环',
+            operateBy: 'auditor',
+            operateTime: '2026-03-21 11:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          }
+        ]
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="overview-rectification-event-301"]').text()).toContain('发起整改')
+    expect(wrapper.get('[data-testid="overview-rectification-event-302"]').text()).toContain('完成整改')
+    expect(wrapper.get('[data-testid="overview-rectification-event-303"]').text()).toContain('提交审批')
+    expect(wrapper.get('[data-testid="overview-rectification-event-304"]').text()).toContain('审批通过')
+    expect(wrapper.text()).toContain('整改已完成，下一步需要关注审批是否推进')
+    expect(wrapper.text()).toContain('整改审批已通过，可归档回看')
+  })
+
   it('占用页签支持打开变更占用抽屉', async () => {
     const wrapper = mount(AssetRealEstateDetailPage, {
       global: {

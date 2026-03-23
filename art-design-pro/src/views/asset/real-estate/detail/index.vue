@@ -61,7 +61,8 @@
       <OverviewPanel
         v-if="activeTab === 'overview'"
         :detail-data="detailData"
-        :change-logs="changeLogs"
+        :change-logs="overviewChangeLogs"
+        :rectification-summary="rectificationOverviewSummary"
         :get-status-label="getStatusLabel"
         :get-source-type-label="getSourceTypeLabel"
         :get-acquire-type-label="getAcquireTypeLabel"
@@ -340,6 +341,10 @@
   import OverviewPanel from './components/overview-panel.vue'
   import RectificationPanel from './components/rectification-panel.vue'
   import {
+    buildRectificationOverviewSummary,
+    decorateOverviewLifecycleRecords
+  } from './components/rectification-overview'
+  import {
     clearRealEstateReturnSource,
     clearRealEstateReturnTab,
     type RealEstateDetailTabName,
@@ -464,7 +469,8 @@
       { label: '资产编码', value: detailData.assetCode || '-' },
       { label: '资产状态', value: getStatusLabel(detailData.assetStatus) },
       { label: '权属部门', value: detailData.ownerDeptName || '-' },
-      { label: '最近巡检', value: detailData.lastInventoryDate || '-' }
+      { label: '最近巡检', value: detailData.lastInventoryDate || '-' },
+      { label: '整改闭环', value: rectificationOverviewSummary.value.overallLabel }
     ]
   })
 
@@ -472,6 +478,9 @@
   const inspectionRecords = computed(() => lifecycleData.inventoryRecords)
   const disposalRecords = computed(() => lifecycleData.disposalRecords)
   const changeLogs = computed(() => lifecycleData.changeLogs)
+  const overviewChangeLogs = computed(() => {
+    return decorateOverviewLifecycleRecords(changeLogs.value)
+  })
 
   const occupancyDrawerTitle = computed(() => {
     const mapper = {
@@ -537,9 +546,14 @@
   })
 
   const rectificationLogs = computed(() => {
-    return lifecycleData.changeLogs.filter((record) =>
-      String(record.changeDesc || '').includes('整改')
-    )
+    return lifecycleData.changeLogs.filter((record) => {
+      const desc = String(record.changeDesc || '')
+      return desc.includes('整改') || desc.includes('审批')
+    })
+  })
+
+  const rectificationOverviewSummary = computed(() => {
+    return buildRectificationOverviewSummary(rectificationRecords.value, overviewChangeLogs.value)
   })
 
   const findLinkedRectification = (record: AssetInventoryRecord) => {
@@ -1192,7 +1206,7 @@
 
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
   }
 
