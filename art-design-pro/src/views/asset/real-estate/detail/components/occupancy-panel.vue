@@ -1706,10 +1706,13 @@
 <script setup lang="ts">
   import type { AssetRealEstateOccupancyRecord } from '@/api/asset/real-estate'
   import { ElMessageBox } from 'element-plus'
+  import { toRef } from 'vue'
   import OccupancyBusinessSection from './occupancy/OccupancyBusinessSection.vue'
   import OccupancyGovernanceSection from './occupancy/OccupancyGovernanceSection.vue'
   import OccupancyHistorySection from './occupancy/OccupancyHistorySection.vue'
   import OccupancySummarySection from './occupancy/OccupancySummarySection.vue'
+  import { getRecordKey, getStatusLabel } from './occupancy/occupancyShared'
+  import { useOccupancyState } from './occupancy/useOccupancyState'
 
   type TimeFilter = 'ALL' | '7D' | '30D' | '90D' | 'CUSTOM'
   type SortDirection = 'DESC' | 'ASC'
@@ -1905,12 +1908,51 @@
     'switch-tab': [tab: LinkedTabName]
   }>()
 
-  const historyListRef = ref<HTMLElement>()
-  const statusFilter = ref<StatusFilter>('ALL')
-  const timeFilter = ref<TimeFilter>('ALL')
-  const sortDirection = ref<SortDirection>('DESC')
-  const groupViewMode = ref<GroupViewMode>('LIST')
-  const annotationTemplate = ref<AnnotationTemplateKey>('standard')
+  const detailDataRef = toRef(props, 'detailData')
+  const occupancyRecordsRef = toRef(props, 'occupancyRecords')
+  const {
+    historyListRef,
+    statusFilter,
+    timeFilter,
+    sortDirection,
+    groupViewMode,
+    annotationTemplate,
+    focusedRecordKey,
+    keyword,
+    customRangeDraft,
+    customRangeApplied,
+    sortedRecords,
+    activeRecord,
+    latestReleasedRecord,
+    isLedgerSynced,
+    ledgerSyncTagType,
+    ledgerSyncCompareItems,
+    lastChangeCompareItems,
+    matrixRules,
+    filteredRecords,
+    recordGroups,
+    annotationPreviewRecord,
+    buildFilterState,
+    applyFilterState,
+    resetFocusedRecord,
+    resetTimeFilters,
+    clearCustomRange,
+    setQuickTimeFilter,
+    applyCustomRange,
+    focusActiveHistory,
+    focusLatestReleasedHistory,
+    focusReleasedHistory,
+    applyLinkedFilter,
+    setRecordRef,
+    buildAnnotationStatusNote,
+    buildAnnotationChangeNote,
+    buildAnnotationReleaseNote,
+    buildAnnotationPreviewItems
+  } = useOccupancyState({
+    detailData: detailDataRef,
+    occupancyRecords: occupancyRecordsRef
+  })
+
   const exportConfigOpen = ref(false)
   const governanceOpen = ref(false)
   const presetNameEditOpen = ref(false)
@@ -1931,9 +1973,6 @@
   const governanceActivityFilter = ref<'ALL' | GovernanceActivityType>('ALL')
   const governanceActivityKeyword = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
-  const focusedRecordKey = ref('')
-  const filtersReady = ref(false)
-  const keyword = ref('')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
   const presetImportPreviewItems = ref<PresetImportPreviewItem[]>([])
   const presetImportInvalidItems = ref<PresetImportInvalidItem[]>([])
@@ -1960,20 +1999,7 @@
     lastTargetLabel: '',
     events: []
   })
-  const customRangeDraft = reactive({
-    start: '',
-    end: ''
-  })
-  const customRangeApplied = reactive({
-    start: '',
-    end: ''
-  })
 
-  const compareFieldLabels: Record<CompareFieldKey, string> = {
-    useDeptName: '使用部门',
-    responsibleUserName: '责任人',
-    locationName: '使用位置'
-  }
   const exportFieldOptions: ExportFieldOption[] = [
     { key: 'occupancyNo', label: '占用单号' },
     { key: 'occupancyStatus', label: '占用状态' },
@@ -2033,23 +2059,8 @@
     { key: 'COUNTS', label: '只重置来源' },
     { key: 'ALL', label: '全部重置' }
   ]
-  const recordRefs = new Map<string, HTMLElement>()
   const selectedExportFields = ref<ExportFieldKey[]>([...defaultExportFieldKeys])
-  const defaultFilterState: OccupancyFilterState = {
-    statusFilter: 'ALL',
-    timeFilter: 'ALL',
-    sortDirection: 'DESC',
-    keyword: '',
-    customRangeDraftStart: '',
-    customRangeDraftEnd: '',
-    customRangeAppliedStart: '',
-    customRangeAppliedEnd: ''
-  }
 
-  const storageKey = computed(() => {
-    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
-    return assetKey ? `asset-real-estate-occupancy-filters:${assetKey}` : ''
-  })
   const exportFieldsStorageKey = 'asset-real-estate-occupancy-export-fields'
   const exportPresetNameStorageKey = 'asset-real-estate-occupancy-export-preset-names'
   const customPresetStorageKey = 'asset-real-estate-occupancy-export-custom-presets'
@@ -2089,10 +2100,6 @@
       source: 'system'
     }))
     return [...systemPresets, ...customExportPresets.value]
-  })
-
-  const annotationPreviewRecord = computed(() => {
-    return activeRecord.value || sortedRecords.value[0]
   })
 
   const annotationTemplateLabel = computed(() => {
@@ -2457,19 +2464,6 @@
     return `${dateKey} ${hours}:${minutes}:${seconds}`
   }
 
-  const resolveTimelineDate = (record: AssetRealEstateOccupancyRecord) => {
-    return parseDateValue(record.endDate || record.startDate)
-  }
-
-  const getDisplayValue = (value?: string) => {
-    const text = String(value || '').trim()
-    return text || '-'
-  }
-
-  const getRecordKey = (record: AssetRealEstateOccupancyRecord) => {
-    return String(record.occupancyId || record.occupancyNo || record.startDate || 'unknown')
-  }
-
   const getExportPresetTestId = (preset: ExportPresetViewOption, presetIndex: number) => {
     if (preset.source === 'custom') {
       return `occupancy-export-preset-custom-${presetIndex - exportPresetOptions.length}`
@@ -2482,305 +2476,6 @@
       return `occupancy-preset-copy-source-custom-${presetIndex - exportPresetOptions.length}`
     }
     return `occupancy-preset-copy-source-${preset.key}`
-  }
-
-  const setRecordRef = (record: AssetRealEstateOccupancyRecord, element: Element | null) => {
-    const key = getRecordKey(record)
-    if (element instanceof HTMLElement) {
-      recordRefs.set(key, element)
-      return
-    }
-    recordRefs.delete(key)
-  }
-
-  const buildCompareItems = (
-    baseSource: Record<string, any>,
-    compareSource: Record<string, any>
-  ) => {
-    return (Object.keys(compareFieldLabels) as CompareFieldKey[]).map((key) => {
-      const baseValue = getDisplayValue(baseSource?.[key])
-      const compareValue = getDisplayValue(compareSource?.[key])
-      return {
-        key,
-        label: compareFieldLabels[key],
-        baseValue,
-        compareValue,
-        changed: baseValue !== compareValue
-      }
-    })
-  }
-
-  const sortedRecords = computed(() => {
-    return [...props.occupancyRecords].sort((left, right) => {
-      const rightTime = resolveTimelineDate(right)?.getTime() || 0
-      const leftTime = resolveTimelineDate(left)?.getTime() || 0
-      return rightTime - leftTime
-    })
-  })
-
-  const activeRecord = computed(() => {
-    return sortedRecords.value.find(
-      (record) => String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
-    )
-  })
-
-  const latestReleasedRecord = computed(() => {
-    return sortedRecords.value.find(
-      (record) => String(record.occupancyStatus || '').toUpperCase() === 'RELEASED'
-    )
-  })
-
-  const isLedgerSynced = computed(() => {
-    if (!activeRecord.value) {
-      return false
-    }
-    return (
-      String(props.detailData.useDeptName || '') === String(activeRecord.value.useDeptName || '') &&
-      String(props.detailData.responsibleUserName || '') ===
-        String(activeRecord.value.responsibleUserName || '') &&
-      String(props.detailData.locationName || '') === String(activeRecord.value.locationName || '')
-    )
-  })
-
-  const ledgerSyncTagType = computed(() => {
-    return isLedgerSynced.value ? 'success' : 'warning'
-  })
-
-  const ledgerSyncCompareItems = computed(() => {
-    if (!activeRecord.value) {
-      return []
-    }
-    return buildCompareItems(props.detailData || {}, activeRecord.value)
-  })
-
-  const lastChangeCompareItems = computed(() => {
-    if (!activeRecord.value || !latestReleasedRecord.value) {
-      return []
-    }
-    return buildCompareItems(latestReleasedRecord.value, activeRecord.value)
-  })
-
-  const matrixRules = computed(() => {
-    return [
-      {
-        key: 'empty',
-        title: '无有效占用',
-        tagLabel: activeRecord.value ? '待切换' : '当前状态',
-        tagType: activeRecord.value ? 'info' : 'primary',
-        desc: '当前资产没有有效占用关系，需要先登记归口、责任人与位置。',
-        actions: '发起占用',
-        highlight: !activeRecord.value,
-        shortcuts: [
-          {
-            key: 'all',
-            label: '查看全部轨迹',
-            status: 'ALL' as StatusFilter,
-            testId: 'occupancy-shortcut-all'
-          }
-        ]
-      },
-      {
-        key: 'active',
-        title: '存在有效占用',
-        tagLabel: activeRecord.value ? '当前状态' : '待触发',
-        tagType: activeRecord.value ? 'success' : 'info',
-        desc: '当前资产存在一条有效占用单，后续变更与释放都从当前有效单继续。',
-        actions: '变更占用、释放占用',
-        highlight: !!activeRecord.value,
-        shortcuts: [
-          {
-            key: 'active',
-            label: '只看有效占用',
-            status: 'ACTIVE' as StatusFilter,
-            testId: 'occupancy-shortcut-active'
-          }
-        ]
-      },
-      {
-        key: 'released',
-        title: '已释放历史',
-        tagLabel: '历史状态',
-        tagType: 'warning',
-        desc: '已释放记录只保留轨迹，不允许直接对历史单再次执行变更或释放。',
-        actions: '查看轨迹',
-        highlight: false,
-        shortcuts: [
-          {
-            key: 'released',
-            label: '只看已释放',
-            status: 'RELEASED' as StatusFilter,
-            testId: 'occupancy-shortcut-released'
-          }
-        ]
-      }
-    ]
-  })
-
-  const recordGroups = computed(() => {
-    if (groupViewMode.value === 'LIST') {
-      return [
-        {
-          key: 'ALL',
-          title: '全部轨迹',
-          records: filteredRecords.value
-        }
-      ]
-    }
-
-    return [
-      {
-        key: 'ACTIVE',
-        title: '有效占用',
-        records: filteredRecords.value.filter(
-          (record) => String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
-        )
-      },
-      {
-        key: 'RELEASED',
-        title: '已释放',
-        records: filteredRecords.value.filter(
-          (record) => String(record.occupancyStatus || '').toUpperCase() === 'RELEASED'
-        )
-      }
-    ].filter((group) => group.records.length)
-  })
-
-  const filteredRecords = computed(() => {
-    const normalizedKeyword = keyword.value.trim().toLowerCase()
-
-    const matchedRecords = sortedRecords.value.filter((record) => {
-      const matchesStatus =
-        statusFilter.value === 'ALL' ||
-        String(record.occupancyStatus || '').toUpperCase() === statusFilter.value
-
-      if (!matchesStatus) {
-        return false
-      }
-
-      if (timeFilter.value !== 'ALL') {
-        const recordDate = resolveTimelineDate(record)
-        if (!recordDate) {
-          return false
-        }
-        if (timeFilter.value === 'CUSTOM') {
-          const start = parseDateValue(customRangeApplied.start)
-          const end = parseDateValue(customRangeApplied.end)
-          if (start && recordDate < start) {
-            return false
-          }
-          if (end) {
-            const inclusiveEnd = new Date(end)
-            inclusiveEnd.setHours(23, 59, 59, 999)
-            if (recordDate > inclusiveEnd) {
-              return false
-            }
-          }
-        } else {
-          const now = new Date()
-          const diffDays = (now.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24)
-          const limitDays = {
-            '7D': 7,
-            '30D': 30,
-            '90D': 90
-          }[timeFilter.value]
-
-          if (typeof limitDays === 'number' && diffDays > limitDays) {
-            return false
-          }
-        }
-      }
-
-      if (!normalizedKeyword) {
-        return true
-      }
-
-      const searchableText = [
-        record.occupancyNo,
-        record.useDeptName,
-        record.responsibleUserName,
-        record.locationName,
-        record.changeReason,
-        record.releaseReason
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      return searchableText.includes(normalizedKeyword)
-    })
-
-    return matchedRecords.sort((left, right) => {
-      const leftTime = resolveTimelineDate(left)?.getTime() || 0
-      const rightTime = resolveTimelineDate(right)?.getTime() || 0
-      return sortDirection.value === 'ASC' ? leftTime - rightTime : rightTime - leftTime
-    })
-  })
-
-  const getStatusLabel = (status?: string) => {
-    const mapper: Record<string, string> = {
-      ACTIVE: '有效占用',
-      RELEASED: '已释放'
-    }
-    return mapper[String(status || '').toUpperCase()] || status || '-'
-  }
-
-  const buildAnnotationStatusNote = (
-    record: AssetRealEstateOccupancyRecord,
-    templateKey: AnnotationTemplateKey = annotationTemplate.value
-  ) => {
-    const isActive = String(record.occupancyStatus || '').toUpperCase() === 'ACTIVE'
-    if (templateKey === 'manager') {
-      return isActive
-        ? '管理视角：当前占用仍在持续，请优先核对责任归属和主档同步状态。'
-        : '管理视角：该条轨迹已经释放，可作为本次占用结束与重新分配的依据。'
-    }
-    if (templateKey === 'audit') {
-      return isActive
-        ? '审计视角：当前轨迹仍为有效占用，应作为最近一次占用依据。'
-        : '审计视角：该轨迹已释放，应作为历史留痕和释放凭据记录。'
-    }
-    return isActive
-      ? '该轨迹仍是当前有效占用，主档应以这条占用记录为准。'
-      : '该轨迹已经释放，仅保留为历史留痕，不再承接变更或释放动作。'
-  }
-
-  const buildAnnotationChangeNote = (
-    record: AssetRealEstateOccupancyRecord,
-    templateKey: AnnotationTemplateKey = annotationTemplate.value
-  ) => {
-    const reason = record.changeReason || '-'
-    if (templateKey === 'manager') {
-      return `管理视角：占用依据 ${reason}`
-    }
-    if (templateKey === 'audit') {
-      return `审计视角：占用凭据 ${reason}`
-    }
-    return reason
-  }
-
-  const buildAnnotationReleaseNote = (
-    record: AssetRealEstateOccupancyRecord,
-    templateKey: AnnotationTemplateKey = annotationTemplate.value
-  ) => {
-    const reason = record.releaseReason || '-'
-    if (templateKey === 'manager') {
-      return `管理视角：释放结论 ${reason}`
-    }
-    if (templateKey === 'audit') {
-      return `审计视角：释放凭据 ${reason}`
-    }
-    return reason
-  }
-
-  const buildAnnotationPreviewItems = (record?: AssetRealEstateOccupancyRecord) => {
-    if (!record) {
-      return []
-    }
-    return [
-      { label: '状态说明样例', value: buildAnnotationStatusNote(record) },
-      { label: '占用批注样例', value: buildAnnotationChangeNote(record) },
-      { label: '释放批注样例', value: buildAnnotationReleaseNote(record) }
-    ]
   }
 
   const persistLinkStats = () => {
@@ -3146,140 +2841,6 @@
       summaryMap[linkStatsResetScope.value],
       new Date().toISOString()
     )
-  }
-
-  const focusReleasedHistory = () => {
-    statusFilter.value = 'RELEASED'
-    resetTimeFilters()
-    keyword.value = ''
-    nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
-  }
-
-  const resetTimeFilters = () => {
-    customRangeDraft.start = ''
-    customRangeDraft.end = ''
-    customRangeApplied.start = ''
-    customRangeApplied.end = ''
-    timeFilter.value = 'ALL'
-  }
-
-  const clearCustomRange = () => {
-    resetTimeFilters()
-  }
-
-  const setQuickTimeFilter = (filter: Exclude<TimeFilter, 'CUSTOM'>) => {
-    timeFilter.value = filter
-    customRangeApplied.start = ''
-    customRangeApplied.end = ''
-  }
-
-  const applyCustomRange = () => {
-    if (!customRangeDraft.start || !customRangeDraft.end) {
-      return
-    }
-
-    const start = parseDateValue(customRangeDraft.start)
-    const end = parseDateValue(customRangeDraft.end)
-    if (!start || !end) {
-      return
-    }
-
-    if (start.getTime() <= end.getTime()) {
-      customRangeApplied.start = customRangeDraft.start
-      customRangeApplied.end = customRangeDraft.end
-    } else {
-      customRangeApplied.start = customRangeDraft.end
-      customRangeApplied.end = customRangeDraft.start
-    }
-    timeFilter.value = 'CUSTOM'
-  }
-
-  const resetFocusedRecord = () => {
-    focusedRecordKey.value = ''
-  }
-
-  const focusRecord = async (record: AssetRealEstateOccupancyRecord | undefined, filter: StatusFilter) => {
-    if (!record) {
-      return
-    }
-
-    statusFilter.value = filter
-    sortDirection.value = 'DESC'
-    keyword.value = ''
-    resetTimeFilters()
-    focusedRecordKey.value = getRecordKey(record)
-    await nextTick()
-    await nextTick()
-    recordRefs.get(focusedRecordKey.value)?.scrollIntoView?.({
-      behavior: 'smooth',
-      block: 'center'
-    })
-  }
-
-  const focusActiveHistory = () => focusRecord(activeRecord.value, 'ACTIVE')
-  const focusLatestReleasedHistory = () => focusRecord(latestReleasedRecord.value, 'RELEASED')
-
-  const applyLinkedFilter = (status: StatusFilter) => {
-    statusFilter.value = status
-    sortDirection.value = 'DESC'
-    keyword.value = ''
-    resetTimeFilters()
-    resetFocusedRecord()
-    nextTick(() => historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }))
-  }
-
-  const buildPersistedState = (): OccupancyFilterState => {
-    return {
-      statusFilter: statusFilter.value,
-      timeFilter: timeFilter.value,
-      sortDirection: sortDirection.value,
-      keyword: keyword.value,
-      customRangeDraftStart: customRangeDraft.start,
-      customRangeDraftEnd: customRangeDraft.end,
-      customRangeAppliedStart: customRangeApplied.start,
-      customRangeAppliedEnd: customRangeApplied.end
-    }
-  }
-
-  const applyFilterState = (state: Partial<OccupancyFilterState>) => {
-    statusFilter.value = ['ALL', 'ACTIVE', 'RELEASED'].includes(String(state.statusFilter))
-      ? (state.statusFilter as StatusFilter)
-      : defaultFilterState.statusFilter
-    timeFilter.value = ['ALL', '7D', '30D', '90D', 'CUSTOM'].includes(String(state.timeFilter))
-      ? (state.timeFilter as TimeFilter)
-      : defaultFilterState.timeFilter
-    sortDirection.value = ['DESC', 'ASC'].includes(String(state.sortDirection))
-      ? (state.sortDirection as SortDirection)
-      : defaultFilterState.sortDirection
-    keyword.value = String(state.keyword || '')
-    customRangeDraft.start = String(state.customRangeDraftStart || '')
-    customRangeDraft.end = String(state.customRangeDraftEnd || '')
-    customRangeApplied.start = String(state.customRangeAppliedStart || '')
-    customRangeApplied.end = String(state.customRangeAppliedEnd || '')
-  }
-
-  const restorePersistedFilters = () => {
-    filtersReady.value = false
-    resetFocusedRecord()
-    applyFilterState(defaultFilterState)
-
-    if (!storageKey.value) {
-      filtersReady.value = true
-      return
-    }
-
-    const raw = window.localStorage.getItem(storageKey.value)
-    if (!raw) {
-      filtersReady.value = true
-      return
-    }
-
-    try {
-      applyFilterState(JSON.parse(raw) as Partial<OccupancyFilterState>)
-    } catch {
-      window.localStorage.removeItem(storageKey.value)
-    }
-    filtersReady.value = true
   }
 
   const restoreExportFields = () => {
@@ -4463,9 +4024,10 @@
       return
     }
 
-    const header = ['占用单号', '轨迹状态', '状态说明', '占用批注', '释放批注']
+    const header = ['模板视角', '占用单号', '轨迹状态', '状态说明', '占用批注', '释放批注']
     const rows = filteredRecords.value.map((record) => {
       return [
+        annotationTemplateLabel.value,
         record.occupancyNo || '',
         getStatusLabel(record.occupancyStatus),
         buildAnnotationStatusNote(record),
@@ -4486,10 +4048,6 @@
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
-
-  watch(storageKey, () => {
-    restorePersistedFilters()
-  }, { immediate: true })
 
   watch(
     annotationTemplate,
@@ -4578,25 +4136,6 @@
     restoreGovernanceActivities()
     restoreGovernanceExportMeta()
   })
-
-  watch(
-    () => [
-      statusFilter.value,
-      timeFilter.value,
-      sortDirection.value,
-      keyword.value,
-      customRangeDraft.start,
-      customRangeDraft.end,
-      customRangeApplied.start,
-      customRangeApplied.end
-    ],
-    () => {
-      if (!filtersReady.value || !storageKey.value) {
-        return
-      }
-      window.localStorage.setItem(storageKey.value, JSON.stringify(buildPersistedState()))
-    }
-  )
 
   watch(
     selectedExportFields,
