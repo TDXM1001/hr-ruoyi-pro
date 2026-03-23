@@ -2,6 +2,7 @@ import App from './App.vue'
 import { createApp } from 'vue'
 import { initStore } from './store'                 // Store
 import { initRouter } from './router'               // Router
+import { mountAppAfterRouterReady } from './bootstrap/mountAppAfterRouterReady'
 import language from './locales'                    // 国际化
 import '@styles/core/tailwind.css'                  // tailwind
 import '@styles/index.scss'                         // 样式
@@ -20,7 +21,7 @@ document.addEventListener(
 
 const app = createApp(App)
 initStore(app)
-initRouter(app)
+const appRouter = initRouter(app)
 setupGlobDirectives(app)
 setupErrorHandle(app)
 
@@ -32,4 +33,4 @@ app.directive('hasPermi', hasPermi)
 app.directive('hasRole', hasRole)
 
 app.use(language)
-app.mount('#app')
+void mountAppAfterRouterReady(app, appRouter)
