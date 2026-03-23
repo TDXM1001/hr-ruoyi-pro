@@ -835,6 +835,7 @@ export const useOccupancyGovernance = ({
     linkTrendItems,
     emitTabSwitch,
     setLinkStatsWindow,
+    clearTrendDrilldown,
     toggleTrendDrilldown,
     saveTrendSnapshot,
     toggleGovernancePanel,
