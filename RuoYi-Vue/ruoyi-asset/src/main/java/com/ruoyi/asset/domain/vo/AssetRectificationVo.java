@@ -63,6 +63,13 @@ public class AssetRectificationVo extends BaseEntity
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date approvalFinishedTime;
 
+    private String latestApprovalOpinion;
+
+    private String latestApprovalOperateBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date latestApprovalOperateTime;
+
     public Long getRectificationId()
     {
         return rectificationId;
@@ -291,5 +298,35 @@ public class AssetRectificationVo extends BaseEntity
     public void setApprovalFinishedTime(Date approvalFinishedTime)
     {
         this.approvalFinishedTime = approvalFinishedTime;
+    }
+
+    public String getLatestApprovalOpinion()
+    {
+        return latestApprovalOpinion;
+    }
+
+    public void setLatestApprovalOpinion(String latestApprovalOpinion)
+    {
+        this.latestApprovalOpinion = latestApprovalOpinion;
+    }
+
+    public String getLatestApprovalOperateBy()
+    {
+        return latestApprovalOperateBy;
+    }
+
+    public void setLatestApprovalOperateBy(String latestApprovalOperateBy)
+    {
+        this.latestApprovalOperateBy = latestApprovalOperateBy;
+    }
+
+    public Date getLatestApprovalOperateTime()
+    {
+        return latestApprovalOperateTime;
+    }
+
+    public void setLatestApprovalOperateTime(Date latestApprovalOperateTime)
+    {
+        this.latestApprovalOperateTime = latestApprovalOperateTime;
     }
 }

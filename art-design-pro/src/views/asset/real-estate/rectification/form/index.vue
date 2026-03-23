@@ -162,7 +162,7 @@
 
           <div class="guide-panel">
             <div class="guide-panel__headline">
-              {{ isCompletedRectification ? '当前整改单已收口，页面只做回看。' : '先补齐责任与期限，再推进整改。' }}
+              {{ isCompletedRectification ? approvalStageMeta.nextStep : '先补齐责任与期限，再推进整改。' }}
             </div>
             <div class="guide-panel__line">整改登记页只维护基础信息，不在这里执行完成动作。</div>
             <div class="guide-panel__line">保存后会回到详情壳整改页签，便于继续处理其他记录。</div>
@@ -194,10 +194,13 @@
           </template>
 
           <ElDescriptions class="completion-descriptions" :column="1" border>
+            <ElDescriptionsItem label="闭环阶段">{{ approvalStageMeta.label }}</ElDescriptionsItem>
             <ElDescriptionsItem label="审批状态">{{ approvalStatusLabel }}</ElDescriptionsItem>
             <ElDescriptionsItem label="提交时间">{{ approvalInfo.submittedTime || '-' }}</ElDescriptionsItem>
             <ElDescriptionsItem label="审批完成">{{ approvalInfo.finishedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最近处理">{{ approvalInfo.latestOperateSnapshot || '-' }}</ElDescriptionsItem>
             <ElDescriptionsItem label="最新意见">{{ approvalInfo.latestOpinion || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="下一步建议">{{ approvalStageMeta.nextStep }}</ElDescriptionsItem>
           </ElDescriptions>
         </ElCard>
       </div>
@@ -216,6 +219,10 @@
     listRealEstateResponsibleUsers,
     updateRealEstateRectification
   } from '@/api/asset/real-estate'
+  import {
+    getApprovalStatusLabel,
+    getRectificationApprovalStageMeta
+  } from '../approval-stage'
   import { persistRealEstateDetailTab } from '../../detail/tab-state'
 
   defineOptions({ name: 'AssetRealEstateRectificationFormPage' })
@@ -250,7 +257,8 @@
     status: 'UNSUBMITTED',
     submittedTime: '',
     finishedTime: '',
-    latestOpinion: ''
+    latestOpinion: '',
+    latestOperateSnapshot: ''
   })
 
   // 中文注释：树选择器统一复用资产域的节点协议，避免不同页面对同一部门树结构解释不一致。
@@ -301,15 +309,13 @@
     }
     return mapper[String(formData.rectificationStatus || '').toUpperCase()] || formData.rectificationStatus || '-'
   })
-  const approvalStatusLabel = computed(() => {
-    const mapper: Record<string, string> = {
-      UNSUBMITTED: '待提交审批',
-      SUBMITTED: '审批中',
-      APPROVED: '审批通过',
-      REJECTED: '审批驳回'
-    }
-    return mapper[String(approvalInfo.status || '').toUpperCase()] || '待提交审批'
-  })
+  const approvalStatusLabel = computed(() => getApprovalStatusLabel(approvalInfo.status))
+  const approvalStageMeta = computed(() =>
+    getRectificationApprovalStageMeta({
+      rectificationStatus: formData.rectificationStatus,
+      approvalStatus: approvalInfo.status
+    })
+  )
 
   const rules: FormRules = {
     issueType: [{ required: true, message: '请输入问题类型', trigger: 'blur' }],
@@ -383,7 +389,8 @@
       status: 'UNSUBMITTED',
       submittedTime: '',
       finishedTime: '',
-      latestOpinion: ''
+      latestOpinion: '',
+      latestOperateSnapshot: ''
     })
 
     if (!createTaskId.value || Number.isNaN(createTaskId.value)) {
@@ -446,7 +453,11 @@
       status: detail.approvalStatus || 'UNSUBMITTED',
       submittedTime: detail.approvalSubmittedTime || '',
       finishedTime: detail.approvalFinishedTime || '',
-      latestOpinion: detail.latestApprovalOpinion || ''
+      latestOpinion: detail.latestApprovalOpinion || '',
+      latestOperateSnapshot:
+        detail.latestApprovalOperateBy || detail.latestApprovalOperateTime
+          ? `${detail.latestApprovalOperateBy || '-'} / ${detail.latestApprovalOperateTime || '-'}`
+          : ''
     })
 
     sourceResultDesc.value = detail.issueDesc || ''

@@ -32,6 +32,25 @@
         <div class="overview-text">
           整改页签面向资产管理员做持续跟踪。待整改项需要看责任归口、整改期限和完成入口；已完成项除了结果回看，还要确认审批挂载状态是否推进到位。
         </div>
+
+        <div class="approval-metrics">
+          <div class="approval-metric-chip">
+            <span>待提交审批</span>
+            <strong>{{ pendingApprovalCount }}</strong>
+          </div>
+          <div class="approval-metric-chip">
+            <span>审批中</span>
+            <strong>{{ inReviewCount }}</strong>
+          </div>
+          <div class="approval-metric-chip approval-metric-chip--danger">
+            <span>驳回待处理</span>
+            <strong>{{ rejectedCount }}</strong>
+          </div>
+          <div class="approval-metric-chip approval-metric-chip--success">
+            <span>审批通过</span>
+            <strong>{{ approvedCount }}</strong>
+          </div>
+        </div>
       </ElCard>
 
       <ElCard class="section-card" shadow="never">
@@ -162,6 +181,13 @@
 
                 <div class="approval-grid">
                   <div class="detail-card">
+                    <div class="detail-card__label">闭环阶段</div>
+                    <div class="detail-card__value">
+                      {{ getApprovalStageMeta(record).label }}
+                    </div>
+                  </div>
+
+                  <div class="detail-card">
                     <div class="detail-card__label">提交时间</div>
                     <div class="detail-card__value">{{ record.approvalSubmittedTime || '-' }}</div>
                   </div>
@@ -169,6 +195,27 @@
                   <div class="detail-card">
                     <div class="detail-card__label">审批完成</div>
                     <div class="detail-card__value">{{ record.approvalFinishedTime || '-' }}</div>
+                  </div>
+
+                  <div class="detail-card">
+                    <div class="detail-card__label">最近处理</div>
+                    <div class="detail-card__value">
+                      {{ formatApprovalActor(record) }}
+                    </div>
+                  </div>
+
+                  <div class="detail-card detail-card--wide">
+                    <div class="detail-card__label">最新审批意见</div>
+                    <div class="detail-card__value">
+                      {{ record.latestApprovalOpinion || '-' }}
+                    </div>
+                  </div>
+
+                  <div class="detail-card detail-card--wide">
+                    <div class="detail-card__label">下一步建议</div>
+                    <div class="detail-card__value">
+                      {{ getApprovalStageMeta(record).nextStep }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -269,6 +316,10 @@
 
 <script setup lang="ts">
   import type { AssetChangeLogRecord, AssetRectificationRecord } from '@/api/asset/ledger'
+  import {
+    getApprovalStatusLabel,
+    getRectificationApprovalStageMeta
+  } from '../../rectification/approval-stage'
 
   const props = defineProps<{
     rectificationRecords: AssetRectificationRecord[]
@@ -306,16 +357,6 @@
     return mapper[String(status || '').toUpperCase()] || 'info'
   }
 
-  const getApprovalStatusLabel = (status?: string) => {
-    const mapper: Record<string, string> = {
-      UNSUBMITTED: '待提交审批',
-      SUBMITTED: '审批中',
-      APPROVED: '审批通过',
-      REJECTED: '审批驳回'
-    }
-    return mapper[String(status || '').toUpperCase()] || '待提交审批'
-  }
-
   const getApprovalTagType = (status?: string) => {
     const mapper: Record<string, 'info' | 'warning' | 'success' | 'danger'> = {
       UNSUBMITTED: 'info',
@@ -337,6 +378,19 @@
 
   const canApproveOrReject = (record: AssetRectificationRecord) => {
     return String(record.approvalStatus || '').toUpperCase() === 'SUBMITTED'
+  }
+
+  const getApprovalStageMeta = (record: AssetRectificationRecord) => {
+    return getRectificationApprovalStageMeta(record)
+  }
+
+  const formatApprovalActor = (record: AssetRectificationRecord) => {
+    const operator = record.latestApprovalOperateBy || '-'
+    const operateTime = record.latestApprovalOperateTime || '-'
+    if (!record.latestApprovalOperateBy && !record.latestApprovalOperateTime) {
+      return '-'
+    }
+    return `${operator} / ${operateTime}`
   }
 
   const getPendingTone = (deadlineDate?: string) => {
@@ -368,6 +422,19 @@
     return props.rectificationRecords.filter((record) => {
       return !isCompletedRecord(record) && getPendingTone(record.deadlineDate).label === '已逾期'
     }).length
+  })
+  const completedRecords = computed(() => props.rectificationRecords.filter((record) => isCompletedRecord(record)))
+  const pendingApprovalCount = computed(() => {
+    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'PENDING_SUBMIT').length
+  })
+  const inReviewCount = computed(() => {
+    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'IN_REVIEW').length
+  })
+  const rejectedCount = computed(() => {
+    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'REJECTED_RESUBMIT').length
+  })
+  const approvedCount = computed(() => {
+    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'APPROVED_CLOSED').length
   })
 </script>
 
@@ -421,6 +488,42 @@
     font-size: 13px;
     line-height: 1.8;
     color: #51627f;
+  }
+
+  .approval-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0 16px 16px;
+  }
+
+  .approval-metric-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid #d8e3f1;
+    border-radius: 14px;
+    background: #f8fbff;
+    color: #5d6b86;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .approval-metric-chip strong {
+    font-size: 24px;
+    line-height: 1;
+    color: #18233a;
+  }
+
+  .approval-metric-chip--danger {
+    border-color: #fecaca;
+    background: #fff7f7;
+  }
+
+  .approval-metric-chip--success {
+    border-color: #bbf7d0;
+    background: #f3fff6;
   }
 
   .guide-panel {

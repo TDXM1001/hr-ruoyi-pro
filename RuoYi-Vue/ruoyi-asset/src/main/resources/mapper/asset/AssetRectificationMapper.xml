@@ -22,6 +22,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="approvalStatus" column="approval_status"/>
         <result property="approvalSubmittedTime" column="approval_submitted_time"/>
         <result property="approvalFinishedTime" column="approval_finished_time"/>
+        <result property="latestApprovalOpinion" column="latest_approval_opinion"/>
+        <result property="latestApprovalOperateBy" column="latest_approval_operate_by"/>
+        <result property="latestApprovalOperateTime" column="latest_approval_operate_time"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
@@ -84,6 +87,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                r.approval_status,
                r.approval_submitted_time,
                r.approval_finished_time,
+               latest_approval.opinion as latest_approval_opinion,
+               latest_approval.operate_by as latest_approval_operate_by,
+               latest_approval.operate_time as latest_approval_operate_time,
                r.create_by,
                r.create_time,
                r.update_by,
@@ -94,6 +100,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join ast_asset_inventory_task t on r.task_id = t.task_id
         left join sys_dept dept on r.responsible_dept_id = dept.dept_id
         left join sys_user u on r.responsible_user_id = u.user_id
+        left join ast_asset_rectification_approval_record latest_approval
+            on latest_approval.approval_record_id = (
+                select rr.approval_record_id
+                from ast_asset_rectification_approval_record rr
+                where rr.rectification_id = r.rectification_id
+                order by rr.operate_time desc, rr.approval_record_id desc
+                limit 1
+            )
     </sql>
 
     <select id="selectAssetRectificationListByAssetId" parameterType="Long" resultMap="AssetRectificationVoResult">

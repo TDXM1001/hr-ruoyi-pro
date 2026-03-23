@@ -164,7 +164,11 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
         deadlineDate: '2026-03-25',
         completedTime: '2026-03-21 14:49:04',
         completionDesc: '已完成现场复核并修正责任人信息。',
-        acceptanceRemark: '资产管理员复核通过。'
+        acceptanceRemark: '资产管理员复核通过。',
+        approvalStatus: 'REJECTED',
+        latestApprovalOpinion: '请补充整改前后对比照片后重新提交。',
+        latestApprovalOperateBy: '资产主管',
+        latestApprovalOperateTime: '2026-03-21 15:10:00'
       }
     } as any)
 
@@ -184,6 +188,9 @@ describe('AssetRealEstateRectificationFormPage 点测', () => {
     expect(wrapper.text()).toContain('已完成现场复核并修正责任人信息。')
     expect(wrapper.text()).toContain('验收备注')
     expect(wrapper.text()).toContain('资产管理员复核通过。')
+    expect(wrapper.text()).toContain('审批驳回待重提')
+    expect(wrapper.text()).toContain('请补充整改前后对比照片后重新提交。')
+    expect(wrapper.text()).toContain('资产主管 / 2026-03-21 15:10:00')
     expect(wrapper.text()).not.toContain('保存整改单')
 
     expect(wrapper.find('input[placeholder="请输入问题类型"]').attributes('readonly')).toBeDefined()

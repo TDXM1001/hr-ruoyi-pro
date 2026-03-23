@@ -130,10 +130,13 @@
           </template>
 
           <ElDescriptions class="context-descriptions" :column="1" border>
+            <ElDescriptionsItem label="闭环阶段">{{ approvalStageMeta.label }}</ElDescriptionsItem>
             <ElDescriptionsItem label="审批状态">{{ approvalStatusLabel }}</ElDescriptionsItem>
             <ElDescriptionsItem label="提交时间">{{ rectificationData.approvalSubmittedTime || '-' }}</ElDescriptionsItem>
             <ElDescriptionsItem label="审批完成">{{ rectificationData.approvalFinishedTime || '-' }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="最近处理">{{ latestApprovalActor }}</ElDescriptionsItem>
             <ElDescriptionsItem label="最新意见">{{ latestApprovalOpinion }}</ElDescriptionsItem>
+            <ElDescriptionsItem label="下一步建议">{{ approvalStageMeta.nextStep }}</ElDescriptionsItem>
           </ElDescriptions>
 
           <div class="approval-action-bar">
@@ -164,6 +167,10 @@
     rejectRealEstateRectificationApproval,
     submitRealEstateRectificationApproval
   } from '@/api/asset/real-estate'
+  import {
+    getApprovalStatusLabel,
+    getRectificationApprovalStageMeta
+  } from '../approval-stage'
   import { persistRealEstateDetailTab } from '../../detail/tab-state'
 
   defineOptions({ name: 'AssetRealEstateRectificationCompletePage' })
@@ -211,18 +218,20 @@
     return mapper[String(rectificationData.rectificationStatus || '').toUpperCase()] || rectificationData.rectificationStatus || '-'
   })
 
-  const approvalStatusLabel = computed(() => {
-    const mapper: Record<string, string> = {
-      UNSUBMITTED: '待提交审批',
-      SUBMITTED: '审批中',
-      APPROVED: '审批通过',
-      REJECTED: '审批驳回'
-    }
-    return mapper[String(rectificationData.approvalStatus || '').toUpperCase()] || '待提交审批'
-  })
+  const approvalStatusLabel = computed(() => getApprovalStatusLabel(rectificationData.approvalStatus))
+  const approvalStageMeta = computed(() => getRectificationApprovalStageMeta(rectificationData))
 
   const latestApprovalOpinion = computed(() => {
-    return approvalRecords.value[0]?.opinion || '-'
+    return rectificationData.latestApprovalOpinion || approvalRecords.value[0]?.opinion || '-'
+  })
+
+  const latestApprovalActor = computed(() => {
+    const operateBy = rectificationData.latestApprovalOperateBy || approvalRecords.value[0]?.operateBy
+    const operateTime = rectificationData.latestApprovalOperateTime || approvalRecords.value[0]?.operateTime
+    if (!operateBy && !operateTime) {
+      return '-'
+    }
+    return `${operateBy || '-'} / ${operateTime || '-'}`
   })
 
   const canSubmitApproval = computed(() => {

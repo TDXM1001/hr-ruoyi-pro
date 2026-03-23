@@ -116,6 +116,9 @@ export interface AssetRectificationRecord {
   approvalStatus?: string
   approvalSubmittedTime?: string
   approvalFinishedTime?: string
+  latestApprovalOpinion?: string
+  latestApprovalOperateBy?: string
+  latestApprovalOperateTime?: string
   createTime?: string
   remark?: string
 }

@@ -139,7 +139,13 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
         deadlineDate: '2026-03-25',
         completedTime: '2026-03-21 14:49:04',
         completionDesc: '已完成现场复核并修正责任人信息。',
-        acceptanceRemark: '资产管理员现场验收通过。'
+        acceptanceRemark: '资产管理员现场验收通过。',
+        approvalStatus: 'APPROVED',
+        approvalSubmittedTime: '2026-03-21 15:00:00',
+        approvalFinishedTime: '2026-03-21 15:12:00',
+        latestApprovalOpinion: '审批通过，可归档回看。',
+        latestApprovalOperateBy: '资产主管',
+        latestApprovalOperateTime: '2026-03-21 15:12:00'
       }
     } as any)
 
@@ -157,6 +163,9 @@ describe('AssetRealEstateRectificationCompletePage 点测', () => {
     expect(wrapper.text()).toContain('2026-03-21 14:49:04')
     expect(wrapper.text()).toContain('已完成现场复核并修正责任人信息。')
     expect(wrapper.text()).toContain('资产管理员现场验收通过。')
+    expect(wrapper.text()).toContain('审批通过，已完成闭环')
+    expect(wrapper.text()).toContain('审批通过，可归档回看。')
+    expect(wrapper.text()).toContain('资产主管 / 2026-03-21 15:12:00')
     expect(wrapper.text()).not.toContain('确认完成整改')
 
     const vm = wrapper.vm as any
