@@ -36,31 +36,52 @@
         <div class="approval-metrics">
           <div class="approval-metric-chip">
             <span>待提交审批</span>
-            <strong>{{ pendingApprovalCount }}</strong>
+            <strong>{{ rectificationSummary.pendingSubmitCount }}</strong>
           </div>
           <div class="approval-metric-chip">
             <span>审批中</span>
-            <strong>{{ inReviewCount }}</strong>
+            <strong>{{ rectificationSummary.inReviewCount }}</strong>
           </div>
           <div class="approval-metric-chip approval-metric-chip--danger">
             <span>驳回待处理</span>
-            <strong>{{ rejectedCount }}</strong>
+            <strong>{{ rectificationSummary.rejectedResubmitCount }}</strong>
           </div>
           <div class="approval-metric-chip approval-metric-chip--success">
             <span>审批通过</span>
-            <strong>{{ approvedCount }}</strong>
+            <strong>{{ rectificationSummary.approvedClosedCount }}</strong>
           </div>
         </div>
       </ElCard>
 
       <ElCard class="section-card" shadow="never">
         <template #header>
-          <div class="card-title">推进提示</div>
+          <div class="card-title">闭环提示</div>
         </template>
 
         <div class="guide-panel">
+          <div class="guide-focus-card">
+            <div class="guide-focus-card__header">
+              <div>
+                <div class="guide-focus-card__label">当前闭环状态</div>
+                <div class="guide-focus-card__title">{{ rectificationSummary.overallLabel }}</div>
+              </div>
+              <ElTag :type="rectificationSummary.overallTagType" effect="light">
+                {{ rectificationSummary.overallLabel }}
+              </ElTag>
+            </div>
+
+            <div class="guide-focus-card__meta">
+              <span class="guide-focus-card__label">最近整改动作</span>
+              <strong>{{ rectificationSummary.latestActionLabel }}</strong>
+              <span>{{ rectificationSummary.latestActionTime || '-' }}</span>
+            </div>
+
+            <div class="timeline-desc">{{ rectificationSummary.latestActionDesc }}</div>
+            <div class="timeline-meta">{{ rectificationSummary.nextStep }}</div>
+          </div>
+
           <div class="guide-panel__headline">
-            {{ pendingCount ? '先收口待整改记录，再核查审批挂载状态。' : '当前整改记录已收口，可重点核查闭环结果与审批状态。' }}
+            整改页签沿用总览的闭环状态口径，重点确认责任、期限和审批推进是否一致。
           </div>
           <div class="guide-panel__line">编辑整改单负责维护责任、期限和说明。</div>
           <div class="guide-panel__line">完成整改只在独立完成页执行，避免基础信息和收口动作混写。</div>
@@ -295,15 +316,28 @@
       </template>
 
       <div class="record-wrapper">
-        <ElTimeline v-if="props.rectificationLogs.length">
+        <ElTimeline v-if="normalizedRectificationLogs.length">
           <ElTimelineItem
-            v-for="record in props.rectificationLogs"
+            v-for="record in normalizedRectificationLogs"
             :key="record.logId"
             :timestamp="record.operateTime || '-'"
             placement="top"
           >
-            <div class="timeline-title">{{ props.getBizTypeLabel(record.bizType) }}</div>
+            <div class="timeline-title-group">
+              <div class="timeline-title">{{ props.getBizTypeLabel(record.bizType) }}</div>
+              <ElTag
+                v-if="record.rectificationEventLabel"
+                :type="record.rectificationEventTagType"
+                effect="light"
+                size="small"
+              >
+                {{ record.rectificationEventLabel }}
+              </ElTag>
+            </div>
             <div class="timeline-desc">{{ record.changeDesc || '暂无整改说明' }}</div>
+            <div v-if="record.rectificationEventHint" class="timeline-desc timeline-desc--emphasis">
+              {{ record.rectificationEventHint }}
+            </div>
             <div class="timeline-meta">操作人：{{ record.operateBy || '-' }}</div>
           </ElTimelineItem>
         </ElTimeline>
@@ -320,10 +354,17 @@
     getApprovalStatusLabel,
     getRectificationApprovalStageMeta
   } from '../../rectification/approval-stage'
+  import {
+    buildRectificationOverviewSummary,
+    decorateOverviewLifecycleRecords,
+    type OverviewLifecycleRecord,
+    type RectificationOverviewSummary
+  } from './rectification-overview'
 
   const props = defineProps<{
     rectificationRecords: AssetRectificationRecord[]
-    rectificationLogs: AssetChangeLogRecord[]
+    rectificationLogs: Array<AssetChangeLogRecord | OverviewLifecycleRecord>
+    rectificationSummary?: RectificationOverviewSummary
     getBizTypeLabel: (bizType?: string) => string
     canEdit?: boolean
   }>()
@@ -416,25 +457,23 @@
     return { label: '按期推进', type: 'success' as const }
   }
 
+  const normalizedRectificationLogs = computed<OverviewLifecycleRecord[]>(() => {
+    return decorateOverviewLifecycleRecords(props.rectificationLogs)
+  })
+
+  const rectificationSummary = computed(() => {
+    return (
+      props.rectificationSummary ||
+      buildRectificationOverviewSummary(props.rectificationRecords, normalizedRectificationLogs.value)
+    )
+  })
+
   const pendingCount = computed(() => props.rectificationRecords.filter((record) => !isCompletedRecord(record)).length)
   const completedCount = computed(() => props.rectificationRecords.filter((record) => isCompletedRecord(record)).length)
   const overdueCount = computed(() => {
     return props.rectificationRecords.filter((record) => {
       return !isCompletedRecord(record) && getPendingTone(record.deadlineDate).label === '已逾期'
     }).length
-  })
-  const completedRecords = computed(() => props.rectificationRecords.filter((record) => isCompletedRecord(record)))
-  const pendingApprovalCount = computed(() => {
-    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'PENDING_SUBMIT').length
-  })
-  const inReviewCount = computed(() => {
-    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'IN_REVIEW').length
-  })
-  const rejectedCount = computed(() => {
-    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'REJECTED_RESUBMIT').length
-  })
-  const approvedCount = computed(() => {
-    return completedRecords.value.filter((record) => getApprovalStageMeta(record).key === 'APPROVED_CLOSED').length
   })
 </script>
 
@@ -531,6 +570,37 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
+  }
+
+  .guide-focus-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid #dce8f3;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fcfeff 0%, #f5fbff 100%);
+  }
+
+  .guide-focus-card__header,
+  .guide-focus-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .guide-focus-card__label {
+    font-size: 12px;
+    color: #70839c;
+  }
+
+  .guide-focus-card__title {
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d2f4f;
   }
 
   .guide-panel__headline {
@@ -717,6 +787,13 @@
     color: #18233a;
   }
 
+  .timeline-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
   .timeline-desc {
     margin-top: 6px;
     font-size: 13px;
@@ -729,6 +806,11 @@
     margin-top: 6px;
     font-size: 12px;
     color: #7b8aa5;
+  }
+
+  .timeline-desc--emphasis {
+    margin-top: 4px;
+    color: #2f5d7c;
   }
 
   @media (width <= 1080px) {

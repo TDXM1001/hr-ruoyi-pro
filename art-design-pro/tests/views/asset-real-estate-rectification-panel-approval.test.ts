@@ -101,4 +101,76 @@ describe('RectificationPanel 审批挂载位', () => {
     expect(wrapper.text()).toContain('驳回待处理')
     expect(wrapper.text()).toContain('审批通过')
   })
+
+  it('整改页签展示统一闭环提示与阶段化整改轨迹', () => {
+    const wrapper = mount(RectificationPanel, {
+      props: {
+        rectificationRecords: [
+          {
+            rectificationId: 9301,
+            rectificationNo: 'RC-2026-0030',
+            rectificationStatus: 'PENDING',
+            taskNo: 'INV-2026-0030',
+            taskName: '门禁巡检',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            deadlineDate: '2026-03-28'
+          },
+          {
+            rectificationId: 9302,
+            rectificationNo: 'RC-2026-0031',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'UNSUBMITTED',
+            taskNo: 'INV-2026-0031',
+            taskName: '消防巡检',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            completedTime: '2026-03-21 09:30:00'
+          }
+        ],
+        rectificationLogs: [
+          {
+            logId: 401,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '完成整改单：RC-2026-0031，完成说明：已完成闭门器维修',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 09:30:00'
+          },
+          {
+            logId: 402,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '提交整改审批：RC-2026-0031，意见：整改已完成，请审批',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 10:00:00'
+          }
+        ] as any,
+        rectificationSummary: {
+          pendingRectificationCount: 1,
+          pendingSubmitCount: 1,
+          inReviewCount: 0,
+          rejectedResubmitCount: 0,
+          approvedClosedCount: 0,
+          overallStage: 'PENDING_SUBMIT',
+          overallLabel: '待提交审批',
+          overallTagType: 'info',
+          latestActionLabel: '完成整改',
+          latestActionTime: '2026-03-21 09:30:00',
+          latestActionDesc: '整改事实已收口，下一步建议尽快提交审批。',
+          nextStep: '整改事实已经收口，但仍需尽快提交审批，避免闭环停在待提交阶段。'
+        },
+        getBizTypeLabel: (bizType?: string) => bizType || '业务动作',
+        canEdit: true
+      } as any,
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    expect(wrapper.text()).toContain('当前闭环状态')
+    expect(wrapper.text()).toContain('待提交审批')
+    expect(wrapper.text()).toContain('最近整改动作')
+    expect(wrapper.text()).toContain('整改事实已经收口，但仍需尽快提交审批，避免闭环停在待提交阶段。')
+    expect(wrapper.text()).toContain('完成整改')
+    expect(wrapper.text()).toContain('提交审批')
+  })
 })

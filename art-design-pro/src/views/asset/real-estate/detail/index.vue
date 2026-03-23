@@ -97,6 +97,7 @@
         v-else-if="activeTab === 'rectification'"
         :rectification-records="rectificationRecords"
         :rectification-logs="rectificationLogs"
+        :rectification-summary="rectificationOverviewSummary"
         :get-biz-type-label="getBizTypeLabel"
         :can-edit="canEdit"
         @edit-rectification="goToEditRectification"
@@ -546,7 +547,7 @@
   })
 
   const rectificationLogs = computed(() => {
-    return lifecycleData.changeLogs.filter((record) => {
+    return overviewChangeLogs.value.filter((record) => {
       const desc = String(record.changeDesc || '')
       return desc.includes('整改') || desc.includes('审批')
     })

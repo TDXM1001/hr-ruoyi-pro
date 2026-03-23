@@ -403,6 +403,81 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.text()).toContain('请补充现场照片后重新提交审批')
   })
 
+  it('整改页签复用总览闭环状态和下一步建议', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [
+          {
+            rectificationId: 9201,
+            rectificationNo: 'RC-2026-0020',
+            assetId: 20001,
+            taskId: 21,
+            taskNo: 'INV-2026-0020',
+            taskName: '门禁巡检',
+            issueType: '损坏',
+            issueDesc: '门禁控制器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'PENDING',
+            deadlineDate: '2026-03-28'
+          },
+          {
+            rectificationId: 9202,
+            rectificationNo: 'RC-2026-0021',
+            assetId: 20001,
+            taskId: 22,
+            taskNo: 'INV-2026-0021',
+            taskName: '消防巡检',
+            issueType: '损坏',
+            issueDesc: '消防闭门器损坏',
+            responsibleDeptName: '研发部门',
+            responsibleUserName: '若依',
+            rectificationStatus: 'COMPLETED',
+            approvalStatus: 'UNSUBMITTED',
+            completedTime: '2026-03-21 09:30:00'
+          }
+        ],
+        disposalRecords: [],
+        changeLogs: [
+          {
+            logId: 220,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '完成整改单：RC-2026-0021，完成说明：已完成闭门器维修',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 09:30:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'IN_USE'
+          }
+        ]
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('整改闭环')
+    expect(wrapper.text()).toContain('待提交审批')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('rectification')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('当前闭环状态')
+    expect(wrapper.text()).toContain('待提交审批')
+    expect(wrapper.text()).toContain('最近整改动作')
+    expect(wrapper.text()).toContain('完成整改')
+    expect(wrapper.text()).toContain('整改事实已经收口，但仍需尽快提交审批，避免闭环停在待提交阶段。')
+  })
+
   it('总览生命周期轨迹对整改节点展示阶段标签', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
