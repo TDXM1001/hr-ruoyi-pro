@@ -6,6 +6,8 @@ import AssetDisposalPage from '@/views/asset/disposal/index.vue'
 import * as disposalApi from '@/api/asset/disposal'
 import * as ledgerApi from '@/api/asset/ledger'
 
+const mockPush = vi.fn()
+
 const routeState = {
   query: {
     tab: 'record',
@@ -18,7 +20,10 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return {
     ...actual,
-    useRoute: () => routeState
+    useRoute: () => routeState,
+    useRouter: () => ({
+      push: mockPush
+    })
   }
 })
 
@@ -65,6 +70,7 @@ vi.mock('@/api/asset/ledger', () => {
 describe('AssetDisposalPage 上下文点测', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockPush.mockReset()
     routeState.query = {
       tab: 'record',
       assetId: '20001',
@@ -174,5 +180,135 @@ describe('AssetDisposalPage 上下文点测', () => {
 
     warnSpy.mockRestore()
     errorSpy.mockRestore()
+  })
+
+  it('intent=view 时展示不动产来源横幅、资产上下文和返回入口', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mount(AssetDisposalPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: {
+          DictTag: true,
+          ArtSearchBar: {
+            template: '<div class="art-search-bar-stub"></div>',
+            props: ['modelValue', 'items', 'showExpand']
+          },
+          ArtTable: {
+            template: '<div class="art-table-stub"></div>',
+            props: ['data', 'columns', 'loading', 'pagination']
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+
+    expect(disposalApi.listAssetDisposal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageNum: 1,
+        pageSize: 10,
+        assetId: 20002
+      })
+    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
+      '来自不动产档案处置联动'
+    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
+      '当前进入的是处置记录视图'
+    )
+    expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('RE-2026-0002')
+    expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('深圳测试不动产B座')
+
+    await wrapper.get('[data-testid="disposal-return-real-estate"]').trigger('click')
+
+    expect(mockPush).toHaveBeenCalledWith({
+      path: '/asset/real-estate/detail/20002',
+      query: {
+        tab: 'disposal',
+        from: 'asset-disposal'
+      }
+    })
+  })
+
+  it('intent=start 时默认切到待处置资产池并展示继续办理提示', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'start',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mount(AssetDisposalPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: {
+          DictTag: true,
+          ArtSearchBar: {
+            template: '<div class="art-search-bar-stub"></div>',
+            props: ['modelValue', 'items', 'showExpand']
+          },
+          ArtTable: {
+            template: '<div class="art-table-stub"></div>',
+            props: ['data', 'columns', 'loading', 'pagination']
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+
+    expect(ledgerApi.listAssetLedger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageNum: 1,
+        pageSize: 10,
+        assetType: 'FIXED',
+        assetStatus: 'PENDING_DISPOSAL',
+        assetCode: 'RE-2026-0002'
+      })
+    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
+      '来自不动产档案处置联动'
+    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
+      '请继续发起或补齐处置流程'
+    )
+  })
+
+  it('无来源参数时不展示来源横幅和返回入口', async () => {
+    routeState.query = {
+      tab: 'record',
+      assetId: '20001',
+      assetCode: 'RE-2026-0001'
+    }
+
+    const wrapper = mount(AssetDisposalPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: {
+          DictTag: true,
+          ArtSearchBar: {
+            template: '<div class="art-search-bar-stub"></div>',
+            props: ['modelValue', 'items', 'showExpand']
+          },
+          ArtTable: {
+            template: '<div class="art-table-stub"></div>',
+            props: ['data', 'columns', 'loading', 'pagination']
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="disposal-source-banner"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="disposal-return-real-estate"]').exists()).toBe(false)
   })
 })

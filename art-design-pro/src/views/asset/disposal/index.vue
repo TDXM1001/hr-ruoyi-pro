@@ -2,6 +2,62 @@
   <div
     class="asset-disposal-page art-full-height flex flex-col gap-2 overflow-y-auto overflow-x-hidden p-3"
   >
+    <ElAlert
+      v-if="sourceContext.hasSource"
+      data-testid="disposal-source-banner"
+      type="info"
+      show-icon
+      :closable="false"
+      :title="sourceContext.sourceLabel"
+      :description="sourceContext.intentDescription"
+    />
+
+    <ElCard
+      v-if="sourceContext.hasSource"
+      data-testid="disposal-source-context"
+      class="source-context-card"
+      shadow="never"
+    >
+      <div class="source-context-card__header">
+        <div>
+          <div class="source-context-card__title">当前资产上下文</div>
+          <div class="source-context-card__desc">{{ sourceContext.sourceDescription }}</div>
+        </div>
+        <ElSpace wrap>
+          <ElTag type="success" effect="light">{{ sourceContext.intentLabel }}</ElTag>
+          <ElTag type="warning" effect="light">{{ sourceContext.preferredTabLabel }}</ElTag>
+          <ElButton
+            v-if="sourceContext.returnRoute"
+            data-testid="disposal-return-real-estate"
+            type="primary"
+            link
+            @click="handleBackToRealEstate"
+          >
+            返回不动产详情
+          </ElButton>
+        </ElSpace>
+      </div>
+      <div class="source-context-card__grid">
+        <div class="source-context-card__item">
+          <span>资产编码</span>
+          <strong>{{ sourceContext.assetCode || '-' }}</strong>
+        </div>
+        <div class="source-context-card__item">
+          <span>资产名称</span>
+          <strong>{{ sourceContext.assetName || '-' }}</strong>
+        </div>
+        <div class="source-context-card__item">
+          <span>当前意图</span>
+          <strong>{{ sourceContext.intentLabel }}</strong>
+        </div>
+        <div class="source-context-card__item">
+          <span>首屏落点</span>
+          <strong>{{ sourceContext.preferredTabLabel }}</strong>
+        </div>
+      </div>
+      <div class="source-context-card__hint">{{ sourceContext.scopedDescription }}</div>
+    </ElCard>
+
     <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
       <ElTabs v-model="activeTab">
         <ElTabPane label="待处置资产池" name="pool">
@@ -272,6 +328,7 @@
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElButton, ElMessage, ElTag } from 'element-plus'
+  import { useRoute, useRouter } from 'vue-router'
   import { listAssetLedger } from '@/api/asset/ledger'
   import {
     addAssetDisposal,
@@ -281,6 +338,7 @@
     rejectAssetDisposal
   } from '@/api/asset/disposal'
   import DictTag from '@/components/DictTag/index.vue'
+  import { buildDisposalSourceContext } from './disposal-source-context'
   import { useDict } from '@/utils/dict'
   import { useTable } from '@/hooks/core/useTable'
   import { useUserStore } from '@/store/modules/user'
@@ -324,6 +382,7 @@
 
   const { ast_asset_status } = useDict('ast_asset_status')
   const route = useRoute()
+  const router = useRouter()
   const userStore = useUserStore()
   const hasPermission = (permission: string) => {
     return userStore.permissions.includes('*:*:*') || userStore.permissions.includes(permission)
@@ -332,11 +391,13 @@
   // 中文注释：处置确认会改变台账最终状态，仅对具备新增处置权限的用户开放。
   const canConfirmDisposal = computed(() => hasPermission('asset:disposal:add'))
 
-  const scopedAssetId = Number(route.query.assetId || 0) || undefined
-  const scopedAssetCode = typeof route.query.assetCode === 'string' ? route.query.assetCode : ''
+  // 中文注释：把不动产详情壳传来的 query 参数统一解释成来源上下文，避免页面各处重复拼接来源语义。
+  const sourceContext = buildDisposalSourceContext(route.query as Record<string, unknown>)
+  const scopedAssetId = sourceContext.assetId
+  const scopedAssetCode = sourceContext.assetCode
 
-  // 中文注释：如果从资产详情页带着上下文跳转过来，则优先打开对应页签。
-  const activeTab = ref<'pool' | 'record'>(route.query.tab === 'record' ? 'record' : 'pool')
+  // 中文注释：显式 tab 优先；如果没有显式 tab，则按来源意图选择首屏落点。
+  const activeTab = ref<'pool' | 'record'>(sourceContext.preferredTab)
 
   const disposalTypeOptions = [
     { label: '报废', value: 'SCRAP', listClass: 'warning' },
@@ -785,7 +846,74 @@
       approvalSubmitting.value = false
     }
   }
+
+  const handleBackToRealEstate = () => {
+    if (!sourceContext.returnRoute) {
+      return
+    }
+    router.push(sourceContext.returnRoute)
+  }
 </script>
+
+<style scoped lang="scss">
+  .source-context-card {
+    border: 1px solid rgba(64, 158, 255, 0.18);
+    background: linear-gradient(180deg, rgba(236, 245, 255, 0.9), rgba(255, 255, 255, 0.98));
+  }
+
+  .source-context-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .source-context-card__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  .source-context-card__desc,
+  .source-context-card__hint {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--el-text-color-regular);
+  }
+
+  .source-context-card__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .source-context-card__item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(64, 158, 255, 0.14);
+
+    span {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    strong {
+      font-size: 14px;
+      color: var(--el-text-color-primary);
+      word-break: break-word;
+    }
+  }
+
+  .source-context-card__hint {
+    margin-top: 12px;
+    color: #7b5a20;
+  }
+</style>
 
 <style scoped lang="scss">
   .asset-disposal-page {
