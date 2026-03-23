@@ -104,7 +104,22 @@
             <strong>{{ disposalSummary.latestActionLabel }}</strong>
             <span>{{ disposalSummary.latestActionTime || '-' }}</span>
           </div>
+          <div class="disposal-responsibility-grid">
+            <div class="disposal-responsibility-item">
+              <span>当前责任归口</span>
+              <strong>{{ disposalSummary.responsibilityOwnerLabel }}</strong>
+            </div>
+            <div class="disposal-responsibility-item">
+              <span>责任动作</span>
+              <strong>{{ disposalSummary.responsibilityActionLabel }}</strong>
+            </div>
+            <div class="disposal-responsibility-item">
+              <span>最近责任人</span>
+              <strong>{{ disposalSummary.latestActionOwner || '-' }}</strong>
+            </div>
+          </div>
           <div class="timeline-desc">{{ disposalSummary.latestActionDesc }}</div>
+          <div class="timeline-desc timeline-desc--emphasis">{{ disposalSummary.responsibilityHint }}</div>
           <div class="timeline-meta">{{ disposalSummary.nextStep }}</div>
         </div>
       </div>
@@ -225,6 +240,32 @@
     @extend .rectification-focus-card;
     background: linear-gradient(135deg, #fffdf8 0%, #fff7ec 100%);
     border-color: #f3e2c8;
+  }
+
+  .disposal-responsibility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .disposal-responsibility-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid #f3e7d8;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.75);
+
+    span {
+      font-size: 12px;
+      color: #7b6d59;
+    }
+
+    strong {
+      color: #3a2d1b;
+      font-size: 14px;
+    }
   }
 
   .rectification-focus-card__header,

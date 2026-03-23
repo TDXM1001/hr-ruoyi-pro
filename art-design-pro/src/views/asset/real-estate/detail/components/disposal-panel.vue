@@ -30,7 +30,23 @@
           <span>{{ disposalSummary.latestActionTime || '-' }}</span>
         </div>
 
+        <div class="disposal-responsibility-grid">
+          <div class="disposal-responsibility-item">
+            <span>当前责任归口</span>
+            <strong>{{ disposalSummary.responsibilityOwnerLabel }}</strong>
+          </div>
+          <div class="disposal-responsibility-item">
+            <span>责任动作</span>
+            <strong>{{ disposalSummary.responsibilityActionLabel }}</strong>
+          </div>
+          <div class="disposal-responsibility-item">
+            <span>最近责任人</span>
+            <strong>{{ disposalSummary.latestActionOwner || '-' }}</strong>
+          </div>
+        </div>
+
         <div class="record-item__desc">{{ disposalSummary.latestActionDesc }}</div>
+        <div class="record-item__desc record-item__desc--emphasis">{{ disposalSummary.responsibilityHint }}</div>
         <div class="record-item__desc">{{ disposalSummary.nextStep }}</div>
       </div>
     </ElCard>
@@ -130,5 +146,35 @@
 
   .disposal-link-card__actions {
     justify-content: flex-end;
+  }
+
+  .disposal-responsibility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .disposal-responsibility-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid #e7edf5;
+    border-radius: 10px;
+    background: #fafcff;
+
+    span {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    strong {
+      font-size: 14px;
+      color: var(--el-text-color-primary);
+    }
+  }
+
+  .record-item__desc--emphasis {
+    color: var(--el-color-primary);
   }
 </style>

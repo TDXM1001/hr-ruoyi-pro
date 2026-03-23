@@ -568,7 +568,11 @@
   })
 
   const disposalOverviewSummary = computed(() => {
-    return buildDisposalOverviewSummary(disposalRecords.value, detailData.assetStatus)
+    return buildDisposalOverviewSummary(
+      disposalRecords.value,
+      detailData.assetStatus,
+      changeLogs.value
+    )
   })
 
   const findLinkedRectification = (record: AssetInventoryRecord) => {

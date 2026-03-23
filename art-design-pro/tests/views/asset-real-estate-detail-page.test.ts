@@ -328,6 +328,106 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.text()).toContain('处置已闭环，可回看历史记录并归档留痕。')
   })
 
+  it('总览和处置页签统一展示处置责任归口提示', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('当前责任归口')
+    expect(wrapper.text()).toContain('资产管理员')
+    expect(wrapper.text()).toContain('归档回看')
+    expect(wrapper.text()).toContain('处置已闭环，由资产管理员回看结果并完成留痕归档。')
+    expect(wrapper.text()).toContain('最近责任人')
+    expect(wrapper.text()).toContain('资产经理')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('当前责任归口')
+    expect(wrapper.text()).toContain('资产管理员')
+    expect(wrapper.text()).toContain('归档回看')
+    expect(wrapper.text()).toContain('处置已闭环，由资产管理员回看结果并完成留痕归档。')
+    expect(wrapper.text()).toContain('最近责任人')
+    expect(wrapper.text()).toContain('资产经理')
+  })
+
+  it('处置审批中场景统一提示当前责任归口和下一步动作', async () => {
+    vi.mocked(realEstateApi.getRealEstateDetail).mockResolvedValueOnce({
+      data: {
+        assetId: 20001,
+        assetCode: 'RE-2026-0001',
+        assetName: '深圳研发办公楼A座',
+        assetStatus: 'PENDING_DISPOSAL',
+        ownerDeptName: '研发部门',
+        useDeptName: '研发部门',
+        responsibleUserName: '若依',
+        locationName: '深圳南山科技园A座',
+        ownershipCertNo: '粤(2024)深圳市不动产权第A0001号',
+        landUseType: '研发办公',
+        buildingArea: 18650.5,
+        originalValue: 12500000,
+        lastInventoryDate: '2026-03-01',
+        sourceType: 'MANUAL',
+        acquireType: 'PURCHASE',
+        categoryName: '办公用房',
+        enableDate: '2026-01-01',
+        remark: '用于研发办公的不动产资产。'
+      }
+    } as any)
+
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [],
+        disposalRecords: [
+          {
+            disposalId: 41,
+            disposalNo: 'DIS-2026-0041',
+            disposalType: '报废',
+            disposalStatus: 'SUBMITTED',
+            disposalDate: '2026-03-21',
+            disposalReason: '设备老化报废'
+          }
+        ],
+        changeLogs: [
+          {
+            logId: 501,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '提交处置审批：DIS-2026-0041，意见：申请进入报废流程',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 11:00:00',
+            beforeStatus: 'PENDING_DISPOSAL',
+            afterStatus: 'PENDING_DISPOSAL'
+          }
+        ]
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('处置审批中')
+    expect(wrapper.text()).toContain('审批责任岗')
+    expect(wrapper.text()).toContain('审批处理')
+    expect(wrapper.text()).toContain('当前由审批责任岗处理，资产管理员需跟进审批反馈并准备补充材料。')
+    expect(wrapper.text()).toContain('最近责任人')
+    expect(wrapper.text()).toContain('asset-admin')
+  })
+
   it('总览展示整改闭环摘要和最近整改动作', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
