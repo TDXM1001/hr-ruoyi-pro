@@ -39,9 +39,15 @@
 
     <ElCard class="summary-card" shadow="never">
       <div class="summary-grid">
-        <div v-for="item in summaryItems" :key="item.label" class="summary-item">
+        <div
+          v-for="item in summaryItems"
+          :key="item.key"
+          class="summary-item"
+          :data-testid="`detail-summary-${item.key}`"
+        >
           <div class="summary-item__label">{{ item.label }}</div>
           <div class="summary-item__value">{{ item.value }}</div>
+          <div v-if="item.desc" class="summary-item__desc">{{ item.desc }}</div>
         </div>
       </div>
     </ElCard>
@@ -64,6 +70,7 @@
         :change-logs="overviewChangeLogs"
         :rectification-summary="rectificationOverviewSummary"
         :disposal-summary="disposalOverviewSummary"
+        :disposal-closure-card="disposalClosureCard"
         :get-status-label="getStatusLabel"
         :get-source-type-label="getSourceTypeLabel"
         :get-acquire-type-label="getAcquireTypeLabel"
@@ -113,7 +120,7 @@
         v-else
         :detail-data="detailData"
         :disposal-records="disposalRecords"
-        :disposal-summary="disposalOverviewSummary"
+        :disposal-closure-card="disposalClosureCard"
         @jump-disposal="goToDisposalModule"
       />
     </div>
@@ -340,6 +347,7 @@
   import { useUserStore } from '@/store/modules/user'
   import DisposalPanel from './components/disposal-panel.vue'
   import {
+    buildDisposalClosureCard,
     buildDisposalOverviewSummary,
     decorateDisposalLifecycleEvent
   } from './components/disposal-overview'
@@ -472,13 +480,23 @@
   })
 
   const summaryItems = computed(() => {
+    const disposalCard = disposalClosureCard.value
     return [
-      { label: '资产编码', value: detailData.assetCode || '-' },
-      { label: '资产状态', value: getStatusLabel(detailData.assetStatus) },
-      { label: '权属部门', value: detailData.ownerDeptName || '-' },
-      { label: '最近巡检', value: detailData.lastInventoryDate || '-' },
-      { label: '整改闭环', value: rectificationOverviewSummary.value.overallLabel },
-      { label: '处置闭环', value: disposalOverviewSummary.value.overallLabel }
+      { key: 'asset-code', label: '资产编码', value: detailData.assetCode || '-' },
+      { key: 'asset-status', label: '资产状态', value: getStatusLabel(detailData.assetStatus) },
+      { key: 'owner-dept', label: '权属部门', value: detailData.ownerDeptName || '-' },
+      { key: 'last-inventory', label: '最近巡检', value: detailData.lastInventoryDate || '-' },
+      {
+        key: 'rectification',
+        label: '整改闭环',
+        value: rectificationOverviewSummary.value.overallLabel
+      },
+      {
+        key: 'disposal',
+        label: '处置闭环',
+        value: disposalCard.compactTitle,
+        desc: disposalCard.compactDesc
+      }
     ]
   })
 
@@ -573,6 +591,10 @@
       detailData.assetStatus,
       changeLogs.value
     )
+  })
+
+  const disposalClosureCard = computed(() => {
+    return buildDisposalClosureCard(disposalOverviewSummary.value)
   })
 
   const findLinkedRectification = (record: AssetInventoryRecord) => {
@@ -1253,6 +1275,14 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--asset-text-main);
+    word-break: break-word;
+  }
+
+  .summary-item__desc {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #5f7392;
     word-break: break-word;
   }
 

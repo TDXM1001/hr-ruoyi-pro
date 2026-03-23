@@ -25,6 +25,24 @@ export type DisposalOverviewSummary = {
   initiateActionLabel: string
 }
 
+export type DisposalClosureCard = {
+  statusLabel: string
+  statusTagType: 'info' | 'warning' | 'success' | 'danger'
+  latestActionLabel: string
+  latestActionTime: string
+  latestActionOwner: string
+  latestActionDesc: string
+  nextStep: string
+  responsibilityOwnerLabel: string
+  responsibilityActionLabel: string
+  responsibilityHint: string
+  latestOwnerLabel: string
+  showInitiateAction: boolean
+  initiateActionLabel: string
+  compactTitle: string
+  compactDesc: string
+}
+
 export type DisposalResponsibilityView = {
   ownerLabel: string
   actionLabel: string
@@ -136,21 +154,21 @@ const DISPOSAL_EVENT_MATCHERS: Array<{
     }
   },
   {
-    matcher: (changeDesc) => changeDesc.includes('提交处置审批'),
-    meta: {
-      disposalEventKey: 'IN_REVIEW',
-      disposalEventLabel: '提交审批',
-      disposalEventTagType: 'warning',
-      disposalEventHint: '处置申请已提交，当前正在等待审批结论。'
-    }
-  },
-  {
     matcher: (changeDesc) => changeDesc.includes('处置审批驳回'),
     meta: {
       disposalEventKey: 'REJECTED_RESUBMIT',
       disposalEventLabel: '审批驳回',
       disposalEventTagType: 'danger',
       disposalEventHint: '处置审批已驳回，需要根据意见补齐材料并重新提交流程。'
+    }
+  },
+  {
+    matcher: (changeDesc) => changeDesc.includes('提交处置审批'),
+    meta: {
+      disposalEventKey: 'IN_REVIEW',
+      disposalEventLabel: '提交审批',
+      disposalEventTagType: 'warning',
+      disposalEventHint: '处置申请已提交，当前正在等待审批结论。'
     }
   },
   {
@@ -188,6 +206,26 @@ export function buildDisposalOverviewSummary(
     responsibilityHint: responsibilityView.hint,
     showInitiateAction: meta.showInitiateAction,
     initiateActionLabel: meta.initiateActionLabel
+  }
+}
+
+export function buildDisposalClosureCard(summary: DisposalOverviewSummary): DisposalClosureCard {
+  return {
+    statusLabel: summary.overallLabel,
+    statusTagType: summary.overallTagType,
+    latestActionLabel: summary.latestActionLabel,
+    latestActionTime: summary.latestActionTime,
+    latestActionOwner: summary.latestActionOwner || '-',
+    latestActionDesc: summary.latestActionDesc,
+    nextStep: summary.nextStep,
+    responsibilityOwnerLabel: summary.responsibilityOwnerLabel,
+    responsibilityActionLabel: summary.responsibilityActionLabel,
+    responsibilityHint: summary.responsibilityHint,
+    latestOwnerLabel: summary.latestActionOwner || '-',
+    showInitiateAction: summary.showInitiateAction,
+    initiateActionLabel: summary.initiateActionLabel,
+    compactTitle: `${summary.overallLabel} · ${summary.responsibilityOwnerLabel} / ${summary.responsibilityActionLabel}`,
+    compactDesc: `最近动作：${summary.latestActionLabel} · 最近责任人：${summary.latestActionOwner || '-'}`
   }
 }
 
@@ -256,7 +294,7 @@ function resolveLatestDisposalAction(
       label: latestLog.disposalEventLabel,
       time: latestLog.operateTime || '-',
       owner: latestLog.operateBy || '-',
-      desc: latestLog.changeDesc || latestLog.disposalEventHint || '暂无动作说明'
+      desc: latestLog.changeDesc || latestLog.disposalEventHint || '暂无处置动作说明'
     }
   }
 

@@ -89,39 +89,10 @@
         <div class="card-title">处置闭环摘要</div>
       </template>
       <div class="record-wrapper">
-        <div class="disposal-focus-card" data-testid="overview-disposal-focus-card">
-          <div class="rectification-focus-card__header">
-            <div>
-              <div class="rectification-focus-card__label">当前闭环状态</div>
-              <div class="rectification-focus-card__title">{{ disposalSummary.overallLabel }}</div>
-            </div>
-            <ElTag :type="disposalSummary.overallTagType" effect="light">
-              {{ disposalSummary.overallLabel }}
-            </ElTag>
-          </div>
-          <div class="rectification-focus-card__meta">
-            <span class="rectification-focus-card__label">最近处置动作</span>
-            <strong>{{ disposalSummary.latestActionLabel }}</strong>
-            <span>{{ disposalSummary.latestActionTime || '-' }}</span>
-          </div>
-          <div class="disposal-responsibility-grid">
-            <div class="disposal-responsibility-item">
-              <span>当前责任归口</span>
-              <strong>{{ disposalSummary.responsibilityOwnerLabel }}</strong>
-            </div>
-            <div class="disposal-responsibility-item">
-              <span>责任动作</span>
-              <strong>{{ disposalSummary.responsibilityActionLabel }}</strong>
-            </div>
-            <div class="disposal-responsibility-item">
-              <span>最近责任人</span>
-              <strong>{{ disposalSummary.latestActionOwner || '-' }}</strong>
-            </div>
-          </div>
-          <div class="timeline-desc">{{ disposalSummary.latestActionDesc }}</div>
-          <div class="timeline-desc timeline-desc--emphasis">{{ disposalSummary.responsibilityHint }}</div>
-          <div class="timeline-meta">{{ disposalSummary.nextStep }}</div>
-        </div>
+        <DisposalClosureCard
+          :card="disposalClosureCard"
+          testid-prefix="overview-disposal"
+        />
       </div>
     </ElCard>
 
@@ -193,15 +164,18 @@
   } from './rectification-overview'
   import {
     buildDisposalResponsibilityView,
+    type DisposalClosureCard as DisposalClosureCardView,
     type DisposalOverviewStage,
     type DisposalOverviewSummary
   } from './disposal-overview'
+  import DisposalClosureCard from './disposal-closure-card.vue'
 
   defineProps<{
     detailData: Record<string, any>
     changeLogs: OverviewLifecycleRecord[]
     rectificationSummary: RectificationOverviewSummary
     disposalSummary: DisposalOverviewSummary
+    disposalClosureCard: DisposalClosureCardView
     getStatusLabel: (status?: string) => string
     getSourceTypeLabel: (sourceType?: string) => string
     getAcquireTypeLabel: (acquireType?: string) => string
@@ -257,38 +231,6 @@
     border: 1px solid #dce8f3;
     border-radius: 12px;
     background: linear-gradient(135deg, #fcfeff 0%, #f5fbff 100%);
-  }
-
-  .disposal-focus-card {
-    @extend .rectification-focus-card;
-    background: linear-gradient(135deg, #fffdf8 0%, #fff7ec 100%);
-    border-color: #f3e2c8;
-  }
-
-  .disposal-responsibility-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-  }
-
-  .disposal-responsibility-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
-    border: 1px solid #f3e7d8;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.75);
-
-    span {
-      font-size: 12px;
-      color: #7b6d59;
-    }
-
-    strong {
-      color: #3a2d1b;
-      font-size: 14px;
-    }
   }
 
   .rectification-focus-card__header,

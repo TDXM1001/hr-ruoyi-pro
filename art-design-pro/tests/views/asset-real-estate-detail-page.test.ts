@@ -270,6 +270,43 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.text()).toContain('处置已闭环，可回看历史记录并归档留痕。')
   })
 
+  it('顶部摘要、总览和处置页签统一展示处置闭环卡口径', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const disposalSummary = wrapper.get('[data-testid="detail-summary-disposal"]')
+    expect(disposalSummary.text()).toContain('已完成处置闭环')
+    expect(disposalSummary.text()).toContain('资产管理员 / 归档回看')
+    expect(disposalSummary.text()).toContain('最近动作：已确认处置')
+    expect(disposalSummary.text()).toContain('最近责任人：资产经理')
+
+    const overviewClosureCard = wrapper.get('[data-testid="overview-disposal-closure-card"]')
+    expect(overviewClosureCard.text()).toContain('当前责任归口')
+    expect(overviewClosureCard.text()).toContain('资产管理员')
+    expect(overviewClosureCard.text()).toContain('责任动作')
+    expect(overviewClosureCard.text()).toContain('归档回看')
+    expect(overviewClosureCard.text()).toContain('下一步建议')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    const disposalClosureCard = wrapper.get('[data-testid="disposal-closure-card"]')
+    expect(disposalClosureCard.text()).toContain('当前责任归口')
+    expect(disposalClosureCard.text()).toContain('资产管理员')
+    expect(disposalClosureCard.text()).toContain('责任动作')
+    expect(disposalClosureCard.text()).toContain('归档回看')
+    expect(disposalClosureCard.text()).toContain('下一步建议')
+    expect(disposalClosureCard.text()).toContain('进入资产处置')
+    expect(wrapper.text()).not.toContain('处置联动')
+  })
+
   it('处置页签在未发起时提供发起入口并带来源上下文跳转', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
@@ -309,6 +346,46 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
         intent: 'start'
       }
     })
+  })
+
+  it('未发起处置场景顶部摘要和处置页签统一展示发起提示', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [],
+        disposalRecords: [],
+        changeLogs: []
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const disposalSummary = wrapper.get('[data-testid="detail-summary-disposal"]')
+    expect(disposalSummary.text()).toContain('未发起处置')
+    expect(disposalSummary.text()).toContain('资产管理员 / 发起处置')
+    expect(disposalSummary.text()).toContain('最近动作：未发起处置')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    const disposalClosureCard = wrapper.get('[data-testid="disposal-closure-card"]')
+    expect(disposalClosureCard.text()).toContain('当前责任归口')
+    expect(disposalClosureCard.text()).toContain('资产管理员')
+    expect(disposalClosureCard.text()).toContain('责任动作')
+    expect(disposalClosureCard.text()).toContain('发起处置')
+    expect(disposalClosureCard.text()).toContain('下一步建议')
+    expect(disposalClosureCard.text()).toContain('发起处置')
+    expect(disposalClosureCard.text()).toContain('进入资产处置')
   })
 
   it('总览展示处置闭环摘要和最近处置动作', async () => {
