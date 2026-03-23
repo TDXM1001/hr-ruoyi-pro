@@ -428,6 +428,31 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.text()).toContain('asset-admin')
   })
 
+  it('处置页签记录卡片展示最近责任归口视图', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-record-responsibility-9"]').text()).toContain(
+      '资产管理员'
+    )
+    expect(wrapper.get('[data-testid="disposal-record-responsibility-9"]').text()).toContain(
+      '归档回看'
+    )
+    expect(wrapper.get('[data-testid="disposal-record-responsibility-9"]').text()).toContain(
+      '资产经理'
+    )
+  })
+
   it('总览展示整改闭环摘要和最近整改动作', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
@@ -799,6 +824,18 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.get('[data-testid="overview-disposal-event-402"]').text()).toContain('提交审批')
     expect(wrapper.get('[data-testid="overview-disposal-event-403"]').text()).toContain('审批通过')
     expect(wrapper.get('[data-testid="overview-disposal-event-404"]').text()).toContain('确认处置')
+    expect(wrapper.get('[data-testid="overview-disposal-responsibility-402"]').text()).toContain(
+      '审批责任岗'
+    )
+    expect(wrapper.get('[data-testid="overview-disposal-responsibility-402"]').text()).toContain(
+      'asset-admin'
+    )
+    expect(wrapper.get('[data-testid="overview-disposal-responsibility-404"]').text()).toContain(
+      '资产管理员'
+    )
+    expect(wrapper.get('[data-testid="overview-disposal-responsibility-404"]').text()).toContain(
+      '归档回看'
+    )
     expect(wrapper.text()).toContain('处置已进入办理链路，下一步需要补齐申请并推进审批。')
     expect(wrapper.text()).toContain('处置审批已通过，下一步需要完成最终处置确认。')
     expect(wrapper.text()).toContain('处置已完成确认，可回看历史并归档留痕。')

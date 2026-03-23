@@ -165,6 +165,15 @@
             <div v-if="record.disposalEventHint" class="timeline-desc timeline-desc--emphasis">
               {{ record.disposalEventHint }}
             </div>
+            <div
+              v-if="getDisposalResponsibilityView(record)"
+              :data-testid="`overview-disposal-responsibility-${record.logId}`"
+              class="timeline-desc"
+            >
+              最近责任归口：{{ getDisposalResponsibilityView(record)?.ownerLabel }} · 责任动作：{{
+                getDisposalResponsibilityView(record)?.actionLabel
+              }} · 最近责任人：{{ getDisposalResponsibilityView(record)?.latestOwner }}
+            </div>
             <div class="timeline-meta">
               操作人：{{ record.operateBy || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
               {{ record.afterStatus || '-' }}
@@ -182,7 +191,11 @@
     OverviewLifecycleRecord,
     RectificationOverviewSummary
   } from './rectification-overview'
-  import type { DisposalOverviewSummary } from './disposal-overview'
+  import {
+    buildDisposalResponsibilityView,
+    type DisposalOverviewStage,
+    type DisposalOverviewSummary
+  } from './disposal-overview'
 
   defineProps<{
     detailData: Record<string, any>
@@ -195,6 +208,16 @@
     getBizTypeLabel: (bizType?: string) => string
     formatArea: (value?: number | string) => string
   }>()
+
+  const getDisposalResponsibilityView = (record: OverviewLifecycleRecord) => {
+    if (!record.disposalEventKey) {
+      return undefined
+    }
+    return buildDisposalResponsibilityView(
+      record.disposalEventKey as DisposalOverviewStage,
+      record.operateBy
+    )
+  }
 </script>
 
 <style scoped lang="scss">

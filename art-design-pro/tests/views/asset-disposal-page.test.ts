@@ -44,7 +44,12 @@ vi.mock('@/api/asset/disposal', () => {
       rows: [],
       total: 0
     }),
-    addAssetDisposal: vi.fn().mockResolvedValue({ code: 200 })
+    addAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
+    approveAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
+    rejectAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
+    listAssetDisposalApprovals: vi.fn().mockResolvedValue({
+      data: []
+    })
   }
 })
 
@@ -130,5 +135,44 @@ describe('AssetDisposalPage 上下文点测', () => {
         assetCode: 'RE-2026-0001'
       })
     )
+  })
+
+  it('挂载时不应出现审批弹窗相关未定义属性警告', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    mount(AssetDisposalPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: {
+          DictTag: true,
+          ArtSearchBar: {
+            template: '<div class="art-search-bar-stub"></div>',
+            props: ['modelValue', 'items', 'showExpand']
+          },
+          ArtTable: {
+            template: '<div class="art-table-stub"></div>',
+            props: ['data', 'columns', 'loading', 'pagination']
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+
+    const warnOutput = warnSpy.mock.calls.flat().join(' ')
+    const errorOutput = errorSpy.mock.calls.flat().join(' ')
+
+    expect(warnOutput).not.toContain('approvalDialogVisible')
+    expect(warnOutput).not.toContain('approvalDialogTitle')
+    expect(warnOutput).not.toContain('handleApprovalDialogClosed')
+    expect(warnOutput).not.toContain('approvalDrawerVisible')
+    expect(errorOutput).not.toContain('approvalDialogVisible')
+    expect(errorOutput).not.toContain('approvalDialogTitle')
+    expect(errorOutput).not.toContain('handleApprovalDialogClosed')
+    expect(errorOutput).not.toContain('approvalDrawerVisible')
+
+    warnSpy.mockRestore()
+    errorSpy.mockRestore()
   })
 })

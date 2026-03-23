@@ -25,6 +25,13 @@ export type DisposalOverviewSummary = {
   initiateActionLabel: string
 }
 
+export type DisposalResponsibilityView = {
+  ownerLabel: string
+  actionLabel: string
+  hint: string
+  latestOwner: string
+}
+
 type DisposalEventMeta = Pick<
   OverviewLifecycleRecord,
   'disposalEventKey' | 'disposalEventLabel' | 'disposalEventTagType' | 'disposalEventHint'
@@ -165,6 +172,7 @@ export function buildDisposalOverviewSummary(
   const overallStage = resolveDisposalOverviewStage(disposalRecords, assetStatus)
   const meta = DISPOSAL_STAGE_META[overallStage]
   const latestAction = resolveLatestDisposalAction(disposalRecords, assetStatus, overallStage, changeLogs)
+  const responsibilityView = buildDisposalResponsibilityView(overallStage, latestAction.owner)
 
   return {
     overallStage,
@@ -175,11 +183,24 @@ export function buildDisposalOverviewSummary(
     latestActionOwner: latestAction.owner,
     latestActionDesc: latestAction.desc,
     nextStep: meta.nextStep,
-    responsibilityOwnerLabel: meta.responsibilityOwnerLabel,
-    responsibilityActionLabel: meta.responsibilityActionLabel,
-    responsibilityHint: meta.responsibilityHint,
+    responsibilityOwnerLabel: responsibilityView.ownerLabel,
+    responsibilityActionLabel: responsibilityView.actionLabel,
+    responsibilityHint: responsibilityView.hint,
     showInitiateAction: meta.showInitiateAction,
     initiateActionLabel: meta.initiateActionLabel
+  }
+}
+
+export function buildDisposalResponsibilityView(
+  stage: DisposalOverviewStage,
+  latestOwner?: string
+): DisposalResponsibilityView {
+  const meta = DISPOSAL_STAGE_META[stage]
+  return {
+    ownerLabel: meta.responsibilityOwnerLabel,
+    actionLabel: meta.responsibilityActionLabel,
+    hint: meta.responsibilityHint,
+    latestOwner: latestOwner || '-'
   }
 }
 
@@ -189,7 +210,7 @@ export function decorateDisposalLifecycleEvent(changeDesc?: string): DisposalEve
   return matched?.meta || {}
 }
 
-function resolveDisposalOverviewStage(
+export function resolveDisposalOverviewStage(
   disposalRecords: AssetDisposalRecord[],
   assetStatus?: string
 ): DisposalOverviewStage {

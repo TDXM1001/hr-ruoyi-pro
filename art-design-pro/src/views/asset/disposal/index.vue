@@ -93,7 +93,7 @@
 
     <ElDialog
       v-model="confirmDialogVisible"
-      title="确认资产处置"
+      title="提交处置审批"
       width="720px"
       destroy-on-close
       @closed="handleConfirmDialogClosed"
@@ -198,10 +198,74 @@
       <template #footer>
         <ElButton @click="confirmDialogVisible = false">取消</ElButton>
         <ElButton type="primary" :loading="confirmSubmitting" @click="handleConfirmSubmit">
-          提交处置
+          提交审批
         </ElButton>
       </template>
     </ElDialog>
+
+    <ElDialog
+      v-model="approvalDialogVisible"
+      :title="approvalDialogTitle"
+      width="640px"
+      destroy-on-close
+      @closed="handleApprovalDialogClosed"
+    >
+      <ElDescriptions v-if="currentDisposal" :column="2" border class="mb-4">
+        <ElDescriptionsItem label="处置单号">{{ currentDisposal.disposalNo || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="资产编码">{{ currentDisposal.assetCode || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="资产名称">{{ currentDisposal.assetName || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="当前状态">
+          <DictTag :options="disposalStatusOptions" :value="normalizeDisposalStatus(currentDisposal.disposalStatus)" />
+        </ElDescriptionsItem>
+      </ElDescriptions>
+
+      <ElForm ref="approvalFormRef" :model="approvalFormData" :rules="approvalFormRules" label-width="100px">
+        <ElFormItem label="审批意见" prop="opinion">
+          <ElInput
+            v-model="approvalFormData.opinion"
+            type="textarea"
+            :rows="4"
+            maxlength="255"
+            show-word-limit
+            :placeholder="approvalAction === 'approve' ? '请输入审批通过意见' : '请输入审批驳回原因'"
+          />
+        </ElFormItem>
+      </ElForm>
+
+      <template #footer>
+        <ElButton @click="approvalDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" :loading="approvalSubmitting" @click="handleApprovalSubmit">
+          {{ approvalAction === 'approve' ? '确认通过' : '确认驳回' }}
+        </ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDrawer
+      v-model="approvalDrawerVisible"
+      title="处置审批轨迹"
+      size="520px"
+      destroy-on-close
+    >
+      <div v-loading="approvalLoading" class="approval-timeline-wrapper">
+        <ElTimeline v-if="approvalRecords.length">
+          <ElTimelineItem
+            v-for="record in approvalRecords"
+            :key="record.approvalId"
+            :timestamp="record.createTime || '-'"
+            placement="top"
+            :type="getApprovalTimelineType(record.approvalStatus)"
+          >
+            <div class="approval-timeline-card">
+              <div class="approval-timeline-card__title">
+                {{ getApprovalStatusLabel(record.approvalStatus) }} · {{ record.createBy || '-' }}
+              </div>
+              <div class="approval-timeline-card__desc">{{ record.opinion || '-' }}</div>
+            </div>
+          </ElTimelineItem>
+        </ElTimeline>
+        <ElEmpty v-else description="暂无审批轨迹" :image-size="72" />
+      </div>
+    </ElDrawer>
   </div>
 </template>
 
@@ -209,7 +273,13 @@
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElButton, ElMessage, ElTag } from 'element-plus'
   import { listAssetLedger } from '@/api/asset/ledger'
-  import { addAssetDisposal, listAssetDisposal } from '@/api/asset/disposal'
+  import {
+    addAssetDisposal,
+    approveAssetDisposal,
+    listAssetDisposal,
+    listAssetDisposalApprovals,
+    rejectAssetDisposal
+  } from '@/api/asset/disposal'
   import DictTag from '@/components/DictTag/index.vue'
   import { useDict } from '@/utils/dict'
   import { useTable } from '@/hooks/core/useTable'
@@ -244,6 +314,14 @@
     disposalReason?: string
   }
 
+  type DisposalApprovalRecord = {
+    approvalId?: number
+    approvalStatus?: string
+    opinion?: string
+    createBy?: string
+    createTime?: string
+  }
+
   const { ast_asset_status } = useDict('ast_asset_status')
   const route = useRoute()
   const userStore = useUserStore()
@@ -267,7 +345,14 @@
     { label: '毁损', value: 'DAMAGE', listClass: 'danger' }
   ]
 
-  const disposalStatusOptions = [{ label: '已确认', value: 'CONFIRMED', listClass: 'success' }]
+  const disposalStatusOptions = [
+    { label: '待提交', value: 'PENDING', listClass: 'info' },
+    { label: '审批中', value: 'SUBMITTED', listClass: 'warning' },
+    { label: '审批通过', value: 'APPROVED', listClass: 'success' },
+    { label: '审批驳回', value: 'REJECTED', listClass: 'danger' },
+    { label: '已取消', value: 'CANCELLED', listClass: 'info' },
+    { label: '已确认', value: 'CONFIRMED', listClass: 'success' }
+  ]
 
   const poolInitialSearchState = {
     assetCode: activeTab.value === 'pool' ? scopedAssetCode : '',
@@ -486,6 +571,25 @@
     disposalReason: [{ required: true, message: '请输入处置原因', trigger: 'blur' }]
   }
 
+  const approvalDialogVisible = ref(false)
+  const approvalDrawerVisible = ref(false)
+  const approvalSubmitting = ref(false)
+  const approvalLoading = ref(false)
+  const approvalFormRef = ref<FormInstance>()
+  const approvalAction = ref<'approve' | 'reject'>('approve')
+  const currentDisposal = ref<DisposalRecordRow>()
+  const approvalRecords = ref<DisposalApprovalRecord[]>([])
+  const approvalFormData = reactive({
+    opinion: ''
+  })
+  const approvalFormRules: FormRules = {
+    opinion: [{ required: true, message: '请输入审批意见', trigger: 'blur' }]
+  }
+
+  const approvalDialogTitle = computed(() => {
+    return approvalAction.value === 'approve' ? '处置审批通过' : '处置审批驳回'
+  })
+
   const formatMoney = (value?: number) => {
     if (value === null || value === undefined || value === ('' as any)) {
       return '-'
@@ -494,6 +598,27 @@
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })
+  }
+
+  const normalizeDisposalStatus = (status?: string) => String(status || '').toUpperCase()
+
+  const getApprovalStatusLabel = (status?: string) => {
+    const option = disposalStatusOptions.find((item) => item.value === normalizeDisposalStatus(status))
+    return option?.label || status || '-'
+  }
+
+  const getApprovalTimelineType = (status?: string) => {
+    const normalizedStatus = normalizeDisposalStatus(status)
+    if (normalizedStatus === 'APPROVED' || normalizedStatus === 'CONFIRMED') {
+      return 'success'
+    }
+    if (normalizedStatus === 'REJECTED' || normalizedStatus === 'CANCELLED') {
+      return 'danger'
+    }
+    if (normalizedStatus === 'SUBMITTED') {
+      return 'warning'
+    }
+    return 'primary'
   }
 
   // 中文注释：资产池固定查询“待处置”状态，确保页面口径与后端闭环规则一致。
@@ -567,6 +692,41 @@
     currentAsset.value = undefined
   }
 
+  const resetApprovalForm = () => {
+    approvalFormData.opinion = ''
+    approvalFormRef.value?.clearValidate()
+  }
+
+  const handleApprovalDialogClosed = () => {
+    resetApprovalForm()
+    currentDisposal.value = undefined
+  }
+
+  const openApprovalDialog = (row: DisposalRecordRow, action: 'approve' | 'reject') => {
+    approvalAction.value = action
+    currentDisposal.value = row
+    approvalDialogVisible.value = true
+  }
+
+  const openApprovalDrawer = async (row: DisposalRecordRow) => {
+    if (!row.disposalId) {
+      return
+    }
+    currentDisposal.value = row
+    approvalLoading.value = true
+    approvalDrawerVisible.value = true
+    try {
+      const response = await listAssetDisposalApprovals(row.disposalId)
+      approvalRecords.value = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : []
+    } finally {
+      approvalLoading.value = false
+    }
+  }
+
   // 中文注释：提交成功后同时刷新资产池与处置记录，并切换到记录页便于用户立即核对结果。
   const handleConfirmSubmit = async () => {
     const valid = await confirmFormRef.value?.validate().catch(() => false)
@@ -595,6 +755,34 @@
       activeTab.value = 'record'
     } finally {
       confirmSubmitting.value = false
+    }
+  }
+
+  const handleApprovalSubmit = async () => {
+    const valid = await approvalFormRef.value?.validate().catch(() => false)
+    if (!valid) {
+      return
+    }
+    if (!currentDisposal.value?.disposalId) {
+      ElMessage.warning('未识别到处置单')
+      return
+    }
+
+    approvalSubmitting.value = true
+    try {
+      const payload = { opinion: approvalFormData.opinion.trim() }
+      if (approvalAction.value === 'approve') {
+        await approveAssetDisposal(currentDisposal.value.disposalId, payload)
+        ElMessage.success('处置审批已通过')
+      } else {
+        await rejectAssetDisposal(currentDisposal.value.disposalId, payload)
+        ElMessage.success('处置审批已驳回')
+      }
+      approvalDialogVisible.value = false
+      await refreshRecordData()
+      await openApprovalDrawer(currentDisposal.value)
+    } finally {
+      approvalSubmitting.value = false
     }
   }
 </script>
