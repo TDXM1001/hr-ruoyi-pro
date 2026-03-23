@@ -268,6 +268,58 @@ describe('AssetDisposalPage 来源上下文接入', () => {
     expect(afterCalls).toBeGreaterThan(beforeCalls)
   })
 
+  it('intent=view 时应展示办理视图提示，并可切到待处置资产池', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    const beforeCalls = vi.mocked(ledgerApi.listAssetLedger).mock.calls.length
+
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('当前办理视图')
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-entry-secondary-action"]').text()).toContain('去待处置资产池')
+
+    await wrapper.get('[data-testid="disposal-entry-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    const afterCalls = vi.mocked(ledgerApi.listAssetLedger).mock.calls.length
+    expect(afterCalls).toBeGreaterThan(beforeCalls)
+  })
+
+  it('intent=start 时应展示办理视图提示，并可切回处置记录', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'start',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    const beforeCalls = vi.mocked(disposalApi.listAssetDisposal).mock.calls.length
+
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('当前办理视图')
+    expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('待处置资产池办理')
+    expect(wrapper.get('[data-testid="disposal-entry-secondary-action"]').text()).toContain('查看处置记录')
+
+    await wrapper.get('[data-testid="disposal-entry-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    const afterCalls = vi.mocked(disposalApi.listAssetDisposal).mock.calls.length
+    expect(afterCalls).toBeGreaterThan(beforeCalls)
+  })
+
   it('无来源参数时不展示来源横幅和返回入口', async () => {
     routeState.query = {
       tab: 'record',

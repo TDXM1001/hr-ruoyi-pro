@@ -18,8 +18,13 @@ export type DisposalSourceContext = {
   nextStepSuggestion: string
   entryTitle: string
   entryDescription: string
+  workflowTitle: string
+  workflowLabel: string
+  workflowDescription: string
   primaryActionLabel: string
   primaryActionDescription: string
+  secondaryActionLabel: string
+  secondaryActionDescription: string
   returnRoute?: {
     path: string
     query: Record<string, string>
@@ -93,6 +98,19 @@ export function buildDisposalSourceContext(query: Record<string, unknown>): Disp
       ? '继续核对该资产的处置记录、审批进展和责任归口。'
       : '继续进入待处置资产池，发起或补齐该资产的处置流程。'
 
+  const workflowTitle = '当前办理视图'
+  const workflowLabel = preferredTab === 'record' ? '处置记录回看' : '待处置资产池办理'
+  const workflowDescription =
+    preferredTab === 'record'
+      ? '当前更适合回看该资产的处置记录、审批状态和责任归口，再决定是否继续办理。'
+      : '当前更适合在待处置资产池中确认该资产并继续办理处置流程。'
+
+  const secondaryActionLabel = preferredTab === 'record' ? '去待处置资产池' : '查看处置记录'
+  const secondaryActionDescription =
+    preferredTab === 'record'
+      ? '如需继续推进该资产处置，可切到待处置资产池继续办理。'
+      : '如需回看审批和确认结果，可切到处置记录查看进展。'
+
   return {
     hasSource,
     source,
@@ -111,8 +129,13 @@ export function buildDisposalSourceContext(query: Record<string, unknown>): Disp
     nextStepSuggestion,
     entryTitle,
     entryDescription,
+    workflowTitle,
+    workflowLabel,
+    workflowDescription,
     primaryActionLabel,
     primaryActionDescription,
+    secondaryActionLabel,
+    secondaryActionDescription,
     returnRoute: assetId
       ? {
           path: `/asset/real-estate/detail/${assetId}`,

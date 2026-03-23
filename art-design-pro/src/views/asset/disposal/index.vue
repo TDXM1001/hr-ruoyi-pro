@@ -17,6 +17,7 @@
       :context="sourceContext"
       @back="handleBackToRealEstate"
       @primary-action="handleEntryPrimaryAction"
+      @secondary-action="handleEntrySecondaryAction"
     />
 
     <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
@@ -823,6 +824,16 @@
     activeTab.value = sourceContext.preferredTab
     await nextTick()
     if (sourceContext.preferredTab === 'record') {
+      await refreshRecordData()
+      return
+    }
+    await refreshPoolData()
+  }
+
+  const handleEntrySecondaryAction = async () => {
+    activeTab.value = sourceContext.preferredTab === 'record' ? 'pool' : 'record'
+    await nextTick()
+    if (activeTab.value === 'record') {
       await refreshRecordData()
       return
     }

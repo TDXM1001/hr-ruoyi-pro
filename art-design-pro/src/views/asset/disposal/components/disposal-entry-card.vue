@@ -53,18 +53,35 @@
         </div>
       </div>
 
+      <div data-testid="disposal-entry-workflow" class="disposal-entry-card__workflow">
+        <div class="disposal-entry-card__workflow-title">{{ context.workflowTitle }}</div>
+        <div class="disposal-entry-card__workflow-body">
+          <strong>{{ context.workflowLabel }}</strong>
+          <p>{{ context.workflowDescription }}</p>
+        </div>
+      </div>
+
       <div class="disposal-entry-card__actions">
         <div class="disposal-entry-card__action-copy">
           <div class="disposal-entry-card__action-title">{{ context.primaryActionLabel }}</div>
           <div class="disposal-entry-card__action-desc">{{ context.primaryActionDescription }}</div>
         </div>
-        <ElButton
-          data-testid="disposal-entry-primary-action"
-          :type="primaryActionType"
-          @click="$emit('primary-action')"
-        >
-          {{ context.primaryActionLabel }}
-        </ElButton>
+        <div class="disposal-entry-card__action-buttons">
+          <ElButton
+            data-testid="disposal-entry-secondary-action"
+            plain
+            @click="$emit('secondary-action')"
+          >
+            {{ context.secondaryActionLabel }}
+          </ElButton>
+          <ElButton
+            data-testid="disposal-entry-primary-action"
+            :type="primaryActionType"
+            @click="$emit('primary-action')"
+          >
+            {{ context.primaryActionLabel }}
+          </ElButton>
+        </div>
       </div>
     </div>
   </ElCard>
@@ -81,6 +98,7 @@
   defineEmits<{
     back: []
     'primary-action': []
+    'secondary-action': []
   }>()
 
   const primaryActionType = computed(() => {
@@ -200,6 +218,36 @@
     border: 1px solid rgba(64, 158, 255, 0.14);
   }
 
+  .disposal-entry-card__workflow {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(47, 102, 255, 0.06);
+    border: 1px dashed rgba(47, 102, 255, 0.28);
+  }
+
+  .disposal-entry-card__workflow-title {
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .disposal-entry-card__workflow-body {
+    strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--el-text-color-primary);
+    }
+
+    p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--el-text-color-regular);
+    }
+  }
+
   .disposal-entry-card__action-copy {
     display: flex;
     flex-direction: column;
@@ -218,11 +266,22 @@
     color: var(--el-text-color-secondary);
   }
 
+  .disposal-entry-card__action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
   @media (max-width: 768px) {
     .disposal-entry-card__header,
     .disposal-entry-card__actions {
       flex-direction: column;
       align-items: stretch;
+    }
+
+    .disposal-entry-card__action-buttons {
+      justify-content: stretch;
     }
   }
 </style>
