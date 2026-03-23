@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
@@ -45,29 +45,40 @@ vi.mock('@/store/modules/user', () => {
 
 vi.mock('@/api/asset/disposal', () => {
   return {
-    listAssetDisposal: vi.fn().mockResolvedValue({
-      rows: [],
-      total: 0
-    }),
+    listAssetDisposal: vi.fn().mockResolvedValue({ rows: [], total: 0 }),
     addAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
     approveAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
     rejectAssetDisposal: vi.fn().mockResolvedValue({ code: 200 }),
-    listAssetDisposalApprovals: vi.fn().mockResolvedValue({
-      data: []
-    })
+    listAssetDisposalApprovals: vi.fn().mockResolvedValue({ data: [] })
   }
 })
 
 vi.mock('@/api/asset/ledger', () => {
   return {
-    listAssetLedger: vi.fn().mockResolvedValue({
-      rows: [],
-      total: 0
-    })
+    listAssetLedger: vi.fn().mockResolvedValue({ rows: [], total: 0 })
   }
 })
 
-describe('AssetDisposalPage 上下文点测', () => {
+const mountPage = () => {
+  return mount(AssetDisposalPage, {
+    global: {
+      plugins: [ElementPlus],
+      stubs: {
+        DictTag: true,
+        ArtSearchBar: {
+          template: '<div class="art-search-bar-stub"></div>',
+          props: ['modelValue', 'items', 'showExpand']
+        },
+        ArtTable: {
+          template: '<div class="art-table-stub"></div>',
+          props: ['data', 'columns', 'loading', 'pagination']
+        }
+      }
+    }
+  })
+}
+
+describe('AssetDisposalPage 来源上下文接入', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPush.mockReset()
@@ -78,23 +89,8 @@ describe('AssetDisposalPage 上下文点测', () => {
     }
   })
 
-  it('应在首次加载时携带资产上下文过滤处置记录', async () => {
-    mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+  it('首次加载时会按资产上下文过滤处置记录', async () => {
+    mountPage()
 
     await flushPromises()
 
@@ -107,28 +103,13 @@ describe('AssetDisposalPage 上下文点测', () => {
     )
   })
 
-  it('应在待处置资产池页签首屏带入资产编码上下文', async () => {
+  it('待处置资产池首屏会带入资产编码过滤', async () => {
     routeState.query = {
       tab: 'pool',
       assetCode: 'RE-2026-0001'
     }
 
-    mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+    mountPage()
 
     await flushPromises()
 
@@ -147,22 +128,7 @@ describe('AssetDisposalPage 上下文点测', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+    mountPage()
 
     await flushPromises()
 
@@ -182,7 +148,7 @@ describe('AssetDisposalPage 上下文点测', () => {
     errorSpy.mockRestore()
   })
 
-  it('intent=view 时展示不动产来源横幅、资产上下文和返回入口', async () => {
+  it('intent=view 时展示来源横幅、上下文和返回入口', async () => {
     routeState.query = {
       source: 'real-estate-disposal-tab',
       intent: 'view',
@@ -191,22 +157,7 @@ describe('AssetDisposalPage 上下文点测', () => {
       assetName: '深圳测试不动产B座'
     }
 
-    const wrapper = mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+    const wrapper = mountPage()
 
     await flushPromises()
 
@@ -217,12 +168,8 @@ describe('AssetDisposalPage 上下文点测', () => {
         assetId: 20002
       })
     )
-    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
-      '来自不动产档案处置联动'
-    )
-    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
-      '当前进入的是处置记录视图'
-    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain('来自不动产档案处置联动')
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain('当前进入的是处置记录视图')
     expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('RE-2026-0002')
     expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('深圳测试不动产B座')
     expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('当前锁定范围')
@@ -250,22 +197,7 @@ describe('AssetDisposalPage 上下文点测', () => {
       assetName: '深圳测试不动产B座'
     }
 
-    const wrapper = mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+    const wrapper = mountPage()
 
     await flushPromises()
 
@@ -278,16 +210,62 @@ describe('AssetDisposalPage 上下文点测', () => {
         assetCode: 'RE-2026-0002'
       })
     )
-    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
-      '来自不动产档案处置联动'
-    )
-    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
-      '请继续发起或补齐处置流程'
-    )
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain('来自不动产档案处置联动')
+    expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain('请继续发起或补齐处置流程')
     expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('当前锁定范围')
     expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('待处置资产池')
     expect(wrapper.get('[data-testid="disposal-source-next-step"]').text()).toContain('下一步建议')
     expect(wrapper.find('[data-testid="disposal-pool-scope-alert"]').exists()).toBe(false)
+  })
+
+  it('intent=view 时应展示处置闭环入口卡并可继续查看记录', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    const beforeCalls = vi.mocked(disposalApi.listAssetDisposal).mock.calls.length
+
+    expect(wrapper.get('[data-testid="disposal-entry-card"]').text()).toContain('RE-2026-0002')
+    expect(wrapper.get('[data-testid="disposal-entry-primary-action"]').text()).toContain('查看处置记录')
+
+    await wrapper.get('[data-testid="disposal-entry-primary-action"]').trigger('click')
+    await flushPromises()
+
+    const afterCalls = vi.mocked(disposalApi.listAssetDisposal).mock.calls.length
+    expect(afterCalls).toBeGreaterThan(beforeCalls)
+  })
+
+  it('intent=start 时应展示处置闭环入口卡并可继续办理资产池', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'start',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    const beforeCalls = vi.mocked(ledgerApi.listAssetLedger).mock.calls.length
+
+    expect(wrapper.get('[data-testid="disposal-entry-card"]').text()).toContain('RE-2026-0002')
+    expect(wrapper.get('[data-testid="disposal-entry-primary-action"]').text()).toContain('进入待处置资产池')
+
+    await wrapper.get('[data-testid="disposal-entry-primary-action"]').trigger('click')
+    await flushPromises()
+
+    const afterCalls = vi.mocked(ledgerApi.listAssetLedger).mock.calls.length
+    expect(afterCalls).toBeGreaterThan(beforeCalls)
   })
 
   it('无来源参数时不展示来源横幅和返回入口', async () => {
@@ -297,22 +275,7 @@ describe('AssetDisposalPage 上下文点测', () => {
       assetCode: 'RE-2026-0001'
     }
 
-    const wrapper = mount(AssetDisposalPage, {
-      global: {
-        plugins: [ElementPlus],
-        stubs: {
-          DictTag: true,
-          ArtSearchBar: {
-            template: '<div class="art-search-bar-stub"></div>',
-            props: ['modelValue', 'items', 'showExpand']
-          },
-          ArtTable: {
-            template: '<div class="art-table-stub"></div>',
-            props: ['data', 'columns', 'loading', 'pagination']
-          }
-        }
-      }
-    })
+    const wrapper = mountPage()
 
     await flushPromises()
 

@@ -12,61 +12,12 @@
       :description="sourceContext.intentDescription"
     />
 
-    <ElCard
+    <DisposalEntryCard
       v-if="sourceContext.hasSource"
-      data-testid="disposal-source-context"
-      class="source-context-card"
-      shadow="never"
-    >
-      <div class="source-context-card__header">
-        <div>
-          <div class="source-context-card__title">当前资产上下文</div>
-          <div class="source-context-card__desc">{{ sourceContext.sourceDescription }}</div>
-        </div>
-        <ElSpace wrap>
-          <ElTag type="success" effect="light">{{ sourceContext.intentLabel }}</ElTag>
-          <ElTag type="warning" effect="light">{{ sourceContext.preferredTabLabel }}</ElTag>
-          <ElButton
-            v-if="sourceContext.returnRoute"
-            data-testid="disposal-return-real-estate"
-            type="primary"
-            link
-            @click="handleBackToRealEstate"
-          >
-            返回不动产详情
-          </ElButton>
-        </ElSpace>
-      </div>
-      <div class="source-context-card__grid">
-        <div class="source-context-card__item">
-          <span>资产编码</span>
-          <strong>{{ sourceContext.assetCode || '-' }}</strong>
-        </div>
-        <div class="source-context-card__item">
-          <span>资产名称</span>
-          <strong>{{ sourceContext.assetName || '-' }}</strong>
-        </div>
-        <div class="source-context-card__item">
-          <span>当前意图</span>
-          <strong>{{ sourceContext.intentLabel }}</strong>
-        </div>
-        <div class="source-context-card__item">
-          <span>首屏落点</span>
-          <strong>{{ sourceContext.preferredTabLabel }}</strong>
-        </div>
-      </div>
-      <div class="source-context-card__panels">
-        <div data-testid="disposal-source-scope" class="source-context-card__panel">
-          <span>{{ sourceContext.scopeTitle }}</span>
-          <strong>{{ sourceContext.preferredTabLabel }}</strong>
-          <p>{{ sourceContext.scopeDescription }}</p>
-        </div>
-        <div data-testid="disposal-source-next-step" class="source-context-card__panel">
-          <span>下一步建议</span>
-          <p>{{ sourceContext.nextStepSuggestion }}</p>
-        </div>
-      </div>
-    </ElCard>
+      :context="sourceContext"
+      @back="handleBackToRealEstate"
+      @primary-action="handleEntryPrimaryAction"
+    />
 
     <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
       <ElTabs v-model="activeTab">
@@ -340,6 +291,7 @@
 <script setup lang="ts">
   import type { FormInstance, FormRules } from 'element-plus'
   import { ElButton, ElMessage, ElTag } from 'element-plus'
+  import { nextTick } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { listAssetLedger } from '@/api/asset/ledger'
   import {
@@ -350,6 +302,7 @@
     rejectAssetDisposal
   } from '@/api/asset/disposal'
   import DictTag from '@/components/DictTag/index.vue'
+  import DisposalEntryCard from './components/disposal-entry-card.vue'
   import { buildDisposalSourceContext } from './disposal-source-context'
   import { useDict } from '@/utils/dict'
   import { useTable } from '@/hooks/core/useTable'
@@ -865,96 +818,17 @@
     }
     router.push(sourceContext.returnRoute)
   }
+
+  const handleEntryPrimaryAction = async () => {
+    activeTab.value = sourceContext.preferredTab
+    await nextTick()
+    if (sourceContext.preferredTab === 'record') {
+      await refreshRecordData()
+      return
+    }
+    await refreshPoolData()
+  }
 </script>
-
-<style scoped lang="scss">
-  .source-context-card {
-    border: 1px solid rgba(64, 158, 255, 0.18);
-    background: linear-gradient(180deg, rgba(236, 245, 255, 0.9), rgba(255, 255, 255, 0.98));
-  }
-
-  .source-context-card__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  .source-context-card__title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .source-context-card__desc {
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--el-text-color-regular);
-  }
-
-  .source-context-card__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-  }
-
-  .source-context-card__item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(64, 158, 255, 0.14);
-
-    span {
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-    }
-
-    strong {
-      font-size: 14px;
-      color: var(--el-text-color-primary);
-      word-break: break-word;
-    }
-  }
-
-  .source-context-card__panels {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-  }
-
-  .source-context-card__panel {
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(64, 158, 255, 0.14);
-
-    span {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-    }
-
-    strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: #1d2f4f;
-    }
-
-    p {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1.7;
-      color: #7b5a20;
-    }
-  }
-</style>
 
 <style scoped lang="scss">
   .asset-disposal-page {
