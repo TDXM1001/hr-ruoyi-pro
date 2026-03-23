@@ -1,4 +1,5 @@
 import type { AssetDisposalRecord } from '@/api/asset/ledger'
+import type { OverviewLifecycleRecord } from './rectification-overview'
 
 export type DisposalOverviewStage =
   | 'NOT_STARTED'
@@ -19,6 +20,11 @@ export type DisposalOverviewSummary = {
   showInitiateAction: boolean
   initiateActionLabel: string
 }
+
+type DisposalEventMeta = Pick<
+  OverviewLifecycleRecord,
+  'disposalEventKey' | 'disposalEventLabel' | 'disposalEventTagType' | 'disposalEventHint'
+>
 
 const DISPOSAL_STAGE_META: Record<
   DisposalOverviewStage,
@@ -71,6 +77,57 @@ const DISPOSAL_STAGE_META: Record<
   }
 }
 
+const DISPOSAL_EVENT_MATCHERS: Array<{
+  matcher: (changeDesc: string) => boolean
+  meta: DisposalEventMeta
+}> = [
+  {
+    matcher: (changeDesc) => changeDesc.includes('确认处置'),
+    meta: {
+      disposalEventKey: 'DISPOSED_CLOSED',
+      disposalEventLabel: '确认处置',
+      disposalEventTagType: 'success',
+      disposalEventHint: '处置已完成确认，可回看历史并归档留痕。'
+    }
+  },
+  {
+    matcher: (changeDesc) => changeDesc.includes('处置审批通过'),
+    meta: {
+      disposalEventKey: 'APPROVED_DISPOSING',
+      disposalEventLabel: '审批通过',
+      disposalEventTagType: 'success',
+      disposalEventHint: '处置审批已通过，下一步需要完成最终处置确认。'
+    }
+  },
+  {
+    matcher: (changeDesc) => changeDesc.includes('提交处置审批'),
+    meta: {
+      disposalEventKey: 'IN_REVIEW',
+      disposalEventLabel: '提交审批',
+      disposalEventTagType: 'warning',
+      disposalEventHint: '处置申请已提交，当前正在等待审批结论。'
+    }
+  },
+  {
+    matcher: (changeDesc) => changeDesc.includes('处置审批驳回'),
+    meta: {
+      disposalEventKey: 'REJECTED_RESUBMIT',
+      disposalEventLabel: '审批驳回',
+      disposalEventTagType: 'danger',
+      disposalEventHint: '处置审批已驳回，需要根据意见补齐材料并重新提交流程。'
+    }
+  },
+  {
+    matcher: (changeDesc) => changeDesc.includes('发起处置') || changeDesc.includes('创建处置单'),
+    meta: {
+      disposalEventKey: 'PENDING_SUBMIT',
+      disposalEventLabel: '发起处置',
+      disposalEventTagType: 'info',
+      disposalEventHint: '处置已进入办理链路，下一步需要补齐申请并推进审批。'
+    }
+  }
+]
+
 export function buildDisposalOverviewSummary(
   disposalRecords: AssetDisposalRecord[],
   assetStatus?: string
@@ -90,6 +147,12 @@ export function buildDisposalOverviewSummary(
     showInitiateAction: meta.showInitiateAction,
     initiateActionLabel: meta.initiateActionLabel
   }
+}
+
+export function decorateDisposalLifecycleEvent(changeDesc?: string): DisposalEventMeta {
+  const normalizedDesc = String(changeDesc || '')
+  const matched = DISPOSAL_EVENT_MATCHERS.find((item) => item.matcher(normalizedDesc))
+  return matched?.meta || {}
 }
 
 function resolveDisposalOverviewStage(

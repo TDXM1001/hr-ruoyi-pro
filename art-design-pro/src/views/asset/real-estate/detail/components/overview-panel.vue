@@ -86,6 +86,32 @@
 
     <ElCard class="section-card" shadow="never">
       <template #header>
+        <div class="card-title">处置闭环摘要</div>
+      </template>
+      <div class="record-wrapper">
+        <div class="disposal-focus-card" data-testid="overview-disposal-focus-card">
+          <div class="rectification-focus-card__header">
+            <div>
+              <div class="rectification-focus-card__label">当前闭环状态</div>
+              <div class="rectification-focus-card__title">{{ disposalSummary.overallLabel }}</div>
+            </div>
+            <ElTag :type="disposalSummary.overallTagType" effect="light">
+              {{ disposalSummary.overallLabel }}
+            </ElTag>
+          </div>
+          <div class="rectification-focus-card__meta">
+            <span class="rectification-focus-card__label">最近处置动作</span>
+            <strong>{{ disposalSummary.latestActionLabel }}</strong>
+            <span>{{ disposalSummary.latestActionTime || '-' }}</span>
+          </div>
+          <div class="timeline-desc">{{ disposalSummary.latestActionDesc }}</div>
+          <div class="timeline-meta">{{ disposalSummary.nextStep }}</div>
+        </div>
+      </div>
+    </ElCard>
+
+    <ElCard class="section-card" shadow="never">
+      <template #header>
         <div class="card-title">生命周期轨迹</div>
       </template>
       <div class="record-wrapper">
@@ -107,10 +133,22 @@
               >
                 {{ record.rectificationEventLabel }}
               </ElTag>
+              <ElTag
+                v-if="record.disposalEventLabel"
+                :data-testid="`overview-disposal-event-${record.logId}`"
+                :type="record.disposalEventTagType"
+                effect="light"
+                size="small"
+              >
+                {{ record.disposalEventLabel }}
+              </ElTag>
             </div>
             <div class="timeline-desc">{{ record.changeDesc || '暂无变更说明' }}</div>
             <div v-if="record.rectificationEventHint" class="timeline-desc timeline-desc--emphasis">
               {{ record.rectificationEventHint }}
+            </div>
+            <div v-if="record.disposalEventHint" class="timeline-desc timeline-desc--emphasis">
+              {{ record.disposalEventHint }}
             </div>
             <div class="timeline-meta">
               操作人：{{ record.operateBy || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
@@ -129,11 +167,13 @@
     OverviewLifecycleRecord,
     RectificationOverviewSummary
   } from './rectification-overview'
+  import type { DisposalOverviewSummary } from './disposal-overview'
 
   defineProps<{
     detailData: Record<string, any>
     changeLogs: OverviewLifecycleRecord[]
     rectificationSummary: RectificationOverviewSummary
+    disposalSummary: DisposalOverviewSummary
     getStatusLabel: (status?: string) => string
     getSourceTypeLabel: (sourceType?: string) => string
     getAcquireTypeLabel: (acquireType?: string) => string
@@ -179,6 +219,12 @@
     border: 1px solid #dce8f3;
     border-radius: 12px;
     background: linear-gradient(135deg, #fcfeff 0%, #f5fbff 100%);
+  }
+
+  .disposal-focus-card {
+    @extend .rectification-focus-card;
+    background: linear-gradient(135deg, #fffdf8 0%, #fff7ec 100%);
+    border-color: #f3e2c8;
   }
 
   .rectification-focus-card__header,

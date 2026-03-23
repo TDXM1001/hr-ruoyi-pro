@@ -63,6 +63,7 @@
         :detail-data="detailData"
         :change-logs="overviewChangeLogs"
         :rectification-summary="rectificationOverviewSummary"
+        :disposal-summary="disposalOverviewSummary"
         :get-status-label="getStatusLabel"
         :get-source-type-label="getSourceTypeLabel"
         :get-acquire-type-label="getAcquireTypeLabel"
@@ -338,7 +339,10 @@
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
   import DisposalPanel from './components/disposal-panel.vue'
-  import { buildDisposalOverviewSummary } from './components/disposal-overview'
+  import {
+    buildDisposalOverviewSummary,
+    decorateDisposalLifecycleEvent
+  } from './components/disposal-overview'
   import InspectionPanel from './components/inspection-panel.vue'
   import OccupancyPanel from './components/occupancy-panel.vue'
   import OverviewPanel from './components/overview-panel.vue'
@@ -483,7 +487,10 @@
   const disposalRecords = computed(() => lifecycleData.disposalRecords)
   const changeLogs = computed(() => lifecycleData.changeLogs)
   const overviewChangeLogs = computed(() => {
-    return decorateOverviewLifecycleRecords(changeLogs.value)
+    return decorateOverviewLifecycleRecords(changeLogs.value).map((record) => ({
+      ...record,
+      ...decorateDisposalLifecycleEvent(record.changeDesc)
+    }))
   })
 
   const occupancyDrawerTitle = computed(() => {
@@ -1073,6 +1080,10 @@
       RETURN: '归还',
       INVENTORY_CREATE: '发起巡检',
       INVENTORY_RESULT: '登记巡检结果',
+      DISPOSAL_CREATE: '发起处置',
+      DISPOSAL_SUBMIT: '提交处置审批',
+      DISPOSAL_APPROVE: '处置审批通过',
+      DISPOSAL_REJECT: '处置审批驳回',
       DISPOSAL_CONFIRM: '确认处置'
     }
     return mapper[bizType || ''] || bizType || '业务动作'

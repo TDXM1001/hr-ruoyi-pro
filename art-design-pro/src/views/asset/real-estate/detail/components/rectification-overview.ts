@@ -28,6 +28,10 @@ export type OverviewLifecycleRecord = AssetChangeLogRecord & {
   rectificationEventLabel?: string
   rectificationEventTagType?: 'info' | 'warning' | 'success' | 'danger'
   rectificationEventHint?: string
+  disposalEventKey?: string
+  disposalEventLabel?: string
+  disposalEventTagType?: 'info' | 'warning' | 'success' | 'danger'
+  disposalEventHint?: string
 }
 
 type RectificationEventMeta = Pick<
@@ -299,6 +303,9 @@ function resolveRecordLatestTime(record: Partial<AssetRectificationRecord>) {
 
 function resolveRectificationEvent(changeDesc?: string): RectificationEventMeta {
   const normalizedDesc = String(changeDesc || '')
+  if (normalizedDesc.includes('处置')) {
+    return {}
+  }
   const matcher = RECTIFICATION_EVENT_MATCHERS.find((item) => normalizedDesc.includes(item.keyword))
   return matcher?.meta || {}
 }

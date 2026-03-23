@@ -311,6 +311,23 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     })
   })
 
+  it('总览展示处置闭环摘要和最近处置动作', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('处置闭环摘要')
+    expect(wrapper.text()).toContain('已完成处置闭环')
+    expect(wrapper.text()).toContain('最近处置动作')
+    expect(wrapper.text()).toContain('已确认处置')
+    expect(wrapper.text()).toContain('处置已闭环，可回看历史记录并归档留痕。')
+  })
+
   it('总览展示整改闭环摘要和最近整改动作', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
@@ -607,6 +624,84 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.get('[data-testid="overview-rectification-event-304"]').text()).toContain('审批通过')
     expect(wrapper.text()).toContain('整改已完成，下一步需要关注审批是否推进')
     expect(wrapper.text()).toContain('整改审批已通过，可归档回看')
+  })
+
+  it('总览生命周期轨迹对处置节点展示阶段标签', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [],
+        disposalRecords: [
+          {
+            disposalId: 31,
+            disposalNo: 'DIS-2026-0031',
+            disposalType: '报废',
+            disposalStatus: 'CONFIRMED',
+            disposalDate: '2026-03-21',
+            confirmedBy: '资产经理',
+            confirmedTime: '2026-03-21 13:00:00',
+            disposalReason: '设备老化报废'
+          }
+        ],
+        changeLogs: [
+          {
+            logId: 401,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '发起处置：DIS-2026-0031，原因：设备老化报废',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 10:00:00',
+            beforeStatus: 'IN_USE',
+            afterStatus: 'PENDING_DISPOSAL'
+          },
+          {
+            logId: 402,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '提交处置审批：DIS-2026-0031，意见：申请进入报废流程',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 11:00:00',
+            beforeStatus: 'PENDING_DISPOSAL',
+            afterStatus: 'PENDING_DISPOSAL'
+          },
+          {
+            logId: 403,
+            bizType: 'LEDGER_UPDATE',
+            changeDesc: '处置审批通过：DIS-2026-0031，意见：同意处置',
+            operateBy: 'auditor',
+            operateTime: '2026-03-21 12:00:00',
+            beforeStatus: 'PENDING_DISPOSAL',
+            afterStatus: 'PENDING_DISPOSAL'
+          },
+          {
+            logId: 404,
+            bizType: 'DISPOSAL_CONFIRM',
+            changeDesc: '确认处置：DIS-2026-0031，结果：完成报废出清',
+            operateBy: 'asset-admin',
+            operateTime: '2026-03-21 13:00:00',
+            beforeStatus: 'PENDING_DISPOSAL',
+            afterStatus: 'DISPOSED'
+          }
+        ]
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="overview-disposal-event-401"]').text()).toContain('发起处置')
+    expect(wrapper.get('[data-testid="overview-disposal-event-402"]').text()).toContain('提交审批')
+    expect(wrapper.get('[data-testid="overview-disposal-event-403"]').text()).toContain('审批通过')
+    expect(wrapper.get('[data-testid="overview-disposal-event-404"]').text()).toContain('确认处置')
+    expect(wrapper.text()).toContain('处置已进入办理链路，下一步需要补齐申请并推进审批。')
+    expect(wrapper.text()).toContain('处置审批已通过，下一步需要完成最终处置确认。')
+    expect(wrapper.text()).toContain('处置已完成确认，可回看历史并归档留痕。')
   })
 
   it('占用页签支持打开变更占用抽屉', async () => {
