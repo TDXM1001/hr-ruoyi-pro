@@ -340,7 +340,7 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(mockPush).toHaveBeenLastCalledWith({
       path: '/asset/disposal',
       query: {
-        tab: 'record',
+        tab: 'pool',
         assetId: '20001',
         assetCode: 'RE-2026-0001',
         assetName: '深圳研发办公楼A座',

@@ -1069,10 +1069,11 @@
       return
     }
     persistRealEstateDetailTab(assetId.value, 'disposal')
+    const targetTab: 'pool' | 'record' = intent === 'start' ? 'pool' : preferredDisposalTab.value
     router.push({
       path: '/asset/disposal',
       query: {
-        tab: preferredDisposalTab.value,
+        tab: targetTab,
         assetId: String(assetId.value),
         assetCode: detailData.assetCode || '',
         assetName: detailData.assetName || '',
