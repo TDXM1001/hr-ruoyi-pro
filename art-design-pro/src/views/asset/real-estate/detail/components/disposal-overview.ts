@@ -41,6 +41,7 @@ export type DisposalClosureCard = {
   initiateActionLabel: string
   compactTitle: string
   compactDesc: string
+  responsibilityChain: DisposalResponsibilityChain
 }
 
 export type DisposalResponsibilityView = {
@@ -48,6 +49,15 @@ export type DisposalResponsibilityView = {
   actionLabel: string
   hint: string
   latestOwner: string
+}
+
+export type DisposalResponsibilityChain = {
+  recentActionLabel: string
+  recentActionTime: string
+  ownerLabel: string
+  actionLabel: string
+  latestOwnerLabel: string
+  hint: string
 }
 
 type DisposalEventMeta = Pick<
@@ -210,6 +220,12 @@ export function buildDisposalOverviewSummary(
 }
 
 export function buildDisposalClosureCard(summary: DisposalOverviewSummary): DisposalClosureCard {
+  const responsibilityChain = buildDisposalResponsibilityChain(summary.overallStage, {
+    recentActionLabel: summary.latestActionLabel,
+    recentActionTime: summary.latestActionTime,
+    latestOwner: summary.latestActionOwner
+  })
+
   return {
     statusLabel: summary.overallLabel,
     statusTagType: summary.overallTagType,
@@ -225,7 +241,27 @@ export function buildDisposalClosureCard(summary: DisposalOverviewSummary): Disp
     showInitiateAction: summary.showInitiateAction,
     initiateActionLabel: summary.initiateActionLabel,
     compactTitle: `${summary.overallLabel} · ${summary.responsibilityOwnerLabel} / ${summary.responsibilityActionLabel}`,
-    compactDesc: `最近动作：${summary.latestActionLabel} · 最近责任人：${summary.latestActionOwner || '-'}`
+    compactDesc: `最近动作：${summary.latestActionLabel} · 最近责任人：${summary.latestActionOwner || '-'}`,
+    responsibilityChain
+  }
+}
+
+export function buildDisposalResponsibilityChain(
+  stage: DisposalOverviewStage,
+  options: {
+    recentActionLabel?: string
+    recentActionTime?: string
+    latestOwner?: string
+  } = {}
+): DisposalResponsibilityChain {
+  const view = buildDisposalResponsibilityView(stage, options.latestOwner)
+  return {
+    recentActionLabel: options.recentActionLabel || DISPOSAL_STAGE_META[stage].overallLabel,
+    recentActionTime: options.recentActionTime || '-',
+    ownerLabel: view.ownerLabel,
+    actionLabel: view.actionLabel,
+    latestOwnerLabel: view.latestOwner,
+    hint: view.hint
   }
 }
 
@@ -246,6 +282,30 @@ export function decorateDisposalLifecycleEvent(changeDesc?: string): DisposalEve
   const normalizedDesc = String(changeDesc || '')
   const matched = DISPOSAL_EVENT_MATCHERS.find((item) => item.matcher(normalizedDesc))
   return matched?.meta || {}
+}
+
+export function buildDisposalRecordResponsibilityChain(
+  record: AssetDisposalRecord,
+  assetStatus?: string
+) {
+  const stage = resolveDisposalOverviewStage([record], assetStatus)
+  return buildDisposalResponsibilityChain(stage, {
+    recentActionLabel: resolveLatestDisposalAction([record], assetStatus, stage, []).label,
+    recentActionTime: record.confirmedTime || record.disposalDate || '-',
+    latestOwner: record.confirmedBy
+  })
+}
+
+export function buildDisposalLifecycleResponsibilityChain(record: OverviewLifecycleRecord) {
+  if (!record.disposalEventKey) {
+    return undefined
+  }
+
+  return buildDisposalResponsibilityChain(record.disposalEventKey as DisposalOverviewStage, {
+    recentActionLabel: record.disposalEventLabel,
+    recentActionTime: record.operateTime,
+    latestOwner: record.operateBy
+  })
 }
 
 export function resolveDisposalOverviewStage(

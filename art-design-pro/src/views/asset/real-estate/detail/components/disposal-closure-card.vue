@@ -16,25 +16,12 @@
       <span>{{ card.latestActionTime || '-' }}</span>
     </div>
 
-    <div class="disposal-closure-card__grid">
-      <div class="disposal-closure-card__item">
-        <span>当前责任归口</span>
-        <strong>{{ card.responsibilityOwnerLabel }}</strong>
-      </div>
-      <div class="disposal-closure-card__item">
-        <span>责任动作</span>
-        <strong>{{ card.responsibilityActionLabel }}</strong>
-      </div>
-      <div class="disposal-closure-card__item">
-        <span>最近责任人</span>
-        <strong>{{ card.latestOwnerLabel }}</strong>
-      </div>
-    </div>
-
     <div class="disposal-closure-card__desc">{{ card.latestActionDesc }}</div>
-    <div class="disposal-closure-card__desc disposal-closure-card__desc--emphasis">
-      {{ card.responsibilityHint }}
-    </div>
+    <DisposalResponsibilityChain
+      :chain="card.responsibilityChain"
+      :testid-prefix="testidPrefix"
+      mode="card"
+    />
 
     <div class="disposal-closure-card__next-step">
       <div class="disposal-closure-card__next-label">下一步建议</div>
@@ -49,6 +36,7 @@
 
 <script setup lang="ts">
   import type { DisposalClosureCard } from './disposal-overview'
+  import DisposalResponsibilityChain from './disposal-responsibility-chain.vue'
 
   defineProps<{
     card: DisposalClosureCard
@@ -90,42 +78,12 @@
     color: #3a2d1b;
   }
 
-  .disposal-closure-card__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 10px;
-  }
-
-  .disposal-closure-card__item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 10px 12px;
-    border: 1px solid #f3e7d8;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.75);
-
-    span {
-      font-size: 12px;
-      color: #7b6d59;
-    }
-
-    strong {
-      color: #3a2d1b;
-      font-size: 14px;
-    }
-  }
-
   .disposal-closure-card__desc,
   .disposal-closure-card__next-value {
     font-size: 12px;
     line-height: 1.7;
     color: #5f7392;
     word-break: break-word;
-  }
-
-  .disposal-closure-card__desc--emphasis {
-    color: #7b5a20;
   }
 
   .disposal-closure-card__actions {

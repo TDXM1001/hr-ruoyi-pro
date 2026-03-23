@@ -136,15 +136,13 @@
             <div v-if="record.disposalEventHint" class="timeline-desc timeline-desc--emphasis">
               {{ record.disposalEventHint }}
             </div>
-            <div
-              v-if="getDisposalResponsibilityView(record)"
-              :data-testid="`overview-disposal-responsibility-${record.logId}`"
-              class="timeline-desc"
-            >
-              最近责任归口：{{ getDisposalResponsibilityView(record)?.ownerLabel }} · 责任动作：{{
-                getDisposalResponsibilityView(record)?.actionLabel
-              }} · 最近责任人：{{ getDisposalResponsibilityView(record)?.latestOwner }}
-            </div>
+            <DisposalResponsibilityChain
+              v-if="getDisposalResponsibilityChain(record)"
+              :chain="getDisposalResponsibilityChain(record)!"
+              :testid-prefix="`overview-disposal-responsibility-${record.logId}`"
+              mode="inline"
+              :show-hint="false"
+            />
             <div class="timeline-meta">
               操作人：{{ record.operateBy || '-' }}，状态：{{ record.beforeStatus || '-' }} ->
               {{ record.afterStatus || '-' }}
@@ -163,12 +161,12 @@
     RectificationOverviewSummary
   } from './rectification-overview'
   import {
-    buildDisposalResponsibilityView,
+    buildDisposalLifecycleResponsibilityChain,
     type DisposalClosureCard as DisposalClosureCardView,
-    type DisposalOverviewStage,
     type DisposalOverviewSummary
   } from './disposal-overview'
   import DisposalClosureCard from './disposal-closure-card.vue'
+  import DisposalResponsibilityChain from './disposal-responsibility-chain.vue'
 
   defineProps<{
     detailData: Record<string, any>
@@ -183,14 +181,8 @@
     formatArea: (value?: number | string) => string
   }>()
 
-  const getDisposalResponsibilityView = (record: OverviewLifecycleRecord) => {
-    if (!record.disposalEventKey) {
-      return undefined
-    }
-    return buildDisposalResponsibilityView(
-      record.disposalEventKey as DisposalOverviewStage,
-      record.operateBy
-    )
+  const getDisposalResponsibilityChain = (record: OverviewLifecycleRecord) => {
+    return buildDisposalLifecycleResponsibilityChain(record)
   }
 </script>
 

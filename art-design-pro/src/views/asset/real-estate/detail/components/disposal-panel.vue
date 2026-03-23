@@ -46,17 +46,11 @@
             <div class="record-item__desc">
               确认人：{{ record.confirmedBy || '-' }}，确认时间：{{ record.confirmedTime || '-' }}
             </div>
-            <div
-              :data-testid="`disposal-record-responsibility-${record.disposalId}`"
-              class="record-item__desc record-item__desc--responsibility"
-            >
-              最近责任归口：{{ getRecordResponsibilityView(record).ownerLabel }} · 责任动作：{{
-                getRecordResponsibilityView(record).actionLabel
-              }} · 最近责任人：{{ getRecordResponsibilityView(record).latestOwner }}
-            </div>
-            <div class="record-item__desc record-item__desc--emphasis">
-              {{ getRecordResponsibilityView(record).hint }}
-            </div>
+            <DisposalResponsibilityChain
+              :chain="getRecordResponsibilityChain(record)"
+              :testid-prefix="`disposal-record-responsibility-${record.disposalId}`"
+              mode="inline"
+            />
           </div>
         </div>
         <ElEmpty v-else description="暂无处置记录" :image-size="68" />
@@ -68,11 +62,11 @@
 <script setup lang="ts">
   import type { AssetDisposalRecord } from '@/api/asset/ledger'
   import {
-    buildDisposalResponsibilityView,
-    resolveDisposalOverviewStage,
+    buildDisposalRecordResponsibilityChain,
     type DisposalClosureCard as DisposalClosureCardView
   } from './disposal-overview'
   import DisposalClosureCard from './disposal-closure-card.vue'
+  import DisposalResponsibilityChain from './disposal-responsibility-chain.vue'
 
   defineEmits<{
     'jump-disposal': [intent?: 'start' | 'view']
@@ -84,19 +78,10 @@
     disposalClosureCard: DisposalClosureCardView
   }>()
 
-  const getRecordResponsibilityView = (record: AssetDisposalRecord) => {
-    const stage = resolveDisposalOverviewStage([record], props.detailData?.assetStatus)
-    return buildDisposalResponsibilityView(stage, record.confirmedBy)
+  const getRecordResponsibilityChain = (record: AssetDisposalRecord) => {
+    return buildDisposalRecordResponsibilityChain(record, props.detailData?.assetStatus)
   }
 </script>
 
 <style scoped>
-  .record-item__desc--emphasis {
-    color: var(--el-color-primary);
-  }
-
-  .record-item__desc--responsibility {
-    color: var(--el-text-color-primary);
-    font-weight: 500;
-  }
 </style>

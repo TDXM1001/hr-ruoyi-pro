@@ -287,7 +287,8 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(disposalSummary.text()).toContain('最近责任人：资产经理')
 
     const overviewClosureCard = wrapper.get('[data-testid="overview-disposal-closure-card"]')
-    expect(overviewClosureCard.text()).toContain('当前责任归口')
+    expect(overviewClosureCard.text()).toContain('最近动作责任链')
+    expect(overviewClosureCard.text()).toContain('责任归口')
     expect(overviewClosureCard.text()).toContain('资产管理员')
     expect(overviewClosureCard.text()).toContain('责任动作')
     expect(overviewClosureCard.text()).toContain('归档回看')
@@ -298,7 +299,8 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     await flushPromises()
 
     const disposalClosureCard = wrapper.get('[data-testid="disposal-closure-card"]')
-    expect(disposalClosureCard.text()).toContain('当前责任归口')
+    expect(disposalClosureCard.text()).toContain('最近动作责任链')
+    expect(disposalClosureCard.text()).toContain('责任归口')
     expect(disposalClosureCard.text()).toContain('资产管理员')
     expect(disposalClosureCard.text()).toContain('责任动作')
     expect(disposalClosureCard.text()).toContain('归档回看')
@@ -379,7 +381,8 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     await flushPromises()
 
     const disposalClosureCard = wrapper.get('[data-testid="disposal-closure-card"]')
-    expect(disposalClosureCard.text()).toContain('当前责任归口')
+    expect(disposalClosureCard.text()).toContain('最近动作责任链')
+    expect(disposalClosureCard.text()).toContain('责任归口')
     expect(disposalClosureCard.text()).toContain('资产管理员')
     expect(disposalClosureCard.text()).toContain('责任动作')
     expect(disposalClosureCard.text()).toContain('发起处置')
@@ -415,23 +418,25 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await flushPromises()
 
-    expect(wrapper.text()).toContain('当前责任归口')
-    expect(wrapper.text()).toContain('资产管理员')
-    expect(wrapper.text()).toContain('归档回看')
-    expect(wrapper.text()).toContain('处置已闭环，由资产管理员回看结果并完成留痕归档。')
-    expect(wrapper.text()).toContain('最近责任人')
-    expect(wrapper.text()).toContain('资产经理')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('最近动作责任链')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('资产管理员')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('归档回看')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain(
+      '处置已闭环，由资产管理员回看结果并完成留痕归档。'
+    )
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('资产经理')
 
     const vm = wrapper.vm as any
     vm.handleTabChange('disposal')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('当前责任归口')
-    expect(wrapper.text()).toContain('资产管理员')
-    expect(wrapper.text()).toContain('归档回看')
-    expect(wrapper.text()).toContain('处置已闭环，由资产管理员回看结果并完成留痕归档。')
-    expect(wrapper.text()).toContain('最近责任人')
-    expect(wrapper.text()).toContain('资产经理')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('最近动作责任链')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('资产管理员')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('归档回看')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain(
+      '处置已闭环，由资产管理员回看结果并完成留痕归档。'
+    )
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('资产经理')
   })
 
   it('处置审批中场景统一提示当前责任归口和下一步动作', async () => {
@@ -527,6 +532,36 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     )
     expect(wrapper.get('[data-testid="disposal-record-responsibility-9"]').text()).toContain(
       '资产经理'
+    )
+  })
+
+  it('总览、处置页签、记录卡片和生命周期节点统一展示最近动作责任链', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('最近动作责任链')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('已确认处置')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('资产管理员')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('归档回看')
+    expect(wrapper.get('[data-testid="overview-disposal-chain"]').text()).toContain('资产经理')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('最近动作责任链')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('已确认处置')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('资产管理员')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('归档回看')
+    expect(wrapper.get('[data-testid="disposal-chain"]').text()).toContain('资产经理')
+    expect(wrapper.get('[data-testid="disposal-record-responsibility-9"]').text()).toContain(
+      '最近动作责任链：已确认处置'
     )
   })
 
@@ -901,6 +936,9 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(wrapper.get('[data-testid="overview-disposal-event-402"]').text()).toContain('提交审批')
     expect(wrapper.get('[data-testid="overview-disposal-event-403"]').text()).toContain('审批通过')
     expect(wrapper.get('[data-testid="overview-disposal-event-404"]').text()).toContain('确认处置')
+    expect(wrapper.get('[data-testid="overview-disposal-responsibility-402"]').text()).toContain(
+      '最近动作责任链：提交审批'
+    )
     expect(wrapper.get('[data-testid="overview-disposal-responsibility-402"]').text()).toContain(
       '审批责任岗'
     )
