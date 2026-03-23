@@ -1057,6 +1057,8 @@
                     <strong>{{ item.name }}</strong>
                     <span>全局策略：{{ buildImportPolicyLabel(item.globalPolicy) }}</span>
                     <span>逐条策略：{{ item.itemPolicies.length }} 项</span>
+                    <span>创建时间：{{ item.createdAt }}</span>
+                    <span>最近应用：{{ item.lastAppliedAt || '暂无' }}</span>
                   </div>
                   <div class="governance-panel__item-actions">
                     <button
@@ -1070,12 +1072,38 @@
                     <button
                       type="button"
                       class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-policy-template-detail-${index}`"
+                      @click="openPolicyTemplateDetail(item.key)"
+                    >
+                      详情
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
                       :data-testid="`occupancy-policy-template-delete-${index}`"
                       @click="removeImportPolicyTemplate(item.key)"
                     >
                       删除
                     </button>
                   </div>
+                </div>
+              </div>
+              <div
+                v-if="selectedPolicyTemplate"
+                class="governance-panel__detail"
+                data-testid="occupancy-policy-template-detail-panel"
+              >
+                <div class="governance-panel__detail-title">
+                  {{ selectedPolicyTemplate.name }}
+                </div>
+                <div class="governance-panel__detail-grid">
+                  <span>创建时间：{{ selectedPolicyTemplate.createdAt }}</span>
+                  <span>全局策略：{{ buildImportPolicyLabel(selectedPolicyTemplate.globalPolicy) }}</span>
+                  <span>最近应用：{{ selectedPolicyTemplate.lastAppliedAt || '暂无' }}</span>
+                  <span>最近命中：{{ selectedPolicyTemplate.lastMatchedCount ?? 0 }} 项</span>
+                </div>
+                <div class="governance-panel__detail-desc">
+                  {{ selectedPolicyTemplate.lastAppliedSummary || '暂无最近应用结果摘要。' }}
                 </div>
               </div>
             </div>
@@ -1103,6 +1131,22 @@
                     <button
                       type="button"
                       class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-snapshot-compare-left-${index}`"
+                      @click="markSnapshotCompareSide('left', item.key)"
+                    >
+                      对比 A
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      :data-testid="`occupancy-snapshot-compare-right-${index}`"
+                      @click="markSnapshotCompareSide('right', item.key)"
+                    >
+                      对比 B
+                    </button>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
                       :data-testid="`occupancy-snapshot-restore-${index}`"
                       @click="applySavedTrendSnapshot(item)"
                     >
@@ -1119,6 +1163,25 @@
                   </div>
                 </div>
               </div>
+              <div
+                v-if="snapshotCompareItems.length"
+                class="governance-panel__detail"
+                data-testid="occupancy-snapshot-compare-panel"
+              >
+                <div class="governance-panel__detail-title">
+                  {{ selectedSnapshotCompareLeft?.name }} vs {{ selectedSnapshotCompareRight?.name }}
+                </div>
+                <div class="governance-panel__detail-desc">{{ snapshotCompareSummary }}</div>
+                <div
+                  v-for="item in snapshotCompareItems"
+                  :key="item.key"
+                  class="governance-panel__compare-item"
+                >
+                  <strong>{{ item.label }}</strong>
+                  <span>{{ item.leftValue }} / {{ item.rightValue }}</span>
+                  <span>{{ item.changed ? '存在差异' : '一致' }}</span>
+                </div>
+              </div>
             </div>
 
             <div class="governance-panel__section">
@@ -1126,12 +1189,58 @@
               <div class="governance-panel__section-desc">
                 记录趋势、来源和全量重置操作，便于回看治理动作。
               </div>
+              <div class="governance-panel__form">
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="resetLogFilterScope === 'ALL_RECORDS' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-reset-log-filter-all"
+                  @click="resetLogFilterScope = 'ALL_RECORDS'"
+                >
+                  全部记录
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="resetLogFilterScope === 'EVENTS' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-reset-log-filter-events"
+                  @click="resetLogFilterScope = 'EVENTS'"
+                >
+                  只重置趋势
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="resetLogFilterScope === 'COUNTS' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-reset-log-filter-counts"
+                  @click="resetLogFilterScope = 'COUNTS'"
+                >
+                  只重置来源
+                </button>
+                <input
+                  v-model="resetLogKeyword"
+                  data-testid="occupancy-reset-log-keyword"
+                  type="text"
+                  class="preset-name-field__input"
+                  placeholder="搜索重置摘要"
+                />
+                <ElButton
+                  data-testid="occupancy-reset-log-export"
+                  size="small"
+                  type="primary"
+                  plain
+                  :disabled="!filteredLinkResetLogs.length"
+                  @click="exportFilteredResetLogs"
+                >
+                  导出记录
+                </ElButton>
+              </div>
               <div
-                v-if="linkResetLogs.length"
+                v-if="filteredLinkResetLogs.length"
                 class="governance-panel__list"
               >
                 <div
-                  v-for="(item, index) in linkResetLogs.slice(0, 5)"
+                  v-for="(item, index) in filteredLinkResetLogs.slice(0, 5)"
                   :key="item.key"
                   class="governance-panel__item"
                   :data-testid="`occupancy-reset-log-item-${index}`"
@@ -1674,6 +1783,9 @@
     createdAt: string
     globalPolicy: ImportConflictPolicy
     itemPolicies: ImportPolicyTemplateItem[]
+    lastAppliedAt?: string
+    lastAppliedSummary?: string
+    lastMatchedCount?: number
   }
 
   interface LinkResetLogState {
@@ -1682,6 +1794,8 @@
     scope: LinkStatsResetScope
     summary: string
   }
+
+  type ResetLogFilterScope = 'ALL_RECORDS' | LinkStatsResetScope
 
   const props = defineProps<{
     detailData: Record<string, any>
@@ -1714,6 +1828,11 @@
   const presetImportPolicy = ref<ImportConflictPolicy>('RENAME')
   const policyTemplateName = ref('')
   const trendSnapshotName = ref('')
+  const selectedPolicyTemplateKey = ref('')
+  const selectedSnapshotCompareLeftKey = ref('')
+  const selectedSnapshotCompareRightKey = ref('')
+  const resetLogFilterScope = ref<ResetLogFilterScope>('ALL_RECORDS')
+  const resetLogKeyword = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
@@ -1980,11 +2099,132 @@
 
   const visibleSavedTrendSnapshots = computed(() => savedTrendSnapshotHistory.value.slice(0, 5))
 
+  const selectedPolicyTemplate = computed(() => {
+    if (!importPolicyTemplates.value.length) {
+      return null
+    }
+    return (
+      importPolicyTemplates.value.find((item) => item.key === selectedPolicyTemplateKey.value) ||
+      importPolicyTemplates.value[0]
+    )
+  })
+
+  const selectedSnapshotCompareLeft = computed(() => {
+    return visibleSavedTrendSnapshots.value.find(
+      (item) => item.key === selectedSnapshotCompareLeftKey.value
+    )
+  })
+
+  const selectedSnapshotCompareRight = computed(() => {
+    return visibleSavedTrendSnapshots.value.find(
+      (item) => item.key === selectedSnapshotCompareRightKey.value
+    )
+  })
+
+  const filteredLinkResetLogs = computed(() => {
+    return linkResetLogs.value.filter((item) => {
+      if (resetLogFilterScope.value !== 'ALL_RECORDS' && item.scope !== resetLogFilterScope.value) {
+        return false
+      }
+      if (!resetLogKeyword.value.trim()) {
+        return true
+      }
+      const keywordValue = resetLogKeyword.value.trim().toLowerCase()
+      return (
+        buildResetScopeLabel(item.scope).toLowerCase().includes(keywordValue) ||
+        item.summary.toLowerCase().includes(keywordValue) ||
+        item.executedAt.toLowerCase().includes(keywordValue)
+      )
+    })
+  })
+
   const historyDrilldownTip = computed(() => {
     if (!trendDrilldown.value) {
       return ''
     }
     return `当前来自趋势钻取：${trendDrilldown.value.date}`
+  })
+
+  const snapshotCompareItems = computed(() => {
+    const leftSnapshot = selectedSnapshotCompareLeft.value
+    const rightSnapshot = selectedSnapshotCompareRight.value
+    if (!leftSnapshot || !rightSnapshot || leftSnapshot.key === rightSnapshot.key) {
+      return []
+    }
+
+    const resolveWindowLabel = (value: LinkStatsWindow) =>
+      value === '30D' ? '近 30 天' : '近 7 天'
+    const resolveSortLabel = (value: SortDirection) =>
+      value === 'ASC' ? '最早在前' : '最新在前'
+    const resolveTimeLabel = (state: TrendFilterSnapshot) => {
+      if (state.timeFilter === 'CUSTOM') {
+        return `${state.customRangeAppliedStart || '-'} ~ ${state.customRangeAppliedEnd || '-'}`
+      }
+      if (state.timeFilter === '90D') {
+        return '近 90 天'
+      }
+      if (state.timeFilter === '30D') {
+        return '近 30 天'
+      }
+      if (state.timeFilter === '7D') {
+        return '近 7 天'
+      }
+      return '全部时间'
+    }
+
+    const compareItems = [
+      {
+        key: 'window',
+        label: '时间窗',
+        leftValue: resolveWindowLabel(leftSnapshot.linkStatsWindow),
+        rightValue: resolveWindowLabel(rightSnapshot.linkStatsWindow)
+      },
+      {
+        key: 'drilldown',
+        label: '钻取日期',
+        leftValue: leftSnapshot.drilldown?.date || '-',
+        rightValue: rightSnapshot.drilldown?.date || '-'
+      },
+      {
+        key: 'status',
+        label: '状态筛选',
+        leftValue: leftSnapshot.filterState.statusFilter,
+        rightValue: rightSnapshot.filterState.statusFilter
+      },
+      {
+        key: 'time',
+        label: '时间筛选',
+        leftValue: resolveTimeLabel(leftSnapshot.filterState),
+        rightValue: resolveTimeLabel(rightSnapshot.filterState)
+      },
+      {
+        key: 'keyword',
+        label: '关键字',
+        leftValue: leftSnapshot.filterState.keyword || '-',
+        rightValue: rightSnapshot.filterState.keyword || '-'
+      },
+      {
+        key: 'sort',
+        label: '排序方式',
+        leftValue: resolveSortLabel(leftSnapshot.filterState.sortDirection),
+        rightValue: resolveSortLabel(rightSnapshot.filterState.sortDirection)
+      }
+    ]
+
+    return compareItems.map((item) => ({
+      ...item,
+      changed: item.leftValue !== item.rightValue
+    }))
+  })
+
+  const snapshotCompareSummary = computed(() => {
+    if (!snapshotCompareItems.value.length) {
+      return ''
+    }
+    const changedCount = snapshotCompareItems.value.filter((item) => item.changed).length
+    return changedCount
+      ? `核心变化摘要：共 ${changedCount} 项存在差异`
+      : '核心变化摘要：两个快照当前没有差异'
   })
 
   const annotationCompareItems = computed(() => {
@@ -3094,6 +3334,9 @@
               const key = String(item?.key || '').trim()
               const createdAt = String(item?.createdAt || '').trim()
               const globalPolicy = String(item?.globalPolicy || '') as ImportConflictPolicy
+              const lastAppliedAt = String(item?.lastAppliedAt || '').trim()
+              const lastAppliedSummary = String(item?.lastAppliedSummary || '').trim()
+              const lastMatchedCount = Number(item?.lastMatchedCount || 0)
               const itemPolicies = Array.isArray(item?.itemPolicies)
                 ? item.itemPolicies
                     .map((policyItem) => {
@@ -3123,7 +3366,10 @@
                 name,
                 createdAt,
                 globalPolicy,
-                itemPolicies
+                itemPolicies,
+                lastAppliedAt: lastAppliedAt || undefined,
+                lastAppliedSummary: lastAppliedSummary || undefined,
+                lastMatchedCount: Number.isFinite(lastMatchedCount) ? lastMatchedCount : undefined
               }
             })
             .filter((item): item is ImportPolicyTemplateState => !!item)
@@ -3200,28 +3446,44 @@
     return `policy-template-${Date.now()}-${importPolicyTemplates.value.length}`
   }
 
+  const openPolicyTemplateDetail = (templateKey: string) => {
+    selectedPolicyTemplateKey.value = templateKey
+  }
+
   const saveImportPolicyTemplate = () => {
     if (!presetImportPreviewItems.value.length) {
       return
     }
     const templateName = policyTemplateName.value.trim() || `策略模板 ${importPolicyTemplates.value.length + 1}`
+    const nextTemplate: ImportPolicyTemplateState = {
+      key: buildImportPolicyTemplateKey(),
+      name: templateName,
+      createdAt: new Date().toISOString(),
+      globalPolicy: presetImportPolicy.value,
+      itemPolicies: presetImportPreviewItems.value
+        .filter((item) => item.conflictType !== 'none')
+        .map((item) => ({
+          label: item.label,
+          conflictType: item.conflictType,
+          effectivePolicy: getEffectiveImportPolicy(item)
+        }))
+    }
     importPolicyTemplates.value = [
-      {
-        key: buildImportPolicyTemplateKey(),
-        name: templateName,
-        createdAt: new Date().toISOString(),
-        globalPolicy: presetImportPolicy.value,
-        itemPolicies: presetImportPreviewItems.value
-          .filter((item) => item.conflictType !== 'none')
-          .map((item) => ({
-            label: item.label,
-            conflictType: item.conflictType,
-            effectivePolicy: getEffectiveImportPolicy(item)
-          }))
-      },
+      nextTemplate,
       ...importPolicyTemplates.value
     ].slice(0, 10)
+    selectedPolicyTemplateKey.value = nextTemplate.key
     policyTemplateName.value = ''
+  }
+
+  const buildPolicyTemplateApplySummary = (
+    matchedCount: number,
+    globalPolicy: ImportConflictPolicy
+  ) => {
+    if (!matchedCount) {
+      return `本次未命中预览冲突项，保留全局策略 ${buildImportPolicyLabel(globalPolicy)}`
+    }
+    return `本次命中 ${matchedCount} 项冲突，按 ${buildImportPolicyLabel(globalPolicy)} 回填`
   }
 
   const applyImportPolicyTemplate = (templateKey: string) => {
@@ -3230,6 +3492,7 @@
       return
     }
     presetImportPolicy.value = targetTemplate.globalPolicy
+    let matchedCount = 0
     presetImportPreviewItems.value = presetImportPreviewItems.value.map((item) => {
       const matched = targetTemplate.itemPolicies.find(
         (policyItem) => policyItem.label === item.label && policyItem.conflictType === item.conflictType
@@ -3240,6 +3503,7 @@
           policyOverride: 'DEFAULT'
         }
       }
+      matchedCount += 1
       if (item.conflictType === 'system' && matched.effectivePolicy === 'OVERWRITE') {
         return {
           ...item,
@@ -3251,10 +3515,32 @@
         policyOverride: matched.effectivePolicy
       }
     })
+    importPolicyTemplates.value = importPolicyTemplates.value.map((item) =>
+      item.key === templateKey
+        ? {
+            ...item,
+            lastAppliedAt: new Date().toISOString(),
+            lastAppliedSummary: buildPolicyTemplateApplySummary(matchedCount, item.globalPolicy),
+            lastMatchedCount: matchedCount
+          }
+        : item
+    )
+    selectedPolicyTemplateKey.value = templateKey
   }
 
   const removeImportPolicyTemplate = (templateKey: string) => {
     importPolicyTemplates.value = importPolicyTemplates.value.filter((item) => item.key !== templateKey)
+    if (selectedPolicyTemplateKey.value === templateKey) {
+      selectedPolicyTemplateKey.value = importPolicyTemplates.value[0]?.key || ''
+    }
+  }
+
+  const markSnapshotCompareSide = (side: 'left' | 'right', snapshotKey: string) => {
+    if (side === 'left') {
+      selectedSnapshotCompareLeftKey.value = snapshotKey
+      return
+    }
+    selectedSnapshotCompareRightKey.value = snapshotKey
   }
 
   const buildImportConflictLabel = (conflictType: ImportConflictType) => {
@@ -3282,6 +3568,35 @@
       ALL: '全部重置'
     }
     return mapper[scope]
+  }
+
+  const exportFilteredResetLogs = () => {
+    if (!filteredLinkResetLogs.value.length) {
+      return
+    }
+
+    const content = JSON.stringify(
+      {
+        version: 1,
+        filters: {
+          scope: resetLogFilterScope.value,
+          keyword: resetLogKeyword.value.trim()
+        },
+        records: filteredLinkResetLogs.value
+      },
+      null,
+      2
+    )
+
+    const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${props.detailData.assetCode || 'asset'}-occupancy-reset-log-audit.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const resolveImportConflictType = (label: string): ImportConflictType => {
@@ -4740,6 +5055,41 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+  }
+
+  .governance-panel__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgb(238 244 255 / 72%);
+    box-shadow: inset 0 0 0 1px rgb(191 219 254 / 70%);
+  }
+
+  .governance-panel__detail-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #18233a;
+  }
+
+  .governance-panel__detail-grid,
+  .governance-panel__compare-item {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #51627d;
+  }
+
+  .governance-panel__detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .governance-panel__detail-desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #51627d;
   }
 
   .preset-name-panel {

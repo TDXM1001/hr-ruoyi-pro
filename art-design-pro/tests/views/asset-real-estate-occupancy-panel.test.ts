@@ -2682,6 +2682,228 @@ describe('OccupancyPanel occupancy flow', () => {
       '只重置趋势'
     )
   })
+
+  it('shows policy template audit detail and latest apply summary', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-copy-name"]').setValue('第十六批审计预设')
+    await wrapper.get('[data-testid="occupancy-preset-copy-apply"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-preset-import-input"]').setValue(`{
+  "version": 1,
+  "presets": [
+    {
+      "label": "第十六批审计预设",
+      "fields": ["occupancyNo", "releaseReason"]
+    }
+  ]
+}`)
+    await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('审计模板')
+    await wrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-policy-template-apply-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-policy-template-detail-0"]').trigger('click')
+
+    const detailPanel = wrapper.get('[data-testid="occupancy-policy-template-detail-panel"]')
+    expect(detailPanel.text()).toContain('审计模板')
+    expect(detailPanel.text()).toContain('最近应用')
+    expect(detailPanel.text()).toContain('最近命中')
+  })
+
+  it('compares two saved trend snapshots and shows diff summary', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-22T12:00:00+08:00'))
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-link-stats:RE-2026-0001',
+      JSON.stringify({
+        counts: {
+          overview: 0,
+          inspection: 2,
+          rectification: 1,
+          disposal: 0
+        },
+        lastTargetKey: 'rectification',
+        lastTargetLabel: '看整改进展',
+        events: [
+          {
+            targetKey: 'inspection',
+            targetLabel: '看巡检联动',
+            occurredAt: '2026-03-21T09:00:00+08:00'
+          },
+          {
+            targetKey: 'rectification',
+            targetLabel: '看整改进展',
+            occurredAt: '2026-03-22T10:00:00+08:00'
+          }
+        ]
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-21',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-22"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('今日快照')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-clear"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('昨日快照')
+    await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-snapshot-compare-left-0"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-snapshot-compare-right-1"]').trigger('click')
+
+    const comparePanel = wrapper.get('[data-testid="occupancy-snapshot-compare-panel"]')
+    expect(comparePanel.text()).toContain('昨日快照')
+    expect(comparePanel.text()).toContain('今日快照')
+    expect(comparePanel.text()).toContain('核心变化摘要')
+  })
+
+  it('filters reset logs by scope and keyword', async () => {
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-reset-logs:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'reset-events',
+          executedAt: '2026-03-22T10:00:00+08:00',
+          scope: 'EVENTS',
+          summary: '已清空趋势事件 2 条'
+        },
+        {
+          key: 'reset-counts',
+          executedAt: '2026-03-22T11:00:00+08:00',
+          scope: 'COUNTS',
+          summary: '已清空来源计数 4 次'
+        }
+      ])
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-reset-log-filter-counts"]').trigger('click')
+    expect(wrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain('只重置来源')
+    expect(wrapper.find('[data-testid="occupancy-reset-log-item-1"]').exists()).toBe(false)
+
+    await wrapper.get('[data-testid="occupancy-reset-log-keyword"]').setValue('计数')
+    expect(wrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain(
+      '已清空来源计数 4 次'
+    )
+    expect(wrapper.find('[data-testid="occupancy-reset-log-item-1"]').exists()).toBe(false)
+  })
+
+  it('exports filtered reset logs as json', async () => {
+    const createObjectURL = vi.fn(() => 'blob:occupancy-reset-logs')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-reset-logs:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'reset-events',
+          executedAt: '2026-03-22T10:00:00+08:00',
+          scope: 'EVENTS',
+          summary: '已清空趋势事件 2 条'
+        },
+        {
+          key: 'reset-counts',
+          executedAt: '2026-03-22T11:00:00+08:00',
+          scope: 'COUNTS',
+          summary: '已清空来源计数 4 次'
+        }
+      ])
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-reset-log-filter-counts"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-reset-log-export"]').trigger('click')
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('COUNTS')
+    expect(content).toContain('已清空来源计数 4 次')
+    expect(content).not.toContain('已清空趋势事件 2 条')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
+  })
 })
 
 
