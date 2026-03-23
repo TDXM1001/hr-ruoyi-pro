@@ -225,6 +225,10 @@ describe('AssetDisposalPage 上下文点测', () => {
     )
     expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('RE-2026-0002')
     expect(wrapper.get('[data-testid="disposal-source-context"]').text()).toContain('深圳测试不动产B座')
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('当前锁定范围')
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('处置记录')
+    expect(wrapper.get('[data-testid="disposal-source-next-step"]').text()).toContain('下一步建议')
+    expect(wrapper.find('[data-testid="disposal-record-scope-alert"]').exists()).toBe(false)
 
     await wrapper.get('[data-testid="disposal-return-real-estate"]').trigger('click')
 
@@ -280,6 +284,10 @@ describe('AssetDisposalPage 上下文点测', () => {
     expect(wrapper.get('[data-testid="disposal-source-banner"]').text()).toContain(
       '请继续发起或补齐处置流程'
     )
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('当前锁定范围')
+    expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('待处置资产池')
+    expect(wrapper.get('[data-testid="disposal-source-next-step"]').text()).toContain('下一步建议')
+    expect(wrapper.find('[data-testid="disposal-pool-scope-alert"]').exists()).toBe(false)
   })
 
   it('无来源参数时不展示来源横幅和返回入口', async () => {
@@ -310,5 +318,6 @@ describe('AssetDisposalPage 上下文点测', () => {
 
     expect(wrapper.find('[data-testid="disposal-source-banner"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="disposal-return-real-estate"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="disposal-record-scope-alert"]').exists()).toBe(true)
   })
 })

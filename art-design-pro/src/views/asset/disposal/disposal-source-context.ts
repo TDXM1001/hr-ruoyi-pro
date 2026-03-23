@@ -13,7 +13,9 @@ export type DisposalSourceContext = {
   assetName: string
   preferredTab: 'pool' | 'record'
   preferredTabLabel: string
-  scopedDescription: string
+  scopeTitle: string
+  scopeDescription: string
+  nextStepSuggestion: string
   returnRoute?: {
     path: string
     query: Record<string, string>
@@ -56,10 +58,17 @@ export function buildDisposalSourceContext(query: Record<string, unknown>): Disp
         ? '当前进入的是处置办理视图，请继续发起或补齐处置流程。'
         : '当前来源于不动产详情壳的处置联动入口。'
 
-  const scopedDescription =
+  const scopeTitle = '当前锁定范围'
+  const scopeDescription =
     preferredTab === 'record'
-      ? `当前将优先查看资产 ${assetCode || '-'} 的处置记录。`
-      : `当前将优先查看资产 ${assetCode || '-'} 是否已进入待处置资产池。`
+      ? `当前已按资产 ${assetCode || '-'} 锁定处置记录视图。`
+      : `当前已按资产 ${assetCode || '-'} 锁定待处置资产池视图。`
+  const nextStepSuggestion =
+    intent === 'view'
+      ? '请先核对该资产的处置记录、审批进展和最近责任归口，再决定是否返回不动产详情继续回看。'
+      : intent === 'start'
+        ? '请先确认该资产是否出现在待处置资产池，再继续提交处置审批或补齐处置资料。'
+        : '当前来源于不动产详情壳的处置联动入口，可按需查看记录或继续办理。'
 
   return {
     hasSource,
@@ -74,7 +83,9 @@ export function buildDisposalSourceContext(query: Record<string, unknown>): Disp
     assetName,
     preferredTab,
     preferredTabLabel,
-    scopedDescription,
+    scopeTitle,
+    scopeDescription,
+    nextStepSuggestion,
     returnRoute: assetId
       ? {
           path: `/asset/real-estate/detail/${assetId}`,

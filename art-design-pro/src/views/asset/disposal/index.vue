@@ -55,7 +55,17 @@
           <strong>{{ sourceContext.preferredTabLabel }}</strong>
         </div>
       </div>
-      <div class="source-context-card__hint">{{ sourceContext.scopedDescription }}</div>
+      <div class="source-context-card__panels">
+        <div data-testid="disposal-source-scope" class="source-context-card__panel">
+          <span>{{ sourceContext.scopeTitle }}</span>
+          <strong>{{ sourceContext.preferredTabLabel }}</strong>
+          <p>{{ sourceContext.scopeDescription }}</p>
+        </div>
+        <div data-testid="disposal-source-next-step" class="source-context-card__panel">
+          <span>下一步建议</span>
+          <p>{{ sourceContext.nextStepSuggestion }}</p>
+        </div>
+      </div>
     </ElCard>
 
     <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
@@ -63,7 +73,8 @@
         <ElTabPane label="待处置资产池" name="pool">
           <div class="tab-pane-body">
             <ElAlert
-              v-if="activeTab === 'pool' && scopedAssetCode"
+              v-if="activeTab === 'pool' && scopedAssetCode && !sourceContext.hasSource"
+              data-testid="disposal-pool-scope-alert"
               class="mb-3"
               type="info"
               show-icon
@@ -107,7 +118,8 @@
         <ElTabPane label="处置记录" name="record">
           <div class="tab-pane-body">
             <ElAlert
-              v-if="activeTab === 'record' && scopedAssetCode"
+              v-if="activeTab === 'record' && scopedAssetCode && !sourceContext.hasSource"
+              data-testid="disposal-record-scope-alert"
               class="mb-3"
               type="success"
               show-icon
@@ -875,8 +887,7 @@
     color: var(--el-text-color-primary);
   }
 
-  .source-context-card__desc,
-  .source-context-card__hint {
+  .source-context-card__desc {
     font-size: 12px;
     line-height: 1.7;
     color: var(--el-text-color-regular);
@@ -909,9 +920,39 @@
     }
   }
 
-  .source-context-card__hint {
+  .source-context-card__panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
     margin-top: 12px;
-    color: #7b5a20;
+  }
+
+  .source-context-card__panel {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(64, 158, 255, 0.14);
+
+    span {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #1d2f4f;
+    }
+
+    p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #7b5a20;
+    }
   }
 </style>
 
