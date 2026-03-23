@@ -1712,6 +1712,7 @@
   import OccupancyHistorySection from './occupancy/OccupancyHistorySection.vue'
   import OccupancySummarySection from './occupancy/OccupancySummarySection.vue'
   import { getRecordKey, getStatusLabel } from './occupancy/occupancyShared'
+  import { useOccupancyGovernance } from './occupancy/useOccupancyGovernance'
   import { useOccupancyState } from './occupancy/useOccupancyState'
 
   type TimeFilter = 'ALL' | '7D' | '30D' | '90D' | 'CUSTOM'
@@ -1953,8 +1954,35 @@
     occupancyRecords: occupancyRecordsRef
   })
 
-  const exportConfigOpen = ref(false)
-  const governanceOpen = ref(false)
+  const {
+    exportConfigOpen,
+    governanceOpen,
+    governanceActivityFilter,
+    governanceActivityKeyword,
+    governanceActivities,
+    governanceExportMeta,
+    filteredGovernanceActivities,
+    latestGovernanceActivity,
+    recordGovernanceActivity
+  } = useOccupancyGovernance({
+    detailData: detailDataRef,
+    statusFilter,
+    timeFilter,
+    sortDirection,
+    groupViewMode,
+    keyword,
+    customRangeDraft,
+    customRangeApplied,
+    historyListRef,
+    buildFilterState,
+    applyFilterState,
+    resetFocusedRecord,
+    activeRecord,
+    sortedRecords,
+    filteredRecords,
+    onSwitchTab: (tab) => emit('switch-tab', tab)
+  })
+
   const presetNameEditOpen = ref(false)
   const presetCopyOpen = ref(false)
   const presetImportOpen = ref(false)
@@ -1968,18 +1996,14 @@
   const selectedPolicyTemplateKey = ref('')
   const selectedSnapshotCompareLeftKey = ref('')
   const selectedSnapshotCompareRightKey = ref('')
-  const resetLogFilterScope = ref<ResetLogFilterScope>('ALL_RECORDS')
-  const resetLogKeyword = ref('')
-  const governanceActivityFilter = ref<'ALL' | GovernanceActivityType>('ALL')
-  const governanceActivityKeyword = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const customExportPresets = ref<CustomExportPresetOption[]>([])
   const presetImportPreviewItems = ref<PresetImportPreviewItem[]>([])
   const presetImportInvalidItems = ref<PresetImportInvalidItem[]>([])
   const lastPresetImportResult = ref<PresetImportResultState | null>(null)
   const importPolicyTemplates = ref<ImportPolicyTemplateState[]>([])
-  const governanceActivities = ref<GovernanceActivityState[]>([])
-  const governanceExportMeta = ref<GovernanceExportMetaState | null>(null)
+  const resetLogFilterScope = ref<ResetLogFilterScope>('ALL_RECORDS')
+  const resetLogKeyword = ref('')
   const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
   const linkStatsWindow = ref<LinkStatsWindow>('7D')
   const linkStatsResetScope = ref<LinkStatsResetScope>('ALL')
@@ -2083,14 +2107,6 @@
   const linkResetLogStorageKey = computed(() => {
     const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
     return assetKey ? `asset-real-estate-occupancy-reset-logs:${assetKey}` : ''
-  })
-  const governanceActivitiesStorageKey = computed(() => {
-    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
-    return assetKey ? `asset-real-estate-occupancy-governance-activities:${assetKey}` : ''
-  })
-  const governanceExportMetaStorageKey = computed(() => {
-    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
-    return assetKey ? `asset-real-estate-occupancy-governance-export-meta:${assetKey}` : ''
   })
 
   const computedExportPresetOptions = computed(() => {
@@ -2251,26 +2267,6 @@
       )
     })
   })
-
-  const filteredGovernanceActivities = computed(() => {
-    return governanceActivities.value.filter((item) => {
-      if (governanceActivityFilter.value !== 'ALL' && item.type !== governanceActivityFilter.value) {
-        return false
-      }
-      const keywordValue = governanceActivityKeyword.value.trim().toLowerCase()
-      if (!keywordValue) {
-        return true
-      }
-      return (
-        item.label.toLowerCase().includes(keywordValue) ||
-        item.target.toLowerCase().includes(keywordValue) ||
-        item.summary.toLowerCase().includes(keywordValue) ||
-        buildGovernanceActivityTypeLabel(item.type).toLowerCase().includes(keywordValue)
-      )
-    })
-  })
-
-  const latestGovernanceActivity = computed(() => governanceActivities.value[0] || null)
 
   const historyDrilldownTip = computed(() => {
     if (!trendDrilldown.value) {
@@ -2547,54 +2543,6 @@
       return
     }
     window.localStorage.setItem(linkResetLogStorageKey.value, JSON.stringify(linkResetLogs.value))
-  }
-
-  const persistGovernanceActivities = () => {
-    if (!governanceActivitiesStorageKey.value) {
-      return
-    }
-    if (!governanceActivities.value.length) {
-      window.localStorage.removeItem(governanceActivitiesStorageKey.value)
-      return
-    }
-    window.localStorage.setItem(
-      governanceActivitiesStorageKey.value,
-      JSON.stringify(governanceActivities.value)
-    )
-  }
-
-  const persistGovernanceExportMeta = () => {
-    if (!governanceExportMetaStorageKey.value) {
-      return
-    }
-    if (!governanceExportMeta.value) {
-      window.localStorage.removeItem(governanceExportMetaStorageKey.value)
-      return
-    }
-    window.localStorage.setItem(
-      governanceExportMetaStorageKey.value,
-      JSON.stringify(governanceExportMeta.value)
-    )
-  }
-
-  const recordGovernanceActivity = (
-    type: GovernanceActivityType,
-    label: string,
-    target: string,
-    summary: string,
-    executedAt = new Date().toISOString()
-  ) => {
-    governanceActivities.value = [
-      {
-        key: `governance-${Date.now()}-${type.toLowerCase()}`,
-        type,
-        label,
-        target,
-        summary,
-        executedAt
-      },
-      ...governanceActivities.value
-    ].slice(0, 20)
   }
 
   const emitTabSwitch = (tab: LinkedTabName) => {
@@ -3198,70 +3146,6 @@
         : []
     } catch {
       window.localStorage.removeItem(linkResetLogStorageKey.value)
-    }
-  }
-
-  const restoreGovernanceActivities = () => {
-    governanceActivities.value = []
-    if (!governanceActivitiesStorageKey.value) {
-      return
-    }
-    const raw = window.localStorage.getItem(governanceActivitiesStorageKey.value)
-    if (!raw) {
-      return
-    }
-    try {
-      const parsed = JSON.parse(raw)
-      governanceActivities.value = Array.isArray(parsed)
-        ? parsed
-            .map((item) => {
-              const key = String(item?.key || '').trim()
-              const type = String(item?.type || '').trim() as GovernanceActivityType
-              const label = String(item?.label || '').trim()
-              const target = String(item?.target || '').trim()
-              const summary = String(item?.summary || '').trim()
-              const executedAt = String(item?.executedAt || '').trim()
-              if (
-                !key ||
-                !['TEMPLATE', 'SNAPSHOT', 'RESET', 'EXPORT'].includes(type) ||
-                !label ||
-                !target ||
-                !summary ||
-                !executedAt
-              ) {
-                return undefined
-              }
-              return { key, type, label, target, summary, executedAt }
-            })
-            .filter((item): item is GovernanceActivityState => !!item)
-        : []
-    } catch {
-      window.localStorage.removeItem(governanceActivitiesStorageKey.value)
-    }
-  }
-
-  const restoreGovernanceExportMeta = () => {
-    governanceExportMeta.value = null
-    if (!governanceExportMetaStorageKey.value) {
-      return
-    }
-    const raw = window.localStorage.getItem(governanceExportMetaStorageKey.value)
-    if (!raw) {
-      return
-    }
-    try {
-      const parsed = JSON.parse(raw)
-      const exportedAt = String(parsed?.exportedAt || '').trim()
-      const fileName = String(parsed?.fileName || '').trim()
-      if (!exportedAt) {
-        return
-      }
-      governanceExportMeta.value = {
-        exportedAt,
-        fileName
-      }
-    } catch {
-      window.localStorage.removeItem(governanceExportMetaStorageKey.value)
     }
   }
 
@@ -4108,22 +3992,6 @@
     { immediate: true }
   )
 
-  watch(
-    governanceActivitiesStorageKey,
-    () => {
-      restoreGovernanceActivities()
-    },
-    { immediate: true }
-  )
-
-  watch(
-    governanceExportMetaStorageKey,
-    () => {
-      restoreGovernanceExportMeta()
-    },
-    { immediate: true }
-  )
-
   onMounted(() => {
     restoreExportFields()
     restorePresetNames()
@@ -4133,8 +4001,6 @@
     restoreSavedTrendSnapshot()
     restoreImportPolicyTemplates()
     restoreLinkResetLogs()
-    restoreGovernanceActivities()
-    restoreGovernanceExportMeta()
   })
 
   watch(
@@ -4202,22 +4068,6 @@
     linkResetLogs,
     () => {
       persistLinkResetLogs()
-    },
-    { deep: true }
-  )
-
-  watch(
-    governanceActivities,
-    () => {
-      persistGovernanceActivities()
-    },
-    { deep: true }
-  )
-
-  watch(
-    governanceExportMeta,
-    () => {
-      persistGovernanceExportMeta()
     },
     { deep: true }
   )

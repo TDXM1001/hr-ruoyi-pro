@@ -67,6 +67,8 @@ export const useOccupancyGovernance = ({
 }: UseOccupancyGovernanceOptions) => {
   const exportConfigOpen = ref(false)
   const governanceOpen = ref(false)
+  const governanceActivityFilter = ref<'ALL' | GovernanceActivityType>('ALL')
+  const governanceActivityKeyword = ref('')
   const linkStatsWindow = ref<LinkStatsWindow>('7D')
   const linkStatsResetScope = ref<LinkStatsResetScope>('ALL')
   const trendSnapshotName = ref('')
@@ -164,6 +166,23 @@ export const useOccupancyGovernance = ({
   const historyDrilldownTip = computed(() => (trendDrilldown.value ? `当前来自趋势钻取：${trendDrilldown.value.date}` : ''))
   const visibleSavedTrendSnapshots = computed(() => savedTrendSnapshotHistory.value.slice(0, 5))
   const latestGovernanceActivity = computed(() => governanceActivities.value[0] || null)
+  const filteredGovernanceActivities = computed(() => {
+    return governanceActivities.value.filter((item) => {
+      if (governanceActivityFilter.value !== 'ALL' && item.type !== governanceActivityFilter.value) {
+        return false
+      }
+      const keywordValue = governanceActivityKeyword.value.trim().toLowerCase()
+      if (!keywordValue) {
+        return true
+      }
+      return (
+        item.label.toLowerCase().includes(keywordValue) ||
+        item.target.toLowerCase().includes(keywordValue) ||
+        item.summary.toLowerCase().includes(keywordValue) ||
+        buildGovernanceActivityTypeLabel(item.type).toLowerCase().includes(keywordValue)
+      )
+    })
+  })
 
   const filteredLinkResetLogs = computed(() => {
     return linkResetLogs.value.filter((item) => {
@@ -791,6 +810,8 @@ export const useOccupancyGovernance = ({
     linkStatsResetScopeOptions,
     exportConfigOpen,
     governanceOpen,
+    governanceActivityFilter,
+    governanceActivityKeyword,
     linkStatsWindow,
     linkStatsResetScope,
     trendSnapshotName,
@@ -809,6 +830,7 @@ export const useOccupancyGovernance = ({
     historyDrilldownTip,
     visibleSavedTrendSnapshots,
     latestGovernanceActivity,
+    filteredGovernanceActivities,
     filteredLinkResetLogs,
     linkTrendItems,
     emitTabSwitch,

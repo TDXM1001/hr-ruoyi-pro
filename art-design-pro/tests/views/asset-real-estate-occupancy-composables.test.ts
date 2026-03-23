@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+﻿import { afterEach, describe, expect, it, vi } from 'vitest'
 import { computed, nextTick, ref } from 'vue'
 import type { AssetRealEstateOccupancyRecord } from '@/api/asset/real-estate'
 import { useOccupancyState } from '@/views/asset/real-estate/detail/components/occupancy/useOccupancyState'
@@ -14,32 +14,32 @@ describe('occupancy composables', () => {
   it('useOccupancyState derives active occupancy and applies released filter', async () => {
     const detailData = ref({
       assetCode: 'RE-2026-0001',
-      useDeptName: '研发部门',
-      responsibleUserName: '张三',
-      locationName: '科技园A座'
+      useDeptName: 'R&D Department',
+      responsibleUserName: 'Zhang San',
+      locationName: 'Block B'
     })
     const occupancyRecords = ref<AssetRealEstateOccupancyRecord[]>([
       {
         occupancyId: 9101,
         occupancyNo: 'OCC-2026-9001',
         occupancyStatus: 'ACTIVE',
-        useDeptName: '研发部门',
-        responsibleUserName: '张三',
-        locationName: '科技园A座',
+        useDeptName: 'R&D Department',
+        responsibleUserName: 'Zhang San',
+        locationName: 'Block B',
         startDate: '2026-03-22',
-        changeReason: '首次发起'
+        changeReason: 'Initial assignment'
       },
       {
         occupancyId: 9100,
         occupancyNo: 'OCC-2026-8999',
         occupancyStatus: 'RELEASED',
-        useDeptName: '行政部门',
-        responsibleUserName: '李四',
-        locationName: '科技园B座',
+        useDeptName: 'Admin Department',
+        responsibleUserName: 'Li Si',
+        locationName: 'Block A',
         startDate: '2026-03-01',
         endDate: '2026-03-20',
-        changeReason: '历史占用',
-        releaseReason: '部门搬迁'
+        changeReason: 'Historical occupancy',
+        releaseReason: 'Department relocation'
       }
     ])
 
@@ -70,11 +70,11 @@ describe('occupancy composables', () => {
         occupancyId: 9101,
         occupancyNo: 'OCC-2026-9001',
         occupancyStatus: 'ACTIVE',
-        useDeptName: '研发部门',
-        responsibleUserName: '张三',
-        locationName: '科技园A座',
+        useDeptName: 'R&D Department',
+        responsibleUserName: 'Zhang San',
+        locationName: 'Block B',
         startDate: '2026-03-22',
-        changeReason: '首次发起'
+        changeReason: 'Initial assignment'
       }
     ])
     const onSwitchTab = vi.fn()
@@ -97,10 +97,6 @@ describe('occupancy composables', () => {
       applyFilterState: vi.fn(),
       resetFocusedRecord: vi.fn(),
       historyListRef: ref(),
-      getStatusLabel: (status?: string) => (String(status).toUpperCase() === 'ACTIVE' ? '有效占用' : '已释放'),
-      buildAnnotationStatusNote: (record) => `状态：${record.occupancyNo}`,
-      buildAnnotationChangeNote: (record) => `变更：${record.changeReason || '-'}`,
-      buildAnnotationReleaseNote: (record) => `释放：${record.releaseReason || '-'}`,
       onSwitchTab
     })
 
@@ -115,5 +111,62 @@ describe('occupancy composables', () => {
     expect(governance.linkStatItems.value.find((item) => item.key === 'inspection')?.count).toBe(1)
     expect(governance.displayedLinkLastTargetLabel.value).toBe('看巡检联动')
     expect(onSwitchTab).toHaveBeenCalledWith('inspection')
+  })
+
+  it('useOccupancyGovernance filters governance activities by type and keyword', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-23T11:00:00+08:00'))
+
+    const detailData = ref({
+      assetCode: 'RE-2026-0001'
+    })
+    const occupancyRecords = ref<AssetRealEstateOccupancyRecord[]>([
+      {
+        occupancyId: 9101,
+        occupancyNo: 'OCC-2026-9001',
+        occupancyStatus: 'ACTIVE',
+        useDeptName: 'R&D Department',
+        responsibleUserName: 'Zhang San',
+        locationName: 'Block B',
+        startDate: '2026-03-22',
+        changeReason: 'Initial assignment'
+      }
+    ])
+
+    const governance = useOccupancyGovernance({
+      detailData,
+      filteredRecords: computed(() => occupancyRecords.value),
+      activeRecord: computed(() => occupancyRecords.value[0]),
+      sortedRecords: computed(() => occupancyRecords.value),
+      buildFilterState: () => ({
+        statusFilter: 'ALL',
+        timeFilter: 'ALL',
+        sortDirection: 'DESC',
+        keyword: '',
+        customRangeDraftStart: '',
+        customRangeDraftEnd: '',
+        customRangeAppliedStart: '',
+        customRangeAppliedEnd: ''
+      }),
+      applyFilterState: vi.fn(),
+      resetFocusedRecord: vi.fn(),
+      historyListRef: ref(),
+      onSwitchTab: vi.fn()
+    })
+
+    governance.recordGovernanceActivity('SNAPSHOT', '保存趋势快照', '三月快照', '已保存趋势快照')
+    governance.recordGovernanceActivity('RESET', '只重置趋势', '趋势数据', '已清空趋势事件 2 条')
+
+    // @ts-expect-error contract to be implemented during script split
+    governance.governanceActivityFilter.value = 'SNAPSHOT'
+    // @ts-expect-error contract to be implemented during script split
+    governance.governanceActivityKeyword.value = '快照'
+
+    // @ts-expect-error contract to be implemented during script split
+    expect(governance.filteredGovernanceActivities.value).toHaveLength(1)
+    // @ts-expect-error contract to be implemented during script split
+    expect(governance.filteredGovernanceActivities.value[0]?.type).toBe('SNAPSHOT')
+    // @ts-expect-error contract to be implemented during script split
+    expect(governance.filteredGovernanceActivities.value[0]?.target).toBe('三月快照')
   })
 })
