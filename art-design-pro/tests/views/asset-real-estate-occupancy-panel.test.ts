@@ -11,6 +11,12 @@ describe('OccupancyPanel occupancy flow', () => {
     window.localStorage.clear()
   })
 
+  const ensureGovernanceOpen = async (wrapper: any) => {
+    if (!wrapper.find('[data-testid="occupancy-governance-panel"]').exists()) {
+      await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    }
+  }
+
   it('shows create entry when no active occupancy exists', async () => {
     const wrapper = mount(OccupancyPanel, {
       props: {
@@ -36,6 +42,72 @@ describe('OccupancyPanel occupancy flow', () => {
 
     await wrapper.get('[data-testid="occupancy-create-link"]').trigger('click')
     expect(wrapper.emitted('create-occupancy')?.length).toBe(1)
+  })
+
+  it('keeps governance content collapsed by default and leaves only the governance entry in main view', () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-22',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    expect(wrapper.get('[data-testid="occupancy-business-section"]').text()).toContain('当前有效占用')
+    expect(wrapper.get('[data-testid="occupancy-summary-section"]').text()).toContain('主档联动摘要')
+    expect(wrapper.get('[data-testid="occupancy-history-section"]').text()).toContain('占用历史轨迹')
+    expect(wrapper.get('[data-testid="occupancy-governance-section"]').text()).toContain('治理工具区')
+    expect(wrapper.find('[data-testid="occupancy-governance-panel"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('来源链路统计')
+  })
+
+  it('reveals governance content only after expanding the governance section', async () => {
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [
+          {
+            occupancyId: 9101,
+            occupancyNo: 'OCC-2026-9001',
+            occupancyStatus: 'ACTIVE',
+            useDeptName: 'dept-alpha',
+            responsibleUserName: 'user-alpha',
+            locationName: 'loc-alpha',
+            startDate: '2026-03-22',
+            changeReason: 'reason-alpha'
+          }
+        ],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="occupancy-governance-panel"]').text()).toContain('来源链路统计')
+    expect(wrapper.get('[data-testid="occupancy-governance-panel"]').text()).toContain('当前治理状态')
   })
 
   it('shows change and release actions when active occupancy exists', async () => {
@@ -1360,6 +1432,7 @@ describe('OccupancyPanel occupancy flow', () => {
     await firstWrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
     await firstWrapper.get('[data-testid="occupancy-tab-link-inspection"]').trigger('click')
     await firstWrapper.get('[data-testid="occupancy-tab-link-rectification"]').trigger('click')
+    await ensureGovernanceOpen(firstWrapper)
 
     expect(firstWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('2')
     expect(firstWrapper.get('[data-testid="occupancy-link-stat-rectification"]').text()).toContain('1')
@@ -1375,6 +1448,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(secondWrapper)
 
     expect(secondWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('2')
     expect(secondWrapper.get('[data-testid="occupancy-link-stat-rectification"]').text()).toContain('1')
@@ -1596,6 +1670,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     const trendChart = wrapper.get('[data-testid="occupancy-link-trend-chart"]')
     const vm = wrapper.vm as any
@@ -1756,6 +1831,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     const vm = wrapper.vm as any
     expect(vm.linkTrendItems).toHaveLength(7)
@@ -1817,6 +1893,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
     expect(wrapper.get('[data-testid="occupancy-link-drilldown-panel"]').text()).toContain(
@@ -1878,6 +1955,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
@@ -2046,6 +2124,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     const vm = wrapper.vm as any
     vm.customRangeDraft.start = '2026-03-01'
@@ -2118,6 +2197,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
 
@@ -2299,6 +2379,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
@@ -2373,6 +2454,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-stats-reset-scope-events"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
@@ -2429,7 +2511,7 @@ describe('OccupancyPanel occupancy flow', () => {
 }`)
     await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-preset-import-item-policy-overwrite-preview-0"]').trigger('click')
-    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(wrapper)
     await wrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('冲突覆盖模板')
     await wrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
 
@@ -2481,7 +2563,7 @@ describe('OccupancyPanel occupancy flow', () => {
   ]
 }`)
     await firstWrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
-    await firstWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(firstWrapper)
     await firstWrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('可恢复模板')
     await firstWrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
     firstWrapper.unmount()
@@ -2512,7 +2594,7 @@ describe('OccupancyPanel occupancy flow', () => {
     })
 
     await secondWrapper.get('[data-testid="occupancy-export-config-toggle"]').trigger('click')
-    await secondWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(secondWrapper)
     expect(secondWrapper.get('[data-testid="occupancy-policy-template-apply-0"]').text()).toContain(
       '应用'
     )
@@ -2574,6 +2656,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('今日快照')
@@ -2582,7 +2665,7 @@ describe('OccupancyPanel occupancy flow', () => {
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-20"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('昨日快照')
     await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
-    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(wrapper)
     await wrapper.get('[data-testid="occupancy-snapshot-restore-1"]').trigger('click')
 
     expect(wrapper.get('[data-testid="occupancy-history-drilldown-tip"]').text()).toContain(
@@ -2642,10 +2725,10 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(firstWrapper)
 
     await firstWrapper.get('[data-testid="occupancy-link-stats-reset-scope-events"]').trigger('click')
     await firstWrapper.get('[data-testid="occupancy-link-stats-reset"]').trigger('click')
-    await firstWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
 
     expect(firstWrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain(
       '只重置趋势'
@@ -2677,7 +2760,7 @@ describe('OccupancyPanel occupancy flow', () => {
       }
     })
 
-    await secondWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(secondWrapper)
     expect(secondWrapper.get('[data-testid="occupancy-reset-log-item-0"]').text()).toContain(
       '只重置趋势'
     )
@@ -2724,7 +2807,7 @@ describe('OccupancyPanel occupancy flow', () => {
   ]
 }`)
     await wrapper.get('[data-testid="occupancy-preset-import-preview"]').trigger('click')
-    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(wrapper)
     await wrapper.get('[data-testid="occupancy-policy-template-name"]').setValue('审计模板')
     await wrapper.get('[data-testid="occupancy-policy-template-save"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-policy-template-apply-0"]').trigger('click')
@@ -2789,6 +2872,7 @@ describe('OccupancyPanel occupancy flow', () => {
         plugins: [ElementPlus]
       }
     })
+    await ensureGovernanceOpen(wrapper)
 
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-22"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('今日快照')
@@ -2797,7 +2881,7 @@ describe('OccupancyPanel occupancy flow', () => {
     await wrapper.get('[data-testid="occupancy-link-trend-day-2026-03-21"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-link-drilldown-snapshot-name"]').setValue('昨日快照')
     await wrapper.get('[data-testid="occupancy-link-drilldown-save-snapshot"]').trigger('click')
-    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await ensureGovernanceOpen(wrapper)
     await wrapper.get('[data-testid="occupancy-snapshot-compare-left-0"]').trigger('click')
     await wrapper.get('[data-testid="occupancy-snapshot-compare-right-1"]').trigger('click')
 

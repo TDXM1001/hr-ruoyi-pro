@@ -8,11 +8,12 @@
       title="占用页签聚焦当前实际使用归口、责任人和释放轨迹，资产管理员可以在当前详情页内连续完成发起、变更和释放。"
     />
 
-    <div class="occupancy-overview-grid">
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">当前有效占用</div>
-        </template>
+    <OccupancyBusinessSection>
+      <div class="occupancy-overview-grid">
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">当前有效占用</div>
+          </template>
 
         <div v-if="activeRecord" class="current-occupancy-card">
           <div class="current-occupancy-card__header">
@@ -56,6 +57,142 @@
               <div class="detail-card__value">{{ activeRecord.changeReason || '-' }}</div>
             </div>
           </div>
+
+          <div v-if="props.canEdit" class="current-occupancy-card__actions">
+            <ElButton
+              :data-testid="`occupancy-change-link-${activeRecord.occupancyId}`"
+              link
+              type="primary"
+              @click="$emit('change-occupancy', activeRecord)"
+            >
+              变更占用
+            </ElButton>
+            <ElButton
+              :data-testid="`occupancy-release-link-${activeRecord.occupancyId}`"
+              link
+              type="warning"
+              @click="$emit('release-occupancy', activeRecord)"
+            >
+              释放占用
+            </ElButton>
+          </div>
+
+          <div class="occupancy-tab-links">
+            <div class="occupancy-tab-links__label">跨页签联动</div>
+            <div class="occupancy-tab-links__items">
+              <ElButton
+                v-for="item in tabLinkOptions"
+                :key="item.key"
+                :data-testid="`occupancy-tab-link-${item.key}`"
+                size="small"
+                plain
+                @click="emitTabSwitch(item.key)"
+              >
+                {{ item.label }}
+              </ElButton>
+            </div>
+          </div>
+
+        </div>
+
+        <div v-else class="empty-occupancy-card">
+          <div>
+            <div class="empty-occupancy-card__title">暂无有效占用</div>
+            <div class="empty-occupancy-card__desc">
+              当前资产没有有效占用关系。可以先登记使用部门、责任人和实际位置，再进入后续变更和释放流程。
+            </div>
+          </div>
+
+          <div class="empty-occupancy-card__meta">
+            <div class="empty-occupancy-card__meta-item">
+              <span>资产编码</span>
+              <strong>{{ props.detailData.assetCode || '-' }}</strong>
+            </div>
+            <div class="empty-occupancy-card__meta-item">
+              <span>权属部门</span>
+              <strong>{{ props.detailData.ownerDeptName || '-' }}</strong>
+            </div>
+          </div>
+
+          <div
+            v-if="latestReleasedRecord"
+            class="empty-occupancy-card__release-summary"
+            data-testid="occupancy-empty-released-summary"
+          >
+            <div class="insight-card__title">最近释放信息</div>
+            <div class="insight-card__desc">
+              最近一次释放后，当前资产处于无有效占用状态。可以直接重新发起占用，或先回看已释放轨迹确认释放原因。
+            </div>
+            <div class="insight-card__grid">
+              <div class="detail-card">
+                <div class="detail-card__label">最近释放单号</div>
+                <div class="detail-card__value">{{ latestReleasedRecord.occupancyNo || '-' }}</div>
+              </div>
+              <div class="detail-card">
+                <div class="detail-card__label">最近释放日期</div>
+                <div class="detail-card__value">{{ latestReleasedRecord.endDate || '-' }}</div>
+              </div>
+              <div class="detail-card detail-card--wide">
+                <div class="detail-card__label">最近释放原因</div>
+                <div class="detail-card__value">
+                  {{ latestReleasedRecord.releaseReason || '-' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-occupancy-card__actions">
+            <ElButton
+              v-if="props.canEdit"
+              data-testid="occupancy-create-link"
+              type="primary"
+              plain
+              @click="$emit('create-occupancy')"
+            >
+              发起占用
+            </ElButton>
+            <ElButton
+              v-if="latestReleasedRecord"
+              data-testid="occupancy-focus-released-link"
+              link
+              type="primary"
+              @click="focusReleasedHistory"
+            >
+              查看已释放轨迹
+            </ElButton>
+          </div>
+
+          <div class="occupancy-tab-links">
+            <div class="occupancy-tab-links__label">跨页签联动</div>
+            <div class="occupancy-tab-links__items">
+              <ElButton
+                v-for="item in tabLinkOptions"
+                :key="item.key"
+                :data-testid="`occupancy-tab-link-${item.key}`"
+                size="small"
+                plain
+                @click="emitTabSwitch(item.key)"
+              >
+                {{ item.label }}
+              </ElButton>
+            </div>
+          </div>
+
+        </div>
+        </ElCard>
+      </div>
+    </OccupancyBusinessSection>
+
+    <OccupancySummarySection>
+      <div class="occupancy-overview-grid occupancy-overview-grid--summary">
+        <ElCard
+          v-if="activeRecord"
+          class="section-card"
+          shadow="never"
+        >
+          <template #header>
+            <div class="card-title">管理摘要</div>
+          </template>
 
           <div class="insight-card-grid">
             <div
@@ -160,349 +297,12 @@
               </div>
             </div>
           </div>
+        </ElCard>
 
-          <div v-if="props.canEdit" class="current-occupancy-card__actions">
-            <ElButton
-              :data-testid="`occupancy-change-link-${activeRecord.occupancyId}`"
-              link
-              type="primary"
-              @click="$emit('change-occupancy', activeRecord)"
-            >
-              变更占用
-            </ElButton>
-            <ElButton
-              :data-testid="`occupancy-release-link-${activeRecord.occupancyId}`"
-              link
-              type="warning"
-              @click="$emit('release-occupancy', activeRecord)"
-            >
-              释放占用
-            </ElButton>
-          </div>
-
-          <div class="occupancy-tab-links">
-            <div class="occupancy-tab-links__label">跨页签联动</div>
-            <div class="occupancy-tab-links__items">
-              <ElButton
-                v-for="item in tabLinkOptions"
-                :key="item.key"
-                :data-testid="`occupancy-tab-link-${item.key}`"
-                size="small"
-                plain
-                @click="emitTabSwitch(item.key)"
-              >
-                {{ item.label }}
-              </ElButton>
-            </div>
-          </div>
-
-          <div class="occupancy-link-stats">
-            <div class="occupancy-link-stats__header">
-              <div class="occupancy-link-stats__meta">
-                <div class="occupancy-link-stats__title">来源链路统计</div>
-                <div
-                  class="occupancy-link-stats__last"
-                  data-testid="occupancy-link-stat-last-target"
-                >
-                  最近一次联动：{{ displayedLinkLastTargetLabel || '暂无' }}
-                </div>
-              </div>
-              <div class="occupancy-link-stats__toolbar">
-                <div class="occupancy-link-stats__window-switch">
-                  <button
-                    v-for="item in linkStatsWindowOptions"
-                    :key="item.key"
-                    type="button"
-                    class="export-preset-chip export-preset-chip--subtle"
-                    :class="linkStatsWindow === item.key ? 'export-preset-chip--active' : ''"
-                    :data-testid="`occupancy-link-window-${item.key.toLowerCase()}`"
-                    @click="setLinkStatsWindow(item.key)"
-                  >
-                    {{ item.label }}
-                  </button>
-                </div>
-                <div class="occupancy-link-stats__window-switch">
-                  <button
-                    v-for="item in linkStatsResetScopeOptions"
-                    :key="item.key"
-                    type="button"
-                    class="export-preset-chip export-preset-chip--subtle"
-                    :class="linkStatsResetScope === item.key ? 'export-preset-chip--active' : ''"
-                    :data-testid="`occupancy-link-stats-reset-scope-${item.key.toLowerCase()}`"
-                    @click="linkStatsResetScope = item.key"
-                  >
-                    {{ item.label }}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  class="export-preset-chip export-preset-chip--subtle"
-                  data-testid="occupancy-link-stats-reset"
-                  @click="resetLinkStatsView"
-                >
-                  重置统计
-                </button>
-              </div>
-            </div>
-            <div class="occupancy-link-stats__grid">
-              <div
-                v-for="item in linkStatItems"
-                :key="item.key"
-                class="occupancy-link-stats__item"
-                :data-testid="`occupancy-link-stat-${item.key}`"
-              >
-                <div class="occupancy-link-stats__label">{{ item.label }}</div>
-                <div class="occupancy-link-stats__value">{{ item.count }}</div>
-              </div>
-            </div>
-            <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
-              <div class="occupancy-link-trend__title">{{ linkTrendTitle }}</div>
-              <div class="occupancy-link-trend__grid">
-                <div
-                  v-for="item in linkTrendItems"
-                  :key="item.date"
-                  class="occupancy-link-trend__item"
-                  :class="trendDrilldown?.date === item.date ? 'occupancy-link-trend__item--active' : ''"
-                  :data-testid="`occupancy-link-trend-day-${item.date}`"
-                  @click="toggleTrendDrilldown(item)"
-                >
-                  <div class="occupancy-link-trend__date">{{ item.label }}</div>
-                  <div class="occupancy-link-trend__bar-wrap">
-                    <div
-                      class="occupancy-link-trend__bar"
-                      :style="{ height: `${item.barHeight}%` }"
-                    />
-                  </div>
-                  <div class="occupancy-link-trend__count">{{ item.count }}</div>
-                  <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
-                </div>
-              </div>
-              <div
-                v-if="trendDrilldown"
-                class="occupancy-link-drilldown"
-                data-testid="occupancy-link-drilldown-panel"
-              >
-                <div class="occupancy-link-drilldown__title">
-                  趋势钻取：{{ trendDrilldown.date }}
-                </div>
-                <div class="occupancy-link-drilldown__desc">
-                  当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
-                  {{ trendDrilldown.count }} 次。
-                </div>
-                <input
-                  v-model="trendSnapshotName"
-                  data-testid="occupancy-link-drilldown-snapshot-name"
-                  type="text"
-                  class="preset-name-field__input occupancy-link-drilldown__input"
-                  placeholder="输入快照名称，可选"
-                />
-                <div class="occupancy-link-drilldown__actions">
-                  <ElButton
-                    size="small"
-                    text
-                    type="primary"
-                    data-testid="occupancy-link-drilldown-save-snapshot"
-                    @click="saveTrendSnapshot"
-                  >
-                    保存快照
-                  </ElButton>
-                  <ElButton
-                    size="small"
-                    text
-                    type="primary"
-                    data-testid="occupancy-link-drilldown-clear"
-                    @click="clearTrendDrilldown"
-                  >
-                    取消钻取
-                  </ElButton>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="empty-occupancy-card">
-          <div>
-            <div class="empty-occupancy-card__title">暂无有效占用</div>
-            <div class="empty-occupancy-card__desc">
-              当前资产没有有效占用关系。可以先登记使用部门、责任人和实际位置，再进入后续变更和释放流程。
-            </div>
-          </div>
-
-          <div class="empty-occupancy-card__meta">
-            <div class="empty-occupancy-card__meta-item">
-              <span>资产编码</span>
-              <strong>{{ props.detailData.assetCode || '-' }}</strong>
-            </div>
-            <div class="empty-occupancy-card__meta-item">
-              <span>权属部门</span>
-              <strong>{{ props.detailData.ownerDeptName || '-' }}</strong>
-            </div>
-          </div>
-
-          <div
-            v-if="latestReleasedRecord"
-            class="empty-occupancy-card__release-summary"
-            data-testid="occupancy-empty-released-summary"
-          >
-            <div class="insight-card__title">最近释放信息</div>
-            <div class="insight-card__desc">
-              最近一次释放后，当前资产处于无有效占用状态。可以直接重新发起占用，或先回看已释放轨迹确认释放原因。
-            </div>
-            <div class="insight-card__grid">
-              <div class="detail-card">
-                <div class="detail-card__label">最近释放单号</div>
-                <div class="detail-card__value">{{ latestReleasedRecord.occupancyNo || '-' }}</div>
-              </div>
-              <div class="detail-card">
-                <div class="detail-card__label">最近释放日期</div>
-                <div class="detail-card__value">{{ latestReleasedRecord.endDate || '-' }}</div>
-              </div>
-              <div class="detail-card detail-card--wide">
-                <div class="detail-card__label">最近释放原因</div>
-                <div class="detail-card__value">
-                  {{ latestReleasedRecord.releaseReason || '-' }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="empty-occupancy-card__actions">
-            <ElButton
-              v-if="props.canEdit"
-              data-testid="occupancy-create-link"
-              type="primary"
-              plain
-              @click="$emit('create-occupancy')"
-            >
-              发起占用
-            </ElButton>
-            <ElButton
-              v-if="latestReleasedRecord"
-              data-testid="occupancy-focus-released-link"
-              link
-              type="primary"
-              @click="focusReleasedHistory"
-            >
-              查看已释放轨迹
-            </ElButton>
-          </div>
-
-          <div class="occupancy-tab-links">
-            <div class="occupancy-tab-links__label">跨页签联动</div>
-            <div class="occupancy-tab-links__items">
-              <ElButton
-                v-for="item in tabLinkOptions"
-                :key="item.key"
-                :data-testid="`occupancy-tab-link-${item.key}`"
-                size="small"
-                plain
-                @click="emitTabSwitch(item.key)"
-              >
-                {{ item.label }}
-              </ElButton>
-            </div>
-          </div>
-
-          <div class="occupancy-link-stats">
-            <div class="occupancy-link-stats__header">
-              <div class="occupancy-link-stats__meta">
-                <div class="occupancy-link-stats__title">来源链路统计</div>
-                <div
-                  class="occupancy-link-stats__last"
-                  data-testid="occupancy-link-stat-last-target"
-                >
-                  最近一次联动：{{ displayedLinkLastTargetLabel || '暂无' }}
-                </div>
-              </div>
-              <div class="occupancy-link-stats__toolbar">
-                <div class="occupancy-link-stats__window-switch">
-                  <button
-                    v-for="item in linkStatsWindowOptions"
-                    :key="item.key"
-                    type="button"
-                    class="export-preset-chip export-preset-chip--subtle"
-                    :class="linkStatsWindow === item.key ? 'export-preset-chip--active' : ''"
-                    :data-testid="`occupancy-link-window-${item.key.toLowerCase()}`"
-                    @click="setLinkStatsWindow(item.key)"
-                  >
-                    {{ item.label }}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  class="export-preset-chip export-preset-chip--subtle"
-                  data-testid="occupancy-link-stats-reset"
-                  @click="resetLinkStatsView"
-                >
-                  重置统计
-                </button>
-              </div>
-            </div>
-            <div class="occupancy-link-stats__grid">
-              <div
-                v-for="item in linkStatItems"
-                :key="item.key"
-                class="occupancy-link-stats__item"
-                :data-testid="`occupancy-link-stat-${item.key}`"
-              >
-                <div class="occupancy-link-stats__label">{{ item.label }}</div>
-                <div class="occupancy-link-stats__value">{{ item.count }}</div>
-              </div>
-            </div>
-            <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
-              <div class="occupancy-link-trend__title">{{ linkTrendTitle }}</div>
-              <div class="occupancy-link-trend__grid">
-                <div
-                  v-for="item in linkTrendItems"
-                  :key="item.date"
-                  class="occupancy-link-trend__item"
-                  :class="trendDrilldown?.date === item.date ? 'occupancy-link-trend__item--active' : ''"
-                  :data-testid="`occupancy-link-trend-day-${item.date}`"
-                  @click="toggleTrendDrilldown(item)"
-                >
-                  <div class="occupancy-link-trend__date">{{ item.label }}</div>
-                  <div class="occupancy-link-trend__bar-wrap">
-                    <div
-                      class="occupancy-link-trend__bar"
-                      :style="{ height: `${item.barHeight}%` }"
-                    />
-                  </div>
-                  <div class="occupancy-link-trend__count">{{ item.count }}</div>
-                  <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
-                </div>
-              </div>
-              <div
-                v-if="trendDrilldown"
-                class="occupancy-link-drilldown"
-                data-testid="occupancy-link-drilldown-panel"
-              >
-                <div class="occupancy-link-drilldown__title">
-                  趋势钻取：{{ trendDrilldown.date }}
-                </div>
-                <div class="occupancy-link-drilldown__desc">
-                  当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
-                  {{ trendDrilldown.count }} 次。
-                </div>
-                <ElButton
-                  size="small"
-                  text
-                  type="primary"
-                  data-testid="occupancy-link-drilldown-clear"
-                  @click="clearTrendDrilldown"
-                >
-                  取消钻取
-                </ElButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ElCard>
-
-      <ElCard class="section-card" shadow="never">
-        <template #header>
-          <div class="card-title">状态矩阵</div>
-        </template>
+        <ElCard class="section-card" shadow="never">
+          <template #header>
+            <div class="card-title">状态矩阵</div>
+          </template>
 
         <div class="matrix-panel">
           <div
@@ -531,10 +331,12 @@
             </div>
           </div>
         </div>
-      </ElCard>
-    </div>
+        </ElCard>
+      </div>
+    </OccupancySummarySection>
 
-    <ElCard class="section-card" shadow="never">
+    <OccupancyHistorySection>
+      <ElCard class="section-card" shadow="never">
       <template #header>
         <div class="history-card-header">
           <div>
@@ -736,20 +538,6 @@
               </ElButton>
             </div>
             <ElButton
-              data-testid="occupancy-export-config-toggle"
-              size="small"
-              @click="exportConfigOpen = !exportConfigOpen"
-            >
-              导出字段
-            </ElButton>
-            <ElButton
-              data-testid="occupancy-governance-toggle"
-              size="small"
-              @click="toggleGovernancePanel"
-            >
-              {{ governanceOpen ? '收起治理工具' : '治理工具' }}
-            </ElButton>
-            <ElButton
               v-if="groupViewMode === 'ANNOTATION'"
               data-testid="occupancy-export-annotation-link"
               size="small"
@@ -772,8 +560,26 @@
           </div>
         </div>
 
+        <OccupancyGovernanceSection>
+          <template #actions>
+            <ElButton
+              data-testid="occupancy-export-config-toggle"
+              size="small"
+              @click="toggleExportConfigPanel"
+            >
+              {{ exportConfigOpen ? '收起导出配置' : '导出配置' }}
+            </ElButton>
+            <ElButton
+              data-testid="occupancy-governance-toggle"
+              size="small"
+              @click="toggleGovernancePanel"
+            >
+              {{ governanceOpen ? '收起治理工具' : '治理工具' }}
+            </ElButton>
+          </template>
+
         <div
-          v-if="exportConfigOpen"
+          v-if="governanceOpen && exportConfigOpen"
           class="export-config-panel"
           data-testid="occupancy-export-config-panel"
         >
@@ -1019,6 +825,135 @@
             class="governance-panel"
             data-testid="occupancy-governance-panel"
           >
+            <div class="governance-panel__section governance-panel__section--wide">
+              <div class="governance-panel__section-title">来源链路统计</div>
+              <div class="governance-panel__section-desc">
+                统一收纳跨页签联动次数、最近目标与趋势钻取，避免打断占用主流程浏览。
+              </div>
+              <div class="occupancy-link-stats">
+                <div class="occupancy-link-stats__header">
+                  <div class="occupancy-link-stats__meta">
+                    <div class="occupancy-link-stats__title">来源链路统计</div>
+                    <div
+                      class="occupancy-link-stats__last"
+                      data-testid="occupancy-link-stat-last-target"
+                    >
+                      最近一次联动：{{ displayedLinkLastTargetLabel || '暂无' }}
+                    </div>
+                  </div>
+                  <div class="occupancy-link-stats__toolbar">
+                    <div class="occupancy-link-stats__window-switch">
+                      <button
+                        v-for="item in linkStatsWindowOptions"
+                        :key="item.key"
+                        type="button"
+                        class="export-preset-chip export-preset-chip--subtle"
+                        :class="linkStatsWindow === item.key ? 'export-preset-chip--active' : ''"
+                        :data-testid="`occupancy-link-window-${item.key.toLowerCase()}`"
+                        @click="setLinkStatsWindow(item.key)"
+                      >
+                        {{ item.label }}
+                      </button>
+                    </div>
+                    <div class="occupancy-link-stats__window-switch">
+                      <button
+                        v-for="item in linkStatsResetScopeOptions"
+                        :key="item.key"
+                        type="button"
+                        class="export-preset-chip export-preset-chip--subtle"
+                        :class="linkStatsResetScope === item.key ? 'export-preset-chip--active' : ''"
+                        :data-testid="`occupancy-link-stats-reset-scope-${item.key.toLowerCase()}`"
+                        @click="linkStatsResetScope = item.key"
+                      >
+                        {{ item.label }}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      class="export-preset-chip export-preset-chip--subtle"
+                      data-testid="occupancy-link-stats-reset"
+                      @click="resetLinkStatsView"
+                    >
+                      重置统计
+                    </button>
+                  </div>
+                </div>
+                <div class="occupancy-link-stats__grid">
+                  <div
+                    v-for="item in linkStatItems"
+                    :key="item.key"
+                    class="occupancy-link-stats__item"
+                    :data-testid="`occupancy-link-stat-${item.key}`"
+                  >
+                    <div class="occupancy-link-stats__label">{{ item.label }}</div>
+                    <div class="occupancy-link-stats__value">{{ item.count }}</div>
+                  </div>
+                </div>
+                <div class="occupancy-link-trend" data-testid="occupancy-link-trend-chart">
+                  <div class="occupancy-link-trend__title">{{ linkTrendTitle }}</div>
+                  <div class="occupancy-link-trend__grid">
+                    <div
+                      v-for="item in linkTrendItems"
+                      :key="item.date"
+                      class="occupancy-link-trend__item"
+                      :class="trendDrilldown?.date === item.date ? 'occupancy-link-trend__item--active' : ''"
+                      :data-testid="`occupancy-link-trend-day-${item.date}`"
+                      @click="toggleTrendDrilldown(item)"
+                    >
+                      <div class="occupancy-link-trend__date">{{ item.label }}</div>
+                      <div class="occupancy-link-trend__bar-wrap">
+                        <div
+                          class="occupancy-link-trend__bar"
+                          :style="{ height: `${item.barHeight}%` }"
+                        />
+                      </div>
+                      <div class="occupancy-link-trend__count">{{ item.count }}</div>
+                      <div class="occupancy-link-trend__target">{{ item.topLabel }}</div>
+                    </div>
+                  </div>
+                  <div
+                    v-if="trendDrilldown"
+                    class="occupancy-link-drilldown"
+                    data-testid="occupancy-link-drilldown-panel"
+                  >
+                    <div class="occupancy-link-drilldown__title">
+                      趋势钻取：{{ trendDrilldown.date }}
+                    </div>
+                    <div class="occupancy-link-drilldown__desc">
+                      当前聚焦 {{ trendDrilldown.date }} 的来源联动摘要，主目标为“{{ trendDrilldown.label }}”，共
+                      {{ trendDrilldown.count }} 次。
+                    </div>
+                    <input
+                      v-model="trendSnapshotName"
+                      data-testid="occupancy-link-drilldown-snapshot-name"
+                      type="text"
+                      class="preset-name-field__input occupancy-link-drilldown__input"
+                      placeholder="输入快照名称，可选"
+                    />
+                    <div class="occupancy-link-drilldown__actions">
+                      <ElButton
+                        size="small"
+                        text
+                        type="primary"
+                        data-testid="occupancy-link-drilldown-save-snapshot"
+                        @click="saveTrendSnapshot"
+                      >
+                        保存快照
+                      </ElButton>
+                      <ElButton
+                        size="small"
+                        text
+                        type="primary"
+                        data-testid="occupancy-link-drilldown-clear"
+                        @click="clearTrendDrilldown"
+                      >
+                        取消钻取
+                      </ElButton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div
               class="governance-panel__section governance-panel__section--wide governance-panel__summary"
               data-testid="occupancy-governance-summary-card"
@@ -1547,6 +1482,7 @@
             </button>
           </div>
         </div>
+        </OccupancyGovernanceSection>
       </div>
 
       <div ref="historyListRef" class="record-wrapper" data-testid="occupancy-history-list">
@@ -1763,12 +1699,17 @@
         <ElEmpty v-else description="当前筛选条件下暂无占用轨迹" :image-size="68" />
       </div>
     </ElCard>
+    </OccupancyHistorySection>
   </div>
 </template>
 
 <script setup lang="ts">
   import type { AssetRealEstateOccupancyRecord } from '@/api/asset/real-estate'
   import { ElMessageBox } from 'element-plus'
+  import OccupancyBusinessSection from './occupancy/OccupancyBusinessSection.vue'
+  import OccupancyGovernanceSection from './occupancy/OccupancyGovernanceSection.vue'
+  import OccupancyHistorySection from './occupancy/OccupancyHistorySection.vue'
+  import OccupancySummarySection from './occupancy/OccupancySummarySection.vue'
 
   type TimeFilter = 'ALL' | '7D' | '30D' | '90D' | 'CUSTOM'
   type SortDirection = 'DESC' | 'ASC'
@@ -3069,10 +3010,19 @@
   }
 
   const toggleGovernancePanel = () => {
-    governanceOpen.value = !governanceOpen.value
     if (governanceOpen.value) {
-      exportConfigOpen.value = true
+      governanceOpen.value = false
+      return
     }
+    governanceOpen.value = true
+    exportConfigOpen.value = true
+  }
+
+  const toggleExportConfigPanel = () => {
+    if (!governanceOpen.value) {
+      governanceOpen.value = true
+    }
+    exportConfigOpen.value = !exportConfigOpen.value
   }
 
   const applySavedTrendSnapshot = async (snapshot?: SavedTrendSnapshotState | Event) => {

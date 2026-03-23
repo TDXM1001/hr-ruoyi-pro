@@ -412,6 +412,8 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
 
     await remountWrapper.get('[data-testid="detail-return-occupancy-link"]').trigger('click')
     await flushPromises()
+    await remountWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await flushPromises()
 
     expect(remountWrapper.get('[data-testid="occupancy-link-stat-inspection"]').text()).toContain('1')
     expect(remountWrapper.get('[data-testid="occupancy-link-stat-last-target"]').text()).toContain(
