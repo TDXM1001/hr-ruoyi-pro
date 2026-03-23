@@ -1019,6 +1019,144 @@
             class="governance-panel"
             data-testid="occupancy-governance-panel"
           >
+            <div
+              class="governance-panel__section governance-panel__section--wide governance-panel__summary"
+              data-testid="occupancy-governance-summary-card"
+            >
+              <div class="governance-panel__section-header">
+                <div>
+                  <div class="governance-panel__section-title">当前治理状态</div>
+                  <div class="governance-panel__section-desc">
+                    汇总当前模板、快照、最近治理动作和最近导出时间，便于先看全局，再进入细节治理。
+                  </div>
+                </div>
+                <ElButton
+                  data-testid="occupancy-governance-export-audit"
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="exportGovernanceAuditPackage"
+                >
+                  导出治理审计包
+                </ElButton>
+              </div>
+              <div class="governance-panel__summary-grid">
+                <div class="governance-summary-item">
+                  <span class="governance-summary-item__label">策略模板数</span>
+                  <strong class="governance-summary-item__value">{{ importPolicyTemplates.length }}</strong>
+                  <span class="governance-summary-item__meta">
+                    {{ importPolicyTemplates[0]?.name || '暂无策略模板' }}
+                  </span>
+                </div>
+                <div class="governance-summary-item">
+                  <span class="governance-summary-item__label">趋势快照数</span>
+                  <strong class="governance-summary-item__value">{{ savedTrendSnapshotHistory.length }}</strong>
+                  <span class="governance-summary-item__meta">
+                    {{ savedTrendSnapshotHistory[0]?.name || '暂无趋势快照' }}
+                  </span>
+                </div>
+                <div class="governance-summary-item">
+                  <span class="governance-summary-item__label">最近一次治理动作</span>
+                  <strong class="governance-summary-item__value">
+                    {{ latestGovernanceActivity?.label || '暂无' }}
+                  </strong>
+                  <span class="governance-summary-item__meta">
+                    {{ latestGovernanceActivity?.executedAt || '暂无治理留痕' }}
+                  </span>
+                </div>
+                <div class="governance-summary-item">
+                  <span class="governance-summary-item__label">最近一次导出</span>
+                  <strong class="governance-summary-item__value">
+                    {{ governanceExportMeta?.exportedAt || '暂无' }}
+                  </strong>
+                  <span class="governance-summary-item__meta">
+                    {{ governanceExportMeta?.fileName || '尚未导出治理审计包' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="governance-panel__section governance-panel__section--wide">
+              <div class="governance-panel__section-title">最近治理活动</div>
+              <div class="governance-panel__section-desc">
+                把模板、快照、重置和导出动作收进统一活动流，支持按类型和关键字回看。
+              </div>
+              <div class="governance-panel__form">
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="governanceActivityFilter === 'ALL' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-governance-activity-filter-all"
+                  @click="governanceActivityFilter = 'ALL'"
+                >
+                  全部
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="governanceActivityFilter === 'TEMPLATE' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-governance-activity-filter-template"
+                  @click="governanceActivityFilter = 'TEMPLATE'"
+                >
+                  模板
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="governanceActivityFilter === 'SNAPSHOT' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-governance-activity-filter-snapshot"
+                  @click="governanceActivityFilter = 'SNAPSHOT'"
+                >
+                  快照
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="governanceActivityFilter === 'RESET' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-governance-activity-filter-reset"
+                  @click="governanceActivityFilter = 'RESET'"
+                >
+                  重置
+                </button>
+                <button
+                  type="button"
+                  class="export-preset-chip export-preset-chip--subtle"
+                  :class="governanceActivityFilter === 'EXPORT' ? 'export-preset-chip--active' : ''"
+                  data-testid="occupancy-governance-activity-filter-export"
+                  @click="governanceActivityFilter = 'EXPORT'"
+                >
+                  导出
+                </button>
+                <input
+                  v-model="governanceActivityKeyword"
+                  data-testid="occupancy-governance-activity-keyword"
+                  type="text"
+                  class="preset-name-field__input"
+                  placeholder="搜索治理动作或对象"
+                />
+              </div>
+              <div
+                v-if="filteredGovernanceActivities.length"
+                class="governance-panel__list"
+                data-testid="occupancy-governance-activity-list"
+              >
+                <div
+                  v-for="(item, index) in filteredGovernanceActivities.slice(0, 8)"
+                  :key="item.key"
+                  class="governance-panel__item"
+                  :data-testid="`occupancy-governance-activity-item-${index}`"
+                >
+                  <div class="governance-panel__item-main">
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ buildGovernanceActivityTypeLabel(item.type) }}</span>
+                    <span>{{ item.target }}</span>
+                    <span>{{ item.summary }}</span>
+                    <span>{{ item.executedAt }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="governance-panel__section">
               <div class="governance-panel__section-title">导入策略模板</div>
               <div class="governance-panel__section-desc">
@@ -1795,6 +1933,22 @@
     summary: string
   }
 
+  type GovernanceActivityType = 'TEMPLATE' | 'SNAPSHOT' | 'RESET' | 'EXPORT'
+
+  interface GovernanceActivityState {
+    key: string
+    type: GovernanceActivityType
+    label: string
+    target: string
+    summary: string
+    executedAt: string
+  }
+
+  interface GovernanceExportMetaState {
+    exportedAt: string
+    fileName: string
+  }
+
   type ResetLogFilterScope = 'ALL_RECORDS' | LinkStatsResetScope
 
   const props = defineProps<{
@@ -1833,6 +1987,8 @@
   const selectedSnapshotCompareRightKey = ref('')
   const resetLogFilterScope = ref<ResetLogFilterScope>('ALL_RECORDS')
   const resetLogKeyword = ref('')
+  const governanceActivityFilter = ref<'ALL' | GovernanceActivityType>('ALL')
+  const governanceActivityKeyword = ref('')
   const presetCopySourceKey = ref<PresetCopySourceKey>('current')
   const focusedRecordKey = ref('')
   const filtersReady = ref(false)
@@ -1842,6 +1998,8 @@
   const presetImportInvalidItems = ref<PresetImportInvalidItem[]>([])
   const lastPresetImportResult = ref<PresetImportResultState | null>(null)
   const importPolicyTemplates = ref<ImportPolicyTemplateState[]>([])
+  const governanceActivities = ref<GovernanceActivityState[]>([])
+  const governanceExportMeta = ref<GovernanceExportMetaState | null>(null)
   const annotationCompareTarget = ref<AnnotationTemplateKey>('manager')
   const linkStatsWindow = ref<LinkStatsWindow>('7D')
   const linkStatsResetScope = ref<LinkStatsResetScope>('ALL')
@@ -1973,6 +2131,14 @@
   const linkResetLogStorageKey = computed(() => {
     const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
     return assetKey ? `asset-real-estate-occupancy-reset-logs:${assetKey}` : ''
+  })
+  const governanceActivitiesStorageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-governance-activities:${assetKey}` : ''
+  })
+  const governanceExportMetaStorageKey = computed(() => {
+    const assetKey = String(props.detailData.assetCode || props.detailData.assetId || '').trim()
+    return assetKey ? `asset-real-estate-occupancy-governance-export-meta:${assetKey}` : ''
   })
 
   const computedExportPresetOptions = computed(() => {
@@ -2137,6 +2303,26 @@
       )
     })
   })
+
+  const filteredGovernanceActivities = computed(() => {
+    return governanceActivities.value.filter((item) => {
+      if (governanceActivityFilter.value !== 'ALL' && item.type !== governanceActivityFilter.value) {
+        return false
+      }
+      const keywordValue = governanceActivityKeyword.value.trim().toLowerCase()
+      if (!keywordValue) {
+        return true
+      }
+      return (
+        item.label.toLowerCase().includes(keywordValue) ||
+        item.target.toLowerCase().includes(keywordValue) ||
+        item.summary.toLowerCase().includes(keywordValue) ||
+        buildGovernanceActivityTypeLabel(item.type).toLowerCase().includes(keywordValue)
+      )
+    })
+  })
+
+  const latestGovernanceActivity = computed(() => governanceActivities.value[0] || null)
 
   const historyDrilldownTip = computed(() => {
     if (!trendDrilldown.value) {
@@ -2320,6 +2506,14 @@
     const month = `${date.getMonth() + 1}`.padStart(2, '0')
     const day = `${date.getDate()}`.padStart(2, '0')
     return `${year}-${month}-${day}`
+  }
+
+  const formatLocalDateTime = (date: Date) => {
+    const dateKey = formatLocalDateKey(date)
+    const hours = `${date.getHours()}`.padStart(2, '0')
+    const minutes = `${date.getMinutes()}`.padStart(2, '0')
+    const seconds = `${date.getSeconds()}`.padStart(2, '0')
+    return `${dateKey} ${hours}:${minutes}:${seconds}`
   }
 
   const resolveTimelineDate = (record: AssetRealEstateOccupancyRecord) => {
@@ -2719,6 +2913,54 @@
     window.localStorage.setItem(linkResetLogStorageKey.value, JSON.stringify(linkResetLogs.value))
   }
 
+  const persistGovernanceActivities = () => {
+    if (!governanceActivitiesStorageKey.value) {
+      return
+    }
+    if (!governanceActivities.value.length) {
+      window.localStorage.removeItem(governanceActivitiesStorageKey.value)
+      return
+    }
+    window.localStorage.setItem(
+      governanceActivitiesStorageKey.value,
+      JSON.stringify(governanceActivities.value)
+    )
+  }
+
+  const persistGovernanceExportMeta = () => {
+    if (!governanceExportMetaStorageKey.value) {
+      return
+    }
+    if (!governanceExportMeta.value) {
+      window.localStorage.removeItem(governanceExportMetaStorageKey.value)
+      return
+    }
+    window.localStorage.setItem(
+      governanceExportMetaStorageKey.value,
+      JSON.stringify(governanceExportMeta.value)
+    )
+  }
+
+  const recordGovernanceActivity = (
+    type: GovernanceActivityType,
+    label: string,
+    target: string,
+    summary: string,
+    executedAt = new Date().toISOString()
+  ) => {
+    governanceActivities.value = [
+      {
+        key: `governance-${Date.now()}-${type.toLowerCase()}`,
+        type,
+        label,
+        target,
+        summary,
+        executedAt
+      },
+      ...governanceActivities.value
+    ].slice(0, 20)
+  }
+
   const emitTabSwitch = (tab: LinkedTabName) => {
     const linkOption = tabLinkOptions.find((item) => item.key === tab)
     const occurredAt = new Date().toISOString()
@@ -2817,6 +3059,13 @@
     savedTrendSnapshot.value = snapshot
     savedTrendSnapshotHistory.value = [snapshot, ...savedTrendSnapshotHistory.value].slice(0, 10)
     trendSnapshotName.value = ''
+    recordGovernanceActivity(
+      'SNAPSHOT',
+      '保存趋势快照',
+      snapshot.name,
+      `已保存${snapshot.linkStatsWindow === '30D' ? '近 30 天' : '近 7 天'}趋势快照`,
+      snapshot.savedAt
+    )
   }
 
   const toggleGovernancePanel = () => {
@@ -2846,9 +3095,20 @@
     resetFocusedRecord()
     await nextTick()
     historyListRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+    recordGovernanceActivity(
+      'SNAPSHOT',
+      '恢复趋势快照',
+      targetSnapshot.name,
+      `已恢复${targetSnapshot.name}`,
+      new Date().toISOString()
+    )
   }
 
   const clearSavedTrendSnapshot = (snapshotKey?: string | Event) => {
+    const targetSnapshot =
+      typeof snapshotKey === 'string'
+        ? savedTrendSnapshotHistory.value.find((item) => item.key === snapshotKey)
+        : savedTrendSnapshot.value || undefined
     let resolvedSnapshotKey = typeof snapshotKey === 'string' ? snapshotKey : undefined
     if (!resolvedSnapshotKey && savedTrendSnapshot.value) {
       resolvedSnapshotKey = savedTrendSnapshot.value.key
@@ -2862,6 +3122,15 @@
     )
     if (savedTrendSnapshot.value?.key === resolvedSnapshotKey) {
       savedTrendSnapshot.value = savedTrendSnapshotHistory.value[0] || null
+    }
+    if (targetSnapshot) {
+      recordGovernanceActivity(
+        'SNAPSHOT',
+        '删除趋势快照',
+        targetSnapshot.name,
+        `已删除${targetSnapshot.name}`,
+        new Date().toISOString()
+      )
     }
   }
 
@@ -2920,6 +3189,13 @@
       },
       ...linkResetLogs.value
     ].slice(0, 10)
+    recordGovernanceActivity(
+      'RESET',
+      buildResetScopeLabel(linkStatsResetScope.value),
+      buildResetScopeLabel(linkStatsResetScope.value),
+      summaryMap[linkStatsResetScope.value],
+      new Date().toISOString()
+    )
   }
 
   const focusReleasedHistory = () => {
@@ -3414,6 +3690,70 @@
     }
   }
 
+  const restoreGovernanceActivities = () => {
+    governanceActivities.value = []
+    if (!governanceActivitiesStorageKey.value) {
+      return
+    }
+    const raw = window.localStorage.getItem(governanceActivitiesStorageKey.value)
+    if (!raw) {
+      return
+    }
+    try {
+      const parsed = JSON.parse(raw)
+      governanceActivities.value = Array.isArray(parsed)
+        ? parsed
+            .map((item) => {
+              const key = String(item?.key || '').trim()
+              const type = String(item?.type || '').trim() as GovernanceActivityType
+              const label = String(item?.label || '').trim()
+              const target = String(item?.target || '').trim()
+              const summary = String(item?.summary || '').trim()
+              const executedAt = String(item?.executedAt || '').trim()
+              if (
+                !key ||
+                !['TEMPLATE', 'SNAPSHOT', 'RESET', 'EXPORT'].includes(type) ||
+                !label ||
+                !target ||
+                !summary ||
+                !executedAt
+              ) {
+                return undefined
+              }
+              return { key, type, label, target, summary, executedAt }
+            })
+            .filter((item): item is GovernanceActivityState => !!item)
+        : []
+    } catch {
+      window.localStorage.removeItem(governanceActivitiesStorageKey.value)
+    }
+  }
+
+  const restoreGovernanceExportMeta = () => {
+    governanceExportMeta.value = null
+    if (!governanceExportMetaStorageKey.value) {
+      return
+    }
+    const raw = window.localStorage.getItem(governanceExportMetaStorageKey.value)
+    if (!raw) {
+      return
+    }
+    try {
+      const parsed = JSON.parse(raw)
+      const exportedAt = String(parsed?.exportedAt || '').trim()
+      const fileName = String(parsed?.fileName || '').trim()
+      if (!exportedAt) {
+        return
+      }
+      governanceExportMeta.value = {
+        exportedAt,
+        fileName
+      }
+    } catch {
+      window.localStorage.removeItem(governanceExportMetaStorageKey.value)
+    }
+  }
+
   const toggleExportField = (fieldKey: ExportFieldKey) => {
     if (selectedExportFields.value.includes(fieldKey)) {
       if (selectedExportFields.value.length === 1) {
@@ -3474,6 +3814,13 @@
     ].slice(0, 10)
     selectedPolicyTemplateKey.value = nextTemplate.key
     policyTemplateName.value = ''
+    recordGovernanceActivity(
+      'TEMPLATE',
+      '保存策略模板',
+      nextTemplate.name,
+      `已保存策略模板，默认策略为${buildImportPolicyLabel(nextTemplate.globalPolicy)}`,
+      nextTemplate.createdAt
+    )
   }
 
   const buildPolicyTemplateApplySummary = (
@@ -3526,12 +3873,29 @@
         : item
     )
     selectedPolicyTemplateKey.value = templateKey
+    recordGovernanceActivity(
+      'TEMPLATE',
+      '应用策略模板',
+      targetTemplate.name,
+      buildPolicyTemplateApplySummary(matchedCount, targetTemplate.globalPolicy),
+      new Date().toISOString()
+    )
   }
 
   const removeImportPolicyTemplate = (templateKey: string) => {
+    const targetTemplate = importPolicyTemplates.value.find((item) => item.key === templateKey)
     importPolicyTemplates.value = importPolicyTemplates.value.filter((item) => item.key !== templateKey)
     if (selectedPolicyTemplateKey.value === templateKey) {
       selectedPolicyTemplateKey.value = importPolicyTemplates.value[0]?.key || ''
+    }
+    if (targetTemplate) {
+      recordGovernanceActivity(
+        'TEMPLATE',
+        '删除策略模板',
+        targetTemplate.name,
+        `已删除${targetTemplate.name}`,
+        new Date().toISOString()
+      )
     }
   }
 
@@ -3570,6 +3934,16 @@
     return mapper[scope]
   }
 
+  const buildGovernanceActivityTypeLabel = (type: GovernanceActivityType) => {
+    const mapper: Record<GovernanceActivityType, string> = {
+      TEMPLATE: '模板',
+      SNAPSHOT: '快照',
+      RESET: '重置',
+      EXPORT: '导出'
+    }
+    return mapper[type]
+  }
+
   const exportFilteredResetLogs = () => {
     if (!filteredLinkResetLogs.value.length) {
       return
@@ -3593,6 +3967,63 @@
     const link = document.createElement('a')
     link.href = url
     link.download = `${props.detailData.assetCode || 'asset'}-occupancy-reset-log-audit.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const exportGovernanceAuditPackage = () => {
+    const exportedAt = formatLocalDateTime(new Date())
+    const fileName = `${props.detailData.assetCode || 'asset'}-occupancy-governance-audit.json`
+    governanceExportMeta.value = {
+      exportedAt,
+      fileName
+    }
+    recordGovernanceActivity(
+      'EXPORT',
+      '导出治理审计包',
+      '治理审计包',
+      '已导出当前资产治理状态',
+      exportedAt
+    )
+
+    const content = JSON.stringify(
+      {
+        version: 1,
+        assetCode: props.detailData.assetCode || '',
+        exportedAt,
+        exportFieldConfig: {
+          selectedExportFields: selectedExportFields.value,
+          presetNames: { ...exportPresetNameDraft }
+        },
+        customExportPresets: customExportPresets.value,
+        lastPresetImportResult: lastPresetImportResult.value,
+        importPolicyTemplates: importPolicyTemplates.value,
+        trendSnapshots: {
+          current: savedTrendSnapshot.value,
+          items: savedTrendSnapshotHistory.value
+        },
+        linkStats: {
+          counts: { ...linkStats.counts },
+          lastTargetKey: linkStats.lastTargetKey,
+          lastTargetLabel: linkStats.lastTargetLabel,
+          window: linkStatsWindow.value,
+          events: [...linkStats.events]
+        },
+        linkResetLogs: linkResetLogs.value,
+        governanceActivities: governanceActivities.value,
+        governanceExportMeta: governanceExportMeta.value
+      },
+      null,
+      2
+    )
+
+    const blob = new Blob([content], { type: 'application/json;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -4169,6 +4600,22 @@
     { immediate: true }
   )
 
+  watch(
+    governanceActivitiesStorageKey,
+    () => {
+      restoreGovernanceActivities()
+    },
+    { immediate: true }
+  )
+
+  watch(
+    governanceExportMetaStorageKey,
+    () => {
+      restoreGovernanceExportMeta()
+    },
+    { immediate: true }
+  )
+
   onMounted(() => {
     restoreExportFields()
     restorePresetNames()
@@ -4178,6 +4625,8 @@
     restoreSavedTrendSnapshot()
     restoreImportPolicyTemplates()
     restoreLinkResetLogs()
+    restoreGovernanceActivities()
+    restoreGovernanceExportMeta()
   })
 
   watch(
@@ -4264,6 +4713,22 @@
     linkResetLogs,
     () => {
       persistLinkResetLogs()
+    },
+    { deep: true }
+  )
+
+  watch(
+    governanceActivities,
+    () => {
+      persistGovernanceActivities()
+    },
+    { deep: true }
+  )
+
+  watch(
+    governanceExportMeta,
+    () => {
+      persistGovernanceExportMeta()
     },
     { deep: true }
   )
@@ -5012,6 +5477,55 @@
     box-shadow: inset 0 0 0 1px rgb(219 230 245 / 80%);
   }
 
+  .governance-panel__section--wide {
+    grid-column: 1 / -1;
+  }
+
+  .governance-panel__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .governance-panel__summary {
+    background: linear-gradient(135deg, rgb(244 248 255 / 96%), rgb(255 255 255 / 98%));
+  }
+
+  .governance-panel__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .governance-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 88%);
+    box-shadow: inset 0 0 0 1px rgb(219 230 245 / 80%);
+  }
+
+  .governance-summary-item__label {
+    font-size: 12px;
+    color: #5d6b86;
+  }
+
+  .governance-summary-item__value {
+    font-size: 18px;
+    line-height: 1.4;
+    color: #18233a;
+  }
+
+  .governance-summary-item__meta {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #51627d;
+    word-break: break-all;
+  }
+
   .governance-panel__section-title {
     font-size: 13px;
     font-weight: 700;
@@ -5528,6 +6042,7 @@
     .annotation-compare__grid,
     .preset-import-preview__list,
     .governance-panel,
+    .governance-panel__summary-grid,
     .occupancy-link-stats__grid,
     .occupancy-link-trend__grid {
       grid-template-columns: 1fr;
@@ -5541,7 +6056,8 @@
     .record-item__header,
     .matrix-item__header,
     .history-toolbar,
-    .insight-card__header {
+    .insight-card__header,
+    .governance-panel__section-header {
       flex-direction: column;
       align-items: flex-start;
     }

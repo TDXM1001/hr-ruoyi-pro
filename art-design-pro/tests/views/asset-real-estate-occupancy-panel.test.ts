@@ -2904,6 +2904,297 @@ describe('OccupancyPanel occupancy flow', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1)
     expect(revokeObjectURL).toHaveBeenCalledTimes(1)
   })
+
+  it('shows governance summary card with template count, snapshot count and last export time', async () => {
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-import-policy-templates:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'policy-template-1',
+          name: '治理审计模板',
+          createdAt: '2026-03-23 10:00:00',
+          globalPolicy: 'RENAME',
+          itemPolicies: [],
+          lastAppliedAt: '2026-03-23 10:10:00',
+          lastAppliedSummary: '最近命中 1 项',
+          lastMatchedCount: 1
+        }
+      ])
+    )
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-trend-snapshot:RE-2026-0001',
+      JSON.stringify({
+        current: {
+          key: 'snapshot-current',
+          name: '当前快照',
+          savedAt: '2026-03-23 10:20:00',
+          linkStatsWindow: '7D',
+          drilldown: {
+            date: '2026-03-23',
+            label: '03-23',
+            count: 2
+          },
+          filterState: {
+            statusFilter: 'ALL',
+            timeFilter: 'CUSTOM',
+            sortDirection: 'DESC',
+            keyword: '',
+            customRangeDraftStart: '2026-03-23',
+            customRangeDraftEnd: '2026-03-23',
+            customRangeAppliedStart: '2026-03-23',
+            customRangeAppliedEnd: '2026-03-23'
+          }
+        },
+        items: [
+          {
+            key: 'snapshot-current',
+            name: '当前快照',
+            savedAt: '2026-03-23 10:20:00',
+            linkStatsWindow: '7D',
+            drilldown: {
+              date: '2026-03-23',
+              label: '03-23',
+              count: 2
+            },
+            filterState: {
+              statusFilter: 'ALL',
+              timeFilter: 'CUSTOM',
+              sortDirection: 'DESC',
+              keyword: '',
+              customRangeDraftStart: '2026-03-23',
+              customRangeDraftEnd: '2026-03-23',
+              customRangeAppliedStart: '2026-03-23',
+              customRangeAppliedEnd: '2026-03-23'
+            }
+          }
+        ]
+      })
+    )
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-governance-activities:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'activity-1',
+          type: 'EXPORT',
+          label: '导出治理审计包',
+          target: '治理审计包',
+          summary: '已导出当前资产治理状态',
+          executedAt: '2026-03-23 10:30:00'
+        }
+      ])
+    )
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-governance-export-meta:RE-2026-0001',
+      JSON.stringify({
+        exportedAt: '2026-03-23 10:30:00'
+      })
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+
+    const summaryCard = wrapper.get('[data-testid="occupancy-governance-summary-card"]')
+    expect(summaryCard.text()).toContain('治理审计模板')
+    expect(summaryCard.text()).toContain('策略模板数')
+    expect(summaryCard.text()).toContain('1')
+    expect(summaryCard.text()).toContain('趋势快照数')
+    expect(summaryCard.text()).toContain('最近一次治理动作')
+    expect(summaryCard.text()).toContain('导出治理审计包')
+    expect(summaryCard.text()).toContain('最近一次导出')
+    expect(summaryCard.text()).toContain('2026-03-23 10:30:00')
+  })
+
+  it('filters governance activities by type and keyword', async () => {
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-governance-activities:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'activity-template',
+          type: 'TEMPLATE',
+          label: '应用策略模板',
+          target: '治理审计模板',
+          summary: '已应用导入策略模板',
+          executedAt: '2026-03-23 09:00:00'
+        },
+        {
+          key: 'activity-snapshot',
+          type: 'SNAPSHOT',
+          label: '保存趋势快照',
+          target: '今日快照',
+          summary: '已保存 7 天趋势快照',
+          executedAt: '2026-03-23 09:10:00'
+        }
+      ])
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    const activityList = wrapper.get('[data-testid="occupancy-governance-activity-list"]')
+    expect(activityList.text()).toContain('应用策略模板')
+    expect(activityList.text()).toContain('保存趋势快照')
+
+    await wrapper.get('[data-testid="occupancy-governance-activity-filter-template"]').trigger('click')
+    expect(activityList.text()).toContain('应用策略模板')
+    expect(activityList.text()).not.toContain('保存趋势快照')
+
+    await wrapper.get('[data-testid="occupancy-governance-activity-filter-all"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-activity-keyword"]').setValue('今日快照')
+    expect(activityList.text()).toContain('保存趋势快照')
+    expect(activityList.text()).not.toContain('应用策略模板')
+  })
+
+  it('exports governance audit package as json', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-23T15:30:00+08:00'))
+    const createObjectURL = vi.fn(() => 'blob:occupancy-governance-audit')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-import-policy-templates:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'policy-template-1',
+          name: '治理审计模板',
+          createdAt: '2026-03-23 10:00:00',
+          globalPolicy: 'RENAME',
+          itemPolicies: [],
+          lastAppliedAt: '2026-03-23 10:10:00',
+          lastAppliedSummary: '最近命中 1 项',
+          lastMatchedCount: 1
+        }
+      ])
+    )
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-reset-logs:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'reset-events',
+          executedAt: '2026-03-23 14:00:00',
+          scope: 'EVENTS',
+          summary: '已清空趋势事件 2 条'
+        }
+      ])
+    )
+    window.localStorage.setItem(
+      'asset-real-estate-occupancy-governance-activities:RE-2026-0001',
+      JSON.stringify([
+        {
+          key: 'activity-template',
+          type: 'TEMPLATE',
+          label: '应用策略模板',
+          target: '治理审计模板',
+          summary: '已应用导入策略模板',
+          executedAt: '2026-03-23 09:00:00'
+        }
+      ])
+    )
+
+    const wrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await wrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await wrapper.get('[data-testid="occupancy-governance-export-audit"]').trigger('click')
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    const exportedBlob = createObjectURL.mock.calls[0][0] as Blob
+    const content = await exportedBlob.text()
+
+    expect(content).toContain('"assetCode": "RE-2026-0001"')
+    expect(content).toContain('"importPolicyTemplates"')
+    expect(content).toContain('"linkResetLogs"')
+    expect(content).toContain('"governanceActivities"')
+    expect(content).toContain('"exportedAt": "2026-03-23 15:30:00"')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1)
+  })
+
+  it('stores latest governance audit export time and restores it after remount', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-23T16:00:00+08:00'))
+    const createObjectURL = vi.fn(() => 'blob:occupancy-governance-audit')
+    const revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    URL.createObjectURL = createObjectURL
+    URL.revokeObjectURL = revokeObjectURL
+
+    const firstWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await firstWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    await firstWrapper.get('[data-testid="occupancy-governance-export-audit"]').trigger('click')
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    firstWrapper.unmount()
+
+    const secondWrapper = mount(OccupancyPanel, {
+      props: {
+        detailData: {
+          assetCode: 'RE-2026-0001',
+          ownerDeptName: 'owner-dept'
+        },
+        occupancyRecords: [],
+        canEdit: true
+      },
+      global: {
+        plugins: [ElementPlus]
+      }
+    })
+
+    await secondWrapper.get('[data-testid="occupancy-governance-toggle"]').trigger('click')
+    const summaryCard = secondWrapper.get('[data-testid="occupancy-governance-summary-card"]')
+    expect(summaryCard.text()).toContain('最近一次导出')
+    expect(summaryCard.text()).toContain('2026-03-23 16:00:00')
+  })
 })
 
 
