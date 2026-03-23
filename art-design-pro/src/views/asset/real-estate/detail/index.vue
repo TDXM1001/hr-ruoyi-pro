@@ -112,6 +112,7 @@
         v-else
         :detail-data="detailData"
         :disposal-records="disposalRecords"
+        :disposal-summary="disposalOverviewSummary"
         @jump-disposal="goToDisposalModule"
       />
     </div>
@@ -337,6 +338,7 @@
   import { useDict } from '@/utils/dict'
   import { useUserStore } from '@/store/modules/user'
   import DisposalPanel from './components/disposal-panel.vue'
+  import { buildDisposalOverviewSummary } from './components/disposal-overview'
   import InspectionPanel from './components/inspection-panel.vue'
   import OccupancyPanel from './components/occupancy-panel.vue'
   import OverviewPanel from './components/overview-panel.vue'
@@ -471,7 +473,8 @@
       { label: '资产状态', value: getStatusLabel(detailData.assetStatus) },
       { label: '权属部门', value: detailData.ownerDeptName || '-' },
       { label: '最近巡检', value: detailData.lastInventoryDate || '-' },
-      { label: '整改闭环', value: rectificationOverviewSummary.value.overallLabel }
+      { label: '整改闭环', value: rectificationOverviewSummary.value.overallLabel },
+      { label: '处置闭环', value: disposalOverviewSummary.value.overallLabel }
     ]
   })
 
@@ -555,6 +558,10 @@
 
   const rectificationOverviewSummary = computed(() => {
     return buildRectificationOverviewSummary(rectificationRecords.value, overviewChangeLogs.value)
+  })
+
+  const disposalOverviewSummary = computed(() => {
+    return buildDisposalOverviewSummary(disposalRecords.value, detailData.assetStatus)
   })
 
   const findLinkedRectification = (record: AssetInventoryRecord) => {
@@ -1024,7 +1031,7 @@
     }
   }
 
-  const goToDisposalModule = () => {
+  const goToDisposalModule = (intent: 'start' | 'view' = 'view') => {
     if (!assetId.value) {
       return
     }
@@ -1034,7 +1041,10 @@
       query: {
         tab: preferredDisposalTab.value,
         assetId: String(assetId.value),
-        assetCode: detailData.assetCode || ''
+        assetCode: detailData.assetCode || '',
+        assetName: detailData.assetName || '',
+        source: 'real-estate-disposal-tab',
+        intent
       }
     })
   }

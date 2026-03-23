@@ -246,6 +246,71 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('occupancy')
   })
 
+  it('详情壳顶部摘要和处置页签展示处置闭环摘要', async () => {
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('处置闭环')
+    expect(wrapper.text()).toContain('已完成处置闭环')
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('处置闭环摘要')
+    expect(wrapper.text()).toContain('已完成处置闭环')
+    expect(wrapper.text()).toContain('最近处置动作')
+    expect(wrapper.text()).toContain('已确认处置')
+    expect(wrapper.text()).toContain('处置已闭环，可回看历史记录并归档留痕。')
+  })
+
+  it('处置页签在未发起时提供发起入口并带来源上下文跳转', async () => {
+    vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
+      data: {
+        occupancyRecords: [],
+        handoverRecords: [],
+        inventoryRecords: [],
+        rectificationOrders: [],
+        disposalRecords: [],
+        changeLogs: []
+      }
+    } as any)
+
+    const wrapper = mount(AssetRealEstateDetailPage, {
+      global: {
+        plugins: [ElementPlus],
+        stubs: { DictTag: true }
+      }
+    })
+
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.handleTabChange('disposal')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('未发起处置')
+    await wrapper.get('[data-testid="disposal-initiate-button"]').trigger('click')
+
+    expect(mockPush).toHaveBeenLastCalledWith({
+      path: '/asset/disposal',
+      query: {
+        tab: 'record',
+        assetId: '20001',
+        assetCode: 'RE-2026-0001',
+        assetName: '深圳研发办公楼A座',
+        source: 'real-estate-disposal-tab',
+        intent: 'start'
+      }
+    })
+  })
+
   it('总览展示整改闭环摘要和最近整改动作', async () => {
     vi.mocked(realEstateApi.getRealEstateLifecycle).mockResolvedValueOnce({
       data: {
@@ -921,7 +986,10 @@ describe('AssetRealEstateDetailPage 详情壳', () => {
       query: {
         tab: 'record',
         assetId: '20001',
-        assetCode: 'RE-2026-0001'
+        assetCode: 'RE-2026-0001',
+        assetName: '深圳研发办公楼A座',
+        source: 'real-estate-disposal-tab',
+        intent: 'view'
       }
     })
     expect(window.sessionStorage.getItem('asset-real-estate-detail-tab:20001')).toBe('disposal')

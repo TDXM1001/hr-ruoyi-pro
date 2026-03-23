@@ -1,12 +1,39 @@
-﻿<template>
-  <div class="section-stack">
+<template>
+  <div class="section-stack" data-testid="disposal-reading-layout">
     <ElAlert
       class="section-alert"
       type="success"
       show-icon
       :closable="false"
-      title="处置页签只承接已进入处置口径的结果，仍然跳转到统一处置模块执行正式流程。"
+      title="处置页签负责识别当前闭环状态和发起入口，正式流程仍由统一资产处置模块承接。"
     />
+
+    <ElCard class="section-card" shadow="never">
+      <template #header>
+        <div class="card-title">处置闭环摘要</div>
+      </template>
+
+      <div class="disposal-summary-card">
+        <div class="disposal-summary-card__header">
+          <div>
+            <div class="disposal-summary-card__label">当前闭环状态</div>
+            <div class="disposal-summary-card__title">{{ disposalSummary.overallLabel }}</div>
+          </div>
+          <ElTag :type="disposalSummary.overallTagType" effect="light">
+            {{ disposalSummary.overallLabel }}
+          </ElTag>
+        </div>
+
+        <div class="disposal-summary-card__meta">
+          <span class="disposal-summary-card__label">最近处置动作</span>
+          <strong>{{ disposalSummary.latestActionLabel }}</strong>
+          <span>{{ disposalSummary.latestActionTime || '-' }}</span>
+        </div>
+
+        <div class="record-item__desc">{{ disposalSummary.latestActionDesc }}</div>
+        <div class="record-item__desc">{{ disposalSummary.nextStep }}</div>
+      </div>
+    </ElCard>
 
     <ElCard class="section-card" shadow="never">
       <template #header>
@@ -19,7 +46,19 @@
             当前资产状态：{{ detailData.assetStatus || '-' }}，历史处置记录：{{ disposalRecords.length }} 条
           </div>
         </div>
-        <ElButton data-testid="disposal-jump-button" type="primary" @click="$emit('jump-disposal')">进入资产处置</ElButton>
+        <div class="disposal-link-card__actions">
+          <ElButton
+            v-if="disposalSummary.showInitiateAction"
+            data-testid="disposal-initiate-button"
+            type="primary"
+            @click="$emit('jump-disposal', 'start')"
+          >
+            {{ disposalSummary.initiateActionLabel }}
+          </ElButton>
+          <ElButton data-testid="disposal-jump-button" plain @click="$emit('jump-disposal', 'view')">
+            进入资产处置
+          </ElButton>
+        </div>
       </div>
     </ElCard>
 
@@ -46,12 +85,50 @@
 </template>
 
 <script setup lang="ts">
+  import type { AssetDisposalRecord } from '@/api/asset/ledger'
+  import type { DisposalOverviewSummary } from './disposal-overview'
+
   defineEmits<{
-    'jump-disposal': []
+    'jump-disposal': [intent?: 'start' | 'view']
   }>()
 
   defineProps<{
     detailData: Record<string, any>
-    disposalRecords: Record<string, any>[]
+    disposalRecords: AssetDisposalRecord[]
+    disposalSummary: DisposalOverviewSummary
   }>()
 </script>
+
+<style scoped>
+  .disposal-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .disposal-summary-card__header,
+  .disposal-summary-card__meta,
+  .disposal-link-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .disposal-summary-card__label {
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .disposal-summary-card__title {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+  }
+
+  .disposal-link-card__actions {
+    justify-content: flex-end;
+  }
+</style>
