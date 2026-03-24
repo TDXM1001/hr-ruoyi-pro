@@ -1,7 +1,7 @@
 ﻿import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import ElementPlus from 'element-plus'
+import ElementPlus, { ElMessage } from 'element-plus'
 import AssetDisposalPage from '@/views/asset/disposal/index.vue'
 import * as disposalApi from '@/api/asset/disposal'
 import * as ledgerApi from '@/api/asset/ledger'
@@ -70,8 +70,9 @@ const mountPage = () => {
           props: ['modelValue', 'items', 'showExpand']
         },
         ArtTable: {
-          template: '<div class="art-table-stub"></div>',
-          props: ['data', 'columns', 'loading', 'pagination']
+          template:
+            '<div class="art-table-stub"><div v-if="!data || !data.length" class="art-table-empty">{{ emptyText }}</div></div>',
+          props: ['data', 'columns', 'loading', 'pagination', 'emptyText']
         }
       }
     }
@@ -343,6 +344,84 @@ describe('AssetDisposalPage 来源上下文接入', () => {
     expect(wrapper.get('[data-testid="disposal-source-scope"]').text()).toContain('待处置资产池')
     expect(wrapper.get('[data-testid="disposal-entry-workflow"]').text()).toContain('待处置资产池办理')
     expect(wrapper.get('[data-testid="disposal-entry-primary-action"]').text()).toContain('进入待处置资产池')
+  })
+
+  it('入口卡和 tab 头部会复用同一套办理摘要条，并随当前视图同步切换', async () => {
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-entry-summary-bar"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-entry-summary-bar"]').text()).toContain('先核对该资产的处置记录')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-bar"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-bar"]').text()).toContain('先核对该资产的处置记录')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-refresh-action"]').text()).toContain('刷新记录')
+    expect(wrapper.get('[data-testid="disposal-search-summary-bar"]').text()).toContain('处置记录回看')
+
+    await wrapper.get('[data-testid="disposal-entry-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-entry-summary-bar"]').text()).toContain('待处置资产池办理')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-bar"]').text()).toContain('待处置资产池办理')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-refresh-action"]').text()).toContain('刷新资产池')
+    expect(wrapper.get('[data-testid="disposal-search-summary-bar"]').text()).toContain('待处置资产池办理')
+
+    await wrapper.get('[data-testid="disposal-tab-summary-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-entry-summary-bar"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-bar"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('[data-testid="disposal-tab-summary-refresh-action"]').text()).toContain('刷新记录')
+    expect(wrapper.get('[data-testid="disposal-search-summary-bar"]').text()).toContain('处置记录回看')
+  })
+
+  it('搜索区空状态和刷新反馈会使用当前办理视图口径', async () => {
+    const successSpy = vi.spyOn(ElMessage, 'success').mockImplementation(() => undefined as never)
+
+    routeState.query = {
+      source: 'real-estate-disposal-tab',
+      intent: 'view',
+      assetId: '20002',
+      assetCode: 'RE-2026-0002',
+      assetName: '深圳测试不动产B座'
+    }
+
+    const wrapper = mountPage()
+
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-search-summary-bar"]').text()).toContain('处置记录回看')
+    expect(wrapper.get('#pane-record .art-table-empty').text()).toContain(
+      '当前办理视图「处置记录回看」暂无符合条件的处置记录'
+    )
+
+    await wrapper.get('[data-testid="disposal-tab-summary-refresh-action"]').trigger('click')
+    await flushPromises()
+
+    expect(successSpy).toHaveBeenCalledWith('已刷新处置记录回看')
+
+    await wrapper.get('[data-testid="disposal-entry-secondary-action"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-testid="disposal-search-summary-bar"]').text()).toContain('待处置资产池办理')
+    expect(wrapper.get('#pane-pool .art-table-empty').text()).toContain(
+      '当前办理视图「待处置资产池办理」暂无符合条件的待处置资产'
+    )
+
+    await wrapper.get('[data-testid="disposal-tab-summary-refresh-action"]').trigger('click')
+    await flushPromises()
+
+    expect(successSpy).toHaveBeenCalledWith('已刷新待处置资产池办理')
+
+    successSpy.mockRestore()
   })
 
   it('无来源参数时不展示来源横幅和返回入口', async () => {

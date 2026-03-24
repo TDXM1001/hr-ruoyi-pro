@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.asset.domain.AssetApprovalRecord;
+import com.ruoyi.asset.domain.bo.AssetApprovalActionBo;
 import com.ruoyi.asset.domain.bo.AssetDisposalBo;
 import com.ruoyi.asset.domain.vo.AssetDisposalVo;
 import com.ruoyi.asset.service.IAssetDisposalService;
@@ -60,7 +62,7 @@ public class AssetDisposalController extends BaseController
     }
 
     /**
-     * 确认处置。
+     * 提交处置审批。
      *
      * @param bo 处置参数
      * @return 处置ID
@@ -70,6 +72,52 @@ public class AssetDisposalController extends BaseController
     @PostMapping
     public AjaxResult add(@Validated @RequestBody AssetDisposalBo bo)
     {
-        return success(assetDisposalService.confirmDisposal(bo, getUsername()));
+        return success(assetDisposalService.submitDisposalApproval(bo, getUsername()));
+    }
+
+    /**
+     * 审批通过处置单。
+     *
+     * @param disposalId 处置单ID
+     * @param bo 审批动作
+     * @return 结果
+     */
+    @Log(title = "资产处置审批", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:disposal:approve')")
+    @PostMapping("/{disposalId}/approve")
+    public AjaxResult approve(@PathVariable Long disposalId, @Validated @RequestBody AssetApprovalActionBo bo)
+    {
+        assetDisposalService.approveDisposal(disposalId, bo, getUsername());
+        return success();
+    }
+
+    /**
+     * 驳回处置单。
+     *
+     * @param disposalId 处置单ID
+     * @param bo 审批动作
+     * @return 结果
+     */
+    @Log(title = "资产处置审批", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('asset:disposal:approve')")
+    @PostMapping("/{disposalId}/reject")
+    public AjaxResult reject(@PathVariable Long disposalId, @Validated @RequestBody AssetApprovalActionBo bo)
+    {
+        assetDisposalService.rejectDisposal(disposalId, bo, getUsername());
+        return success();
+    }
+
+    /**
+     * 查询处置审批轨迹。
+     *
+     * @param disposalId 处置单ID
+     * @return 审批轨迹
+     */
+    @PreAuthorize("@ss.hasPermi('asset:disposal:approval')")
+    @GetMapping("/{disposalId}/approvals")
+    public AjaxResult approvals(@PathVariable Long disposalId)
+    {
+        List<AssetApprovalRecord> approvals = assetDisposalService.selectDisposalApprovalRecords(disposalId);
+        return success(approvals);
     }
 }

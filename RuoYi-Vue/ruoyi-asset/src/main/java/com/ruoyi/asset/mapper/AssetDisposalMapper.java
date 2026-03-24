@@ -1,6 +1,8 @@
 package com.ruoyi.asset.mapper;
 
+import java.util.Date;
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.asset.domain.AssetDisposal;
 import com.ruoyi.asset.domain.bo.AssetDisposalBo;
 import com.ruoyi.asset.domain.vo.AssetDisposalVo;
@@ -43,6 +45,18 @@ public interface AssetDisposalMapper
      * @return 最大处置单号
      */
     String selectMaxDisposalNoByPrefix(String disposalNoPrefix);
+
+    /**
+     * 更新处置审批结果。
+     *
+     * @param disposalId 处置单ID
+     * @param disposalStatus 处置状态
+     * @param operator 审批人
+     * @param confirmedTime 审批时间
+     * @return 结果
+     */
+    int updateDisposalApprovalResult(@Param("disposalId") Long disposalId, @Param("disposalStatus") String disposalStatus,
+        @Param("operator") String operator, @Param("confirmedTime") Date confirmedTime);
 
     /**
      * 新增处置单。

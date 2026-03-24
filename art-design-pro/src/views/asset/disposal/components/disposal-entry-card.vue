@@ -47,63 +47,39 @@
           <strong>{{ context.preferredTabLabel }}</strong>
           <p>{{ context.scopeDescription }}</p>
         </div>
-        <div data-testid="disposal-source-next-step" class="disposal-entry-card__panel">
-          <span>下一步建议</span>
-          <p>{{ context.nextStepSuggestion }}</p>
-        </div>
       </div>
 
-      <div data-testid="disposal-entry-workflow" class="disposal-entry-card__workflow">
-        <div class="disposal-entry-card__workflow-title">{{ context.workflowTitle }}</div>
-        <div class="disposal-entry-card__workflow-body">
-          <strong>{{ context.workflowLabel }}</strong>
-          <p>{{ context.workflowDescription }}</p>
-        </div>
-      </div>
-
-      <div class="disposal-entry-card__actions">
-        <div class="disposal-entry-card__action-copy">
-          <div class="disposal-entry-card__action-title">{{ context.primaryActionLabel }}</div>
-          <div class="disposal-entry-card__action-desc">{{ context.primaryActionDescription }}</div>
-        </div>
-        <div class="disposal-entry-card__action-buttons">
-          <ElButton
-            data-testid="disposal-entry-secondary-action"
-            plain
-            @click="$emit('secondary-action')"
-          >
-            {{ context.secondaryActionLabel }}
-          </ElButton>
-          <ElButton
-            data-testid="disposal-entry-primary-action"
-            :type="primaryActionType"
-            @click="$emit('primary-action')"
-          >
-            {{ context.primaryActionLabel }}
-          </ElButton>
-        </div>
-      </div>
+      <DisposalSummaryBar
+        :context="summaryContext"
+        root-test-id="disposal-entry-summary-bar"
+        workflow-test-id="disposal-entry-workflow"
+        next-step-test-id="disposal-source-next-step"
+        primary-action-test-id="disposal-entry-primary-action"
+        secondary-action-test-id="disposal-entry-secondary-action"
+        refresh-action-test-id="disposal-entry-refresh-action"
+        @primary-action="$emit('primary-action')"
+        @secondary-action="$emit('secondary-action')"
+        @refresh-action="$emit('refresh-action')"
+      />
     </div>
   </ElCard>
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import type { DisposalSourceContext } from '../disposal-source-context'
+  import DisposalSummaryBar from './disposal-summary-bar.vue'
+  import type { DisposalSourceContext, DisposalSummaryBarContext } from '../disposal-source-context'
 
   const props = defineProps<{
     context: DisposalSourceContext
+    summaryContext: DisposalSummaryBarContext
   }>()
 
   defineEmits<{
     back: []
     'primary-action': []
     'secondary-action': []
+    'refresh-action': []
   }>()
-
-  const primaryActionType = computed(() => {
-    return props.context.preferredTab === 'record' ? 'success' : 'primary'
-  })
 </script>
 
 <style scoped lang="scss">
@@ -206,82 +182,10 @@
     }
   }
 
-  .disposal-entry-card__actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 14px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(64, 158, 255, 0.14);
-  }
-
-  .disposal-entry-card__workflow {
-    margin-top: 12px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(47, 102, 255, 0.06);
-    border: 1px dashed rgba(47, 102, 255, 0.28);
-  }
-
-  .disposal-entry-card__workflow-title {
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .disposal-entry-card__workflow-body {
-    strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: var(--el-text-color-primary);
-    }
-
-    p {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1.7;
-      color: var(--el-text-color-regular);
-    }
-  }
-
-  .disposal-entry-card__action-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .disposal-entry-card__action-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .disposal-entry-card__action-desc {
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--el-text-color-secondary);
-  }
-
-  .disposal-entry-card__action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-
   @media (max-width: 768px) {
-    .disposal-entry-card__header,
-    .disposal-entry-card__actions {
+    .disposal-entry-card__header {
       flex-direction: column;
       align-items: stretch;
-    }
-
-    .disposal-entry-card__action-buttons {
-      justify-content: stretch;
     }
   }
 </style>

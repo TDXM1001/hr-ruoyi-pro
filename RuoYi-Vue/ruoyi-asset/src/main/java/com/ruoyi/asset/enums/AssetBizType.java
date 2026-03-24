@@ -36,7 +36,10 @@ public enum AssetBizType
     DISPOSAL_APPLY("DISPOSAL_APPLY", "发起处置"),
 
     /** 确认处置 */
-    DISPOSAL_CONFIRM("DISPOSAL_CONFIRM", "确认处置");
+    DISPOSAL_CONFIRM("DISPOSAL_CONFIRM", "确认处置"),
+
+    /** 驳回处置 */
+    DISPOSAL_REJECT("DISPOSAL_REJECT", "驳回处置");
 
     /** 业务编码 */
     private final String code;

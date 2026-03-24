@@ -141,6 +141,44 @@ public class AssetChangeLog implements Serializable
         return changeLog;
     }
 
+    /**
+     * 构建发起处置审批日志。
+     *
+     * @param assetId 资产ID
+     * @param disposalId 处置单ID
+     * @param beforeStatus 变更前状态
+     * @param afterStatus 变更后状态
+     * @param operator 操作人
+     * @return 变更日志
+     */
+    public static AssetChangeLog ofDisposalApply(Long assetId, Long disposalId, String beforeStatus,
+        String afterStatus, String operator)
+    {
+        AssetChangeLog changeLog = build(assetId, AssetBizType.DISPOSAL_APPLY.getCode(), beforeStatus, afterStatus,
+            operator, "提交资产处置审批");
+        changeLog.setBizId(disposalId);
+        return changeLog;
+    }
+
+    /**
+     * 构建驳回处置审批日志。
+     *
+     * @param assetId 资产ID
+     * @param disposalId 处置单ID
+     * @param beforeStatus 变更前状态
+     * @param afterStatus 变更后状态
+     * @param operator 操作人
+     * @return 变更日志
+     */
+    public static AssetChangeLog ofDisposalReject(Long assetId, Long disposalId, String beforeStatus,
+        String afterStatus, String operator)
+    {
+        AssetChangeLog changeLog = build(assetId, AssetBizType.DISPOSAL_REJECT.getCode(), beforeStatus, afterStatus,
+            operator, "驳回资产处置审批");
+        changeLog.setBizId(disposalId);
+        return changeLog;
+    }
+
     private static AssetChangeLog build(Long assetId, String bizType, String beforeStatus,
         String afterStatus, String operator, String changeDesc)
     {

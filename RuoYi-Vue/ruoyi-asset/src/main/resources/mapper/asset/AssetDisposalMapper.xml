@@ -112,4 +112,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             sysdate()
         )
     </insert>
+
+    <update id="updateDisposalApprovalResult">
+        update ast_asset_disposal
+        set disposal_status = #{disposalStatus},
+            confirmed_by = #{operator},
+            confirmed_time = #{confirmedTime},
+            update_by = #{operator},
+            update_time = sysdate()
+        where disposal_id = #{disposalId}
+    </update>
 </mapper>

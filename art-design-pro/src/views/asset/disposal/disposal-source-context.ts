@@ -31,6 +31,19 @@ export type DisposalSourceContext = {
   }
 }
 
+export type DisposalSummaryBarContext = {
+  currentViewLabel: string
+  currentIntentLabel: string
+  workflowLabel: string
+  workflowDescription: string
+  nextStepSuggestion: string
+  primaryActionLabel: string
+  primaryActionDescription: string
+  secondaryActionLabel: string
+  secondaryActionDescription: string
+  refreshActionLabel: string
+}
+
 const readString = (value: unknown) => {
   return typeof value === 'string' ? value : ''
 }
@@ -199,5 +212,37 @@ export function buildDisposalActiveViewContext(
     primaryActionDescription,
     secondaryActionLabel,
     secondaryActionDescription
+  }
+}
+
+export function buildDisposalSummaryBarContext(
+  context: DisposalSourceContext
+): DisposalSummaryBarContext {
+  const genericWorkflowDescription =
+    context.preferredTab === 'record'
+      ? '当前可回看处置记录、审批状态和责任归口，并判断是否需要继续办理。'
+      : '当前可在待处置资产池中确认资产，并继续办理处置流程。'
+
+  const genericNextStepSuggestion =
+    context.preferredTab === 'record'
+      ? '可按处置单号、类型或日期筛选记录，并继续核对审批进展。'
+      : '可先筛选待处置资产，再继续确认处置或切回记录页回看。'
+
+  return {
+    currentViewLabel: context.preferredTabLabel,
+    // 中文注释：没有来源时不展示意图标签，避免把通用入口误写成联动场景。
+    currentIntentLabel: context.hasSource ? context.intentLabel : '',
+    workflowLabel: context.workflowLabel,
+    workflowDescription: context.hasSource
+      ? context.workflowDescription
+      : genericWorkflowDescription,
+    nextStepSuggestion: context.hasSource
+      ? context.nextStepSuggestion
+      : genericNextStepSuggestion,
+    primaryActionLabel: context.primaryActionLabel,
+    primaryActionDescription: context.primaryActionDescription,
+    secondaryActionLabel: context.secondaryActionLabel,
+    secondaryActionDescription: context.secondaryActionDescription,
+    refreshActionLabel: context.preferredTab === 'record' ? '刷新记录' : '刷新资产池'
   }
 }

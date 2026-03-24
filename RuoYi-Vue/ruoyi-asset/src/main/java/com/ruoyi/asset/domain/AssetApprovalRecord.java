@@ -21,6 +21,9 @@ public class AssetApprovalRecord extends BaseEntity
     /** 资产ID */
     private Long assetId;
 
+    /** 业务单据ID */
+    private Long bizId;
+
     /** 审批类型 */
     private String approvalType;
 
@@ -48,6 +51,16 @@ public class AssetApprovalRecord extends BaseEntity
     public void setAssetId(Long assetId)
     {
         this.assetId = assetId;
+    }
+
+    public Long getBizId()
+    {
+        return bizId;
+    }
+
+    public void setBizId(Long bizId)
+    {
+        this.bizId = bizId;
     }
 
     public String getApprovalType()
@@ -86,6 +99,7 @@ public class AssetApprovalRecord extends BaseEntity
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
             .append("approvalId", getApprovalId())
             .append("assetId", getAssetId())
+            .append("bizId", getBizId())
             .append("approvalType", getApprovalType())
             .append("approvalStatus", getApprovalStatus())
             .append("opinion", getOpinion())
@@ -97,4 +111,3 @@ public class AssetApprovalRecord extends BaseEntity
             .toString();
     }
 }
-

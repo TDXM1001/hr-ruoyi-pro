@@ -1,0 +1,84 @@
+
+> art-design-pro@0.0.0 dev E:\my-project\hr-ruoyi-pro\art-design-pro
+> vite --open "--host" "127.0.0.1" "--port" "5173"
+
+🚀 API_URL = /api
+🚀 VERSION = 3.0.1
+
+  [32m[1mVITE[22m v7.1.7[39m  [2mready in [0m[1m1290[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+  ➜  Vue DevTools: Open http://127.0.0.1:5173/__devtools__/ as a separate window
+  ➜  Vue DevTools: Press Alt(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools
+[2m12:17:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m12:17:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:19:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/views/asset/real-estate/rectification/form/index.vue?vue&type=style&index=0&scoped=28223ef9&lang.scss, /src/assets/styles/core/tailwind.css[22m
+[2m12:19:00[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:41:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/disposal-panel.vue[22m
+[2m12:41:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/inspection-panel.vue[22m
+[2m12:41:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/occupancy-panel.vue[22m
+[2m12:41:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/overview-panel.vue[22m
+[2m12:41:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/rectification-panel.vue[22m
+[2m12:43:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/views/asset/real-estate/detail/index.vue?vue&type=style&index=0&scoped=b1dde38f&lang.scss, /src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:50:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m12:51:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:51:10[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:51:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:53:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:53:52[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/views/asset/real-estate/rectification/form/index.vue?vue&type=style&index=0&scoped=28223ef9&lang.scss, /src/assets/styles/core/tailwind.css[22m
+[2m12:56:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:56:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:56:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:56:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m12:57:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m13:02:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:02:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:02:58[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:03:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:04:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:06:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m13:06:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/store/modules/worktab.ts[22m
+[2m14:31:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m14:33:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m14:33:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m14:34:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css, /src/views/asset/real-estate/detail/index.vue, /src/views/asset/real-estate/inspection-task/index.vue[22m
+[2m14:40:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css, /src/views/asset/disposal/index.vue, /src/views/asset/ledger/index.vue[22m
+[2m14:40:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css, /src/views/asset/real-estate/rectification/form/index.vue, /src/views/asset/real-estate/detail/index.vue, /src/views/asset/real-estate/index.vue, /src/views/asset/real-estate/form/index.vue, /src/views/asset/real-estate/inspection-task/index.vue[22m
+[2m14:41:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/components/rectification-panel.vue, /src/assets/styles/core/tailwind.css[22m
+[2m14:41:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m14:41:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m14:42:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/rectification/complete/index.vue[22m
+[2m14:57:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m14:57:42[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/components/rectification-panel.vue, /src/assets/styles/core/tailwind.css[22m
+[2m15:03:30[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:04:13[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/views/asset/real-estate/rectification/form/index.vue?vue&type=style&index=0&scoped=28223ef9&lang.scss, /src/assets/styles/core/tailwind.css[22m
+[2m15:04:19[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m15:04:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:11:17[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:12:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/rectification/form/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m15:12:31[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:30:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:31:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/rectification-panel.vue[22m
+[2m15:32:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/rectification-panel.vue[22m
+[2m15:32:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:33:12[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m15:33:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m16:32:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m16:33:14[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m16:33:21[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m16:33:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m16:33:44[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/inspection-panel.vue[22m
+[2m16:34:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/views/asset/real-estate/detail/components/inspection-panel.vue[22m
+[2m16:51:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m16:51:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/index.vue, /src/assets/styles/core/tailwind.css[22m
+[2m16:52:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/real-estate/detail/components/inspection-panel.vue, /src/views/asset/real-estate/detail/components/inspection-panel.vue?vue&type=style&index=0&scoped=9db16c82&lang.scss, /src/assets/styles/core/tailwind.css[22m
+[2m17:37:20[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css[22m
+[2m17:40:27[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/assets/styles/core/tailwind.css, /src/views/asset/disposal/index.vue[22m
+[2m17:42:33[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/asset/disposal/index.vue, /src/assets/styles/core/tailwind.css[22m

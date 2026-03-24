@@ -15,9 +15,11 @@
     <DisposalEntryCard
       v-if="sourceContext.hasSource"
       :context="entryContext"
+      :summary-context="summaryContext"
       @back="handleBackToRealEstate"
       @primary-action="handleEntryPrimaryAction"
       @secondary-action="handleEntrySecondaryAction"
+      @refresh-action="handleSummaryRefreshAction"
     />
 
     <ElCard class="main-card flex-1 min-h-0 overflow-hidden" shadow="never">
@@ -34,6 +36,19 @@
               :title="`当前已按资产 ${scopedAssetCode} 过滤待处置资产池`"
             />
 
+            <DisposalSummaryBar
+              v-if="activeTab === 'pool'"
+              compact
+              :showActions="false"
+              :context="summaryContext"
+              root-test-id="disposal-search-summary-bar"
+              workflow-test-id="disposal-search-summary-workflow"
+              next-step-test-id="disposal-search-summary-next-step"
+              primary-action-test-id="disposal-search-summary-primary-action"
+              secondary-action-test-id="disposal-search-summary-secondary-action"
+              refresh-action-test-id="disposal-search-summary-refresh-action"
+            />
+
             <ArtSearchBar
               v-model="poolSearchForm"
               :items="poolSearchItems"
@@ -46,12 +61,20 @@
               <template #header>
                 <div class="card-header">
                   <div class="card-title">待处置资产池</div>
-                  <ElSpace wrap class="toolbar-actions">
-                    <ElTag type="warning" effect="light">处置入口：待处置资产池</ElTag>
-                    <ElButton type="primary" plain icon="ri:refresh-line" @click="refreshPoolData">
-                      刷新资产池
-                    </ElButton>
-                  </ElSpace>
+                  <DisposalSummaryBar
+                    v-if="activeTab === 'pool'"
+                    compact
+                    :context="summaryContext"
+                    root-test-id="disposal-tab-summary-bar"
+                    workflow-test-id="disposal-tab-summary-workflow"
+                    next-step-test-id="disposal-tab-summary-next-step"
+                    primary-action-test-id="disposal-tab-summary-primary-action"
+                    secondary-action-test-id="disposal-tab-summary-secondary-action"
+                    refresh-action-test-id="disposal-tab-summary-refresh-action"
+                    @primary-action="handleEntryPrimaryAction"
+                    @secondary-action="handleEntrySecondaryAction"
+                    @refresh-action="handleSummaryRefreshAction"
+                  />
                 </div>
               </template>
               <ArtTable
@@ -60,6 +83,7 @@
                 :data="poolData"
                 :columns="poolColumns"
                 :pagination="poolPagination"
+                :emptyText="poolEmptyText"
                 @pagination:size-change="handlePoolSizeChange"
                 @pagination:current-change="handlePoolCurrentChange"
               />
@@ -79,6 +103,19 @@
               :title="`当前已按资产 ${scopedAssetCode} 过滤处置记录`"
             />
 
+            <DisposalSummaryBar
+              v-if="activeTab === 'record'"
+              compact
+              :showActions="false"
+              :context="summaryContext"
+              root-test-id="disposal-search-summary-bar"
+              workflow-test-id="disposal-search-summary-workflow"
+              next-step-test-id="disposal-search-summary-next-step"
+              primary-action-test-id="disposal-search-summary-primary-action"
+              secondary-action-test-id="disposal-search-summary-secondary-action"
+              refresh-action-test-id="disposal-search-summary-refresh-action"
+            />
+
             <ArtSearchBar
               v-model="recordSearchForm"
               :items="recordSearchItems"
@@ -91,9 +128,20 @@
               <template #header>
                 <div class="card-header">
                   <div class="card-title">处置记录</div>
-                  <ElButton type="primary" plain icon="ri:refresh-line" @click="refreshRecordData">
-                    刷新记录
-                  </ElButton>
+                  <DisposalSummaryBar
+                    v-if="activeTab === 'record'"
+                    compact
+                    :context="summaryContext"
+                    root-test-id="disposal-tab-summary-bar"
+                    workflow-test-id="disposal-tab-summary-workflow"
+                    next-step-test-id="disposal-tab-summary-next-step"
+                    primary-action-test-id="disposal-tab-summary-primary-action"
+                    secondary-action-test-id="disposal-tab-summary-secondary-action"
+                    refresh-action-test-id="disposal-tab-summary-refresh-action"
+                    @primary-action="handleEntryPrimaryAction"
+                    @secondary-action="handleEntrySecondaryAction"
+                    @refresh-action="handleSummaryRefreshAction"
+                  />
                 </div>
               </template>
               <ArtTable
@@ -102,6 +150,7 @@
                 :data="recordData"
                 :columns="recordColumns"
                 :pagination="recordPagination"
+                :emptyText="recordEmptyText"
                 @pagination:size-change="handleRecordSizeChange"
                 @pagination:current-change="handleRecordCurrentChange"
               />
@@ -304,7 +353,12 @@
   } from '@/api/asset/disposal'
   import DictTag from '@/components/DictTag/index.vue'
   import DisposalEntryCard from './components/disposal-entry-card.vue'
-  import { buildDisposalActiveViewContext, buildDisposalSourceContext } from './disposal-source-context'
+  import DisposalSummaryBar from './components/disposal-summary-bar.vue'
+  import {
+    buildDisposalActiveViewContext,
+    buildDisposalSourceContext,
+    buildDisposalSummaryBarContext
+  } from './disposal-source-context'
   import { useDict } from '@/utils/dict'
   import { useTable } from '@/hooks/core/useTable'
   import { useUserStore } from '@/store/modules/user'
@@ -365,6 +419,15 @@
   // 中文注释：显式 tab 优先；如果没有显式 tab，则按来源意图选择首屏落点。
   const activeTab = ref<'pool' | 'record'>(sourceContext.preferredTab)
   const entryContext = computed(() => buildDisposalActiveViewContext(sourceContext, activeTab.value))
+  // 中文注释：办理摘要条复用同一份上下文，入口卡、搜索区和 tab 头部都从这里取语义。
+  const summaryContext = computed(() => buildDisposalSummaryBarContext(entryContext.value))
+  // 中文注释：空状态文案要带上当前办理视图名称，这样后续回看时能直接判断是谁在提示。
+  const poolEmptyText = computed(() => {
+    return `当前办理视图「${summaryContext.value.workflowLabel}」暂无符合条件的待处置资产，请调整筛选条件后继续办理。`
+  })
+  const recordEmptyText = computed(() => {
+    return `当前办理视图「${summaryContext.value.workflowLabel}」暂无符合条件的处置记录，请调整筛选条件后继续办理。`
+  })
 
   const disposalTypeOptions = [
     { label: '报废', value: 'SCRAP', listClass: 'warning' },
@@ -832,13 +895,25 @@
   }
 
   const handleEntrySecondaryAction = async () => {
-    activeTab.value = sourceContext.preferredTab === 'record' ? 'pool' : 'record'
+    activeTab.value = activeTab.value === 'record' ? 'pool' : 'record'
     await nextTick()
     if (activeTab.value === 'record') {
       await refreshRecordData()
       return
     }
     await refreshPoolData()
+  }
+
+  // 中文注释：刷新成功提示必须沿用当前办理视图口径，避免 tab 切换后还提示旧称呼。
+  const handleSummaryRefreshAction = async () => {
+    const refreshedViewLabel = summaryContext.value.workflowLabel
+    if (activeTab.value === 'record') {
+      await refreshRecordData()
+      ElMessage.success(`已刷新${refreshedViewLabel}`)
+      return
+    }
+    await refreshPoolData()
+    ElMessage.success(`已刷新${refreshedViewLabel}`)
   }
 </script>
 
@@ -953,10 +1028,9 @@
 
   .card-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
 
   .card-title {
@@ -975,11 +1049,6 @@
       background: var(--asset-accent);
     }
   }
-
-  .toolbar-actions {
-    align-items: center;
-  }
-
   :deep(.art-search-bar) {
     padding: 10px 16px 0;
   }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.asset.mapper.AssetApprovalMapper">
+
+    <resultMap id="AssetApprovalRecordResult" type="com.ruoyi.asset.domain.AssetApprovalRecord">
+        <id property="approvalId" column="approval_id"/>
+        <result property="assetId" column="asset_id"/>
+        <result property="bizId" column="biz_id"/>
+        <result property="approvalType" column="approval_type"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="opinion" column="opinion"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <insert id="insertAssetApprovalRecord" parameterType="com.ruoyi.asset.domain.AssetApprovalRecord" useGeneratedKeys="true" keyProperty="approvalId">
+        insert into ast_asset_approval_record (
+            <if test="assetId != null">asset_id,</if>
+            <if test="bizId != null">biz_id,</if>
+            <if test="approvalType != null and approvalType != ''">approval_type,</if>
+            <if test="approvalStatus != null and approvalStatus != ''">approval_status,</if>
+            <if test="opinion != null">opinion,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="assetId != null">#{assetId},</if>
+            <if test="bizId != null">#{bizId},</if>
+            <if test="approvalType != null and approvalType != ''">#{approvalType},</if>
+            <if test="approvalStatus != null and approvalStatus != ''">#{approvalStatus},</if>
+            <if test="opinion != null">#{opinion},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+
+    <select id="selectAssetApprovalRecords" resultMap="AssetApprovalRecordResult">
+        select approval_id, asset_id, biz_id, approval_type, approval_status, opinion,
+               create_by, create_time, update_by, update_time, remark
+        from ast_asset_approval_record
+        where approval_type = #{approvalType}
+          and biz_id = #{bizId}
+        order by approval_id asc
+    </select>
+</mapper>
